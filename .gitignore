@@ -1,3 +1,6 @@
 toolchain/*
 .idea/workspace.xml
+.idea/.name
+.idea/misc.xml
 .idea/tasks.xml
+.idea/misc.xml
