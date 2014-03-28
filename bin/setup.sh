@@ -1,10 +1,9 @@
 #!/bin/bash
-home=`pwd`
+home=$1
 
-export PATH=$PATH:$home/toolchain
 export NODE_PATH=$home/toolchain/node-v0.10.26/lib/node_modules
 
-if ! [ -d "./toolchain" ]
+if ! [ -d "$home/toolchain" ]
 then
     echo "Toolchain not present - creating ./toolchain"
     mkdir toolchain
@@ -23,8 +22,6 @@ then
     echo "Node does not exist in toolchain - Unpacking node"
     cd $home/toolchain
     tar -Pxzf ../bin/node.tar.gz
-    cd ..
+    cd $home
 fi
-echo "Starting node"
-$home/toolchain/node-v0.10.26/bin/node $1
 
