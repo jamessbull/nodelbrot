@@ -10,7 +10,7 @@ then
     mkdir toolchain
 fi
 
-if ! [ -d "$home/toolchain/chrome-driver" ]
+if ! [ -f "$home/toolchain/chromedriver" ]
 then
     echo "Chromedriver does not exist in toolchain - Unpacking chromedriver"
     cd $home/toolchain
