@@ -1,8 +1,6 @@
 #!/bin/bash
 home=$1
 
-export NODE_PATH=$home/toolchain/node-v0.10.26/lib/node_modules
-
 if ! [ -d "$home/toolchain" ]
 then
     echo "Toolchain not present - creating ./toolchain"
