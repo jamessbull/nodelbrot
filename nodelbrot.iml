@@ -6,6 +6,7 @@
       <excludeFolder url="file://$MODULE_DIR$/toolchain" />
     </content>
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="webdriver" level="application" />
   </component>
 </module>
 
