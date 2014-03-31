@@ -1,22 +1,23 @@
-var webdriver = require('selenium-webdriver'), driver;
-
-exports.by = webdriver.By;
-
-exports.start = function () {
+(function () {
     "use strict";
-    require("webserver.js");
-    driver = new webdriver.Builder().withCapabilities(webdriver.Capabilities.chrome()).build();
-    driver.get('http://127.0.0.1:8124/');
-};
+    var webdriver = require('selenium-webdriver'), driver;
 
-exports.run = function (f) {
-    "use strict";
-    f(driver);
-};
+    exports.by = webdriver.By;
 
-exports.stop = function () {
-    "use strict";
-    driver.quit().then(function () {
-        process.exit();
-    });
-};
+    exports.start = function () {
+        require("webserver.js");
+        driver = new webdriver.Builder().withCapabilities(webdriver.Capabilities.chrome()).build();
+        driver.get('http://127.0.0.1:8124/');
+    };
+
+    exports.run = function (fArray) {
+        fArray.forEach(function (f) { f(driver); });
+    };
+
+    exports.stop = function () {
+        driver.quit().then(function () {
+            process.exit();
+        });
+    };
+}());
+
