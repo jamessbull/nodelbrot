@@ -1,8 +1,10 @@
-(function () {
+exports.create = function (args) {
     "use strict";
     var webdriver = require('selenium-webdriver'),
         server = require("webserver.js"),
+        http = require('http'),
         driver = new webdriver.Builder().withCapabilities(webdriver.Capabilities.chrome()).build(),
+        webserver,
         stop = function () {
             driver.quit().then(function () { server.stop(); });
         },
@@ -13,7 +15,8 @@
         finishCallback.bind(this)();
         stop();
     };
-    exports.driver = driver;
-    server.start();
-}());
+    webserver = server.create(http, args.portNo);
+    webserver.start();
+    return { driver: driver};
+};
 

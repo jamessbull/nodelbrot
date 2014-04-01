@@ -1,4 +1,4 @@
-var testEnvironment = require("testEnvironment.js"),
+var testEnvironment = require("testEnvironment.js").create({portNo: 8124}),
     driver = testEnvironment.driver;
 
 describe("A thing", function () {

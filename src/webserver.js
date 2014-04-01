@@ -1,5 +1,4 @@
-var http = require('http'),
-    fs = require("fs"),
+var fs = require("fs"),
     handlebars = require('handlebars'),server,
     render = function (templateName, context) {
         "use strict";
@@ -16,14 +15,16 @@ var mandelbrotPage = function (request, response) {
     response.end();
 };
 
-
-exports.start = function () {
+exports.create = function (http, portNo) {
     "use strict";
-    server = http.createServer(mandelbrotPage).listen(8124);
-    console.log('Server running at http://127.0.0.1:8124/');
-};
-
-exports.stop  = function () {
-    "use strict";
-    server.close(function () { console.log("Server shutdown"); });
+    server = http.createServer(mandelbrotPage);
+    return {
+        start: function () {
+            server.listen(portNo);
+            console.log('Server running at http://127.0.0.1:8124/');
+        },
+        stop: function () {
+            server.close(function () { console.log("Server shutdown"); });
+        }
+    };
 };
