@@ -1,6 +1,6 @@
 (function () {
     "use strict";
-    var webdriver = require('selenium-webdriver'), driver;
+    var webdriver = require('selenium-webdriver'), driver, expect;
 
     exports.by = webdriver.By;
 
@@ -14,9 +14,21 @@
         fArray.forEach(function (f) { f(driver); });
     };
 
+    exports.assert = function (expectations) {
+        expect = expectations;
+    };
     exports.stop = function () {
         driver.quit().then(function () {
-            process.exit();
+            var x = 0;
+
+            while (x < 1000000000) {
+                x += 1;
+            }
+            expect();
+            while (x < 1000000000) {
+                x += 1;
+            }
+            //process.exit();
         });
     };
 }());

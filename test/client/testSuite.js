@@ -14,8 +14,10 @@ var testEnvironment = require("testEnvironment.js"),
         return tests;
     };
 
+exports.run = function (expectations) {
+    testEnvironment.assert(expectations);
+    testEnvironment.start();
+    testEnvironment.run(tests());
+    testEnvironment.stop();
+};
 
-
-testEnvironment.start();
-testEnvironment.run(tests());
-testEnvironment.stop();
