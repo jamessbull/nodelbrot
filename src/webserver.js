@@ -1,6 +1,6 @@
 var http = require('http'),
     fs = require("fs"),
-    handlebars = require('handlebars'),
+    handlebars = require('handlebars'),server,
     render = function (templateName, context) {
         "use strict";
         var input = fs.readFileSync("src/templates/" + templateName + ".hbs", "utf8");
@@ -16,6 +16,14 @@ var mandelbrotPage = function (request, response) {
     response.end();
 };
 
-http.createServer(mandelbrotPage).listen(8124);
 
-console.log('Server running at http://127.0.0.1:8124/');
+exports.start = function () {
+    "use strict";
+    server = http.createServer(mandelbrotPage).listen(8124);
+    console.log('Server running at http://127.0.0.1:8124/');
+};
+
+exports.stop  = function () {
+    "use strict";
+    server.close(function () { console.log("Server shutdown"); });
+};

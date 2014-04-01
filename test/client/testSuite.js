@@ -7,15 +7,13 @@ var testEnvironment = require("testEnvironment.js"),
 
         testNames.forEach(function (name) {
             var test = require("tests/" + name);
-            Object.keys(test).forEach(function (key) {
-                tests.push(test[key]);
-            });
+            Object.keys(test).forEach(function (key) { tests.push(test[key]); });
         });
         return tests;
     };
 
 exports.run = function (expectations) {
-    testEnvironment.assert(expectations);
+    testEnvironment.expect(expectations);
     testEnvironment.start();
     testEnvironment.run(tests());
     testEnvironment.stop();
