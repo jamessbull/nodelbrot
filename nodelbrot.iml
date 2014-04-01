@@ -6,8 +6,10 @@
       <excludeFolder url="file://$MODULE_DIR$/toolchain" />
     </content>
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="webdriver" level="application" />
     <orderEntry type="library" name="Node.js v0.10.26 Core Modules" level="application" />
+    <orderEntry type="library" name="webdriver" level="application" />
+    <orderEntry type="library" name="jasmine" level="application" />
+    <orderEntry type="library" name="webdriver" level="application" />
     <orderEntry type="library" name="webdriver" level="application" />
     <orderEntry type="library" name="jasmine" level="application" />
   </component>

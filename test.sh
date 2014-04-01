@@ -5,5 +5,4 @@ export NODE_PATH=$home/toolchain/node-v0.10.26/lib/node_modules:$home/test/clien
 echo setting up toolchain
 $home/bin/setup.sh $home
 echo Running test suite
-#$home/toolchain/node-v0.10.26/bin/node test/client/testSuite.js
 jasmine-node test/server/specs

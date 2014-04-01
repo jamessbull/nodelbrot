@@ -1,10 +1,12 @@
-var testSuite = require("testSuite.js");
+var testEnvironment = require("testEnvironment.js"),
+    driver = testEnvironment.driver;
 
 describe("A thing", function () {
     "use strict";
-    it("should run the tests on the client", function (done) {
-        testSuite.run(function () {
-            expect(1 + 1).toBe(2);
+    it("should test the title", function (done) {
+        driver.get('http://127.0.0.1:8124/');
+        driver.getTitle().then(function (title) {
+            expect(title).toBe('Hello');
             done();
         });
     });
