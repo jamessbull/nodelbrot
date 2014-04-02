@@ -9,4 +9,14 @@ describe("The http server", function () {
         expect(httpStub.createCalled()).toBeTruthy();
         expect(httpStub.listeningOn()).toBe(8095);
     });
+
+    it("should pass the supplied function to the http server", function () {
+        var serverFunction = function () {
+                console.log("well now");
+                return "testServerFunction";
+            };
+        webServer.create(httpStub, 8095, serverFunction);
+        expect(httpStub.callSuppliedFunction()).toBe("testServerFunction");
+    });
 });
+

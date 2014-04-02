@@ -1,27 +1,12 @@
-var fs = require("fs"),
-    handlebars = require('handlebars'),server,
-    render = function (templateName, context) {
-        "use strict";
-        var input = fs.readFileSync("src/templates/" + templateName + ".hbs", "utf8");
-        return handlebars.compile(input)(context);
-    };
+var server;
 
-var mandelbrotPage = function (request, response) {
+exports.create = function (http, portNo, servingFunction) {
     "use strict";
-    var body = render("body", { name: "helenywelenywoo"}),
-        page = render("index", { body: body});
-
-    response.write(page);
-    response.end();
-};
-
-exports.create = function (http, portNo) {
-    "use strict";
-    server = http.createServer(mandelbrotPage);
+    server = http.createServer(servingFunction);
     return {
         start: function () {
             server.listen(portNo);
-            console.log('Server running at http://127.0.0.1:8124/');
+            console.log('Server running at http://127.0.0.1:' + portNo + '/');
         },
         stop: function () {
             server.close(function () { console.log("Server shutdown"); });

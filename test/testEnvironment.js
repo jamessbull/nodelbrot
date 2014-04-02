@@ -15,7 +15,7 @@ exports.create = function (args) {
         finishCallback.bind(this)();
         stop();
     };
-    webserver = server.create(http, args.portNo);
+    webserver = server.create(http, args.portNo, args.requestHandler);
     webserver.start();
     return { driver: driver};
 };
