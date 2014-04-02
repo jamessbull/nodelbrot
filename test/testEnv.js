@@ -1,3 +1,4 @@
+var running = false;
 exports.create = function (args) {
     "use strict";
     var webdriver = require('selenium-webdriver'),
@@ -6,19 +7,20 @@ exports.create = function (args) {
         driver = args.driver,
         portNo = args.portNo,
         requestHandler = args.requestHandler,
-        //driver = new webdriver.Builder().build(),
         webserver,
-        stop = function () {
-            driver.quit().then(function () { server.stop(); });
-        },
         finishCallback = jasmine.Runner.prototype.finishCallback;
 
     jasmine.Runner.prototype.finishCallback = function () {
         finishCallback.bind(this)();
-        stop();
+        driver.quit().then(function () { server.stop(); });
     };
-    webserver = server.create(http, portNo, requestHandler);
-    webserver.start();
+
+    if (!running) {
+        webserver = server.create(http, portNo, requestHandler);
+        webserver.start();
+        running = true;
+    }
+
     return { driver: driver, server: webserver };
 };
 

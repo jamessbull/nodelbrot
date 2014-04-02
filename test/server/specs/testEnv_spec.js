@@ -3,7 +3,7 @@ var noOfTimesCalled = 0,
         noOfTimesCalled += 1;
     },
     testEnvironment = require("testEnv.js"),
-    http = require("server/stubs/http.js");
+    http = require("server/stubs/http.js").create();
 
 describe("testEnvironment for webdriver tests", function () {
     "use strict";
