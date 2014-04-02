@@ -1,5 +1,13 @@
 var fun = require("homePage").create(),
-    testEnvironment = require("testEnvironment.js").create({portNo: 8124, requestHandler: fun.requestHandler }),
+    http = require("http"),
+    webdriver = require("selenium-webdriver"),
+    driver = new webdriver.Builder().withCapabilities(webdriver.Capabilities.chrome()).build(),
+    testEnvironment = require("testEnv.js").create({
+        portNo: 8124,
+        requestHandler: fun.requestHandler,
+        http: http,
+        driver: driver
+    }),
     driver = testEnvironment.driver;
 
 describe("The main page", function () {

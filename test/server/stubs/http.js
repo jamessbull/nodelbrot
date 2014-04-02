@@ -1,4 +1,4 @@
-var createCalled = false,
+var createCalled = 0,
     portNo = 0,
     suppliedFunction;
 exports.createServer = function (callback) {
@@ -16,6 +16,7 @@ exports.listeningOn = function () {
 };
 exports.createCalled = function () {
     "use strict";
+    createCalled += 1;
     return createCalled;
 };
 exports.callSuppliedFunction = function () {
