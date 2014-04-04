@@ -1,0 +1,1 @@
+require("nodelbrot.js").create().start();

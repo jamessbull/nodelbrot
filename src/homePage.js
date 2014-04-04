@@ -10,8 +10,11 @@ exports.create = function () {
                 page = indexTemplate({ body: body});
             response.write(page);
             response.end();
+        },
+        returnVal = {
+            requestHandler: requestHandler
         };
-    return {
-        requestHandler: requestHandler
-    };
+    returnVal.requestHandler.handlerName = "index";
+    console.log("in home page " + returnVal.requestHandler.handlerName);
+    return returnVal;
 };
