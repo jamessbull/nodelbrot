@@ -4,7 +4,11 @@ exports.create = function () {
         route = require("routing/route.js"),
         router = function (request, response) {
             var requestRoute = routes.routeFor(request.url);
-            requestRoute.execute(request, response);
+            if (requestRoute) {
+                requestRoute.execute(request, response);
+            } else {
+                response.statusCode = 404;
+            }
         };
     router.addRoute = function (url, action) { routes.add(route.create(url, action)); };
     router.routes = function () { return routes.asList; };
