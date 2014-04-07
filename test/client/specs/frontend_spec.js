@@ -21,8 +21,8 @@ describe("The main page", function () {
     it("should pass the client side jasmine tests", function (done) {
         var page = jasminePage.create(driver, webdriver.By, "http://127.0.0.1:8124");
         page.open();
-        page.jasmineTestsDiv(function (element) {
-            expect(element.getText()).toBe("Jasmine tests");
+        page.jasmineTestsDiv(function (text) {
+            expect(text).toBe("Jasmine tests");
             done();
         });
     });

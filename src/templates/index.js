@@ -6,7 +6,7 @@ exports.create = function () {
                 <title>Hello</title> \
             </head> \
             <body> \
-                {{ body }} \
+                {{{ body }}} \
             </body> \
         </html>';
     return template;

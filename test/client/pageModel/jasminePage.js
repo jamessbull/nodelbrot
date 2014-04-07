@@ -5,9 +5,7 @@ exports.create = function (driver, by, baseUrl) {
             driver.get(baseUrl + "/jasmine");
         },
         jasmineTestsDiv: function (assertion) {
-            driver.findElement(by.id("jasmineTests")).then(function (element) {
-                assertion(element);
-            });
+            driver.findElement(by.id("jasmineTests")).getText().then(assertion);
         }
     };
 };
