@@ -8,10 +8,6 @@ exports.create = function () {
 
     nodelbrotRouter.routerName = "nodelbrot";
     nodelbrotRouter.addRoute("/", indexPageAction.requestHandler);
-    nodelbrotRouter.addRoute("/jasmine", function (request, response) {
-        var testPage = clientJasmineTests.create();
-        response.write(testPage);
-        response.end();
-    });
+    nodelbrotRouter.addRoute("/jasmine", clientJasmineTests.requestHandler);
     return nodelbrotRouter;
 };
