@@ -1,26 +1,24 @@
 
 describe("The template context for", function () {
     "use strict";
-    var template = require("html/template.js"),
-        hbl = require("handlebars"),
-        templates = {
-            headTemplate: hbl.compile("testHead"),
-            bodyTemplate: hbl.compile("testBody"),
-            index: hbl.compile("head: {{{head}}}, body: {{{body}}}")
-        },
-        head = template.base("headTemplate"),
-        body = template.base("bodyTemplate");
-
-
-    it(" the html page should have head and body", function () {
-        var main = template.html("index", head, body),
-            page = main.render(templates);
-
-        expect(page).toMatch("head: testHead, body: testBody");
-    });
-    it("the jasmine client test page should have the correct name", function () {
-        var jas = require("pages/jasmineClientTests.js"),
-            page = jas.create();
-        expect(page.name).toBe("jasmineClientTests");
+    it("should render a full template to the response", function (done) {
+        var response = require("server/stubs/response.js").create(),
+            template = require("view/template.js").create,
+            page;
+        page = template("html", {
+            head: "",
+            body: template("homePage/body", {
+                name: "Jim"
+            })
+        });
+        page.renderTo(response, null, function () {
+            expect(response.written()).toMatch('Hello Jim');
+            expect(response.written()).toMatch('html');
+            expect(response.written()).toMatch('head');
+            expect(response.written()).toMatch('body');
+            expect(response.written()).toMatch('<!DOCTYPE HTML PUBLIC ' +
+                '"-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">');
+            done();
+        });
     });
 });

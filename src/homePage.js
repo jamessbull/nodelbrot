@@ -1,20 +1,18 @@
-exports.create = function () {
+exports.create = function (templateContents) {
     "use strict";
-    var bodyString = require("templates/body.js").create(),
-        indexString = require("templates/index.js").create(),
-        handlebars = require("handlebars"),
-        requestHandler = function (request, response) {
-            var bodyTemplate = handlebars.compile(bodyString),
-                indexTemplate = handlebars.compile(indexString),
-                body = bodyTemplate({ name: "helenywelenywoo"}),
-                page = indexTemplate({ body: body});
-            response.write(page);
-            response.end();
-        },
-        returnVal = {
-            requestHandler: requestHandler
-        };
-    returnVal.requestHandler.handlerName = "index";
-    console.log("in home page " + returnVal.requestHandler.handlerName);
-    return returnVal;
+    var template = require("view/template.js").create,
+        page;
+
+
+    page = template("html", {
+        head: "",
+        body: template("homePage/body", {name: "Jim"})
+    });
+
+
+    return function (request, response) {
+        var name = "index";
+        page.renderTo(response);
+        response.end();
+    };
 };

@@ -3,6 +3,7 @@ exports.create = function () {
     var written = "";
     return {
         write: function (content) { written = content; },
-        written: function () { return written; }
+        written: function () { return written; },
+        end: function () {}
     };
 }
