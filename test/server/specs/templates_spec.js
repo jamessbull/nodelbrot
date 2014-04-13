@@ -11,12 +11,12 @@ describe("The template context for", function () {
                 name: "Jim"
             })
         });
-        page.renderTo(response, null, function () {
-            expect(response.written()).toMatch('Hello Jim');
-            expect(response.written()).toMatch('html');
-            expect(response.written()).toMatch('head');
-            expect(response.written()).toMatch('body');
-            expect(response.written()).toMatch('<!DOCTYPE HTML PUBLIC ' +
+        page.renderTo(function (renderedTemplate) {
+            expect(renderedTemplate).toMatch('Hello Jim');
+            expect(renderedTemplate).toMatch('html');
+            expect(renderedTemplate).toMatch('head');
+            expect(renderedTemplate).toMatch('body');
+            expect(renderedTemplate).toMatch('<!DOCTYPE HTML PUBLIC ' +
                 '"-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">');
             done();
         });

@@ -1,13 +1,12 @@
-var router = require("routing/router.js"),
-    index = require("homePage.js");
+var router = require("routing/router.js");
 exports.create = function () {
     "use strict";
     var nodelbrotRouter = router.create(),
-        clientJasmineTests = require("client/jasmine/tests.js"),
-        indexPageAction = index.create();
+        clientJasmineTests = require("pages/jasmineClientTests.js").create(),
+        indexPageAction = require("pages/homePage.js").create();
 
     nodelbrotRouter.routerName = "nodelbrot";
-    nodelbrotRouter.addRoute("/", indexPageAction.requestHandler);
-    nodelbrotRouter.addRoute("/jasmine", clientJasmineTests.requestHandler);
+    nodelbrotRouter.addRoute("/", indexPageAction);
+    nodelbrotRouter.addRoute("/jasmine", clientJasmineTests);
     return nodelbrotRouter;
 };

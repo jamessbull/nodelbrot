@@ -4,7 +4,6 @@ exports.create = function (args) {
     var webdriver = require('selenium-webdriver'),
         server = require("nodelbrot.js"),
         routing = require("routing/nodelbrotRouter.js"),
-        clientJasmineTests = require("client/jasmine/tests.js"),
         http = args.http,
         driver = args.driver,
         portNo = args.portNo,
@@ -16,12 +15,6 @@ exports.create = function (args) {
         finishCallback.bind(this)();
         driver.quit().then(function () { webserver.stop(); });
     };
-
-    router.addRoute("/jasmine", function (request, response) {
-        var testPage = clientJasmineTests.create();
-        response.write(testPage);
-        response.end();
-    });
 
     if (!running) {
         webserver = server.create({http: http, portNo: portNo, router: router});

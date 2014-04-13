@@ -9,6 +9,10 @@ require("testEnv.js").create({
     driver: driver
 });
 
+webdriver.promise.controlFlow().on('uncaughtException', function (e) {
+    console.log('Unhandled error: ' + e);
+});
+
 describe("The main page", function () {
     "use strict";
     it("should have the title Hello", function (done) {
@@ -21,8 +25,8 @@ describe("The main page", function () {
     it("should pass the client side jasmine tests", function (done) {
         var page = jasminePage.create(driver, webdriver.By, "http://127.0.0.1:8124");
         page.open();
-        page.jasmineTestsDiv(function (text) {
-            expect(text).toBe("Jasmine tests");
+        page.title(function (text) {
+            expect(text).toBe("Jasmine Tests");
             done();
         });
     });

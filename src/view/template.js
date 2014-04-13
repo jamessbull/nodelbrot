@@ -2,38 +2,36 @@ exports.create = function (name, context) {
     "use strict";
     var fs = require("fs"),
         hbl = require("handlebars"),
-        render = function (contents) { return hbl.compile(contents)(context); },
-        isTemplate = function (obj) { return context[obj].hasOwnProperty("renderTo"); },
-        allRendered = function (obj) { return Object.keys(obj).every(function (prop) { return !isTemplate(prop); }); },
-        renderWhenReady = function (content, response, callback, callback2) {
-            var rendered;
-            if (allRendered(context)) {
-                rendered = render(content);
-                if (callback) {
-                    callback(rendered);
-                } else {
-                    response.write(rendered);
-                }
-                if (callback2) {
-                    callback2();
-                }
+        templateComplete,
+        templateContents,
+        renderTemplateIfContextResolved = function () {
+            if (templatesInContext().length === 0) {
+                var renderedTemplate = hbl.compile(templateContents)(context);
+                templateComplete(renderedTemplate);
             }
-        };
-    return {
-        renderTo: function (response, callback, callback2) {
-            var filename = "src/view/templates/" + name + ".hbl";
-            fs.readFile(filename,  { encoding: 'utf8' }, function (err, content) {
-                Object.keys(context).forEach(function (prop) {
-                    if (isTemplate(prop)) {
-                        context[prop].renderTo(response, function (renderedTemplate) {
-                            context[prop] =  renderedTemplate;
-                            renderWhenReady(content, response, callback, callback2);
-                        });
-                    }
-                });
-                renderWhenReady(content, response, callback, callback2);
+        },
+        templatesInContext = function () {
+            return Object.keys(context).filter(function (key) {
+                return context[key].hasOwnProperty("renderTo");
             });
+        },
+        renderSubTemplate = function (key) {
+            context[key].renderTo(function (renderedTemplate) {
+                context[key] =  renderedTemplate;
+                renderTemplateIfContextResolved();
+            });
+        },
+        renderAll = function (err, content) {
+            templateContents = content;
+            renderTemplateIfContextResolved();
+            templatesInContext().forEach(renderSubTemplate);
+        };
+
+    return {
+        renderTo: function (callback) {
+            templateComplete = callback;
+            var filename = "src/view/templates/" + name + ".hbl";
+            fs.readFile(filename,  { encoding: 'utf8' }, renderAll);
         }
     };
-}
-
+};

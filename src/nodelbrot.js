@@ -1,5 +1,4 @@
 var server = require("webserver.js"),
-    http = require("http"),
     router = require("routing/nodelbrotRouter.js");
 
 exports.create = function (args) {
@@ -9,7 +8,8 @@ exports.create = function (args) {
         http: require("http"),
         router: router.create()
     },
-        serverArgs;
+        serverArgs,
+        webserver;
     if (arguments.length) {
         serverArgs = args;
     } else {
@@ -18,8 +18,11 @@ exports.create = function (args) {
 
     return {
         start: function () {
-            var webserver = server.create(serverArgs);
+            webserver = server.create(serverArgs);
             webserver.start();
+        },
+        stop: function () {
+            webserver.stop();
         },
         router: serverArgs.router
     };
