@@ -1,4 +1,4 @@
-exports.create = function () {
+exports.contents = function (callback) {
     "use strict";
     var template = require("view/template.js").create,
         page = template("html", {
@@ -6,10 +6,7 @@ exports.create = function () {
             body: template("homePage/body", {name: "Jim"})
         });
 
-    return function (request, response) {
-        page.renderTo(function (contents) {
-            response.write(contents);
-            response.end();
-        });
-    };
+    page.renderTo(function (contents) {
+        callback(contents);
+    });
 };

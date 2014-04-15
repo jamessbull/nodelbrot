@@ -5,9 +5,13 @@ exports.create = function () {
         router = function (request, response) {
             var requestRoute = routes.routeFor(request.url);
             if (requestRoute) {
-                requestRoute.execute(request, response);
+                requestRoute.execute(function (contents) {
+                    response.write(contents);
+                    response.end();
+                });
             } else {
                 response.statusCode = 404;
+                response.end();
             }
         };
     router.addRoute = function (url, action) { routes.add(route.create(url, action)); };

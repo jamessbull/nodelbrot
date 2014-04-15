@@ -1,25 +1,33 @@
-exports.create = function () {
+(function () {
     "use strict";
     var fs = require("fs"),
         template = require("view/template.js").create,
-        head = function (files) {
-            var head = "";
-            head += '<title>Jasmine Tests</title>';
+        filesToScripts = function (files, urlFragment) {
+            var returnVal = "";
             files.forEach(function (file) {
-                head += '<script src="/specs/' + file + '">';
+                console.log("hi " + file);
+                returnVal += '<script src="/' + urlFragment + '/' + file + '"></script>\n';
             });
+            return returnVal;
+        },
+        head = function (testFiles, srcFiles) {
+            var head = "";
+            head += filesToScripts(testFiles, "specs");
+            head += filesToScripts(srcFiles, "js");
+            head += '<title>Jasmine Tests</title>';
+            console.log("head is " + head);
             return head;
         },
-        jasminePage = function (head) {
-            return template("html", {head: head + "I am head", body: "I am body"});
-        };
-    return function (request, response) {
-        fs.readdir("test/client/jasmine/specs", function (err, files) {
-            jasminePage(head(files)).renderTo(function (contents) {
-                console.log(contents);
-                response.write(contents);
-                response.end();
+        page = function (callback) {
+            fs.readdir("test/client/jasmine/specs", function (err, testFiles) {
+                fs.readdir("src/client", function (err, srcFiles) {
+                    template("html", {head: head(testFiles, srcFiles), body: "I am body"})
+                        .renderTo(callback);
+                });
             });
-        });
+        };
+
+    exports.contents = function (callback) {
+        page(callback);
     };
-};
+}());
