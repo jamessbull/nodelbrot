@@ -9,17 +9,13 @@
             });
             return returnVal;
         },
-        head = function (testFiles, srcFiles) {
-            var head = "";
-            head += filesToScripts(testFiles, "specs");
-            head += filesToScripts(srcFiles, "js");
-            head += '<title>Jasmine Tests</title>';
-            return head;
-        },
         page = function (callback) {
             fs.readdir("test/client/jasmine/specs", function (err, testFiles) {
                 fs.readdir("src/client", function (err, srcFiles) {
-                    template("html", {head: head(testFiles, srcFiles), body: "I am body"})
+                    template("specRunner", {
+                        sourceFiles: filesToScripts(srcFiles, "js"),
+                        testFiles: filesToScripts(testFiles, "specs")
+                    })
                         .renderTo(callback);
                 });
             });
