@@ -1,5 +1,5 @@
 describe("The client test page", function () {
-//    "use strict";
+    "use strict";
     it("should have all files in the spec directory in script tags in the head", function (done) {
         var clientPage = require("pages/jasmineClientTests.js");
         clientPage.contents(function (contents) {

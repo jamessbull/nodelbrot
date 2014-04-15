@@ -16,5 +16,6 @@ exports.create = function () {
         };
     router.addRoute = function (url, action) { routes.add(route.create(url, action)); };
     router.routes = function () { return routes.asList; };
+    router.routeFor = function (url) { return routes.routeFor(url); };
     return router;
 };

@@ -5,7 +5,6 @@
         filesToScripts = function (files, urlFragment) {
             var returnVal = "";
             files.forEach(function (file) {
-                console.log("hi " + file);
                 returnVal += '<script src="/' + urlFragment + '/' + file + '"></script>\n';
             });
             return returnVal;
@@ -15,7 +14,6 @@
             head += filesToScripts(testFiles, "specs");
             head += filesToScripts(srcFiles, "js");
             head += '<title>Jasmine Tests</title>';
-            console.log("head is " + head);
             return head;
         },
         page = function (callback) {
