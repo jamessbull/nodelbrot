@@ -3,7 +3,6 @@ describe("The Files", function () {
     it("should list all files in a directory", function (done) {
         var files = require("files.js").create(),
             expectedDirContents = ["bees", "cheese"];
-        console.log("hi");
         files.inDir("test/integration/filesTest/", function (err, dirContents) {
             expectedDirContents.forEach(function (expected) {
                 var filtered = dirContents.filter(function (actual) {

@@ -9,8 +9,8 @@ require("testEnv.js").create({
     driver: driver
 });
 
-webdriver.promise.controlFlow().on('uncaughtException', function (e) {
-    console.log('Unhandled error: ' + e);
+webdriver.promise.controlFlow().on('uncaughtException', function () {
+    console.log('Unhandled error: ');
 });
 
 describe("The main page", function () {
@@ -27,6 +27,15 @@ describe("The main page", function () {
         page.open();
         page.title(function (text) {
             expect(text).toBe("Jasmine Tests");
+        });
+        page.passingAlert(function (element) {
+            if (element !== undefined) {
+                console.log("All client Jasmine tests passed");
+                done();
+            }
+        });
+        page.testFailures(function (failures) {
+            failures.forEach(function (failure) { expect(failure).toBe("Success"); });
             done();
         });
     });
