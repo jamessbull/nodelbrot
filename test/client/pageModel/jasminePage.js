@@ -8,28 +8,22 @@ exports.create = function (driver, by, baseUrl) {
             callback(undefined);
         });
     },
-        getElements = function (callback, by) {
+        getElements = function (by, callback) {
             var elements = driver.findElements(by);
             elements.then(function (elements) {
                 callback(elements);
             }, function () {
                 callback([]);
             });
+        },
+        withElementText = function (element, callback) {
+            element.getText().then(function (text) {
+                callback(text);
+            });
         };
     return {
         open: function () {
             driver.get(baseUrl + "/jasmine");
-        },
-        jasmineTestsDiv: function (assertion) {
-            driver.findElement(by.tagName("head"))
-                .then(function (element) {
-                    var thing = element.getText();
-                    thing.then(function (text) {
-                        assertion(text);
-                    });
-                }, function () {
-                    assertion("jasmine test div not found");
-                });
         },
         title: function (assertion) {
             driver.getTitle().then(function (title) {
@@ -40,18 +34,17 @@ exports.create = function (driver, by, baseUrl) {
             getElement(assertion, by.className("passingAlert"));
         },
         testFailures: function (callback) {
-            var messages = [],
-                failures = function (elements) {
-                    elements.forEach(function (element) {
-                        element.getText().then(function (text) {
-                            messages.push(text);
-                            if (messages.length === elements.length) {
-                                callback(messages);
-                            }
-                        });
-                    });
+            var messages = [];
+
+            getElements(by.className("specDetail"), function (elements) {
+                var collectThenCallBack = function (text) {
+                    messages.push(text);
+                    if (messages.length === elements.length) {
+                        callback(messages);
+                    }
                 };
-            getElements(failures, by.className("specDetail"));
+                elements.forEach(function (element) { withElementText(element, collectThenCallBack); });
+            });
         }
     };
 };
