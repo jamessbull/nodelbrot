@@ -1,6 +1,33 @@
 var mandelbrot = (function () {
     "use strict";
     return {
+        colour: {
+            palette: {
+                create: function () {
+                    var palette = [],
+                        colour = function (r, g, b, a) {
+                            return {red: r, green: g, blue: b, alpha: a};
+                        };
+                    palette.push(colour(0,   0,   0,   255));
+                    palette.push(colour(255, 0,   0,   255));
+                    palette.push(colour(0,   255, 0,   255));
+                    palette.push(colour(0,   0,   255, 255));
+                    palette.push(colour(255, 255, 255, 255));
+
+                    palette.intoColours = function (numbers) {
+                        console.log("Hello!!!!");
+                        return numbers.map(function (number) {
+                            var colour = palette[number % palette.length];
+                            console.log("Palette size " + palette.length + " number " + number);
+                            console.log("colour is " + colour);
+                            return colour;
+                        });
+                    };
+
+                    return palette;
+                }
+            }
+        },
         valueCalculator: {
             create: function (escape) {
                 var myEscape;

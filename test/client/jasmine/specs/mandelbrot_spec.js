@@ -130,4 +130,53 @@ describe("The mandelbrot set", function () {
         result = mandelListFunc();
         verify(result, 3);
     });
+    it("should create a colour pallette", function () {
+        var pal = mandelbrot.colour.palette.create();
+        expect(pal.length).toBe(5);
+
+        expect(pal[0].red).toBe(0);
+        expect(pal[0].green).toBe(0);
+        expect(pal[0].blue).toBe(0);
+        expect(pal[0].alpha).toBe(255);
+
+        expect(pal[1].red).toBe(255);
+        expect(pal[1].green).toBe(0);
+        expect(pal[1].blue).toBe(0);
+        expect(pal[1].alpha).toBe(255);
+
+        expect(pal[2].red).toBe(0);
+        expect(pal[2].green).toBe(255);
+        expect(pal[2].blue).toBe(0);
+        expect(pal[2].alpha).toBe(255);
+
+        expect(pal[3].red).toBe(0);
+        expect(pal[3].green).toBe(0);
+        expect(pal[3].blue).toBe(255);
+        expect(pal[3].alpha).toBe(255);
+
+        expect(pal[4].red).toBe(255);
+        expect(pal[4].green).toBe(255);
+        expect(pal[4].blue).toBe(255);
+        expect(pal[4].alpha).toBe(255);
+    });
+
+    it("should take a palette and trans form iterations to colours", function () {
+        var mandelbrotPalette = mandelbrot.colour.palette.create(),
+            mandelbrotColours;
+        console.log("Hey!");
+        mandelbrotColours = mandelbrotPalette.intoColours([0, 2, 11]);
+        expect(mandelbrotColours.length).toBe(3);
+
+        expect(mandelbrotColours[0].red).toBe(0);
+        expect(mandelbrotColours[0].green).toBe(0);
+        expect(mandelbrotColours[0].blue).toBe(0);
+
+        expect(mandelbrotColours[1].red).toBe(0);
+        expect(mandelbrotColours[1].green).toBe(255);
+        expect(mandelbrotColours[1].blue).toBe(0);
+
+        expect(mandelbrotColours[2].red).toBe(255);
+        expect(mandelbrotColours[2].green).toBe(0);
+        expect(mandelbrotColours[2].blue).toBe(0);
+    });
 });
