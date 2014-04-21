@@ -17,7 +17,7 @@ describe("The nodelbrot application", function () {
         expect(mandelRoute).toBeDefined();
         expect(mandelRoute.url).toBe("/js/mandelbrot.js");
         mandelRoute.execute(function (content) {
-            expect(content).toMatch("mandelbrot");
+            expect(content).toMatch("Hello");
             done();
         });
     });

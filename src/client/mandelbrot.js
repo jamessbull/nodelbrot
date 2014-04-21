@@ -1,1 +1,1 @@
-var mandelbrot = "Hello";
+var x = "Hello";
