@@ -99,4 +99,35 @@ describe("The mandelbrot set", function () {
         result = mandelbrotFunction();
         expect(result.iterations).toBe(3);
     });
+    it("should take a list of mandelbrotCoords and return a list of the next iterations worth every time", function () {
+        var count = 0,
+            mandelFunc = function () {
+                var count = 0;
+                return function () {
+                    count += 1;
+                    return {iterations: count};
+                };
+            },
+            mandelCalc = {
+                functionFor: function (coord) { return mandelFunc(); }
+            },
+            mandelList = mandelbrot.listCalculator.create(mandelCalc),
+            mandelListFunc = mandelList.forPoints([{x: 0.1, y: 0.2}, {x: 0.3, y: 0.4}, {x: 0.5, y: 0.6}]),
+            result,
+            verify = function (result, timesCalled) {
+                expect(result.length).toBe(3);
+                expect(result[0].iterations).toBe(timesCalled);
+                expect(result[1].iterations).toBe(timesCalled);
+                expect(result[2].iterations).toBe(timesCalled);
+            };
+
+        result = mandelListFunc();
+        verify(result, 1);
+
+        result = mandelListFunc();
+        verify(result, 2);
+
+        result = mandelListFunc();
+        verify(result, 3);
+    });
 });

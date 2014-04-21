@@ -37,6 +37,22 @@ var mandelbrot = (function () {
                 };
             }
         },
+        listCalculator: {
+            create: function (mandelCalc) {
+                return {
+                    forPoints: function (mandelCoords) {
+                        var mandelFuncs = mandelCoords.map(function (coord) {
+                            return mandelCalc.functionFor(coord);
+                        });
+                        return function () {
+                            return mandelFuncs.map(function (func) {
+                                return func();
+                            });
+                        };
+                    }
+                };
+            }
+        },
         escape: {
             create: function () {
                 return {
