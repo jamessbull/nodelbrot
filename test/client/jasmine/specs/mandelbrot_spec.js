@@ -16,62 +16,7 @@ describe("The mandelbrot set", function () {
         console.log("escape is " + result.escaped);
         expect(result.escaped).toBeTruthy();
     });
-    it("should call the escape object until it reaches max val", function () {
-        var count = 0,
-            escape = {
-                calculate: function () {
-                    count += 1;
-                    return { x: 1, y: 2, escaped: false };
-                }
-            },
-            mandelbrotCoord = {x: 1, y: 2},
-            mandelbrotCalculator = mandelbrot.valueCalculator.create(escape);
-        mandelbrotCalculator.value(mandelbrotCoord, 5);
-        expect(count).toBe(5);
-        count = 0;
-        mandelbrotCalculator.value(mandelbrotCoord, 6);
-        expect(count).toBe(6);
-    });
 
-    it("should call the escape object until it escapes", function () {
-        var count = 0,
-            escape = {
-                calculate: function () {
-                    count += 1;
-                    return { x: 1, y: 2, escaped: count >= 5 };
-                }
-            },
-            mandelbrotCoord = {x: 1, y: 2},
-            mandelbrotCalculator = mandelbrot.valueCalculator.create(escape);
-
-        mandelbrotCalculator.value(mandelbrotCoord, 10);
-        expect(count).toBe(5);
-    });
-    it("should pass the return value back into the escape function", function () {
-        var count = 0,
-            escapeVal = {x: 0, y: 0},
-            escape = {
-                calculate: function (mandelbrotCoord, escapeValue) {
-                    escapeVal = escapeValue;
-                    count += 1;
-                    return { x: 10, y: 10, escaped: count === 2 };
-                }
-            },
-            mandelbrotCoord = {x: 1, y: 2},
-            mandelbrotCalculator = mandelbrot.valueCalculator.create(escape);
-
-        mandelbrotCalculator.value(mandelbrotCoord, 10);
-        expect(escapeVal.x).toBe(10);
-        expect(escapeVal.y).toBe(10);
-    });
-    it("should return the number of iterations, and whether it escapes or not", function () {
-        var count = 0,
-            mandelbrotCalculator = mandelbrot.valueCalculator.create(),
-            result;
-        result = mandelbrotCalculator.value({x: -2.5, y: -1});
-        expect(result.iterations).toBe(1);
-        expect(result.escaped).toBe(true);
-    });
     it("should pin iterations to the iteration value at which it first escaped", function () {
         var count = 0,
             escape = {
@@ -80,18 +25,12 @@ describe("The mandelbrot set", function () {
                     return { x: 1, y: 1, escaped: count === 3 };
                 }
             },
-            mandelbrotCalculator = mandelbrot.valueCalculator.create(escape),
+            mandelbrotCalculator = mandelbrot.pointFunctionCreator.create(escape),
             mandelbrotFunction = mandelbrotCalculator.functionFor({x: -2.5, y: -1}),
             result;
 
         result = mandelbrotFunction();
         expect(result.iterations).toBe(2);
-
-        result = mandelbrotFunction();
-        expect(result.iterations).toBe(3);
-
-        result = mandelbrotFunction();
-        expect(result.iterations).toBe(3);
 
         result = mandelbrotFunction();
         expect(result.iterations).toBe(3);
@@ -111,8 +50,8 @@ describe("The mandelbrot set", function () {
             mandelCalc = {
                 functionFor: function (coord) { return mandelFunc(); }
             },
-            mandelList = mandelbrot.listCalculator.create(mandelCalc),
-            mandelListFunc = mandelList.forPoints([{x: 0.1, y: 0.2}, {x: 0.3, y: 0.4}, {x: 0.5, y: 0.6}]),
+            mandelList = mandelbrot.setFunctionCreator.create(mandelCalc),
+            mandelListFunc = mandelList.functionFor([{x: 0.1, y: 0.2}, {x: 0.3, y: 0.4}, {x: 0.5, y: 0.6}]),
             result,
             verify = function (result, timesCalled) {
                 expect(result.length).toBe(3);
@@ -130,7 +69,7 @@ describe("The mandelbrot set", function () {
         result = mandelListFunc();
         verify(result, 3);
     });
-    it("should create a colour pallette", function () {
+    it("should create a colour palette", function () {
         var pal = mandelbrot.colour.palette.create();
         expect(pal.length).toBe(5);
 
@@ -163,7 +102,6 @@ describe("The mandelbrot set", function () {
     it("should take a palette and trans form iterations to colours", function () {
         var mandelbrotPalette = mandelbrot.colour.palette.create(),
             mandelbrotColours;
-        console.log("Hey!");
         mandelbrotColours = mandelbrotPalette.intoColours([0, 2, 11]);
         expect(mandelbrotColours.length).toBe(3);
 
@@ -178,5 +116,29 @@ describe("The mandelbrot set", function () {
         expect(mandelbrotColours[2].red).toBe(255);
         expect(mandelbrotColours[2].green).toBe(0);
         expect(mandelbrotColours[2].blue).toBe(0);
+    });
+
+    it("should compose functions into mandelbrot set. Values chosen so they escape at different times", function () {
+        var values = [
+            {x: -2.0, y: -0.9},
+            {x: -0.3, y: -0.9},
+            {x: 0.1, y: -0.2}
+        ],
+            escape = mandelbrot.escape.create(),
+            pointFunctionGenerator = mandelbrot.pointFunctionCreator.create(escape),
+            setFunctionGenerator = mandelbrot.setFunctionCreator.create(pointFunctionGenerator),
+            expectedSet = setFunctionGenerator.functionFor(values),
+            actualSet = mandelbrot.createSet(values),
+            actual,
+            expected,
+            testVal = function (index, actual, expected) {
+                expect(actual[index].iterations).toBe(expected[index].iterations);
+            },
+            i = 0;
+        for (i; i < 9; i += 1) {
+            actual = actualSet();
+            expected = expectedSet();
+            [0, 1, 2].forEach(function (n) { testVal(n, actual, expected); });
+        }
     });
 });

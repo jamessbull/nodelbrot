@@ -15,11 +15,8 @@ var mandelbrot = (function () {
                     palette.push(colour(255, 255, 255, 255));
 
                     palette.intoColours = function (numbers) {
-                        console.log("Hello!!!!");
                         return numbers.map(function (number) {
                             var colour = palette[number % palette.length];
-                            console.log("Palette size " + palette.length + " number " + number);
-                            console.log("colour is " + colour);
                             return colour;
                         });
                     };
@@ -28,53 +25,38 @@ var mandelbrot = (function () {
                 }
             }
         },
-        valueCalculator: {
-            create: function (escape) {
-                var myEscape;
-                if (escape) {
-                    myEscape = escape;
-                } else {
-                    myEscape = mandelbrot.escape.create();
-                }
+        createSet: function (points) {
+            var escape = mandelbrot.escape.create(),
+                pointFunCreator = mandelbrot.pointFunctionCreator.create(escape),
+                setFunCreator = mandelbrot.setFunctionCreator.create(pointFunCreator);
+            return setFunCreator.functionFor(points);
+        },
+        setFunctionCreator: {
+            create: function (pointFunctionGenerator) {
                 return {
-                    value: function (mandelbrotCoord, maxIterations) {
-                        var count = 1,
-                            initial = {x: 0, y: 0},
-                            lastResult = myEscape.calculate(mandelbrotCoord, initial);
-                        while (count < maxIterations && !lastResult.escaped) {
-                            lastResult = myEscape.calculate(mandelbrotCoord, lastResult);
-                            count += 1;
-                        }
-                        return {
-                            iterations: count,
-                            escaped: lastResult.escaped
-                        };
-                    },
-                    functionFor: function (mandelbrotCoord) {
-                        var count = 1,
-                            lastResult = myEscape.calculate(mandelbrotCoord, {x: 0, y: 0});
+                    functionFor: function (coords) {
+                        var pointFuncs = coords.map(function (coord) {
+                            return pointFunctionGenerator.functionFor(coord);
+                        });
                         return function () {
-                            if (!lastResult.escaped) {
-                                count += 1;
-                                lastResult = myEscape.calculate(mandelbrotCoord, lastResult);
-                            }
-                            return {iterations: count};
+                            return pointFuncs.map(function (func) { return func(); });
                         };
                     }
                 };
             }
         },
-        listCalculator: {
-            create: function (mandelCalc) {
+        pointFunctionCreator: {
+            create: function (escape) {
                 return {
-                    forPoints: function (mandelCoords) {
-                        var mandelFuncs = mandelCoords.map(function (coord) {
-                            return mandelCalc.functionFor(coord);
-                        });
+                    functionFor: function (mandelbrotCoord) {
+                        var count = 1,
+                            lastResult = escape.calculate(mandelbrotCoord, {x: 0, y: 0});
                         return function () {
-                            return mandelFuncs.map(function (func) {
-                                return func();
-                            });
+                            if (!lastResult.escaped) {
+                                count += 1;
+                                lastResult = escape.calculate(mandelbrotCoord, lastResult);
+                            }
+                            return {iterations: count};
                         };
                     }
                 };
@@ -84,20 +66,9 @@ var mandelbrot = (function () {
             create: function () {
                 return {
                     calculate: function (mandelbrotCoord, initial) {
-                        var tempX,
-                            x,
-                            y,
-                            escaped;
-
-                        tempX = initial.x * initial.x - initial.y * initial.y + mandelbrotCoord.x;
-                        y = 2 * initial.x * initial.y + mandelbrotCoord.y;
-                        x = tempX;
-                        escaped = (x * x + y * y) > (2 * 2);
-                        return {
-                            x: x,
-                            y: y,
-                            escaped: escaped
-                        };
+                        var x = initial.x * initial.x - initial.y * initial.y + mandelbrotCoord.x,
+                            y = 2 * initial.x * initial.y + mandelbrotCoord.y;
+                        return { x: x, y: y, escaped: (x * x + y * y) > (2 * 2) };
                     }
                 };
             }
