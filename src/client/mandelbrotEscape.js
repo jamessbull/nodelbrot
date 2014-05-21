@@ -1,6 +1,75 @@
 var mandelbrot = (function () {
     "use strict";
     return {
+        set: {
+            create: function (state, escape, pal) {
+                var drawFunc = function (x, y) {
+                        var colour;
+                        escape.calculate(state[x][y].coord, state[x][y].calc);
+                        if (state[x][y].calc.escaped) {
+                            colour = pal.intoColours([state[x][y].calc])[0];
+                        } else {
+                            colour = {red: 0, green: 0, blue: 0, alpha: 255};
+                        }
+                        return colour;
+                    };
+                return drawFunc;
+            }
+        },
+        state: {
+            create: function (size, coordFunc) {
+                var state = [],
+                    i = 0,
+                    j = 0;
+
+                for (i; i < size; i += 1) {
+                    for (j; j < size; j += 1) {
+                        if (!state[i]) { state.push([]); }
+                        state[i][j] = {
+                            coord: coordFunc(i, j),
+                            calc: { iterations: 0, escaped: false, x: 0, y: 0 }
+                        };
+                    }
+                    j = 0;
+                }
+                return state;
+            }
+        },
+        coordTranslator: {
+            create: function (size) {
+                return function (x, y) {
+                    return mandelbrot.coord.create(((3.5  * x) / (size - 1)) - 2.5, ((2 * y) / (size - 1)) - 1);
+                };
+            }
+        },
+        coord: {
+            create: function (x, y) {
+                return {x: x, y: y};
+            }
+        },
+        xyIterator: {
+            create: function (x, y, w, h) {
+                var currentX = x,
+                    currentY = y,
+                    newCoord;
+
+                return {
+                    next: function () {
+                        newCoord = mandelbrot.coord.create(currentX, currentY);
+                        currentX += 1;
+                        if (currentX >= x + w) {
+                            currentX = x;
+                            currentY += 1;
+                        }
+                        if (currentY >= y + h) {
+                            currentX = x;
+                            currentY = y;
+                        }
+                        return newCoord;
+                    }
+                };
+            }
+        },
         colour: {
             palette: {
                 create: function () {
@@ -16,7 +85,7 @@ var mandelbrot = (function () {
 
                     palette.intoColours = function (numbers) {
                         return numbers.map(function (number) {
-                            var colour = palette[number % palette.length];
+                            var colour = palette[number.iterations % palette.length];
                             return colour;
                         });
                     };
@@ -25,50 +94,20 @@ var mandelbrot = (function () {
                 }
             }
         },
-        createSet: function (points) {
-            var escape = mandelbrot.escape.create(),
-                pointFunCreator = mandelbrot.pointFunctionCreator.create(escape),
-                setFunCreator = mandelbrot.setFunctionCreator.create(pointFunCreator);
-            return setFunCreator.functionFor(points);
-        },
-        setFunctionCreator: {
-            create: function (pointFunctionGenerator) {
-                return {
-                    functionFor: function (coords) {
-                        var pointFuncs = coords.map(function (coord) {
-                            return pointFunctionGenerator.functionFor(coord);
-                        });
-                        return function () {
-                            return pointFuncs.map(function (func) { return func(); });
-                        };
-                    }
-                };
-            }
-        },
-        pointFunctionCreator: {
-            create: function (escape) {
-                return {
-                    functionFor: function (mandelbrotCoord) {
-                        var count = 1,
-                            lastResult = escape.calculate(mandelbrotCoord, {x: 0, y: 0});
-                        return function () {
-                            if (!lastResult.escaped) {
-                                count += 1;
-                                lastResult = escape.calculate(mandelbrotCoord, lastResult);
-                            }
-                            return {iterations: count};
-                        };
-                    }
-                };
-            }
-        },
         escape: {
             create: function () {
                 return {
-                    calculate: function (mandelbrotCoord, initial) {
-                        var x = initial.x * initial.x - initial.y * initial.y + mandelbrotCoord.x,
-                            y = 2 * initial.x * initial.y + mandelbrotCoord.y;
-                        return { x: x, y: y, escaped: (x * x + y * y) > (2 * 2) };
+                    calculate: function (mbCoord, state) {
+                        var escaped =  (state.x * state.x + state.y * state.y) > (2 * 2),
+                            tempX = 0;
+                        if (!escaped) {
+                            tempX = state.x * state.x - state.y * state.y + mbCoord.x;
+                            state.y = 2 * state.x * state.y + mbCoord.y;
+                            state.x = tempX;
+                            state.iterations += 1;
+                        } else {
+                            state.escaped = true;
+                        }
                     }
                 };
             }

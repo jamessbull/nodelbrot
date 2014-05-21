@@ -1,1 +1,4 @@
 <title>Hello</title>
+<script src="/js/mandelbrotEscape.js"></script>
+<script src="/js/anim.js"></script>
+<script src="/js/image.js"></script>

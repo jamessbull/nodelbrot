@@ -15,8 +15,7 @@
                     template("specRunner", {
                         sourceFiles: filesToScripts(srcFiles, "js"),
                         testFiles: filesToScripts(testFiles, "specs")
-                    })
-                        .renderTo(callback);
+                    }).renderTo(callback);
                 });
             });
         };
