@@ -6,6 +6,7 @@ Hello {{{name}}}
         state = mandelbrot.state.create(600, coordFunc),
         palette = mandelbrot.colour.palette.create(),
         set = mandelbrot.set.create(state, escape, palette);
-
-    set.start();
+        image = jim.image.create(500, set);
+        anim = anim.create(image.drawXY);
+        anim.start();
 </script>
