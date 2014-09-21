@@ -1,12 +1,5 @@
 Hello {{{name}}}
 
 <script>
-    var coordFunc = mandelbrot.coordTranslator.create(600),
-        escape = mandelbrot.escape.create(),
-        state = mandelbrot.state.create(600, coordFunc),
-        palette = mandelbrot.colour.palette.create(),
-        set = mandelbrot.set.create(state, escape, palette);
-        image = jim.image.create(500, set);
-        anim = anim.create(image.drawXY);
-        anim.start();
+    mandelbrotImage.display();
 </script>

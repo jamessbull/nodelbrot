@@ -37,8 +37,7 @@ describe("The mandelbrot set", function () {
         expect(state.y).toBe(-1.0006469435160577);
 
     });
-// missing test for coord translator
-// then x,y -> mandel x,y -> state x,y -> update state with escape -> no Of iterations -> colour
+
     it("should create a colour palette", function () {
         var pal = mandelbrot.colour.palette.create();
         expect(pal.length).toBe(5);
@@ -141,8 +140,7 @@ describe("The mandelbrot set", function () {
                 palette = mandelbrot.colour.palette.create(),
                 mbSet = mandelbrot.set.create(state, escape, palette),
                 col;
-        //image = jim.image.create(600, drawFunc);
-        //return anim.create(image.drawXY);
+
             col = mbSet(12, 45);
             console.log(col);
             expect(col.red).toBe(0);
@@ -155,42 +153,29 @@ describe("The mandelbrot set", function () {
             expect(col.blue).toBe(0);
         });
 
-    it("can create a chunk of the mandelbrot set", function () {
-        //so i have a function that will give me the colour for any pixel
-        //at the moment I have a simple algorithm that loops across every pixel
-        // instead I want to only do a subset
-        // I need a rendering strategy that will only call a subset of pixels
-        // so i call render once a
-        //var renderer = jim.renderer.create(2, mainImage, subImage, function (x, y) {});
-        //renderer.draw();
-        // I want the renderer to render the first quarter to an image to an image and then draw that image to the main one
-        // I want the draw function to be called with the coords from the main image but putting them into the subimage
-        //  each time the func is called it should use a different chunk
-        // get the x, y width and height of the current chunk
-        // for each x,y in the chunk
-        // call mandelbrot to get colour and write the correct pixel in the buffer image
-        //
+    it("draws each segment in turn", function () {
+        var result = "foo",
+            seg1 = jim.segment.create(200, 10, 10,  function () {
+                result = "seg1";
+                return jim.colour.create(1, 2, 3, 4);
+            }),
+            seg2 = jim.segment.create(200, 10, 10,  function () {
+                result = "seg2";
+                return jim.colour.create(9, 100, 9, 255);
+            }),
+            segs = [seg1, seg2],
+            image = {draw: function () {}},
+            screen = jim.screen.create({segments: segs, image: image});
 
+        screen.draw();
+        expect(result).toBe("seg1");
+        screen.draw();
+        expect(result).toBe("seg2");
+
+        screen.draw();
+        expect(result).toBe("seg1");
+        screen.draw();
+        expect(result).toBe("seg2");
     });
 
-    it("iterates through the mandelbrot set coords between two points", function () {
-        var chunk = mandelbrot.xyIterator.create(10, 11, 2, 2),
-            coord;
-        coord = chunk.next();
-        expect(coord.x).toBe(10);
-        expect(coord.y).toBe(11);
-
-        coord = chunk.next();
-        expect(coord.x).toBe(11);
-        expect(coord.y).toBe(11);
-
-        coord = chunk.next();
-        expect(coord.x).toBe(10);
-        expect(coord.y).toBe(12);
-
-        coord = chunk.next();
-        expect(coord.x).toBe(11);
-        expect(coord.y).toBe(12);
-
-    });
 });
