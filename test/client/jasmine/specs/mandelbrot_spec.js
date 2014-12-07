@@ -71,20 +71,21 @@ describe("The mandelbrot set", function () {
     it("should take a palette and trans form iterations to colours", function () {
         var mandelbrotPalette = mandelbrot.colour.palette.create(),
             mandelbrotColours;
-        mandelbrotColours = mandelbrotPalette.intoColours([{iterations: 0}, {iterations: 2}, {iterations: 11}]);
-        expect(mandelbrotColours.length).toBe(3);
 
-        expect(mandelbrotColours[0].red).toBe(0);
-        expect(mandelbrotColours[0].green).toBe(0);
-        expect(mandelbrotColours[0].blue).toBe(0);
+        mandelbrotColours = mandelbrotPalette.intoColours({iterations: 0});
+        expect(mandelbrotColours.red).toBe(0);
+        expect(mandelbrotColours.green).toBe(0);
+        expect(mandelbrotColours.blue).toBe(0);
 
-        expect(mandelbrotColours[1].red).toBe(0);
-        expect(mandelbrotColours[1].green).toBe(255);
-        expect(mandelbrotColours[1].blue).toBe(0);
+        mandelbrotColours = mandelbrotPalette.intoColours({iterations: 2});
+        expect(mandelbrotColours.red).toBe(0);
+        expect(mandelbrotColours.green).toBe(255);
+        expect(mandelbrotColours.blue).toBe(0);
 
-        expect(mandelbrotColours[2].red).toBe(255);
-        expect(mandelbrotColours[2].green).toBe(0);
-        expect(mandelbrotColours[2].blue).toBe(0);
+        mandelbrotColours = mandelbrotPalette.intoColours({iterations: 11});
+        expect(mandelbrotColours.red).toBe(255);
+        expect(mandelbrotColours.green).toBe(0);
+        expect(mandelbrotColours.blue).toBe(0);
     });
 
     it("should execute 250000 times in 8 ms", function () {
@@ -178,4 +179,21 @@ describe("The mandelbrot set", function () {
         expect(result).toBe("seg2");
     });
 
+    it("creates segments based on a size", function () {
+        var segs = jim.segment.createSegments(600, 3, function () {
+            return jim.colour.create(67, 0, 0, 255);
+        });
+
+        expect(segs[0].size()).toBe(200);
+        expect(segs[0].xOffset()).toBe(0);
+        expect(segs[0].yOffset()).toBe(0);
+
+        expect(segs[1].size()).toBe(200);
+        expect(segs[1].xOffset()).toBe(200);
+        expect(segs[1].yOffset()).toBe(0);
+
+        expect(segs[3].size()).toBe(200);
+        expect(segs[3].xOffset()).toBe(0);
+        expect(segs[3].yOffset()).toBe(200);
+    });
 });

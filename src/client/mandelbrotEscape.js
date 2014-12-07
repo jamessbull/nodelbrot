@@ -4,41 +4,43 @@ var mandelbrot = (function () {
         set: {
             create: function (state, escape, pal) {
                 var drawFunc = function (x, y) {
-                        var colour;
-                        escape.calculate(state[x][y].coord, state[x][y].calc);
-                        if (state[x][y].calc.escaped) {
-                            colour = pal.intoColours([state[x][y].calc])[0];
+                        var colour, myState = state[x][y];
+                    for (var i = 0; i < 1; i += 1) {
+                        escape.calculate(myState.coord, myState.calc);
+                        if (myState.calc.escaped) {
+                            colour = pal.intoColours(myState.calc);
                         } else {
                             colour = {red: 0, green: 0, blue: 0, alpha: 255};
-                        }
+                        }}
                         return colour;
+
                     };
                 return drawFunc;
             }
         },
         state: {
-            create: function (size, coordFunc) {
+            create: function (sizeX, sizeY , coordFunc) {
                 var state = [],
-                    i = 0,
-                    j = 0;
+                    yPos = 0,
+                    xPos = 0;
 
-                for (i; i < size; i += 1) {
-                    for (j; j < size; j += 1) {
-                        if (!state[i]) { state.push([]); }
-                        state[i][j] = {
-                            coord: coordFunc(i, j),
+                for (yPos; yPos < sizeY; yPos += 1) {
+                    for (xPos; xPos < sizeX; xPos += 1) {
+                        if (!state[xPos]) { state.push([]); }
+                        state[xPos][yPos] = {
+                            coord: coordFunc(xPos, yPos),
                             calc: { iterations: 0, escaped: false, x: 0, y: 0 }
                         };
                     }
-                    j = 0;
+                    xPos = 0;
                 }
                 return state;
             }
         },
         coordTranslator: {
-            create: function (size) {
+            create: function (sizeX, sizeY) {
                 return function (x, y) {
-                    return mandelbrot.coord.create(((3.5  * x) / (size - 1)) - 2.5, ((2 * y) / (size - 1)) - 1);
+                    return mandelbrot.coord.create(((3.5  * x) / (sizeX - 1)) - 2.5, ((2 * y) / (sizeY - 1)) - 1);
                 };
             }
         },
@@ -74,20 +76,65 @@ var mandelbrot = (function () {
             palette: {
                 create: function () {
                     var palette = [],
+                        length = 0,
                         colour = function (r, g, b, a) {
                             return {red: r, green: g, blue: b, alpha: a};
                         };
                     palette.push(colour(0,   0,   0,   255));
-                    palette.push(colour(255, 0,   0,   255));
-                    palette.push(colour(0,   255, 0,   255));
-                    palette.push(colour(0,   0,   255, 255));
-                    palette.push(colour(255, 255, 255, 255));
+                    palette.push(colour(255,   10,   10,   255));
+                    palette.push(colour(255,   15,   15,   255));
+                    palette.push(colour(255,   20,   20,   255));
+                    palette.push(colour(255,   25,   25,   255));
+                    palette.push(colour(255,   30,   30,   255));
+                    palette.push(colour(255,   35,   35,   255));
+                    palette.push(colour(255,   40,   40,   255));
+                    palette.push(colour(255,   45,   45,   255));
+                    palette.push(colour(255,   50,   50,   255));
+                    palette.push(colour(255,   55,   55,   255));
+                    palette.push(colour(255,   60,   60,   255));
+                    palette.push(colour(255,   65,   65,   255));
+                    palette.push(colour(255,   70,   70,   255));
+                    palette.push(colour(255,   75,   75,   255));
+                    palette.push(colour(255,   80,   80,   255));
+                    palette.push(colour(255,   85,   85,   255));
+                    palette.push(colour(255,   90,   90,   255));
+                    palette.push(colour(255,   95,   95,   255));
+                    palette.push(colour(255,   100,   100,   255));
+                    palette.push(colour(255,   105,   105,   255));
+                    palette.push(colour(255,   110,   110,   255));
+                    palette.push(colour(255,   115,   115,   255));
+                    palette.push(colour(255,   120,   120,   255));
+                    palette.push(colour(255,   125,   125,   255));
+                    palette.push(colour(255,   130,   130,   255));
+                    palette.push(colour(255,   135,   135,   255));
+                    palette.push(colour(255,   140,   140,   255));
+                    palette.push(colour(255,   145,   145,   255));
+                    palette.push(colour(255,   150,   150,   255));
+                    palette.push(colour(255,   155,   155,   255));
+                    palette.push(colour(255,   160,   160,   255));
+                    palette.push(colour(255,   165,   165,   255));
+                    palette.push(colour(255,   170,   170,   255));
+                    palette.push(colour(255,   175,   175,   255));
+                    palette.push(colour(255,   180,   180,   255));
+                    palette.push(colour(255,   185,   185,   255));
+                    palette.push(colour(255,   190,   190,   255));
+                    palette.push(colour(255,   195,   195,   255));
+                    palette.push(colour(255,   200,   200,   255));
+                    palette.push(colour(255,   205,   205,   255));
+                    palette.push(colour(255,   210,   210,   255));
+                    palette.push(colour(255,   215,   215,   255));
+                    palette.push(colour(255,   220,   220,   255));
+                    palette.push(colour(255,   225,   225,   255));
+                    palette.push(colour(255,   230,   230,   255));
+                    palette.push(colour(255,   235,   235,   255));
+                    palette.push(colour(255,   240,   240,   255));
+                    palette.push(colour(255,   245,   245,   255));
+                    palette.push(colour(255,   250,   250,   255));
+                    palette.push(colour(255,   255,   255,   255));
 
-                    palette.intoColours = function (numbers) {
-                        return numbers.map(function (number) {
-                            var colour = palette[number.iterations % palette.length];
-                            return colour;
-                        });
+                    length = palette.length;
+                    palette.intoColours = function (number) {
+                        return palette[number.iterations % length];
                     };
 
                     return palette;
@@ -98,11 +145,13 @@ var mandelbrot = (function () {
             create: function () {
                 return {
                     calculate: function (mbCoord, state) {
-                        var escaped =  (state.x * state.x + state.y * state.y) > (2 * 2),
+                        var x = state.x,
+                            y = state.y,
+                            escaped =  (x * x + y * y) > 4,
                             tempX = 0;
                         if (!escaped) {
-                            tempX = state.x * state.x - state.y * state.y + mbCoord.x;
-                            state.y = 2 * state.x * state.y + mbCoord.y;
+                            tempX = x * x - y * y + mbCoord.x;
+                            state.y = 2 * x * y + mbCoord.y;
                             state.x = tempX;
                             state.iterations += 1;
                         } else {
