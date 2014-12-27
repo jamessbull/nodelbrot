@@ -12,7 +12,7 @@ describe("The image drawer", function () {
                 console.log("draw called " + x + ", " + y);
                 return jim.colour.create(2 * x, 2 * y, 0, 0);
             },
-            image = jim.image.create(4, drawFunc);
+            image = jim.image.create(4, 4, drawFunc);
         image.drawXY();
         data = image.canvas.getContext('2d').getImageData(0, 0, 4, 4).data;
         expect(data.length).toBe(64);

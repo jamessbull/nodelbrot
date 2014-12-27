@@ -1,5 +1,6 @@
-Hello {{{name}}}
-
+Hello vvv {{{name}}}
+<input type="submit" value="Recalculate">
+<span id="numberEscaped">whassup</span>
 <script>
     mandelbrotImage.display();
 </script>

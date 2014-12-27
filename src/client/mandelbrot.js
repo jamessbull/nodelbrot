@@ -5,7 +5,16 @@ var mandelbrotImage = {};
 mandelbrotImage.display = function () {
     "use strict";
     var coordFunc = mandelbrot.coordTranslator.create(700, 400),
-        escape = mandelbrot.escape.create(),
+        called = 0,
+        total = 700 * 400,
+        notifier = {
+            notify: function () {
+                var remaining = total - called;
+                called = called + 1;
+                document.getElementById("numberEscaped").innerHTML = remaining;
+            }
+        },
+        escape = mandelbrot.escape.create(notifier),
         state = mandelbrot.state.create(700, 400, coordFunc),
         palette = mandelbrot.colour.palette.create(),
         mset = mandelbrot.set.create(state, escape, palette),

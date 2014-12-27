@@ -1,9 +1,11 @@
 describe("The mandelbrot set", function () {
     "use strict";
 
+    var notifier = {notify: function () {}};
+
     it("can take several iterations to escape", function () {
         var mandelbrotCoord = {x: -0.3, y: -0.9},
-            escape = mandelbrot.escape.create(),
+            escape = mandelbrot.escape.create(notifier),
             state = {x: 0, y: 0, iterations: 0, escaped: false};
 
         escape.calculate(mandelbrotCoord, state);
@@ -38,66 +40,47 @@ describe("The mandelbrot set", function () {
 
     });
 
-    it("should create a colour palette", function () {
+    it("should create a colour palette array where every element is a colour", function () {
         var pal = mandelbrot.colour.palette.create();
-        expect(pal.length).toBe(5);
 
-        expect(pal[0].red).toBe(0);
-        expect(pal[0].green).toBe(0);
-        expect(pal[0].blue).toBe(0);
-        expect(pal[0].alpha).toBe(255);
-
-        expect(pal[1].red).toBe(255);
-        expect(pal[1].green).toBe(0);
-        expect(pal[1].blue).toBe(0);
-        expect(pal[1].alpha).toBe(255);
-
-        expect(pal[2].red).toBe(0);
-        expect(pal[2].green).toBe(255);
-        expect(pal[2].blue).toBe(0);
-        expect(pal[2].alpha).toBe(255);
-
-        expect(pal[3].red).toBe(0);
-        expect(pal[3].green).toBe(0);
-        expect(pal[3].blue).toBe(255);
-        expect(pal[3].alpha).toBe(255);
-
-        expect(pal[4].red).toBe(255);
-        expect(pal[4].green).toBe(255);
-        expect(pal[4].blue).toBe(255);
-        expect(pal[4].alpha).toBe(255);
+        pal.forEach(function (colour) {
+            colour.hasOwnProperty('red');
+            colour.hasOwnProperty('green');
+            colour.hasOwnProperty('blue');
+            colour.hasOwnProperty('alpha');
+        });
     });
 
-    it("should take a palette and trans form iterations to colours", function () {
-        var mandelbrotPalette = mandelbrot.colour.palette.create(),
-            mandelbrotColours;
+    it("should return a colour palette i or wrap if beyond the end of the palette", function () {
+        var palette = mandelbrot.colour.palette.create(),
+            colour;
 
-        mandelbrotColours = mandelbrotPalette.intoColours({iterations: 0});
-        expect(mandelbrotColours.red).toBe(0);
-        expect(mandelbrotColours.green).toBe(0);
-        expect(mandelbrotColours.blue).toBe(0);
+        colour = palette.intoColours({iterations: 0});
+        expect(colour.red).toBe(palette[0].red);
+        expect(colour.green).toBe(palette[0].green);
+        expect(colour.blue).toBe(palette[0].blue);
 
-        mandelbrotColours = mandelbrotPalette.intoColours({iterations: 2});
-        expect(mandelbrotColours.red).toBe(0);
-        expect(mandelbrotColours.green).toBe(255);
-        expect(mandelbrotColours.blue).toBe(0);
+        colour = palette.intoColours({iterations: 10});
+        expect(colour.red).toBe(palette[10].red);
+        expect(colour.green).toBe(palette[10].green);
+        expect(colour.blue).toBe(palette[10].blue);
 
-        mandelbrotColours = mandelbrotPalette.intoColours({iterations: 11});
-        expect(mandelbrotColours.red).toBe(255);
-        expect(mandelbrotColours.green).toBe(0);
-        expect(mandelbrotColours.blue).toBe(0);
+        colour = palette.intoColours({iterations: palette.length});
+        expect(colour.red).toBe(palette[0].red);
+        expect(colour.green).toBe(palette[0].green);
+        expect(colour.blue).toBe(palette[0].blue);
     });
 
     it("should execute 250000 times in 8 ms", function () {
-        var escape = mandelbrot.escape.create(),
+        var escape = mandelbrot.escape.create(notifier),
             i = 0,
             j = 0,
-            coord = mandelbrot.coordTranslator.create(500),
+            coord = mandelbrot.coordTranslator.create(500, 500),
             stopwatch = timer.create(),
             mb;
 
         stopwatch.start();
-        mb = mandelbrot.state.create(500, coord);
+        mb = mandelbrot.state.create(500, 500, coord);
         stopwatch.stop();
         console.log("initialisation took " + stopwatch.elapsed() + "ms");
 
@@ -113,8 +96,8 @@ describe("The mandelbrot set", function () {
     });
 
     it("should build initial state for mandelbrot calculation", function () {
-        var coord = mandelbrot.coordTranslator.create(500),
-            mb = mandelbrot.state.create(500, coord);
+        var coord = mandelbrot.coordTranslator.create(500, 500),
+            mb = mandelbrot.state.create(500, 500, coord);
 
         expect(mb[0][0].coord.x).toBe(-2.5);
         expect(mb[0][0].coord.y).toBe(-1);
@@ -136,17 +119,17 @@ describe("The mandelbrot set", function () {
     it("should take a state and an escape and a palette and return a func that takes x and y " +
         "the func should get the x,y val from state and call escape with it" +
         "the colour function should then be called on the x,y state val and returned", function () {
-            var escape = mandelbrot.escape.create(),
-                state = mandelbrot.state.create(500, mandelbrot.coordTranslator.create(500)),
+            var escape = mandelbrot.escape.create(notifier),
+                state = mandelbrot.state.create(500, 500, mandelbrot.coordTranslator.create(500, 500)),
                 palette = mandelbrot.colour.palette.create(),
                 mbSet = mandelbrot.set.create(state, escape, palette),
                 col;
 
             col = mbSet(12, 45);
             console.log(col);
-            expect(col.red).toBe(0);
-            expect(col.green).toBe(0);
-            expect(col.blue).toBe(0);
+            expect(col.red).toBe(255);
+            expect(col.green).toBe(10);
+            expect(col.blue).toBe(10);
 
             col = mbSet(300, 250);
             expect(col.red).toBe(0);
@@ -156,11 +139,11 @@ describe("The mandelbrot set", function () {
 
     it("draws each segment in turn", function () {
         var result = "foo",
-            seg1 = jim.segment.create(200, 10, 10,  function () {
+            seg1 = jim.segment.create(200, 200, 10, 10,  function () {
                 result = "seg1";
                 return jim.colour.create(1, 2, 3, 4);
             }),
-            seg2 = jim.segment.create(200, 10, 10,  function () {
+            seg2 = jim.segment.create(200, 200, 10, 10,  function () {
                 result = "seg2";
                 return jim.colour.create(9, 100, 9, 255);
             }),
@@ -180,7 +163,7 @@ describe("The mandelbrot set", function () {
     });
 
     it("creates segments based on a size", function () {
-        var segs = jim.segment.createSegments(600, 3, function () {
+        var segs = jim.segment.createSegments(600, 600, 3, function () {
             return jim.colour.create(67, 0, 0, 255);
         });
 

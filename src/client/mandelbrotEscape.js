@@ -5,11 +5,12 @@ var mandelbrot = (function () {
             create: function (state, escape, pal) {
                 var drawFunc = function (x, y) {
                         var colour, myState = state[x][y];
-                    for (var i = 0; i < 1; i += 1) {
-                        escape.calculate(myState.coord, myState.calc);
+                    for (var i = 0; i < 10; i += 1) {
+
                         if (myState.calc.escaped) {
                             colour = pal.intoColours(myState.calc);
                         } else {
+                            escape.calculate(myState.coord, myState.calc);
                             colour = {red: 0, green: 0, blue: 0, alpha: 255};
                         }}
                         return colour;
@@ -142,7 +143,7 @@ var mandelbrot = (function () {
             }
         },
         escape: {
-            create: function () {
+            create: function (notifier) {
                 return {
                     calculate: function (mbCoord, state) {
                         var x = state.x,
@@ -156,6 +157,7 @@ var mandelbrot = (function () {
                             state.iterations += 1;
                         } else {
                             state.escaped = true;
+                            notifier.notify();
                         }
                     }
                 };
