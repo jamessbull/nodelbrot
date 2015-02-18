@@ -2,10 +2,11 @@ var mandelbrot = (function () {
     "use strict";
     return {
         set: {
-            create: function (state, escape, pal) {
+            create: function (initialState, escape, pal) {
+                var currentState = initialState;
                 var drawFunc = function (x, y) {
-                        var colour, myState = state[x][y];
-                    for (var i = 0; i < 10; i += 1) {
+                        var colour, myState = currentState[x][y];
+                        for ( var i = 0; i < 10; i += 1) {
 
                         if (myState.calc.escaped) {
                             colour = pal.intoColours(myState.calc);
@@ -16,7 +17,12 @@ var mandelbrot = (function () {
                         return colour;
 
                     };
-                return drawFunc;
+                return {
+                    drawFunc: drawFunc,
+                    setState: function (state) {
+                        currentState = state;
+                    }
+                }
             }
         },
         state: {
@@ -39,10 +45,34 @@ var mandelbrot = (function () {
             }
         },
         coordTranslator: {
-            create: function (sizeX, sizeY) {
-                return function (x, y) {
-                    return mandelbrot.coord.create(((3.5  * x) / (sizeX - 1)) - 2.5, ((2 * y) / (sizeY - 1)) - 1);
+            create: function (originSizeX, originSizeY, targetStartX, targetEndX, targetStartY, targetEndY) {
+                var targetXStart = targetStartX;
+                var targetXEnd = targetEndX;
+                var targetYStart = targetStartY;
+                var targetYEnd = targetEndY;
+
+                var coordFunc = function (originX, originY) {
+
+                    var setXSize = Math.abs(targetXEnd - targetXStart);
+                    var setYSize = Math.abs(targetYEnd - targetYStart);
+
+                    var xPos = ((setXSize / originSizeX) * originX) + targetXStart;
+                    var yPos = ((setYSize / originSizeY) * originY) + targetYStart;
+
+                    return mandelbrot.coord.create(xPos, yPos);
                 };
+                return {
+                    func: coordFunc,
+                    zoomTo: function (selection) {
+                        var start = coordFunc(selection.startX, selection.startY);
+                        var end = coordFunc(selection.endX, selection.endY);
+                        targetXStart = start.x;
+                        targetYStart = start.y;
+                        targetXEnd = end.x;
+                        targetYEnd = end.y;
+                        console.log("xStart is now " + targetXStart);
+                    }
+                }
             }
         },
         coord: {

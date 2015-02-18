@@ -7,6 +7,7 @@ jim.image.create = function (size, sizeY, f) {
         output = context.createImageData(size, sizeY);
     canvas.width = size;
     canvas.height = sizeY;
+    canvas.className = "canvas";
     return {
         drawXY: function () {
             var col, x, y, i;
@@ -46,6 +47,10 @@ jim.image.create = function (size, sizeY, f) {
                 output.data[i * 4 + 3] = col.alpha;
             }
             context.putImageData(output, 0, 0);
+        },
+        darken: function () {
+            context.fillStyle = "rgba(0, 0, 0, 0.4)";
+            context.fillRect(0, 0, 700, 500);
         },
         canvas: canvas
     };

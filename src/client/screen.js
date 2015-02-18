@@ -2,8 +2,10 @@ jim.screen = {};
 jim.screen.create = function (args) {
     "use strict";
     var n = 0,
-        wholeScreen = jim.image.create(args.segments[0].size() * args.segments.length, args.segments[0].sizeY() * args.segments.length, function () {});
-    document.body.appendChild(wholeScreen.canvas);
+        segmentsLen = Math.sqrt(args.segments.length),
+        segX = args.segments[0].size(),
+        segY = args.segments[0].sizeY(),
+        wholeScreen = jim.image.create(segX * segmentsLen, segY * segmentsLen, function () {});
 
     return {
         draw: function () {
@@ -14,6 +16,8 @@ jim.screen.create = function (args) {
             context = wholeScreen.canvas.getContext('2d');
             args.segments[n].draw(context);
             n += 1;
-        }
+        },
+        canvas: wholeScreen.canvas,
+        context : wholeScreen.canvas.getContext('2d')
     };
 };

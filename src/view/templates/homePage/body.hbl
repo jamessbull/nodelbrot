@@ -1,6 +1,38 @@
 Hello vvv {{{name}}}
 <input type="submit" value="Recalculate">
 <span id="numberEscaped">whassup</span>
+
+
 <script>
-    mandelbrotImage.display();
+  document.addEventListener("DOMContentLoaded", function(event) {
+    init.run();
+  });
 </script>
+
+<style>
+    #mandelbrotCanvas { position: relative; }
+    .canvas { position: absolute; top: 0; left: 0; }
+</style>
+
+<div id="mandelbrotCanvas"></div>
+
+<p>Position of the click</p>
+<label>
+X
+<span id="selectionX"></span>
+</label>
+
+<label>
+Y
+<span id="selectionY"></span>
+</label>
+
+<label>
+Width
+<span id="selectionWidth"></span>
+</label>
+
+<label>
+Height
+<span id="selectionHeight"></span>
+</label>

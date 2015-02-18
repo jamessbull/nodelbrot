@@ -22,14 +22,14 @@ jim.segment.create = function (size, sizeY, xOffset, yOffset, f) {
         }
     };
 };
-jim.segment.createSegments = function (sizeX, sizeY, rows, f) {
+jim.segment.createSegments = function (sizeX, sizeY, rows, mandelbrotSet) {
     "use strict";
     var x = 0, y = 0, segments = [],
         chunk = sizeX / rows,
         chunkY = sizeY / rows;
     for (y; y < rows; y += 1) {
         for (x; x < rows; x += 1) {
-            segments.push(jim.segment.create(chunk, chunkY, x * chunk, y * chunkY, f));
+            segments.push(jim.segment.create(chunk, chunkY, x * chunk, y * chunkY, mandelbrotSet.drawFunc));
         }
         x = 0;
     }
