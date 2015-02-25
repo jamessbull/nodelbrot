@@ -1,11 +1,10 @@
-Hello vvv {{{name}}}
+Hello {{{name}}}
 <input type="submit" value="Recalculate">
 <span id="numberEscaped">whassup</span>
 
-
 <script>
   document.addEventListener("DOMContentLoaded", function(event) {
-    init.run();
+    jim.init.run();
   });
 </script>
 

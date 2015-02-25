@@ -28,4 +28,3 @@ jim.mandelbrot.ui.create = function (mandelbrotSet) {
         }
     };
 };
-

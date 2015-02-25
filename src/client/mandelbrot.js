@@ -1,8 +1,5 @@
-
-
-var mandelbrotImage = {}, init = {};
-
-mandelbrotImage.create = function () {
+namespace("jim.mandelbrotImage");
+jim.mandelbrotImage.create = function () {
     "use strict";
     var coord = jim.mandelbrot.coordTranslator.create(700, 400, -2.5, 1, -1, 1),
         called = 0,
@@ -34,10 +31,10 @@ mandelbrotImage.create = function () {
         }
     };
 };
-
-init.run = function () {
+namespace("jim.init");
+jim.init.run = function () {
     "use strict";
-    var currentMandelbrotSet = mandelbrotImage.create(),
+    var currentMandelbrotSet = jim.mandelbrotImage.create(),
         ui = jim.mandelbrot.ui.create(currentMandelbrotSet),
         canvasDiv = document.getElementById("mandelbrotCanvas"),
         uiCanvas = document.createElement('canvas'),
