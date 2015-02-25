@@ -30,7 +30,7 @@ mandelbrotImage.create = function () {
         },
         zoomTo: function (selection) {
             coord.zoomTo(selection);
-            mset.setState(mandelbrot.state.create(700, 400, coord.func));
+            mset.setState(jim.mandelbrot.state.create(700, 400, coord.func));
         }
     };
 };
@@ -50,7 +50,6 @@ init.run = function () {
     uiCanvas.className = "canvas";
     canvasDiv.appendChild(currentMandelbrotSet.canvas());
     canvasDiv.appendChild(uiCanvas);
-    anim.create(render).start();
-    console.log("I have finished");
+    jim.anim.create(render).start();
 };
 
