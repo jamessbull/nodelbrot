@@ -1,4 +1,8 @@
-var jim = {};
+var jim;
+if (!jim) {
+    jim = {};
+}
+
 jim.image = {};
 jim.image.create = function (size, sizeY, f) {
     "use strict";

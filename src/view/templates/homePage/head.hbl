@@ -4,5 +4,6 @@
 <script src="/js/image.js"></script>
 <script src="/js/screen.js"></script>
 <script src="/js/segment.js"></script>
+<script src="/js/selection.js"></script>
 <script src="/js/mandelbrot-ui.js"></script>
 <script src="/js/mandelbrot.js"></script>

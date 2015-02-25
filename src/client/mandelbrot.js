@@ -19,15 +19,11 @@ mandelbrotImage.create = function () {
         palette = mandelbrot.colour.palette.create(),
         mset = mandelbrot.set.create(state, escape, palette),
         segments2 = jim.segment.createSegments(700, 400, 4, mset),
-        canvasDiv,
         screen = jim.screen.create({segments: segments2});
 
     return {
         canvas: function () {
             return screen.canvas;
-        },
-        context: function () {
-            return screen.context;
         },
         draw: function () {
             screen.draw();

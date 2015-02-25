@@ -56,8 +56,8 @@ var mandelbrot = (function () {
                     var setXSize = Math.abs(targetXEnd - targetXStart);
                     var setYSize = Math.abs(targetYEnd - targetYStart);
 
-                    var xPos = ((setXSize / originSizeX) * originX) + targetXStart;
-                    var yPos = ((setYSize / originSizeY) * originY) + targetYStart;
+                    var xPos = ( (setXSize * originX) / (originSizeX -1) ) + targetXStart;
+                    var yPos = ( (setYSize * originY) / (originSizeY -1) ) + targetYStart;
 
                     return mandelbrot.coord.create(xPos, yPos);
                 };
@@ -65,12 +65,11 @@ var mandelbrot = (function () {
                     func: coordFunc,
                     zoomTo: function (selection) {
                         var start = coordFunc(selection.startX, selection.startY);
-                        var end = coordFunc(selection.endX, selection.endY);
+                        var end = coordFunc(selection.startX + selection.width(), selection.startY + selection.height());
                         targetXStart = start.x;
                         targetYStart = start.y;
                         targetXEnd = end.x;
                         targetYEnd = end.y;
-                        console.log("xStart is now " + targetXStart);
                     }
                 }
             }

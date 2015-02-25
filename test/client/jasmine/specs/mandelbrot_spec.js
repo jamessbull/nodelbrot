@@ -75,12 +75,12 @@ describe("The mandelbrot set", function () {
         var escape = mandelbrot.escape.create(notifier),
             i = 0,
             j = 0,
-            coord = mandelbrot.coordTranslator.create(500, 500),
+            coord = mandelbrot.coordTranslator.create(500, 500, -2.5, 1, -1, 1),
             stopwatch = timer.create(),
             mb;
 
         stopwatch.start();
-        mb = mandelbrot.state.create(500, 500, coord);
+        mb = mandelbrot.state.create(500, 500, coord.func);
         stopwatch.stop();
         console.log("initialisation took " + stopwatch.elapsed() + "ms");
 
@@ -96,16 +96,23 @@ describe("The mandelbrot set", function () {
     });
 
     it("should build initial state for mandelbrot calculation", function () {
-        var coord = mandelbrot.coordTranslator.create(500, 500),
-            mb = mandelbrot.state.create(500, 500, coord);
+        var coord = mandelbrot.coordTranslator.create(500, 500, -2.5, 1, -1, 1),
+            mb = mandelbrot.state.create(500, 500, coord.func);
 
         expect(mb[0][0].coord.x).toBe(-2.5);
         expect(mb[0][0].coord.y).toBe(-1);
+
+        expect(coord.func(0, 0).x).toBe(-2.5);
+        expect(coord.func(0, 0).y).toBe(-1);
 
         expect(mb[0][0].calc.x).toBe(0);
         expect(mb[0][0].calc.y).toBe(0);
         expect(mb[0][0].calc.iterations).toBe(0);
         expect(mb[0][0].calc.escaped).toBeFalsy();
+
+
+        expect(coord.func(499, 499).x).toBe(1);
+        expect(coord.func(499, 499).y).toBe(1);
 
         expect(mb[499][499].coord.x).toBe(1);
         expect(mb[499][499].coord.y).toBe(1);
@@ -120,18 +127,18 @@ describe("The mandelbrot set", function () {
         "the func should get the x,y val from state and call escape with it" +
         "the colour function should then be called on the x,y state val and returned", function () {
             var escape = mandelbrot.escape.create(notifier),
-                state = mandelbrot.state.create(500, 500, mandelbrot.coordTranslator.create(500, 500)),
+                state = mandelbrot.state.create(500, 500, mandelbrot.coordTranslator.create(500, 500, -2.5, 1, -1, 1).func),
                 palette = mandelbrot.colour.palette.create(),
                 mbSet = mandelbrot.set.create(state, escape, palette),
                 col;
 
-            col = mbSet(12, 45);
+            col = mbSet.drawFunc(12, 45);
             console.log(col);
             expect(col.red).toBe(255);
             expect(col.green).toBe(10);
             expect(col.blue).toBe(10);
 
-            col = mbSet(300, 250);
+            col = mbSet.drawFunc(300, 250);
             expect(col.red).toBe(0);
             expect(col.green).toBe(0);
             expect(col.blue).toBe(0);
