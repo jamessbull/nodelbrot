@@ -4,7 +4,7 @@ var mandelbrotImage = {}, init = {};
 
 mandelbrotImage.create = function () {
     "use strict";
-    var coord = mandelbrot.coordTranslator.create(700, 400, -2.5, 1, -1, 1),
+    var coord = jim.mandelbrot.coordTranslator.create(700, 400, -2.5, 1, -1, 1),
         called = 0,
         total = 700 * 400,
         notifier = {
@@ -14,10 +14,10 @@ mandelbrotImage.create = function () {
                 document.getElementById("numberEscaped").innerHTML = remaining;
             }
         },
-        escape = mandelbrot.escape.create(notifier),
-        state = mandelbrot.state.create(700, 400, coord.func),
-        palette = mandelbrot.colour.palette.create(),
-        mset = mandelbrot.set.create(state, escape, palette),
+        escape = jim.mandelbrot.escape.create(notifier),
+        state = jim.mandelbrot.state.create(700, 400, coord.func),
+        palette = jim.mandelbrot.colour.palette.create(),
+        mset = jim.mandelbrot.set.create(state, escape, palette),
         segments2 = jim.segment.createSegments(700, 400, 4, mset),
         screen = jim.screen.create({segments: segments2});
 
@@ -38,7 +38,7 @@ mandelbrotImage.create = function () {
 init.run = function () {
     "use strict";
     var currentMandelbrotSet = mandelbrotImage.create(),
-        ui = mandelbrot.ui.create(currentMandelbrotSet),
+        ui = jim.mandelbrot.ui.create(currentMandelbrotSet),
         canvasDiv = document.getElementById("mandelbrotCanvas"),
         uiCanvas = document.createElement('canvas'),
         render = function () {

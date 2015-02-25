@@ -1,4 +1,5 @@
-var mandelbrot = (function () {
+namespace("jim.mandelbrot");
+jim.mandelbrot = (function () {
     "use strict";
     return {
         set: {
@@ -59,7 +60,7 @@ var mandelbrot = (function () {
                     var xPos = ( (setXSize * originX) / (originSizeX -1) ) + targetXStart;
                     var yPos = ( (setYSize * originY) / (originSizeY -1) ) + targetYStart;
 
-                    return mandelbrot.coord.create(xPos, yPos);
+                    return jim.mandelbrot.coord.create(xPos, yPos);
                 };
                 return {
                     func: coordFunc,

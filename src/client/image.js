@@ -1,9 +1,5 @@
-var jim;
-if (!jim) {
-    jim = {};
-}
+namespace("jim.image");
 
-jim.image = {};
 jim.image.create = function (size, sizeY, f) {
     "use strict";
     var canvas = document.createElement('canvas'),
@@ -59,13 +55,13 @@ jim.image.create = function (size, sizeY, f) {
         canvas: canvas
     };
 };
-jim.colour = {};
+namespace("jim.colour");
 jim.colour.create = function (r, g, b, a) {
     "use strict";
     return {red: r, green: g, blue: b, alpha: a};
 };
 
-jim.canvas = {};
+namespace("jim.canvas");
 jim.canvas.create = function (w, h) {
     return {
 

@@ -5,7 +5,7 @@ describe("The mandelbrot set", function () {
 
     it("can take several iterations to escape", function () {
         var mandelbrotCoord = {x: -0.3, y: -0.9},
-            escape = mandelbrot.escape.create(notifier),
+            escape = jim.mandelbrot.escape.create(notifier),
             state = {x: 0, y: 0, iterations: 0, escaped: false};
 
         escape.calculate(mandelbrotCoord, state);
@@ -41,7 +41,7 @@ describe("The mandelbrot set", function () {
     });
 
     it("should create a colour palette array where every element is a colour", function () {
-        var pal = mandelbrot.colour.palette.create();
+        var pal = jim.mandelbrot.colour.palette.create();
 
         pal.forEach(function (colour) {
             colour.hasOwnProperty('red');
@@ -52,7 +52,7 @@ describe("The mandelbrot set", function () {
     });
 
     it("should return a colour palette i or wrap if beyond the end of the palette", function () {
-        var palette = mandelbrot.colour.palette.create(),
+        var palette = jim.mandelbrot.colour.palette.create(),
             colour;
 
         colour = palette.intoColours({iterations: 0});
@@ -72,15 +72,15 @@ describe("The mandelbrot set", function () {
     });
 
     it("should execute 250000 times in 8 ms", function () {
-        var escape = mandelbrot.escape.create(notifier),
+        var escape = jim.mandelbrot.escape.create(notifier),
             i = 0,
             j = 0,
-            coord = mandelbrot.coordTranslator.create(500, 500, -2.5, 1, -1, 1),
+            coord = jim.mandelbrot.coordTranslator.create(500, 500, -2.5, 1, -1, 1),
             stopwatch = timer.create(),
             mb;
 
         stopwatch.start();
-        mb = mandelbrot.state.create(500, 500, coord.func);
+        mb = jim.mandelbrot.state.create(500, 500, coord.func);
         stopwatch.stop();
         console.log("initialisation took " + stopwatch.elapsed() + "ms");
 
@@ -96,8 +96,8 @@ describe("The mandelbrot set", function () {
     });
 
     it("should build initial state for mandelbrot calculation", function () {
-        var coord = mandelbrot.coordTranslator.create(500, 500, -2.5, 1, -1, 1),
-            mb = mandelbrot.state.create(500, 500, coord.func);
+        var coord = jim.mandelbrot.coordTranslator.create(500, 500, -2.5, 1, -1, 1),
+            mb = jim.mandelbrot.state.create(500, 500, coord.func);
 
         expect(mb[0][0].coord.x).toBe(-2.5);
         expect(mb[0][0].coord.y).toBe(-1);
@@ -126,10 +126,10 @@ describe("The mandelbrot set", function () {
     it("should take a state and an escape and a palette and return a func that takes x and y " +
         "the func should get the x,y val from state and call escape with it" +
         "the colour function should then be called on the x,y state val and returned", function () {
-            var escape = mandelbrot.escape.create(notifier),
-                state = mandelbrot.state.create(500, 500, mandelbrot.coordTranslator.create(500, 500, -2.5, 1, -1, 1).func),
-                palette = mandelbrot.colour.palette.create(),
-                mbSet = mandelbrot.set.create(state, escape, palette),
+            var escape = jim.mandelbrot.escape.create(notifier),
+                state = jim.mandelbrot.state.create(500, 500, jim.mandelbrot.coordTranslator.create(500, 500, -2.5, 1, -1, 1).func),
+                palette = jim.mandelbrot.colour.palette.create(),
+                mbSet = jim.mandelbrot.set.create(state, escape, palette),
                 col;
 
             col = mbSet.drawFunc(12, 45);
