@@ -103,7 +103,7 @@ jim.mandelbrot = (function () {
                     var palette = [],
                         length = 0,
                         colour = function (r, g, b, a) {
-                            return {red: r, green: g, blue: b, alpha: a};
+                            return {r: r, g: g, b: b, a: a};
                         };
                     palette.push(colour(0,   0,   0,   255));
                     palette.push(colour(255,   10,   10,   255));

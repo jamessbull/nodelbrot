@@ -15,10 +15,10 @@ jim.image.create = function (size, sizeY, f) {
                 x = i % size;
                 y = Math.floor(i / sizeY);
                 col = f(x, y);
-                output.data[i * 4]     = col.red;
-                output.data[i * 4 + 1] = col.green;
-                output.data[i * 4 + 2] = col.blue;
-                output.data[i * 4 + 3] = col.alpha;
+                output.data[i * 4]     = col.r;
+                output.data[i * 4 + 1] = col.g;
+                output.data[i * 4 + 2] = col.b;
+                output.data[i * 4 + 3] = col.a;
             }
             context.putImageData(output, 0, 0);
         },
@@ -30,10 +30,10 @@ jim.image.create = function (size, sizeY, f) {
                 mandX = x + xOff;
                 mandY = y + yOff;
                 col = f(mandX, mandY);
-                output.data[i * 4]     = col.red;
-                output.data[i * 4 + 1] = col.green;
-                output.data[i * 4 + 2] = col.blue;
-                output.data[i * 4 + 3] = col.alpha;
+                output.data[i * 4]     = col.r;
+                output.data[i * 4 + 1] = col.g;
+                output.data[i * 4 + 2] = col.b;
+                output.data[i * 4 + 3] = col.a;
             }
             context.putImageData(output, 0, 0);
         },
@@ -41,10 +41,10 @@ jim.image.create = function (size, sizeY, f) {
             var col, i;
             for (i = 0; i < size * sizeY; i += 1) {
                 col = f(i);
-                output.data[i * 4]     = col.red;
-                output.data[i * 4 + 1] = col.green;
-                output.data[i * 4 + 2] = col.blue;
-                output.data[i * 4 + 3] = col.alpha;
+                output.data[i * 4]     = col.r;
+                output.data[i * 4 + 1] = col.g;
+                output.data[i * 4 + 2] = col.b;
+                output.data[i * 4 + 3] = col.a;
             }
             context.putImageData(output, 0, 0);
         },
@@ -58,7 +58,7 @@ jim.image.create = function (size, sizeY, f) {
 namespace("jim.colour");
 jim.colour.create = function (r, g, b, a) {
     "use strict";
-    return {red: r, green: g, blue: b, alpha: a};
+    return {r: r, g: g, b: b, a: a};
 };
 
 namespace("jim.canvas");
