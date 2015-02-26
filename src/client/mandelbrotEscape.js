@@ -9,11 +9,9 @@ jim.mandelbrot = (function () {
                     black = colour(0, 0, 0, 255),
                     drawFunc = function (x, y) {
                         var myState = currentState[x][y];
-                        for (i = 50; i > 0; i -= 1) {
-                            if (myState.calc.escaped) {
-                                return pal.intoColours(myState.calc);
-                            }
-                            escape.calculate(myState.coord, myState.calc);
+                        escape.attempt(myState, 50);
+                        if (myState.calc.escaped) {
+                            return pal.intoColours(myState.calc);
                         }
                         return black;
                     };
@@ -182,6 +180,15 @@ jim.mandelbrot = (function () {
                         } else {
                             state.escaped = true;
                             notifier.notify();
+                        }
+                    },
+                    attempt: function (state, times) {
+                        var i;
+                        for (i = times; i > 0; i -= 1) {
+                            if (state.calc.escaped) {
+                                return;
+                            }
+                            this.calculate(state.coord, state.calc);
                         }
                     }
                 };
