@@ -8,3 +8,17 @@ var namespace = function (name) {
         partial = partial[part];
     });
 };
+
+namespace("jim.common.grid.processor");
+jim.common.grid.processor.create = function () {
+    "use strict";
+    return {
+        process: function (array, f) {
+            array.forEach(function (nested, x) {
+                nested.forEach(function (value, y) {
+                    array[x][y] = f(array[x][y]);
+                });
+            });
+        }
+    };
+};

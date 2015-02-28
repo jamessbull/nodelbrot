@@ -1,7 +1,7 @@
 namespace("jim.mandelbrotImage");
 jim.mandelbrotImage.create = function () {
     "use strict";
-    var coord = jim.mandelbrot.coordTranslator.create(700, 400, -2.5, 1, -1, 1),
+    var coord = jim.mandelbrot.coordTranslator.create(1400, 800, -2.5, 1, -1, 1),
         called = 0,
         total = 700 * 400,
         notifier = {
@@ -12,10 +12,10 @@ jim.mandelbrotImage.create = function () {
             }
         },
         escape = jim.mandelbrot.escape.create(notifier),
-        state = jim.mandelbrot.state.create(700, 400, coord.func),
-        palette = jim.mandelbrot.colour.palette.create(),
+        state = jim.mandelbrot.state.create(1400, 800, coord.func),
+        palette = jim.palette.create(),
         mset = jim.mandelbrot.set.create(state, escape, palette),
-        segments2 = jim.segment.createSegments(700, 400, 4, mset),
+        segments2 = jim.segment.createSegments(1400, 800, 4, mset),
         screen = jim.screen.create({segments: segments2});
 
     return {
@@ -27,7 +27,7 @@ jim.mandelbrotImage.create = function () {
         },
         zoomTo: function (selection) {
             coord.zoomTo(selection);
-            mset.setState(jim.mandelbrot.state.create(700, 400, coord.func));
+            mset.setState(jim.mandelbrot.state.create(1400, 800, coord.func));
         }
     };
 };

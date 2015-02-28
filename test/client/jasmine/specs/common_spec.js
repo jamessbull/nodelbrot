@@ -14,4 +14,20 @@ describe("The namespace function", function () {
         namespace("job.jobby.jobjob");
         expect(job.jobby.jobjob).toBeDefined();
     });
+
+    it("should iterate over a 2d array and apply the supplied function to every element once", function () {
+        var processor = jim.common.grid.processor.create(),
+            testArr = [[1, 2], [5, 6], [8, 9]],
+            testFunc = function (x) {
+                return x + 1;
+            };
+        processor.process(testArr, testFunc);
+        expect(testArr[0][0]).toBe(2);
+        expect(testArr[0][1]).toBe(3);
+        expect(testArr[1][0]).toBe(6);
+        expect(testArr[1][1]).toBe(7);
+        expect(testArr[2][0]).toBe(9);
+        expect(testArr[2][1]).toBe(10);
+    });
+
 });

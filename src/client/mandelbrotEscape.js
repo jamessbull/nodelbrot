@@ -11,7 +11,7 @@ jim.mandelbrot = (function () {
                         var myState = currentState[x][y];
                         escape.attempt(myState, 50);
                         if (myState.calc.escaped) {
-                            return pal.intoColours(myState.calc);
+                            return pal.colourAt(myState.calc);
                         }
                         return black;
                     };
@@ -196,4 +196,14 @@ jim.mandelbrot = (function () {
         }
     };
 }());
+
+namespace("jim.mandelbrot.extents");
+jim.mandelbrot.extents.create = function () {
+    "use strict";
+    var coord = jim.mandelbrot.coord.create;
+    return {
+        topLeft: coord(-2.5, 1),
+        bottomRight: coord(1, -1)
+    };
+};
 

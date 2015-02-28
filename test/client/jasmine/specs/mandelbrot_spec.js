@@ -128,20 +128,20 @@ describe("The mandelbrot set", function () {
         "the colour function should then be called on the x,y state val and returned", function () {
             var escape = jim.mandelbrot.escape.create(notifier),
                 state = jim.mandelbrot.state.create(500, 500, jim.mandelbrot.coordTranslator.create(500, 500, -2.5, 1, -1, 1).func),
-                palette = jim.mandelbrot.colour.palette.create(),
+                palette = jim.palette.create(),
                 mbSet = jim.mandelbrot.set.create(state, escape, palette),
                 col;
 
             col = mbSet.drawFunc(12, 45);
             console.log(col);
-            expect(col.red).toBe(255);
-            expect(col.green).toBe(10);
-            expect(col.blue).toBe(10);
+            expect(col.r).toBe(255);
+            expect(col.g).toBe(0);
+            expect(col.b).toBe(4);
 
             col = mbSet.drawFunc(300, 250);
-            expect(col.red).toBe(0);
-            expect(col.green).toBe(0);
-            expect(col.blue).toBe(0);
+            expect(col.r).toBe(0);
+            expect(col.g).toBe(0);
+            expect(col.b).toBe(0);
         });
 
     it("draws each segment in turn", function () {
@@ -185,5 +185,13 @@ describe("The mandelbrot set", function () {
         expect(segs[3].size()).toBe(200);
         expect(segs[3].xOffset()).toBe(0);
         expect(segs[3].yOffset()).toBe(200);
+    });
+
+    it("knows the extents of the mandelbrot set", function () {
+        var extents = jim.mandelbrot.extents.create();
+        expect(extents.topLeft.x).toBe(-2.5);
+        expect(extents.topLeft.y).toBe(1);
+        expect(extents.bottomRight.x).toBe(1);
+        expect(extents.bottomRight.y).toBe(-1);
     });
 });
