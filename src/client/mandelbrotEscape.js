@@ -41,16 +41,13 @@ jim.mandelbrot = (function () {
             }
         },
         coordTranslator: {
-            create: function (originSizeX, originSizeY, targetStartX, targetEndX, targetStartY, targetEndY) {
-                var targetXStart = targetStartX,
-                    targetXEnd = targetEndX,
-                    targetYStart = targetStartY,
-                    targetYEnd = targetEndY,
+            create: function (originSizeX, originSizeY) {
+                var extents = jim.mandelbrot.extents.create(),
                     coordFunc = function (originX, originY) {
-                        var setXSize = Math.abs(targetXEnd - targetXStart),
-                            setYSize = Math.abs(targetYEnd - targetYStart),
-                            xPos = ((setXSize * originX) / (originSizeX - 1)) + targetXStart,
-                            yPos = ((setYSize * originY) / (originSizeY - 1)) + targetYStart;
+                        var setXSize = Math.abs(extents.bottomRight.x - extents.topLeft.x),
+                            setYSize = Math.abs(extents.topLeft.y - extents.bottomRight.y),
+                            xPos = ((setXSize * originX) / (originSizeX - 1)) + extents.topLeft.x,
+                            yPos = ((setYSize * originY) / (originSizeY - 1)) + extents.bottomRight.y;
 
                         return jim.mandelbrot.coord.create(xPos, yPos);
                     };
@@ -59,10 +56,10 @@ jim.mandelbrot = (function () {
                     zoomTo: function (selection) {
                         var start = coordFunc(selection.startX, selection.startY),
                             end = coordFunc(selection.startX + selection.width(), selection.startY + selection.height());
-                        targetXStart = start.x;
-                        targetYStart = start.y;
-                        targetXEnd = end.x;
-                        targetYEnd = end.y;
+                        extents.topLeft.x = start.x;
+                        extents.bottomRight.y = start.y;
+                        extents.bottomRight.x = end.x;
+                        extents.topLeft.y = end.y;
                     }
                 };
             }
