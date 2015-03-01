@@ -41,34 +41,30 @@ describe("The mandelbrot set", function () {
     });
 
     it("should create a colour palette array where every element is a colour", function () {
-        var pal = jim.mandelbrot.colour.palette.create();
+        var pal = jim.palette.create();
 
-        pal.forEach(function (colour) {
-            colour.hasOwnProperty('red');
-            colour.hasOwnProperty('green');
-            colour.hasOwnProperty('blue');
-            colour.hasOwnProperty('alpha');
+        pal.toArray().forEach(function (colour) {
+            expect(colour.hasOwnProperty('r')).toBe(true);
+            expect(colour.hasOwnProperty('g')).toBe(true);
+            expect(colour.hasOwnProperty('b')).toBe(true);
+            expect(colour.hasOwnProperty('a')).toBe(true);
         });
     });
 
-    it("should return a colour palette i or wrap if beyond the end of the palette", function () {
-        var palette = jim.mandelbrot.colour.palette.create(),
-            colour;
+    it("should return a colour no matter how large the number of iterations", function () {
+        var palette = jim.palette.create(),
+            colours = [];
 
-        colour = palette.intoColours({iterations: 0});
-        expect(colour.red).toBe(palette[0].red);
-        expect(colour.green).toBe(palette[0].green);
-        expect(colour.blue).toBe(palette[0].blue);
+        colours.push(palette.colourAt({iterations: 0}));
+        colours.push(palette.colourAt({iterations: 360}));
+        colours.push(palette.colourAt({iterations: 720}));
 
-        colour = palette.intoColours({iterations: 10});
-        expect(colour.red).toBe(palette[10].red);
-        expect(colour.green).toBe(palette[10].green);
-        expect(colour.blue).toBe(palette[10].blue);
-
-        colour = palette.intoColours({iterations: palette.length});
-        expect(colour.red).toBe(palette[0].red);
-        expect(colour.green).toBe(palette[0].green);
-        expect(colour.blue).toBe(palette[0].blue);
+        colours.forEach(function (colour) {
+            expect(colour.hasOwnProperty('r')).toBe(true);
+            expect(colour.hasOwnProperty('g')).toBe(true);
+            expect(colour.hasOwnProperty('b')).toBe(true);
+            expect(colour.hasOwnProperty('a')).toBe(true);
+        });
     });
 
     it("should execute 250000 times in 8 ms", function () {

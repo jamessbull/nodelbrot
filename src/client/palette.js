@@ -13,6 +13,7 @@ jim.palette.create = function () {
         colourAt: function (number) {
             var hue = number.iterations %  360;
             return pal[hue];
-        }
+        },
+        toArray: function () { return pal; }
     };
 };
