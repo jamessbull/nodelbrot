@@ -69,29 +69,6 @@ jim.mandelbrot = (function () {
                 return {x: x, y: y};
             }
         },
-        xyIterator: {
-            create: function (x, y, w, h) {
-                var currentX = x,
-                    currentY = y,
-                    newCoord;
-
-                return {
-                    next: function () {
-                        newCoord = jim.mandelbrot.coord.create(currentX, currentY);
-                        currentX += 1;
-                        if (currentX >= x + w) {
-                            currentX = x;
-                            currentY += 1;
-                        }
-                        if (currentY >= y + h) {
-                            currentX = x;
-                            currentY = y;
-                        }
-                        return newCoord;
-                    }
-                };
-            }
-        },
         colour: {
             palette: {
                 create: function () {
