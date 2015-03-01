@@ -1,4 +1,4 @@
-describe("The namespace function", function () {
+describe("Common utilities", function () {
     "use strict";
 
     it("should create objects to represent a namespace. It should not overwrite existing objects", function () {
@@ -30,4 +30,35 @@ describe("The namespace function", function () {
         expect(testArr[2][1]).toBe(10);
     });
 
+    it("should create a grid of a certain size with default values created by the supplied function", function () {
+        var grid = jim.common.grid.create(3, 3, function (x, y) {
+            return x * y;
+        });
+        expect(grid.at(0, 0)).toBe(0);
+        expect(grid.at(0, 1)).toBe(0);
+        expect(grid.at(0, 2)).toBe(0);
+
+        expect(grid.at(1, 0)).toBe(0);
+        expect(grid.at(1, 1)).toBe(1);
+        expect(grid.at(1, 2)).toBe(2);
+
+        expect(grid.at(2, 0)).toBe(0);
+        expect(grid.at(2, 1)).toBe(2);
+        expect(grid.at(2, 2)).toBe(4);
+
+        grid.run(function (x) {return x + 2;});
+
+        expect(grid.at(0, 0)).toBe(2);
+        expect(grid.at(0, 1)).toBe(2);
+        expect(grid.at(0, 2)).toBe(2);
+
+        expect(grid.at(1, 0)).toBe(2);
+        expect(grid.at(1, 1)).toBe(3);
+        expect(grid.at(1, 2)).toBe(4);
+
+        expect(grid.at(2, 0)).toBe(2);
+        expect(grid.at(2, 1)).toBe(4);
+        expect(grid.at(2, 2)).toBe(6);
+
+    });
 });
