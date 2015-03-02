@@ -44,22 +44,16 @@ jim.mandelbrot = (function () {
             create: function (originSizeX, originSizeY) {
                 var extents = jim.mandelbrot.extents.create(),
                     coordFunc = function (originX, originY) {
-                        var setXSize = Math.abs(extents.bottomRight.x - extents.topLeft.x),
-                            setYSize = Math.abs(extents.topLeft.y - extents.bottomRight.y),
-                            xPos = ((setXSize * originX) / (originSizeX - 1)) + extents.topLeft.x,
-                            yPos = ((setYSize * originY) / (originSizeY - 1)) + extents.bottomRight.y;
-
-                        return jim.mandelbrot.coord.create(xPos, yPos);
+                        return jim.mandelbrot.coord.create(
+                            ((extents.width()  * originX) / (originSizeX - 1)) + extents.topLeft.x,
+                            ((extents.height() * originY) / (originSizeY - 1)) + extents.bottomRight.y
+                        );
                     };
                 return {
                     func: coordFunc,
                     zoomTo: function (selection) {
-                        var start = coordFunc(selection.startX, selection.startY),
-                            end = coordFunc(selection.startX + selection.width(), selection.startY + selection.height());
-                        extents.topLeft.x = start.x;
-                        extents.bottomRight.y = start.y;
-                        extents.bottomRight.x = end.x;
-                        extents.topLeft.y = end.y;
+                        extents.topLeft = coordFunc(selection.startX, selection.startY + selection.height());
+                        extents.bottomRight = coordFunc(selection.startX + selection.width(), selection.startY);
                     }
                 };
             }
@@ -105,10 +99,14 @@ jim.mandelbrot = (function () {
 namespace("jim.mandelbrot.extents");
 jim.mandelbrot.extents.create = function () {
     "use strict";
-    var coord = jim.mandelbrot.coord.create;
+    var coord = jim.mandelbrot.coord.create,
+        topLeft = coord(-2.5, 1),
+        bottomRight = coord(1, -1);
     return {
-        topLeft: coord(-2.5, 1),
-        bottomRight: coord(1, -1)
+        topLeft: topLeft,
+        bottomRight: bottomRight,
+        width: function () {return Math.abs(bottomRight.x - topLeft.x); },
+        height: function () {return Math.abs(topLeft.y - bottomRight.y); }
     };
 };
 
