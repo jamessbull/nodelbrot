@@ -9,6 +9,12 @@ var namespace = function (name) {
     });
 };
 
+namespace("jim.coord");
+jim.coord.create = function (x, y) {
+    "use strict";
+    return {x: x, y: y};
+};
+
 namespace("jim.common.grid.processor");
 jim.common.grid.processor.create = function () {
     "use strict";

@@ -6,7 +6,7 @@ jim.mandelbrot.ui.create = function (mandelbrotSet) {
         selectionX = document.getElementById("selectionX"),
         selectionY = document.getElementById("selectionY"),
         canvas = document.getElementById("mandelbrotCanvas"),
-        selection = jim.selection.create(mandelbrotSet);
+        selection = jim.selection.create();
 
     canvas.onmousedown = function (e) {
         selection.begin(e);
@@ -14,6 +14,7 @@ jim.mandelbrot.ui.create = function (mandelbrotSet) {
 
     canvas.onmouseup = function (e) {
         selection.end(e);
+        mandelbrotSet.zoomTo(selection);
     };
 
     canvas.onmousemove = function (e) {

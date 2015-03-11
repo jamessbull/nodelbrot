@@ -43,17 +43,19 @@ jim.mandelbrot = (function () {
         coordTranslator: {
             create: function (originSizeX, originSizeY) {
                 var extents = jim.mandelbrot.extents.create(),
+                    coord = jim.mandelbrot.coord.create,
                     coordFunc = function (originX, originY) {
-                        return jim.mandelbrot.coord.create(
-                            ((extents.width()  * originX) / (originSizeX - 1)) + extents.topLeft.x,
-                            ((extents.height() * originY) / (originSizeY - 1)) + extents.bottomRight.y
-                        );
+                        var xPos = ((extents.width() * originX) / (originSizeX - 1)) + extents.topLeft.x,
+                            yPos = ((extents.height() * originY) / (originSizeY - 1)) + extents.bottomRight.y;
+                        return coord(xPos, yPos);
                     };
                 return {
                     func: coordFunc,
                     zoomTo: function (selection) {
-                        extents.topLeft = coordFunc(selection.startX, selection.startY + selection.height());
-                        extents.bottomRight = coordFunc(selection.startX + selection.width(), selection.startY);
+                        var start = coordFunc(selection.topLeft.x, selection.topLeft.y + selection.height()),
+                            end = coordFunc(selection.topLeft.x + selection.width(), selection.topLeft.y);
+                        extents.topLeft = start;
+                        extents.bottomRight = end;
                     }
                 };
             }
@@ -99,14 +101,16 @@ jim.mandelbrot = (function () {
 namespace("jim.mandelbrot.extents");
 jim.mandelbrot.extents.create = function () {
     "use strict";
-    var coord = jim.mandelbrot.coord.create,
-        topLeft = coord(-2.5, 1),
-        bottomRight = coord(1, -1);
+    var coord = jim.mandelbrot.coord.create;
     return {
-        topLeft: topLeft,
-        bottomRight: bottomRight,
-        width: function () {return Math.abs(bottomRight.x - topLeft.x); },
-        height: function () {return Math.abs(topLeft.y - bottomRight.y); }
+        topLeft: coord(-2.5, 1),
+        bottomRight: coord(1, -1),
+        width: function () {
+            return this.bottomRight.x - this.topLeft.x;
+        },
+        height: function () {
+            return this.topLeft.y - this.bottomRight.y;
+        }
     };
 };
 
