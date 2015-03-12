@@ -61,4 +61,37 @@ describe("Common utilities", function () {
         expect(grid.at(2, 2)).toBe(6);
 
     });
+
+    it("should correctly know the width - height etc of a rectangle", function () {
+        var coord = jim.coord.create,
+            r = jim.rectangle.create(5, 5, 15, 25);
+
+        expect(r.topLeft()).toEqual(coord(5, 5));
+        expect(r.topRight()).toEqual(coord(20, 5));
+        expect(r.bottomLeft()).toEqual(coord(5, 30));
+        expect(r.bottomRight()).toEqual(coord(20, 30));
+
+        expect(r.width()).toBe(15);
+        expect(r.height()).toBe(25);
+
+        r.width(10);
+
+        expect(r.topLeft()).toEqual(coord(5, 5));
+        expect(r.topRight()).toEqual(coord(15, 5));
+        expect(r.bottomLeft()).toEqual(coord(5, 30));
+        expect(r.bottomRight()).toEqual(coord(15, 30));
+
+        expect(r.width()).toBe(10);
+        expect(r.height()).toBe(25);
+
+        r.height(50);
+
+        expect(r.topLeft()).toEqual(coord(5, 5));
+        expect(r.topRight()).toEqual(coord(15, 5));
+        expect(r.bottomLeft()).toEqual(coord(5, 55));
+        expect(r.bottomRight()).toEqual(coord(15, 55));
+
+        expect(r.width()).toBe(10);
+        expect(r.height()).toBe(50);
+    });
 });

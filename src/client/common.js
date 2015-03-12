@@ -15,6 +15,38 @@ jim.coord.create = function (x, y) {
     return {x: x, y: y};
 };
 
+namespace("jim.rectangle");
+jim.rectangle.create = function (x, y, width, height) {
+    "use strict";
+    var coord = jim.coord.create,
+        w = width,
+        h = height;
+    return {
+        topLeft: function () {return coord(x, y); },
+        topRight: function () { return coord(x + w, y); },
+        bottomRight: function () { return coord(x + w, y + h); },
+        bottomLeft: function () { return coord(x, y + h); },
+        width: function (newWidth) {
+            if (newWidth) {
+                w = newWidth;
+                return;
+            }
+            return w;
+        },
+        height: function (newHeight) {
+            if (newHeight) {
+                h = newHeight;
+                return;
+            }
+            return h;
+        },
+        resize: function (w, h) {
+            this.width(w);
+            this.height(h);
+        }
+    };
+}
+
 namespace("jim.common.grid.processor");
 jim.common.grid.processor.create = function () {
     "use strict";

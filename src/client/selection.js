@@ -1,32 +1,31 @@
 namespace("jim.selection");
-jim.selection.create = function () {
+jim.selection.create = function (rect) {
     "use strict";
-    var coord = jim.coord.create;
+    var newRect = jim.rectangle.create,
+        area = newRect(0, 0, 0, 0),
+        proportionateHeight = function () {
+            return (rect.height() / rect.width()) * (area.bottomRight().x - area.topLeft().x);
+        };
     return {
-        canvas: undefined,
-        topLeft: coord(0, 0),
-        bottomRight: coord(0, 0),
+        area: function () {return area; },
         inProgress: false,
-        width: function () { return this.bottomRight.x - this.topLeft.x; },
-        height: function () {return (this.canvas.height / this.canvas.width) * this.width(); },
         begin: function (event) {
-            this.topLeft = coord(event.layerX, event.layerY);
-            this.bottomRight = coord(event.layerX, event.layerY);
+            area = newRect(event.layerX, event.layerY, 0, 0);
             this.inProgress = true;
         },
         change: function (event) {
-            this.bottomRight = coord(event.layerX, event.layerY);
+            area.resize(event.layerX - area.topLeft().x, proportionateHeight());
         },
         end: function (event) {
-            this.bottomRight = coord(event.layerX, event.layerY);
+            area.resize(event.layerX - area.topLeft().x, proportionateHeight());
             this.inProgress = false;
         },
         show: function (context) {
             if (this.inProgress) {
                 context.strokeStyle = "rgba(0, 0, 0, 1.0)";
-                context.strokeRect(this.topLeft.x, this.topLeft.y, this.width(), this.height());
+                context.strokeRect(area.topLeft().x, area.topLeft().y, area.width(), area.height());
                 context.fillStyle = "rgba(255, 255, 255, 0.2)";
-                context.fillRect(this.topLeft.x, this.topLeft.y, this.width(), this.height());
+                context.fillRect(area.topLeft().x, area.topLeft().y, area.width(), area.height());
             }
         }
     };

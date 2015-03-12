@@ -52,8 +52,8 @@ jim.mandelbrot = (function () {
                 return {
                     func: coordFunc,
                     zoomTo: function (selection) {
-                        var start = coordFunc(selection.topLeft.x, selection.topLeft.y + selection.height()),
-                            end = coordFunc(selection.topLeft.x + selection.width(), selection.topLeft.y);
+                        var start = coordFunc(selection.area().topLeft().x, selection.area().topLeft().y + selection.area().height()),
+                            end = coordFunc(selection.area().topLeft().x + selection.area().width(), selection.area().topLeft().y);
                         extents.topLeft = start;
                         extents.bottomRight = end;
                     }

@@ -1,12 +1,14 @@
 namespace("jim.mandelbrot.ui");
 jim.mandelbrot.ui.create = function (mandelbrotSet) {
     "use strict";
-    var selectionHeight = document.getElementById("selectionHeight"),
+    var rect = jim.rectangle.create,
+        newSelection = jim.selection.create,
+        selectionHeight = document.getElementById("selectionHeight"),
         selectionWidth = document.getElementById("selectionWidth"),
         selectionX = document.getElementById("selectionX"),
         selectionY = document.getElementById("selectionY"),
         canvas = document.getElementById("mandelbrotCanvas"),
-        selection = jim.selection.create();
+        selection = newSelection(rect(0, 0, mandelbrotSet.canvas().width, mandelbrotSet.canvas().height));
 
     canvas.onmousedown = function (e) {
         selection.begin(e);
@@ -18,13 +20,15 @@ jim.mandelbrot.ui.create = function (mandelbrotSet) {
     };
 
     canvas.onmousemove = function (e) {
-        selection.change(e);
+        if (selection.inProgress) {
+            selection.change(e);
+        }
     };
+
     return {
         draw: function (canvas) {
             var context = canvas.getContext('2d');
             context.clearRect(0, 0, canvas.width, canvas.height);
-            selection.canvas = canvas;
             selection.show(context);
         }
     };
