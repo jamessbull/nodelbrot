@@ -31,7 +31,7 @@ jim.mandelbrot = (function () {
                     for (xPos; xPos < sizeX; xPos += 1) {
                         if (!state[xPos]) { state.push([]); }
                         state[xPos][yPos] = {
-                            coord: coordFunc(xPos, yPos),
+                            coord: coordFunc(jim.coord.create(xPos, yPos)),
                             calc: { iterations: 0, escaped: false, x: 0, y: 0 }
                         };
                     }
@@ -43,17 +43,18 @@ jim.mandelbrot = (function () {
         coordTranslator: {
             create: function (originSizeX, originSizeY) {
                 var extents = jim.mandelbrot.extents.create(),
-                    coord = jim.mandelbrot.coord.create,
-                    coordFunc = function (originX, originY) {
-                        var xPos = ((extents.width() * originX) / (originSizeX - 1)) + extents.topLeft.x,
-                            yPos = ((extents.height() * originY) / (originSizeY - 1)) + extents.bottomRight.y;
-                        return coord(xPos, yPos);
+                    newCoord = jim.mandelbrot.coord.create,
+                    coordFunc = function (coord) {
+                        return newCoord(
+                            ((extents.width() * coord.x) / (originSizeX - 1)) + extents.topLeft.x,
+                            ((extents.height() * coord.y) / (originSizeY - 1)) + extents.bottomRight.y
+                        );
                     };
                 return {
                     func: coordFunc,
                     zoomTo: function (selection) {
-                        var start = coordFunc(selection.area().topLeft().x, selection.area().topLeft().y + selection.area().height()),
-                            end = coordFunc(selection.area().topLeft().x + selection.area().width(), selection.area().topLeft().y);
+                        var start = coordFunc(selection.area().bottomLeft()),
+                            end = coordFunc(selection.area().topRight());
                         extents.topLeft = start;
                         extents.bottomRight = end;
                     }
@@ -101,8 +102,10 @@ jim.mandelbrot = (function () {
 namespace("jim.mandelbrot.extents");
 jim.mandelbrot.extents.create = function () {
     "use strict";
-    var coord = jim.mandelbrot.coord.create;
+    var rect = jim.rectangle.create(-2.5, -1, 3.5, 2),
+        coord = jim.coord.create;
     return {
+        a: rect,
         topLeft: coord(-2.5, 1),
         bottomRight: coord(1, -1),
         width: function () {
