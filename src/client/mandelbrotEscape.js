@@ -53,8 +53,8 @@ jim.mandelbrot = (function () {
                 return {
                     func: coordFunc,
                     zoomTo: function (selection) {
-                        var start = coordFunc(selection.area().bottomLeft()),
-                            end = coordFunc(selection.area().topRight());
+                        var start = coordFunc(selection.area().topLeft()),
+                            end = coordFunc(selection.area().bottomRight());
                         extents.reset(start, end);
 
                     }
@@ -106,7 +106,7 @@ jim.mandelbrot.extents.create = function () {
     return {
         area: function () { return rect; },
         reset: function (start, end) {
-            rect = jim.rectangle.create(start.x, end.y, start.distanceTo(end).x, end.distanceTo(start).y);
+            rect = jim.rectangle.create(start.x, start.y, start.distanceTo(end).x, start.distanceTo(end).y);
         }
     };
 };
