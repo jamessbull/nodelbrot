@@ -46,8 +46,8 @@ jim.mandelbrot = (function () {
                     newCoord = jim.mandelbrot.coord.create,
                     coordFunc = function (coord) {
                         return newCoord(
-                            ((extents.area().width() * coord.x) / (originSizeX - 1)) + extents.area().bottomLeft().x,
-                            ((extents.area().height() * coord.y) / (originSizeY - 1)) + extents.area().topRight().y
+                            ((extents.area().width() * coord.x) / (originSizeX - 1)) + extents.area().topLeft().x,
+                            ((extents.area().height() * coord.y) / (originSizeY - 1)) + extents.area().topLeft().y
                         );
                     };
                 return {
@@ -105,10 +105,6 @@ jim.mandelbrot.extents.create = function () {
     var rect = jim.rectangle.create(-2.5, -1, 3.5, 2);
     return {
         area: function () { return rect; },
-        bottomLeft: function () { return rect.bottomLeft(); },
-        topRight: function () { return rect.topRight(); },
-        width: function () { return rect.width(); },
-        height: function () { return rect.height(); },
         reset: function (start, end) {
             rect = jim.rectangle.create(start.x, end.y, end.x - start.x, start.y - end.y);
         }

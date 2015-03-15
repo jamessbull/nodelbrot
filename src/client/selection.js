@@ -3,8 +3,8 @@ jim.selection.create = function (rect) {
     "use strict";
     var newRect = jim.rectangle.create,
         area = newRect(0, 0, 0, 0),
-        proportionateHeight = function () {
-            return (rect.height() / rect.width()) * (area.bottomRight().x - area.topLeft().x);
+        proportionateHeight = function (w) {
+            return (rect.height() / rect.width()) * w;
         };
     return {
         area: function () {return area; },
@@ -14,10 +14,12 @@ jim.selection.create = function (rect) {
             this.inProgress = true;
         },
         change: function (event) {
-            area.resize(event.layerX - area.topLeft().x, proportionateHeight());
+            var xWidth = event.layerX - area.topLeft().x;
+            area.resize(xWidth, proportionateHeight(xWidth));
         },
         end: function (event) {
-            area.resize(event.layerX - area.topLeft().x, proportionateHeight());
+            var xWidth = event.layerX - area.topLeft().x;
+            area.resize(xWidth, proportionateHeight(xWidth));
             this.inProgress = false;
         },
         show: function (context) {

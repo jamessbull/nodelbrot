@@ -93,22 +93,22 @@ describe("The mandelbrot set", function () {
 
     it("should build initial state for mandelbrot calculation", function () {
         var coord = jim.mandelbrot.coordTranslator.create(500, 500),
-            mb = jim.mandelbrot.state.create(500, 500, coord.func);
+            mb = jim.mandelbrot.state.create(500, 500, coord.func),
+            newCoord = jim.coord.create;
 
         expect(mb[0][0].coord.x).toBe(-2.5);
         expect(mb[0][0].coord.y).toBe(-1);
 
-        expect(coord.func(0, 0).x).toBe(-2.5);
-        expect(coord.func(0, 0).y).toBe(-1);
+        expect(coord.func(newCoord(0, 0)).x).toBe(-2.5);
+        expect(coord.func(newCoord(0, 0)).y).toBe(-1);
 
         expect(mb[0][0].calc.x).toBe(0);
         expect(mb[0][0].calc.y).toBe(0);
         expect(mb[0][0].calc.iterations).toBe(0);
         expect(mb[0][0].calc.escaped).toBeFalsy();
 
-
-        expect(coord.func(499, 499).x).toBe(1);
-        expect(coord.func(499, 499).y).toBe(1);
+        expect(coord.func(newCoord(499, 499)).x).toBe(1);
+        expect(coord.func(newCoord(499, 499)).y).toBe(1);
 
         expect(mb[499][499].coord.x).toBe(1);
         expect(mb[499][499].coord.y).toBe(1);
@@ -185,56 +185,54 @@ describe("The mandelbrot set", function () {
 
     it("knows the extents of the whole mandelbrot set", function () {
         var extents = jim.mandelbrot.extents.create();
-        expect(extents.bottomLeft.x).toBe(-2.5);
-        expect(extents.bottomLeft.y).toBe(1);
-        expect(extents.topRight.x).toBe(1);
-        expect(extents.topRight.y).toBe(-1);
-        expect(extents.width()).toBe(3.5);
-        expect(extents.height()).toBe(2);
+        expect(extents.area().bottomLeft().x).toBe(-2.5);
+        expect(extents.area().bottomLeft().y).toBe(1);
+        expect(extents.area().topRight().x).toBe(1);
+        expect(extents.area().topRight().y).toBe(-1);
+        expect(extents.area().width()).toBe(3.5);
+        expect(extents.area().height()).toBe(2);
     });
 
     it("knows the extents of the bottom left mandelbrot set", function () {
         var extents = jim.mandelbrot.extents.create(),
             coord = jim.coord.create;
-        extents.bottomLeft = coord(-2.5, 0);
-        extents.topRight = coord(0, -1);
-        expect(extents.width()).toBe(2.5);
-        expect(extents.height()).toBe(1);
+        extents.reset(coord(-2.5, 0), coord(0, -1));
+        expect(extents.area().width()).toBe(2.5);
+        expect(extents.area().height()).toBe(1);
     });
 
     it("knows the extents of the bottom right mandelbrot set", function () {
         var extents = jim.mandelbrot.extents.create(),
             coord = jim.coord.create;
-        extents.bottomLeft = coord(0, 0);
-        extents.topRight = coord(1, -1);
-        expect(extents.width()).toBe(1);
-        expect(extents.height()).toBe(1);
+        extents.reset(coord(0, 0), coord(1, -1));
+        expect(extents.area().width()).toBe(1);
+        expect(extents.area().height()).toBe(1);
     });
 
     it("knows the extents of the top right mandelbrot set", function () {
         var extents = jim.mandelbrot.extents.create(),
             coord = jim.coord.create;
-        extents.bottomLeft = coord(0, 1);
-        extents.topRight = coord(1, 0);
-        expect(extents.width()).toBe(1);
-        expect(extents.height()).toBe(1);
+        extents.reset(coord(0, 1), coord(1, 0));
+
+        expect(extents.area().width()).toBe(1);
+        expect(extents.area().height()).toBe(1);
     });
 
     it("knows the extents of the top left mandelbrot set", function () {
         var extents = jim.mandelbrot.extents.create(),
             coord = jim.coord.create;
-        extents.bottomLeft = coord(-2.5, 1);
-        extents.topRight = coord(0, 0);
-        expect(extents.width()).toBe(2.5);
-        expect(extents.height()).toBe(1);
+        extents.reset(coord(-2.5, 1), coord(0, 0));
+
+        expect(extents.area().width()).toBe(2.5);
+        expect(extents.area().height()).toBe(1);
     });
 
     it("knows the extents of the middle of the mandelbrot set", function () {
         var extents = jim.mandelbrot.extents.create(),
             coord = jim.coord.create;
-        extents.bottomLeft = coord(-1.5, 0.5);
-        extents.topRight = coord(0.5, -0.5);
-        expect(extents.width()).toBe(2.0);
-        expect(extents.height()).toBe(1);
+        extents.reset(coord(-1.5, 0.5), coord(0.5, -0.5));
+
+        expect(extents.area().width()).toBe(2.0);
+        expect(extents.area().height()).toBe(1);
     });
 });
