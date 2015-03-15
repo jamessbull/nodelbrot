@@ -43,7 +43,7 @@ jim.mandelbrot = (function () {
         coordTranslator: {
             create: function (originSizeX, originSizeY) {
                 var extents = jim.mandelbrot.extents.create(),
-                    newCoord = jim.mandelbrot.coord.create,
+                    newCoord = jim.coord.create,
                     coordFunc = function (coord) {
                         return newCoord(
                             ((extents.area().width() * coord.x) / (originSizeX - 1)) + extents.area().topLeft().x,
@@ -106,7 +106,7 @@ jim.mandelbrot.extents.create = function () {
     return {
         area: function () { return rect; },
         reset: function (start, end) {
-            rect = jim.rectangle.create(start.x, end.y, end.x - start.x, start.y - end.y);
+            rect = jim.rectangle.create(start.x, end.y, start.distanceTo(end).x, end.distanceTo(start).y);
         }
     };
 };

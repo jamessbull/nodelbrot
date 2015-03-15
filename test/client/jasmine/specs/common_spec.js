@@ -117,11 +117,11 @@ describe("Common utilities", function () {
     });
 
     it(" a coordinate should be able to give the distance between itself and another coordinate", function () {
-        var newCoord = jim.coord.create,
-            first = newCoord(2, 4),
-            second = newCoord(3, 5);
+        var newCoord = jim.coord.create;
 
-        expect(first.distanceTo(second).x).toEqual(newCoord(1, 1).x);
-        expect(first.distanceTo(second).y).toEqual(newCoord(1, 1).y);
+        expect(newCoord(2, 4).distanceTo(newCoord(3, 5)).x).toEqual(1);
+        expect(newCoord(2, 4).distanceTo(newCoord(3, 5)).y).toEqual(1);
+        expect(newCoord(5, 5).distanceTo(newCoord(3, 3)).y).toEqual(-2);
+        expect(newCoord(5, 5).distanceTo(newCoord(3, 3)).y).toEqual(-2);
     });
 });
