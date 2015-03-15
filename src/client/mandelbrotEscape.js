@@ -46,8 +46,8 @@ jim.mandelbrot = (function () {
                     newCoord = jim.mandelbrot.coord.create,
                     coordFunc = function (coord) {
                         return newCoord(
-                            ((extents.width() * coord.x) / (originSizeX - 1)) + extents.topLeft.x,
-                            ((extents.height() * coord.y) / (originSizeY - 1)) + extents.bottomRight.y
+                            ((extents.width() * coord.x) / (originSizeX - 1)) + extents.bottomLeft.x,
+                            ((extents.height() * coord.y) / (originSizeY - 1)) + extents.topRight.y
                         );
                     };
                 return {
@@ -55,8 +55,8 @@ jim.mandelbrot = (function () {
                     zoomTo: function (selection) {
                         var start = coordFunc(selection.area().bottomLeft()),
                             end = coordFunc(selection.area().topRight());
-                        extents.topLeft = start;
-                        extents.bottomRight = end;
+                        extents.bottomLeft = start;
+                        extents.topRight = end;
                     }
                 };
             }
@@ -106,13 +106,13 @@ jim.mandelbrot.extents.create = function () {
         coord = jim.coord.create;
     return {
         a: rect,
-        topLeft: coord(-2.5, 1),
-        bottomRight: coord(1, -1),
+        bottomLeft: coord(-2.5, 1),
+        topRight: coord(1, -1),
         width: function () {
-            return this.bottomRight.x - this.topLeft.x;
+            return this.topRight.x - this.bottomLeft.x;
         },
         height: function () {
-            return this.topLeft.y - this.bottomRight.y;
+            return this.bottomLeft.y - this.topRight.y;
         }
     };
 };
