@@ -12,7 +12,13 @@ var namespace = function (name) {
 namespace("jim.coord");
 jim.coord.create = function (x, y) {
     "use strict";
-    return {x: x, y: y};
+    return {
+        x: x,
+        y: y,
+        distanceTo: function (c) {
+            return jim.coord.create(c.x - this.x, c.y - this.y);
+        }
+    };
 };
 
 namespace("jim.rectangle");

@@ -66,32 +66,62 @@ describe("Common utilities", function () {
         var coord = jim.coord.create,
             r = jim.rectangle.create(5, 5, 15, 25);
 
-        expect(r.topLeft()).toEqual(coord(5, 5));
-        expect(r.topRight()).toEqual(coord(20, 5));
-        expect(r.bottomLeft()).toEqual(coord(5, 30));
-        expect(r.bottomRight()).toEqual(coord(20, 30));
+        expect(r.topLeft().x).toEqual(coord(5, 5).x);
+        expect(r.topLeft().y).toEqual(coord(5, 5).y);
+
+        expect(r.topRight().x).toEqual(coord(20, 5).x);
+        expect(r.topRight().y).toEqual(coord(20, 5).y);
+
+        expect(r.bottomLeft().x).toEqual(coord(5, 30).x);
+        expect(r.bottomLeft().y).toEqual(coord(5, 30).y);
+
+        expect(r.bottomRight().x).toEqual(coord(20, 30).x);
+        expect(r.bottomRight().y).toEqual(coord(20, 30).y);
 
         expect(r.width()).toBe(15);
         expect(r.height()).toBe(25);
 
         r.width(10);
 
-        expect(r.topLeft()).toEqual(coord(5, 5));
-        expect(r.topRight()).toEqual(coord(15, 5));
-        expect(r.bottomLeft()).toEqual(coord(5, 30));
-        expect(r.bottomRight()).toEqual(coord(15, 30));
+        expect(r.topLeft().x).toEqual(coord(5, 5).x);
+        expect(r.topLeft().y).toEqual(coord(5, 5).y);
+
+        expect(r.topRight().x).toEqual(coord(15, 5).x);
+        expect(r.topRight().y).toEqual(coord(15, 5).y);
+
+        expect(r.bottomLeft().x).toEqual(coord(5, 30).x);
+        expect(r.bottomLeft().y).toEqual(coord(5, 30).y);
+
+        expect(r.bottomRight().x).toEqual(coord(15, 30).x);
+        expect(r.bottomRight().y).toEqual(coord(15, 30).y);
 
         expect(r.width()).toBe(10);
         expect(r.height()).toBe(25);
 
         r.height(50);
 
-        expect(r.topLeft()).toEqual(coord(5, 5));
-        expect(r.topRight()).toEqual(coord(15, 5));
-        expect(r.bottomLeft()).toEqual(coord(5, 55));
-        expect(r.bottomRight()).toEqual(coord(15, 55));
+        expect(r.topLeft().x).toEqual(coord(5, 5).x);
+        expect(r.topLeft().y).toEqual(coord(5, 5).y);
+
+        expect(r.topRight().x).toEqual(coord(15, 5).x);
+        expect(r.topRight().y).toEqual(coord(15, 5).y);
+
+        expect(r.bottomLeft().x).toEqual(coord(5, 55).x);
+        expect(r.bottomLeft().y).toEqual(coord(5, 55).y);
+
+        expect(r.bottomRight().x).toEqual(coord(15, 55).x);
+        expect(r.bottomRight().y).toEqual(coord(15, 55).y);
 
         expect(r.width()).toBe(10);
         expect(r.height()).toBe(50);
+    });
+
+    it(" a coordinate should be able to give the distance between itself and another coordinate", function () {
+        var newCoord = jim.coord.create,
+            first = newCoord(2, 4),
+            second = newCoord(3, 5);
+
+        expect(first.distanceTo(second).x).toEqual(newCoord(1, 1).x);
+        expect(first.distanceTo(second).y).toEqual(newCoord(1, 1).y);
     });
 });

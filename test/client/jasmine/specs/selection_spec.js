@@ -13,20 +13,28 @@ describe("a ui selection", function () {
         selection.begin(event(5, 5));
         selection.change(event(15, 40));
 
-        expect(selection.area().topLeft()).toEqual(coord(5, 5));
-        expect(selection.area().topRight()).toEqual(coord(15, 5));
-        expect(selection.area().bottomLeft()).toEqual(coord(5, 10));
-        expect(selection.area().bottomRight()).toEqual(coord(15, 10));
+        expect(selection.area().topLeft().x).toBe(5);
+        expect(selection.area().topLeft().y).toBe(5);
+        expect(selection.area().topRight().x).toBe(15);
+        expect(selection.area().topRight().y).toBe(5);
+        expect(selection.area().bottomLeft().x).toBe(5);
+        expect(selection.area().bottomLeft().y).toBe(10);
+        expect(selection.area().bottomRight().x).toBe(15);
+        expect(selection.area().bottomRight().y).toBe(10);
         expect(selection.area().width()).toBe(10);
         expect(selection.area().height()).toBe(5);
         expect(selection.inProgress).toBe(true);
 
         selection.change(event(45, -2));
 
-        expect(selection.area().topLeft()).toEqual(coord(5, 5));
-        expect(selection.area().topRight()).toEqual(coord(45, 5));
-        expect(selection.area().bottomLeft()).toEqual(coord(5, 25));
-        expect(selection.area().bottomRight()).toEqual(coord(45, 25));
+        expect(selection.area().topLeft().x).toBe(5);
+        expect(selection.area().topLeft().y).toBe(5);
+        expect(selection.area().topRight().x).toBe(45);
+        expect(selection.area().topRight().y).toBe(5);
+        expect(selection.area().bottomLeft().x).toBe(5);
+        expect(selection.area().bottomLeft().y).toBe(25);
+        expect(selection.area().bottomRight().x).toBe(45);
+        expect(selection.area().bottomRight().y).toBe(25);
         expect(selection.area().width()).toBe(40);
         expect(selection.area().height()).toBe(20);
         expect(selection.inProgress).toBe(true);
@@ -34,10 +42,14 @@ describe("a ui selection", function () {
 
         selection.end(event(65, 32));
 
-        expect(selection.area().topLeft()).toEqual(coord(5, 5));
-        expect(selection.area().topRight()).toEqual(coord(65, 5));
-        expect(selection.area().bottomLeft()).toEqual(coord(5, 35));
-        expect(selection.area().bottomRight()).toEqual(coord(65, 35));
+        expect(selection.area().topLeft().x).toBe(5);
+        expect(selection.area().topLeft().y).toBe(5);
+        expect(selection.area().topRight().x).toBe(65);
+        expect(selection.area().topRight().y).toBe(5);
+        expect(selection.area().bottomLeft().x).toBe(5);
+        expect(selection.area().bottomLeft().y).toBe(35);
+        expect(selection.area().bottomRight().x).toBe(65);
+        expect(selection.area().bottomRight().y).toBe(35);
         expect(selection.area().width()).toBe(60);
         expect(selection.area().height()).toBe(30);
         expect(selection.inProgress).toBe(false);
