@@ -106,7 +106,7 @@ jim.mandelbrot.extents.create = function () {
     return {
         area: function () { return rect; },
         reset: function (start, end) {
-            rect = jim.rectangle.create(start.x, start.y, start.distanceTo(end).x, start.distanceTo(end).y);
+            rect = jim.rectangle.create(start, start.distanceTo(end));
         }
     };
 };

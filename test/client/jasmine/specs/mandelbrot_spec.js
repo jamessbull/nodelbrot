@@ -196,7 +196,7 @@ describe("The mandelbrot set", function () {
     it("knows the extents of the bottom left mandelbrot set", function () {
         var extents = jim.mandelbrot.extents.create(),
             coord = jim.coord.create;
-        extents.reset(coord(-2.5, 0), coord(0, -1));
+        extents.reset(coord(-2.5, 0), coord(0, 1));
         expect(extents.area().width()).toBe(2.5);
         expect(extents.area().height()).toBe(1);
     });
@@ -204,7 +204,7 @@ describe("The mandelbrot set", function () {
     it("knows the extents of the bottom right mandelbrot set", function () {
         var extents = jim.mandelbrot.extents.create(),
             coord = jim.coord.create;
-        extents.reset(coord(0, 0), coord(1, -1));
+        extents.reset(coord(0, 0), coord(1, 1));
         expect(extents.area().width()).toBe(1);
         expect(extents.area().height()).toBe(1);
     });
@@ -212,7 +212,7 @@ describe("The mandelbrot set", function () {
     it("knows the extents of the top right mandelbrot set", function () {
         var extents = jim.mandelbrot.extents.create(),
             coord = jim.coord.create;
-        extents.reset(coord(0, 1), coord(1, 0));
+        extents.reset(coord(0, -1), coord(1, 0));
 
         expect(extents.area().width()).toBe(1);
         expect(extents.area().height()).toBe(1);
@@ -221,7 +221,7 @@ describe("The mandelbrot set", function () {
     it("knows the extents of the top left mandelbrot set", function () {
         var extents = jim.mandelbrot.extents.create(),
             coord = jim.coord.create;
-        extents.reset(coord(-2.5, 1), coord(0, 0));
+        extents.reset(coord(-2.5, -1), coord(0, 0));
 
         expect(extents.area().width()).toBe(2.5);
         expect(extents.area().height()).toBe(1);
@@ -230,7 +230,7 @@ describe("The mandelbrot set", function () {
     it("knows the extents of the middle of the mandelbrot set", function () {
         var extents = jim.mandelbrot.extents.create(),
             coord = jim.coord.create;
-        extents.reset(coord(-1.5, 0.5), coord(0.5, -0.5));
+        extents.reset(coord(-1.5, -0.5), coord(0.5, 0.5));
 
         expect(extents.area().width()).toBe(2.0);
         expect(extents.area().height()).toBe(1);

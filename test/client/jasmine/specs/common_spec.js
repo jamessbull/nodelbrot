@@ -62,6 +62,17 @@ describe("Common utilities", function () {
 
     });
 
+    it("should be able to create a rectangle from coords", function () {
+        var r = jim.rectangle.create,
+            c = jim.coord.create,
+            rect = r(c(10, 10), c(20, 20));
+
+        expect(rect.width()).toBe(20);
+        expect(rect.height()).toBe(20);
+
+        expect(rect.topRight().x).toBe(30);
+    });
+
     it("should correctly know the width - height etc of a rectangle", function () {
         var coord = jim.coord.create,
             r = jim.rectangle.create(5, 5, 15, 25);

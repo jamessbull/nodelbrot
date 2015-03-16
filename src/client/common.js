@@ -22,11 +22,21 @@ jim.coord.create = function (x, y) {
 };
 
 namespace("jim.rectangle");
-jim.rectangle.create = function (x, y, width, height) {
+jim.rectangle.create = function (one, two, width, height) {
     "use strict";
-    var coord = jim.coord.create,
-        w = width,
+    var coord = jim.coord.create, x, y, w, h;
+
+    if (one.x !== undefined && two.x !== undefined) {
+        x = one.x;
+        y = one.y;
+        w = two.x;
+        h = two.y;
+    } else {
+        x = one;
+        y = two;
+        w = width;
         h = height;
+    }
     return {
         topLeft: function () {return coord(x, y); },
         topRight: function () { return coord(x + w, y); },
