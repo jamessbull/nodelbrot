@@ -42,19 +42,16 @@ jim.mandelbrot = (function () {
         },
         coordTranslator: {
             create: function (originSizeX, originSizeY) {
-                var extents = jim.rectangle.create(-2.5, -1, 3.5, 2),
-                    coordFunc = function (coord) {
-                        return jim.coord.create(
-                            ((extents.width() * coord.x) / (originSizeX - 1)) + extents.topLeft().x,
-                            ((extents.height() * coord.y) / (originSizeY - 1)) + extents.topLeft().y
-                        );
-                    };
+                var currentSet = jim.rectangle.create(-2.5, -1, 3.5, 2),
+                    screen = jim.rectangle.create(0, 0, originSizeX, originSizeY);
                 return {
-                    func: coordFunc,
+                    func: function (coord) {
+                        return screen.at(coord).translateTo(currentSet);
+                    },
                     zoomTo: function (selection) {
-                        var tl = coordFunc(selection.area().topLeft()),
-                            br = coordFunc(selection.area().bottomRight());
-                        extents = jim.rectangle.create(tl, tl.distanceTo(br));
+                        var tl = this.func(selection.area().topLeft()),
+                            br = this.func(selection.area().bottomRight());
+                        currentSet = jim.rectangle.create(tl, tl.distanceTo(br));
 
                     }
                 };

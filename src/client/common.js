@@ -21,6 +21,19 @@ jim.coord.create = function (x, y) {
     };
 };
 
+namespace("jim.coord.translator");
+jim.coord.translator.create = function (fromRect, fromPoint) {
+    "use strict";
+    return {
+        translateTo: function (toRect) {
+            return jim.coord.create(
+                toRect.topLeft().x + (((fromPoint.x - fromRect.topLeft().x) * toRect.width())  / fromRect.width()),
+                toRect.topLeft().y + (((fromPoint.y - fromRect.topLeft().y) * toRect.height()) / fromRect.height())
+            );
+        }
+    };
+};
+
 namespace("jim.rectangle");
 jim.rectangle.create = function (one, two, width, height) {
     "use strict";
@@ -49,6 +62,15 @@ jim.rectangle.create = function (one, two, width, height) {
             }
             return w;
         },
+        at: function (x, y) {
+            var point;
+            if (x.x !== undefined) {
+                point = x;
+            } else {
+                point = jim.coord.create(x, y);
+            }
+            return jim.coord.translator.create(this, point);
+        },
         height: function (newHeight) {
             if (newHeight) {
                 h = newHeight;
@@ -59,9 +81,12 @@ jim.rectangle.create = function (one, two, width, height) {
         resize: function (w, h) {
             this.width(w);
             this.height(h);
+        },
+        delta: function () {
+            return jim.coord.create(this.width(), this.height());
         }
     };
-}
+};
 
 namespace("jim.common.grid.processor");
 jim.common.grid.processor.create = function () {

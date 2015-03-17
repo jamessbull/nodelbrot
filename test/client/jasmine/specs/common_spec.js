@@ -73,6 +73,27 @@ describe("Common utilities", function () {
         expect(rect.topRight().x).toBe(30);
     });
 
+    it("should be able to translate a point from one rect to another", function () {
+        var larger     = jim.rectangle.create(-100, -100, 100, 100),
+            smaller    = jim.rectangle.create(300, 300, 50, 50),
+            pointOne   = larger.at(-100, -100).translateTo(smaller),
+            pointTwo   = larger.at(0, 0).translateTo(smaller),
+            pointThree = larger.at(-98, -98).translateTo(smaller),
+            pointFour  = larger.at(-2, -2).translateTo(smaller);
+
+        expect(pointOne.x).toBe(300);
+        expect(pointOne.y).toBe(300);
+
+        expect(pointTwo.x).toBe(350);
+        expect(pointTwo.y).toBe(350);
+
+        expect(pointThree.x).toBe(301);
+        expect(pointThree.y).toBe(301);
+
+        expect(pointFour.x).toBe(349);
+        expect(pointFour.y).toBe(349);
+    });
+
     it("should correctly know the width - height etc of a rectangle", function () {
         var coord = jim.coord.create,
             r = jim.rectangle.create(5, 5, 15, 25);
