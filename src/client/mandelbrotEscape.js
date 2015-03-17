@@ -43,7 +43,7 @@ jim.mandelbrot = (function () {
         coordTranslator: {
             create: function (originSizeX, originSizeY) {
                 var currentSet = jim.rectangle.create(-2.5, -1, 3.5, 2),
-                    screen = jim.rectangle.create(0, 0, originSizeX, originSizeY);
+                    screen = jim.rectangle.create(0, 0, originSizeX - 1, originSizeY - 1);
                 return {
                     func: function (coord) {
                         return screen.at(coord).translateTo(currentSet);
@@ -89,16 +89,3 @@ jim.mandelbrot = (function () {
         }
     };
 }());
-
-namespace("jim.mandelbrot.extents");
-jim.mandelbrot.extents.create = function () {
-    "use strict";
-    var rect = jim.rectangle.create(-2.5, -1, 3.5, 2);
-    return {
-        area: function () { return rect; },
-        reset: function (start, end) {
-            rect = jim.rectangle.create(start, start.distanceTo(end));
-        }
-    };
-};
-
