@@ -23,21 +23,12 @@ jim.mandelbrot = (function () {
         },
         state : {
             create: function (sizeX, sizeY, coordFunc) {
-                var state = [],
-                    yPos = 0,
-                    xPos = 0;
-
-                for (yPos; yPos < sizeY; yPos += 1) {
-                    for (xPos; xPos < sizeX; xPos += 1) {
-                        if (!state[xPos]) { state.push([]); }
-                        state[xPos][yPos] = {
-                            coord: coordFunc(jim.coord.create(xPos, yPos)),
-                            calc: { iterations: 0, escaped: false, x: 0, y: 0 }
-                        };
-                    }
-                    xPos = 0;
-                }
-                return state;
+                return jim.common.grid.create(sizeX, sizeY, function (x, y) {
+                    return {
+                        coord: coordFunc(jim.coord.create(x, y)),
+                        calc: { iterations: 0, escaped: false, x: 0, y: 0 }
+                    };
+                }).grid;
             }
         },
         coordTranslator: {

@@ -139,6 +139,7 @@ jim.common.grid.create = function (columnSize, rowSize, f) {
         },
         run: function (f) {
             processor.process(grid, f);
-        }
+        },
+        grid: grid
     };
 };
