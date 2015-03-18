@@ -148,6 +148,21 @@ describe("Common utilities", function () {
         expect(r.height()).toBe(50);
     });
 
+    it("should translate a given rectangle from being relative to r1 to being relative to r2 ", function () {
+        var rect = jim.rectangle.create,
+            translated,
+            screen = rect(0, 0, 500, 500),
+            mandelbrot = rect(-50, -70, 100, 100),
+            selection = rect(100, 100, 100, 100);
+
+        translated = selection.translateFrom(screen).to(mandelbrot);
+
+        expect(translated.topLeft().x).toBe(-30);
+        expect(translated.topLeft().y).toBe(-50);
+        expect(translated.width()).toBe(20);
+        expect(translated.height()).toBe(20);
+    });
+
     it(" a coordinate should be able to give the distance between itself and another coordinate", function () {
         var newCoord = jim.coord.create;
 

@@ -37,9 +37,10 @@ jim.coord.translator.create = function (fromRect, fromPoint) {
 namespace("jim.rectangle");
 jim.rectangle.create = function (one, two, width, height) {
     "use strict";
-    var coord = jim.coord.create, x, y, w, h;
+    var coord = jim.coord.create, x, y, w, h, topLeft, topRight, bottomLeft, bottomRight,
+        present = function (x) { return x !== undefined; };
 
-    if (one.x !== undefined && two.x !== undefined) {
+    if (present(one.x)) {
         x = one.x;
         y = one.y;
         w = two.x;
@@ -50,31 +51,30 @@ jim.rectangle.create = function (one, two, width, height) {
         w = width;
         h = height;
     }
+
+    topLeft = coord(x, y);
+    topRight = coord(x + w, y);
+    bottomLeft = coord(x, y + h);
+    bottomRight = coord(x + w, y + h);
+
     return {
-        topLeft: function () {return coord(x, y); },
-        topRight: function () { return coord(x + w, y); },
-        bottomRight: function () { return coord(x + w, y + h); },
-        bottomLeft: function () { return coord(x, y + h); },
-        width: function (newWidth) {
-            if (newWidth) {
-                w = newWidth;
-                return;
+        topLeft:        function () { return topLeft; },
+        topRight:       function () { return topRight; },
+        bottomRight:    function () { return bottomRight; },
+        bottomLeft:     function () { return bottomLeft; },
+        width: function (val) {
+            if (present(val)) {
+                topRight.x = topLeft.x + val;
+                bottomRight.x = topLeft.x + val;
+                w = val;
             }
             return w;
         },
-        at: function (x, y) {
-            var point;
-            if (x.x !== undefined) {
-                point = x;
-            } else {
-                point = jim.coord.create(x, y);
-            }
-            return jim.coord.translator.create(this, point);
-        },
-        height: function (newHeight) {
-            if (newHeight) {
-                h = newHeight;
-                return;
+        height: function (val) {
+            if (present(val)) {
+                bottomLeft.y = topLeft.y + val;
+                bottomRight.y = topLeft.y + val;
+                h = val;
             }
             return h;
         },
@@ -82,8 +82,23 @@ jim.rectangle.create = function (one, two, width, height) {
             this.width(w);
             this.height(h);
         },
-        delta: function () {
-            return jim.coord.create(this.width(), this.height());
+        at: function (x, y) {
+            var translator = jim.coord.translator.create;
+            if (present(x.x)) {
+                return translator(this, x);
+            }
+            return translator(this, jim.coord.create(x, y));
+        },
+        translateFrom: function (source) {
+            var selection = this;
+            return {
+                to: function (destination) {
+                    var topLeft, bottomRight, w, h;
+                    topLeft = source.at(selection.topLeft()).translateTo(destination);
+                    bottomRight = source.at(selection.bottomRight()).translateTo(destination);
+                    return jim.rectangle.create(topLeft, topLeft.distanceTo(bottomRight));
+                }
+            };
         }
     };
 };

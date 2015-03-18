@@ -49,10 +49,7 @@ jim.mandelbrot = (function () {
                         return screen.at(coord).translateTo(currentSet);
                     },
                     zoomTo: function (selection) {
-                        var tl = this.func(selection.area().topLeft()),
-                            br = this.func(selection.area().bottomRight());
-                        currentSet = jim.rectangle.create(tl, tl.distanceTo(br));
-
+                        currentSet = selection.area().translateFrom(screen).to(currentSet);
                     }
                 };
             }
