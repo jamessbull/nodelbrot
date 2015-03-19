@@ -71,19 +71,18 @@ describe("The mandelbrot set", function () {
         var escape = jim.mandelbrot.escape.create(notifier),
             i = 0,
             j = 0,
-            coord = jim.mandelbrot.coordTranslator.create(500, 500),
             stopwatch = timer.create(),
             mb;
 
         stopwatch.start();
-        mb = jim.mandelbrot.state.create(500, 500, coord.func);
+        mb = jim.mandelbrot.state.create(500, 500);
         stopwatch.stop();
         console.log("initialisation took " + stopwatch.elapsed() + "ms");
 
         stopwatch.start();
         for (i; i < 500; i += 1) {
             for (j; j < 500; j += 1) {
-                escape.calculate(mb[i][j].coord, mb[i][j].calc);
+                escape.calculate(mb.grid.grid[i][j].coord, mb.grid.grid[i][j].calc);
             }
             j = 0;
         }
@@ -92,23 +91,15 @@ describe("The mandelbrot set", function () {
     });
 
     it("should build initial state for mandelbrot calculation", function () {
-        var coord = jim.mandelbrot.coordTranslator.create(500, 500),
-            mb = jim.mandelbrot.state.create(500, 500, coord.func),
-            newCoord = jim.coord.create;
+        var mb = jim.mandelbrot.state.create(500, 500).grid.grid;
 
         expect(mb[0][0].coord.x).toBe(-2.5);
         expect(mb[0][0].coord.y).toBe(-1);
-
-        expect(coord.func(newCoord(0, 0)).x).toBe(-2.5);
-        expect(coord.func(newCoord(0, 0)).y).toBe(-1);
 
         expect(mb[0][0].calc.x).toBe(0);
         expect(mb[0][0].calc.y).toBe(0);
         expect(mb[0][0].calc.iterations).toBe(0);
         expect(mb[0][0].calc.escaped).toBeFalsy();
-
-        expect(coord.func(newCoord(499, 499)).x).toBe(1);
-        expect(coord.func(newCoord(499, 499)).y).toBe(1);
 
         expect(mb[499][499].coord.x).toBe(1);
         expect(mb[499][499].coord.y).toBe(1);
@@ -123,7 +114,7 @@ describe("The mandelbrot set", function () {
         "the func should get the x,y val from state and call escape with it" +
         "the colour function should then be called on the x,y state val and returned", function () {
             var escape = jim.mandelbrot.escape.create(notifier),
-                state = jim.mandelbrot.state.create(500, 500, jim.mandelbrot.coordTranslator.create(500, 500).func),
+                state = jim.mandelbrot.state.create(500, 500),
                 palette = jim.palette.create(),
                 mbSet = jim.mandelbrot.set.create(state, escape, palette),
                 col;
@@ -181,5 +172,15 @@ describe("The mandelbrot set", function () {
         expect(segs[3].size()).toBe(200);
         expect(segs[3].xOffset()).toBe(0);
         expect(segs[3].yOffset()).toBe(200);
+    });
+
+    it("Would be good to know how long it takes to iterate an entire set", function () {
+        // Takes too long to do the whole thing therefore I need to do it bit by bit
+        var mset = jim.mandelbrotImage.create(),
+            stopwatch = timer.create();
+        stopwatch.start();
+        mset.calculateEveryPoint();
+        stopwatch.stop();
+        console.log("The time taken to iterate over the entire set in milliseconds is " + stopwatch.elapsed());
     });
 });

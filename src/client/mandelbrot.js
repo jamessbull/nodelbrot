@@ -1,33 +1,35 @@
 namespace("jim.mandelbrotImage");
 jim.mandelbrotImage.create = function () {
     "use strict";
-    var coord = jim.mandelbrot.coordTranslator.create(1400, 800, -2.5, 1, -1, 1),
-        called = 0,
+    var called = 0,
         total = 700 * 400,
         notifier = {
             notify: function () {
-                var remaining = total - called;
-                called = called + 1;
-                document.getElementById("numberEscaped").innerHTML = remaining;
+                //var remaining = total - called;
+                //called = called + 1;
+                //document.getElementById("numberEscaped").innerHTML = remaining;
             }
         },
         escape = jim.mandelbrot.escape.create(notifier),
-        state = jim.mandelbrot.state.create(1400, 800, coord.func),
+        state = jim.mandelbrot.state.create(700, 400),
         palette = jim.palette.create(),
         mset = jim.mandelbrot.set.create(state, escape, palette),
-        segments2 = jim.segment.createSegments(1400, 800, 4, mset),
+        segments2 = jim.segment.createSegments(700, 400, 4, mset),
         screen = jim.screen.create({segments: segments2});
 
     return {
         canvas: function () {
             return screen.canvas;
         },
+        calculateEveryPoint: function () {
+            mset.drawAll();
+        },
         draw: function () {
             screen.draw();
         },
         zoomTo: function (selection) {
-            coord.zoomTo(selection);
-            mset.setState(jim.mandelbrot.state.create(1400, 800, coord.func));
+            state.zoomTo(selection);
+            //mset.setState(jim.mandelbrot.state.create(1400, 800));
         }
     };
 };
