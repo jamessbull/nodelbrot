@@ -5,38 +5,38 @@ describe("The mandelbrot set", function () {
 
     it("can take several iterations to escape", function () {
         var mandelbrotCoord = {x: -0.3, y: -0.9},
-            escape = jim.mandelbrot.escape.create(notifier),
-            state = {x: 0, y: 0, iterations: 0, escaped: false};
+            escape = jim.mandelbrot.escape.create(),
+            state = {calc: {x: 0, y: 0, iterations: 0}, escaped: false};
 
         escape.calculate(mandelbrotCoord, state);
-        expect(state.iterations).toBe(1);
+        expect(state.calc.iterations).toBe(1);
         expect(state.escaped).toBeFalsy();
-        expect(state.x).toBe(-0.3);
-        expect(state.y).toBe(-0.9);
+        expect(state.calc.x).toBe(-0.3);
+        expect(state.calc.y).toBe(-0.9);
 
         escape.calculate(mandelbrotCoord, state);
-        expect(state.iterations).toBe(2);
+        expect(state.calc.iterations).toBe(2);
         expect(state.escaped).toBeFalsy();
-        expect(state.x).toBe(-1.02);
-        expect(state.y).toBe(-0.36);
+        expect(state.calc.x).toBe(-1.02);
+        expect(state.calc.y).toBe(-0.36);
 
         escape.calculate(mandelbrotCoord, state);
-        expect(state.iterations).toBe(3);
+        expect(state.calc.iterations).toBe(3);
         expect(state.escaped).toBeFalsy();
-        expect(state.x).toBe(0.6108);
-        expect(state.y).toBe(-0.16560000000000008);
+        expect(state.calc.x).toBe(0.6108);
+        expect(state.calc.y).toBe(-0.16560000000000008);
 
         escape.calculate(mandelbrotCoord, state);
-        expect(state.iterations).toBe(4);
+        expect(state.calc.iterations).toBe(4);
         expect(state.escaped).toBeFalsy();
-        expect(state.x).toBe(0.04565328000000002);
-        expect(state.y).toBe(-1.10229696);
+        expect(state.calc.x).toBe(0.04565328000000002);
+        expect(state.calc.y).toBe(-1.10229696);
 
         escape.calculate(mandelbrotCoord, state);
-        expect(state.iterations).toBe(5);
+        expect(state.calc.iterations).toBe(5);
         expect(state.escaped).toBeFalsy();
-        expect(state.x).toBe(-1.5129743660504835);
-        expect(state.y).toBe(-1.0006469435160577);
+        expect(state.calc.x).toBe(-1.5129743660504835);
+        expect(state.calc.y).toBe(-1.0006469435160577);
 
     });
 
@@ -51,13 +51,13 @@ describe("The mandelbrot set", function () {
         });
     });
 
-    it("should return a colour no matter how large the number of iterations", function () {
+    it("should return a colour for any number between 0 and 1", function () {
         var palette = jim.palette.create(),
             colours = [];
 
-        colours.push(palette.colourAt({iterations: 0}));
-        colours.push(palette.colourAt({iterations: 360}));
-        colours.push(palette.colourAt({iterations: 720}));
+        colours.push(palette.colourAt(0));
+        colours.push(palette.colourAt(0.5));
+        colours.push(palette.colourAt(1));
 
         colours.forEach(function (colour) {
             expect(colour.hasOwnProperty('r')).toBe(true);
@@ -82,7 +82,7 @@ describe("The mandelbrot set", function () {
         stopwatch.start();
         for (i; i < 500; i += 1) {
             for (j; j < 500; j += 1) {
-                escape.calculate(mb.grid.grid[i][j].coord, mb.grid.grid[i][j].calc);
+                escape.calculate(mb.grid.grid[i][j].coord, mb.grid.grid[i][j]);
             }
             j = 0;
         }
@@ -123,7 +123,7 @@ describe("The mandelbrot set", function () {
             console.log(col);
             expect(col.r).toBe(255);
             expect(col.g).toBe(0);
-            expect(col.b).toBe(4);
+            expect(col.b).toBe(0);
 
             col = mbSet.drawFunc(300, 250);
             expect(col.r).toBe(0);
@@ -172,15 +172,5 @@ describe("The mandelbrot set", function () {
         expect(segs[3].size()).toBe(200);
         expect(segs[3].xOffset()).toBe(0);
         expect(segs[3].yOffset()).toBe(200);
-    });
-
-    it("Would be good to know how long it takes to iterate an entire set", function () {
-        // Takes too long to do the whole thing therefore I need to do it bit by bit
-        var mset = jim.mandelbrotImage.create(),
-            stopwatch = timer.create();
-        stopwatch.start();
-        mset.calculateEveryPoint();
-        stopwatch.stop();
-        console.log("The time taken to iterate over the entire set in milliseconds is " + stopwatch.elapsed());
     });
 });
