@@ -171,4 +171,13 @@ describe("Common utilities", function () {
         expect(newCoord(5, 5).distanceTo(newCoord(3, 3)).y).toEqual(-2);
         expect(newCoord(5, 5).distanceTo(newCoord(3, 3)).y).toEqual(-2);
     });
+
+    it("linearly interpolates between two numbers", function () {
+        var interpolator = jim.interpolator.create();
+        expect(interpolator.interpolate(0, 10, 0.1)).toBe(1);
+        expect(interpolator.interpolate(0, 10, 0.5)).toBe(5);
+        expect(interpolator.interpolate(0, 10, 1.0)).toBe(10);
+        expect(interpolator.interpolate(50, 100, 0.5)).toBe(75);
+        expect(interpolator.interpolate(100, 200, 0.1)).toBe(110);
+    });
 });

@@ -6,37 +6,37 @@ describe("The mandelbrot set", function () {
     it("can take several iterations to escape", function () {
         var mandelbrotCoord = {x: -0.3, y: -0.9},
             escape = jim.mandelbrot.escape.create(),
-            state = {calc: {x: 0, y: 0, iterations: 0}, escaped: false};
+            point = jim.mandelbrot.point.create(mandelbrotCoord);
 
-        escape.calculate(mandelbrotCoord, state);
-        expect(state.calc.iterations).toBe(1);
-        expect(state.escaped).toBeFalsy();
-        expect(state.calc.x).toBe(-0.3);
-        expect(state.calc.y).toBe(-0.9);
+        escape.calculate(point);
+        expect(point.iterations).toBe(1);
+        expect(point.escaped).toBeFalsy();
+        expect(point.x).toBe(-0.3);
+        expect(point.y).toBe(-0.9);
 
-        escape.calculate(mandelbrotCoord, state);
-        expect(state.calc.iterations).toBe(2);
-        expect(state.escaped).toBeFalsy();
-        expect(state.calc.x).toBe(-1.02);
-        expect(state.calc.y).toBe(-0.36);
+        escape.calculate(point);
+        expect(point.iterations).toBe(2);
+        expect(point.escaped).toBeFalsy();
+        expect(point.x).toBe(-1.02);
+        expect(point.y).toBe(-0.36);
 
-        escape.calculate(mandelbrotCoord, state);
-        expect(state.calc.iterations).toBe(3);
-        expect(state.escaped).toBeFalsy();
-        expect(state.calc.x).toBe(0.6108);
-        expect(state.calc.y).toBe(-0.16560000000000008);
+        escape.calculate(point);
+        expect(point.iterations).toBe(3);
+        expect(point.escaped).toBeFalsy();
+        expect(point.x).toBe(0.6108);
+        expect(point.y).toBe(-0.16560000000000008);
 
-        escape.calculate(mandelbrotCoord, state);
-        expect(state.calc.iterations).toBe(4);
-        expect(state.escaped).toBeFalsy();
-        expect(state.calc.x).toBe(0.04565328000000002);
-        expect(state.calc.y).toBe(-1.10229696);
+        escape.calculate(point);
+        expect(point.iterations).toBe(4);
+        expect(point.escaped).toBeFalsy();
+        expect(point.x).toBe(0.04565328000000002);
+        expect(point.y).toBe(-1.10229696);
 
-        escape.calculate(mandelbrotCoord, state);
-        expect(state.calc.iterations).toBe(5);
-        expect(state.escaped).toBeFalsy();
-        expect(state.calc.x).toBe(-1.5129743660504835);
-        expect(state.calc.y).toBe(-1.0006469435160577);
+        escape.calculate(point);
+        expect(point.iterations).toBe(5);
+        expect(point.escaped).toBeFalsy();
+        expect(point.x).toBe(-1.5129743660504835);
+        expect(point.y).toBe(-1.0006469435160577);
 
     });
 
@@ -51,24 +51,8 @@ describe("The mandelbrot set", function () {
         });
     });
 
-    it("should return a colour for any number between 0 and 1", function () {
-        var palette = jim.palette.create(),
-            colours = [];
-
-        colours.push(palette.colourAt(0));
-        colours.push(palette.colourAt(0.5));
-        colours.push(palette.colourAt(1));
-
-        colours.forEach(function (colour) {
-            expect(colour.hasOwnProperty('r')).toBe(true);
-            expect(colour.hasOwnProperty('g')).toBe(true);
-            expect(colour.hasOwnProperty('b')).toBe(true);
-            expect(colour.hasOwnProperty('a')).toBe(true);
-        });
-    });
-
     it("should execute 250000 times in 8 ms", function () {
-        var escape = jim.mandelbrot.escape.create(notifier),
+        var escape = jim.mandelbrot.escape.create(),
             i = 0,
             j = 0,
             stopwatch = timer.create(),
@@ -82,7 +66,7 @@ describe("The mandelbrot set", function () {
         stopwatch.start();
         for (i; i < 500; i += 1) {
             for (j; j < 500; j += 1) {
-                escape.calculate(mb.grid.grid[i][j].coord, mb.grid.grid[i][j]);
+                escape.calculate(mb.at(i, j));
             }
             j = 0;
         }
@@ -91,23 +75,23 @@ describe("The mandelbrot set", function () {
     });
 
     it("should build initial state for mandelbrot calculation", function () {
-        var mb = jim.mandelbrot.state.create(500, 500).grid.grid;
+        var mb = jim.mandelbrot.state.create(500, 500);
 
-        expect(mb[0][0].coord.x).toBe(-2.5);
-        expect(mb[0][0].coord.y).toBe(-1);
+        expect(mb.at(0, 0).coord.x).toBe(-2.5);
+        expect(mb.at(0, 0).coord.y).toBe(-1);
 
-        expect(mb[0][0].calc.x).toBe(0);
-        expect(mb[0][0].calc.y).toBe(0);
-        expect(mb[0][0].calc.iterations).toBe(0);
-        expect(mb[0][0].calc.escaped).toBeFalsy();
+        expect(mb.at(0, 0).x).toBe(0);
+        expect(mb.at(0, 0).y).toBe(0);
+        expect(mb.at(0, 0).iterations).toBe(0);
+        expect(mb.at(0, 0).escaped).toBeFalsy();
 
-        expect(mb[499][499].coord.x).toBe(1);
-        expect(mb[499][499].coord.y).toBe(1);
+        expect(mb.at(499, 499).coord.x).toBe(1);
+        expect(mb.at(499, 499).coord.y).toBe(1);
 
-        expect(mb[499][499].calc.x).toBe(0);
-        expect(mb[499][499].calc.y).toBe(0);
-        expect(mb[499][499].calc.iterations).toBe(0);
-        expect(mb[499][499].calc.escaped).toBeFalsy();
+        expect(mb.at(499, 499).x).toBe(0);
+        expect(mb.at(499, 499).y).toBe(0);
+        expect(mb.at(499, 499).iterations).toBe(0);
+        expect(mb.at(499, 499).escaped).toBeFalsy();
     });
 
     it("should take a state and an escape and a palette and return a func that takes x and y " +
@@ -122,8 +106,8 @@ describe("The mandelbrot set", function () {
             col = mbSet.drawFunc(12, 45);
             console.log(col);
             expect(col.r).toBe(255);
-            expect(col.g).toBe(0);
-            expect(col.b).toBe(0);
+            expect(col.g).toBe(255);
+            expect(col.b).toBe(255);
 
             col = mbSet.drawFunc(300, 250);
             expect(col.r).toBe(0);
@@ -173,4 +157,30 @@ describe("The mandelbrot set", function () {
         expect(segs[3].xOffset()).toBe(0);
         expect(segs[3].yOffset()).toBe(200);
     });
+
+    it("should calculate a colour based on the current state of the point calculation", function () {
+        var p = jim.mandelbrot.point.create(jim.coord.create(0.1, 0.1)),
+            palette = jim.palette.create(),
+            colours = jim.colourCalculator.create(palette),
+            colour,
+            histogram = {percentEscapedBy: function (n) {return 0.2; }};
+
+        p.iterations = 5;
+        p.x = 3.5;
+        p.y = 3;
+
+        spyOn(palette, "colourAt").andReturn(jim.colour.create(8, 8, 8, 255));
+        colour = colours.forPoint(p, histogram);
+
+        expect(palette.colourAt).toHaveBeenCalledWith(0.2);
+
+        expect(colour.r).toBe(8);
+        expect(colour.g).toBe(8);
+        expect(colour.b).toBe(8);
+
+    });
+//so I have a histogram and a palette and a colour calculator
+// calc takes histogram and palette
+// histogram gives me a value between 0 and 1 I use this to get a colour
+// palette responsible for returning a colour between two other colours
 });

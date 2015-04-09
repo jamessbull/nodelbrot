@@ -47,21 +47,27 @@ jim.histogram.create = function () {
         keys = [],
         ripple = jim.arrays.ripple,
         insert = jim.arrays.orderedInsert,
-        find = jim.arrays.find;
+        find = jim.arrays.find,
+        insertNewHistogramValue = function (number) {
+            var index = insert(keys, number);
+            if(index === 0) {
+                state[number] = 0
+            } else {
+                state[number] = state[keys[index - 1]];
+            }
+            return index;
+        },
+        findOrInsert = function (number) {
+            if (!state[number]) {
+                return insertNewHistogramValue(number)
+            } else {
+                return find(keys, number);
+            }
+        };
 
     return {
         add: function (number) {
-            var index;
-            if (!state[number]) {
-                index = insert(keys, number);
-                if(index === 0) {
-                    state[number] = 0
-                } else {
-                    state[number] = state[keys[index - 1]];
-                }
-            } else {
-                index = find(keys, number);
-            }
+            var index = findOrInsert(number);
             ripple(keys, index, state);
             total += 1;
         },

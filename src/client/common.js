@@ -143,3 +143,13 @@ jim.common.grid.create = function (columnSize, rowSize, f) {
         grid: grid
     };
 };
+
+namespace("jim.interpolator");
+jim.interpolator.create = function () {
+    "use strict";
+    return {
+        interpolate: function (from, to, fraction) {
+            return from + ((to - from) * fraction);
+        }
+    };
+}
