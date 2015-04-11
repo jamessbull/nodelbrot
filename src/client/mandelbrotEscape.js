@@ -24,6 +24,7 @@ jim.mandelbrot = (function () {
                     escape = jim.mandelbrot.escape.create(),
                     histogram = jim.histogram.create(),
                     pal = jim.palette.create(),
+                    colours = jim.colourCalculator.create(pal),
                     black = colour(0, 0, 0, 255),
                     initialiseState = function () {
                         return jim.common.grid.create(sizeX, sizeY, function (x, y) {
@@ -38,13 +39,14 @@ jim.mandelbrot = (function () {
                     },
                     processState = function (x, y) {
                         var point = this.at(x, y);
-                        escape.attempt(point, 50);
+                        escape.attempt(point, 5);
                         if (point.escaped) {
                             if (!point.counted) {
                                 point.counted = true;
-                                histogram.add(point.iterations);
+                                histogram.add(point.escapedAt);
                             }
-                            point.colour = pal.colourAt(histogram.percentEscapedBy(point.iterations));
+                            //point.colour = pal.colourAt(histogram.percentEscapedBy(point.iterations));
+                            point.colour = colours.forPoint(point, histogram);
                             return point.colour;
                         }
                         point.colour = black;
@@ -71,21 +73,22 @@ jim.mandelbrot.escape.create = function () {
                 y = point.y,
                 escaped =  (x * x + y * y) > 4,
                 tempX = 0;
-            if (!escaped) {
+            if (((x * x) + (y * y)) < 65536 && point.iterations < 100000) {
                 tempX = x * x - y * y + point.coord.x;
                 point.y = 2 * x * y + point.coord.y;
                 point.x = tempX;
                 point.iterations += 1;
-            } else {
-                point.escaped = true;
+            }
+            if (escaped) {
+                if (!point.escaped) {
+                    point.escaped = true;
+                    point.escapedAt = point.iterations;
+                }
             }
         },
         attempt: function (point, times) {
             var i;
             for (i = times; i > 0; i -= 1) {
-                if (point.escaped) {
-                    return;
-                }
                 this.calculate(point);
             }
         }
@@ -101,7 +104,8 @@ jim.mandelbrot.point.create = function (coord) {
         x: 0,
         y: 0,
         counted: false,
-        escaped: false
+        escaped: false,
+        escapedAt: 0
     };
 };
 
@@ -118,16 +122,16 @@ jim.colourCalculator.create = function (palette) {
                 iteration,
                 interpolate = jim.interpolator.create().interpolate;
 
-            p.iterations = 5;
-            p.x = 3.5;
-            p.y = 3;
             zn = Math.sqrt((p.x * p.x) + (p.y * p.y));
             nu = Math.log(Math.log(zn) / Math.log(2)) / Math.log(2);
             iteration = p.iterations + 1 - nu;
             lowerIteration = Math.floor(iteration - 1);
             higerIteration = Math.floor(iteration);
             fractionalPart = iteration % 1;
-            return palette.colourAt(interpolate(histogram.percentEscapedBy(lowerIteration), histogram.percentEscapedBy(higerIteration), fractionalPart));
+            var lower = histogram.percentEscapedBy(lowerIteration);
+            var higher = histogram.percentEscapedBy(higerIteration);
+            var interpolatedColour = interpolate(lower, higher, fractionalPart);
+            return palette.colourAt(interpolatedColour);
         }
     };
 };

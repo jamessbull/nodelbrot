@@ -32,6 +32,23 @@ describe("mandelbrot escape histogram", function () {
         expect(histogram.percentEscapedBy(10)).toBe(1.0);
     });
 
+    it("should find the lowest thing to be entered", function () {
+        var histogram = jim.histogram.create();
+        histogram.add(10);
+        histogram.add(10);
+        histogram.add(10);
+        histogram.add(10);
+        histogram.add(10);
+        histogram.add(10);
+        histogram.add(4);
+        histogram.add(2);
+        histogram.add(2);
+        histogram.add(1);
+
+        expect(histogram.total()).toBe(10);
+        expect(histogram.percentEscapedBy(8)).toBe(0.4);
+    });
+
     it("should keep a running total", function () {
         var histogram = jim.histogram.create();
         histogram.add(10);

@@ -72,10 +72,21 @@ jim.histogram.create = function () {
             total += 1;
         },
         get: function (number) {
-            return state[number];
+            var check = number;
+            while (!state[check] && check > 0) {
+                check -= 1;
+            }
+            if(check === 0) {
+                return 1;
+            }
+            return state[check];
         },
         percentEscapedBy: function (iteration) {
-            return this.get(iteration) / total;
+            var escaped = this.get(iteration);
+            if (escaped === 0) {
+                return 0;
+            }
+            return escaped / total;
         },
         numberEscapedBy: function (iteration) {
             return this.get(iteration);
