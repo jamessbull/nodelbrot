@@ -3,110 +3,102 @@ jim.mandelbrot = (function () {
     "use strict";
     var colour = jim.colour.create;
     return {
-        set: {
-            create: function (initialState) {
-                var currentState = initialState,
-                    drawFunc = function (x, y) {
-                        return currentState.processState(x, y);
-                    };
-                return {
-                    drawFunc: drawFunc,
-                    drawAll: function () {
-                        currentState.grid.run(processState);
-                    }
-                };
-            }
-        },
         state : {
             create: function (sizeX, sizeY) {
                 var currentExtents = jim.rectangle.create(-2.5, -1, 3.5, 2),
                     screen = jim.rectangle.create(0, 0, sizeX - 1, sizeY - 1),
-                    escape = jim.mandelbrot.escape.create(),
                     histogram = jim.histogram.create(),
                     pal = jim.palette.create(),
                     colours = jim.colourCalculator.create(pal),
                     black = colour(0, 0, 0, 255),
+
                     initialiseState = function () {
                         return jim.common.grid.create(sizeX, sizeY, function (x, y) {
                             return jim.mandelbrot.point.create(screen.at(x, y).translateTo(currentExtents));
                         });
                     },
                     grid = initialiseState(),
+
                     zoom = function (selection) {
                         currentExtents = selection.area().translateFrom(screen).to(currentExtents);
                         grid = initialiseState();
                         histogram.reset();
                     },
                     processState = function (x, y) {
-                        var point = this.at(x, y);
-                        escape.attempt(point, 5);
-                        if (point.escaped) {
-                            if (!point.counted) {
-                                point.counted = true;
-                                histogram.add(point.escapedAt);
-                            }
-                            //point.colour = pal.colourAt(histogram.percentEscapedBy(point.iterations));
-                            point.colour = colours.forPoint(point, histogram);
-                            return point.colour;
+                        var point = grid.at(x, y);
+                        point.batchCalculate(50, histogram);
+                        if (!point.alreadyEscaped) {
+                            return black;
                         }
-                        point.colour = black;
-                        return black;
+                        return colours.forPoint(point, histogram);
                     };
 
                 return {
                     grid: grid,
-                    at: function (x, y) { return grid.at(x, y); },
                     zoomTo: zoom,
-                    processState: processState
+                    drawFunc: processState
                 };
             }
         }
     };
 }());
 
-namespace("jim.mandelbrot.escape");
-jim.mandelbrot.escape.create = function () {
+namespace("jim.mandelbrot.basepoint");
+jim.mandelbrot.basepoint = (function () {
     "use strict";
     return {
-        calculate: function (point) {
-            var x = point.x,
-                y = point.y,
-                escaped =  (x * x + y * y) > 4,
-                tempX = 0;
-            if (((x * x) + (y * y)) < 65536 && point.iterations < 100000) {
-                tempX = x * x - y * y + point.coord.x;
-                point.y = 2 * x * y + point.coord.y;
-                point.x = tempX;
-                point.iterations += 1;
-            }
-            if (escaped) {
-                if (!point.escaped) {
-                    point.escaped = true;
-                    point.escapedAt = point.iterations;
+        mx: 0,
+        count: 0,
+        tempX: 0,
+        my: 0,
+        x: 0,
+        y: 0,
+        complete: false,
+        alreadyEscaped: false,
+        iterations: 0,
+        squaresSum: function () {
+            return this.x * this.x + this.y * this.y;
+        },
+        calculate: function (histogram) {
+            if (this.incomplete()) {
+                this.tempX = this.x * this.x - this.y * this.y + this.mx;
+                this.y = 2 * this.x * this.y + this.my;
+                this.x = this.tempX;
+                this.iterations += 1;
+                if (!this.alreadyEscaped && this.squaresSum() > 4) {
+                    this.alreadyEscaped = true;
+                    histogram.add(this.iterations);
                 }
             }
         },
-        attempt: function (point, times) {
-            var i;
-            for (i = times; i > 0; i -= 1) {
-                this.calculate(point);
+        batchCalculate: function (times, histogram) {
+            for (this.count = times; this.count > 0; this.count -= 1) {
+                if (this.complete) {
+                    break;
+                }
+                this.calculate(histogram);
             }
+        },
+        incomplete: function () {
+            if (this.complete) {
+                return false;
+            }
+            if ((this.squaresSum()) < 65536 && this.iterations < 10000) {
+                return true;
+            }
+            this.complete = true;
+            return false;
         }
     };
-};
+}());
 
 namespace("jim.mandelbrot.point");
 jim.mandelbrot.point.create = function (coord) {
     "use strict";
-    return {
-        coord: coord,
-        iterations: 0,
-        x: 0,
-        y: 0,
-        counted: false,
-        escaped: false,
-        escapedAt: 0
-    };
+    var point = Object.create(jim.mandelbrot.basepoint);
+    point.mx = coord.x;
+    point.my = coord.y;
+    return point;
 };
 
 namespace("jim.colourCalculator");
@@ -118,8 +110,11 @@ jim.colourCalculator.create = function (palette) {
                 nu,
                 lowerIteration,
                 higerIteration,
+                lower,
+                higher,
                 fractionalPart,
                 iteration,
+                interpolatedColour,
                 interpolate = jim.interpolator.create().interpolate;
 
             zn = Math.sqrt((p.x * p.x) + (p.y * p.y));
@@ -128,9 +123,9 @@ jim.colourCalculator.create = function (palette) {
             lowerIteration = Math.floor(iteration - 1);
             higerIteration = Math.floor(iteration);
             fractionalPart = iteration % 1;
-            var lower = histogram.percentEscapedBy(lowerIteration);
-            var higher = histogram.percentEscapedBy(higerIteration);
-            var interpolatedColour = interpolate(lower, higher, fractionalPart);
+            lower = histogram.percentEscapedBy(lowerIteration);
+            higher = histogram.percentEscapedBy(higerIteration);
+            interpolatedColour = interpolate(lower, higher, fractionalPart);
             return palette.colourAt(interpolatedColour);
         }
     };

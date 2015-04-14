@@ -158,6 +158,13 @@ describe("The mandelbrot set", function () {
         expect(segs[3].yOffset()).toBe(200);
     });
 
+    it("should calculate the distance to the origin", function () {
+        var p = jim.mandelbrot.point.create({x: 1, y: 2});
+        p.x = 3;
+        p.y = 4;
+        expect(p.escapeVelocity()).toBe(5);
+    });
+
     it("should calculate a colour based on the current state of the point calculation", function () {
         var p = jim.mandelbrot.point.create(jim.coord.create(0.1, 0.1)),
             palette = jim.palette.create(),
