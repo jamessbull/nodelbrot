@@ -110,7 +110,14 @@ jim.common.grid.processor.create = function () {
         process: function (array, f) {
             array.forEach(function (nested, x) {
                 nested.forEach(function (value, y) {
-                    array[x][y] = f(array[x][y]);
+                    array[x][y] = f(array[x][y], x, y);
+                });
+            });
+        },
+        iterate: function  (array, f) {
+            array.forEach(function (nested, x) {
+                nested.forEach(function (value, y) {
+                    f(array[x][y], x, y);
                 });
             });
         }
@@ -137,8 +144,11 @@ jim.common.grid.create = function (columnSize, rowSize, f) {
         at: function (x, y) {
             return grid[x][y];
         },
-        run: function (f) {
+        replace: function (f) {
             processor.process(grid, f);
+        },
+        iterate: function (f) {
+            processor.iterate(grid, f);
         },
         grid: grid
     };

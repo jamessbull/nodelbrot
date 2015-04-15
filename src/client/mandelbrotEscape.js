@@ -1,48 +1,3 @@
-namespace("jim.mandelbrot");
-jim.mandelbrot = (function () {
-    "use strict";
-    var colour = jim.colour.create;
-    return {
-        state : {
-            create: function (sizeX, sizeY) {
-                var currentExtents = jim.rectangle.create(-2.5, -1, 3.5, 2),
-                    screen = jim.rectangle.create(0, 0, sizeX - 1, sizeY - 1),
-                    histogram = jim.histogram.create(),
-                    pal = jim.palette.create(),
-                    colours = jim.colourCalculator.create(pal),
-                    black = colour(0, 0, 0, 255),
-
-                    initialiseState = function () {
-                        return jim.common.grid.create(sizeX, sizeY, function (x, y) {
-                            return jim.mandelbrot.point.create(screen.at(x, y).translateTo(currentExtents));
-                        });
-                    },
-                    grid = initialiseState(),
-
-                    zoom = function (selection) {
-                        currentExtents = selection.area().translateFrom(screen).to(currentExtents);
-                        grid = initialiseState();
-                        histogram.reset();
-                    },
-                    processState = function (x, y) {
-                        var point = grid.at(x, y);
-                        point.batchCalculate(50, histogram);
-                        if (!point.alreadyEscaped) {
-                            return black;
-                        }
-                        return colours.forPoint(point, histogram);
-                    };
-
-                return {
-                    grid: grid,
-                    zoomTo: zoom,
-                    drawFunc: processState
-                };
-            }
-        }
-    };
-}());
-
 namespace("jim.mandelbrot.basepoint");
 jim.mandelbrot.basepoint = (function () {
     "use strict";
@@ -71,23 +26,33 @@ jim.mandelbrot.basepoint = (function () {
                 }
             }
         },
-        batchCalculate: function (times, histogram) {
+        calculateCurrentColour: function (times, histogram, colours) {
             for (this.count = times; this.count > 0; this.count -= 1) {
                 if (this.complete) {
                     break;
                 }
                 this.calculate(histogram);
             }
+            return this.alreadyEscaped ?
+                    colours.forPoint(this, histogram) :
+                    colours.black;
         },
         incomplete: function () {
-            if (this.complete) {
+            if (this.complete)
                 return false;
-            }
-            if ((this.squaresSum()) < 65536 && this.iterations < 10000) {
+            if ((this.squaresSum()) < 65536 && this.iterations < 10000)
                 return true;
-            }
             this.complete = true;
             return false;
+        },
+        reset: function (coord) {
+            this.mx = coord.x;
+            this.my = coord.y;
+            this.iterations = 0;
+            this.x = 0;
+            this.y = 0;
+            this.complete = false;
+            this.alreadyEscaped = false;
         }
     };
 }());
@@ -104,21 +69,21 @@ jim.mandelbrot.point.create = function (coord) {
 namespace("jim.colourCalculator");
 jim.colourCalculator.create = function (palette) {
     "use strict";
+    var zn,
+        nu,
+        lowerIteration,
+        higerIteration,
+        lower,
+        higher,
+        fractionalPart,
+        iteration,
+        interpolatedColour,
+        interpolate = jim.interpolator.create().interpolate;
+
     return {
         forPoint: function (p, histogram) {
-            var zn,
-                nu,
-                lowerIteration,
-                higerIteration,
-                lower,
-                higher,
-                fractionalPart,
-                iteration,
-                interpolatedColour,
-                interpolate = jim.interpolator.create().interpolate;
-
             zn = Math.sqrt((p.x * p.x) + (p.y * p.y));
-            nu = Math.log(Math.log(zn) / Math.log(2)) / Math.log(2);
+            nu = Math.log(Math.log(zn) /  Math.LN2) / Math.LN2;
             iteration = p.iterations + 1 - nu;
             lowerIteration = Math.floor(iteration - 1);
             higerIteration = Math.floor(iteration);
@@ -127,6 +92,36 @@ jim.colourCalculator.create = function (palette) {
             higher = histogram.percentEscapedBy(higerIteration);
             interpolatedColour = interpolate(lower, higher, fractionalPart);
             return palette.colourAt(interpolatedColour);
+        },
+        black: jim.colour.create(0, 0, 0, 255)
+    };
+};
+
+namespace("jim.mandelbrot.state");
+jim.mandelbrot.state.create = function (sizeX, sizeY) {
+    "use strict";
+    var aRectangle        = jim.rectangle.create,
+        aGrid             = jim.common.grid.create,
+        aPoint            = jim.mandelbrot.point.create,
+
+        currentExtents  = aRectangle(-2.5, -1, 3.5, 2),
+        screen          = aRectangle(0, 0, sizeX - 1, sizeY - 1),
+        histogram       = jim.histogram.create(),
+        colours         = jim.colourCalculator.create(jim.palette.create()),
+
+        fromScreen = function (x, y) { return screen.at(x, y).translateTo(currentExtents);},
+        grid = aGrid(sizeX, sizeY, function (x, y) {
+            return aPoint(fromScreen(x, y));
+        });
+
+    return {
+        zoomTo: function (selection) {
+            currentExtents = selection.area().translateFrom(screen).to(currentExtents);
+            grid.iterate( function (point, x, y) { point.reset(fromScreen(x, y)); });
+            histogram.reset();
+        },
+        drawFunc: function (x, y) {
+            return grid.at(x, y).calculateCurrentColour(50, histogram, colours);
         }
     };
 };
