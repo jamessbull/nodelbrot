@@ -24,8 +24,8 @@ namespace("jim.init");
 jim.init.run = function () {
     "use strict";
     var currentMandelbrotSet = jim.mandelbrotImage.create(),
-        ui = jim.mandelbrot.ui.create(currentMandelbrotSet),
         canvasDiv = document.getElementById("mandelbrotCanvas"),
+        ui = jim.mandelbrot.ui.create(currentMandelbrotSet, canvasDiv, currentMandelbrotSet.canvas().width, currentMandelbrotSet.canvas().height),
         uiCanvas = document.createElement('canvas'),
         render = function () {
             currentMandelbrotSet.draw();
