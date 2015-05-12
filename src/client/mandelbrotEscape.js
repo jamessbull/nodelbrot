@@ -100,11 +100,12 @@ jim.colourCalculator.create = function (palette) {
 namespace("jim.mandelbrot.state");
 jim.mandelbrot.state.create = function (sizeX, sizeY) {
     "use strict";
-    var aRectangle        = jim.rectangle.create,
-        aGrid             = jim.common.grid.create,
-        aPoint            = jim.mandelbrot.point.create,
+    var aRectangle      = jim.rectangle.create,
+        aGrid           = jim.common.grid.create,
+        aPoint          = jim.mandelbrot.point.create,
 
         currentExtents  = aRectangle(-2.5, -1, 3.5, 2),
+        previousExtents = [],
         screen          = aRectangle(0, 0, sizeX - 1, sizeY - 1),
         histogram       = jim.histogram.create(),
         colours         = jim.colourCalculator.create(jim.palette.create()),
@@ -116,12 +117,22 @@ jim.mandelbrot.state.create = function (sizeX, sizeY) {
 
     return {
         zoomTo: function (selection) {
+            previousExtents.push(currentExtents.copy());
             currentExtents = selection.area().translateFrom(screen).to(currentExtents);
             grid.iterate( function (point, x, y) { point.reset(fromScreen(x, y)); });
             histogram.reset();
         },
+        zoomOut: function () {
+            if (previousExtents.length > 0) {
+                currentExtents = previousExtents.pop();
+            }
+            grid.iterate( function (point, x, y) { point.reset(fromScreen(x, y)); });
+            histogram.reset();
+
+        },
         drawFunc: function (x, y) {
             return grid.at(x, y).calculateCurrentColour(50, histogram, colours);
-        }
+        },
+        at: function (x, y) { return grid.at(x, y);}
     };
 };

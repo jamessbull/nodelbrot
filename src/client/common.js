@@ -89,6 +89,9 @@ jim.rectangle.create = function (one, two, width, height) {
             }
             return translator(this, jim.coord.create(x, y));
         },
+        copy: function () {
+            return jim.rectangle.create(x, y, w, h);
+        },
         translateFrom: function (source) {
             var selection = this;
             return {

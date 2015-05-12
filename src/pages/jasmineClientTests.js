@@ -4,6 +4,7 @@
         template = require("view/template.js").create,
         filesToScripts = function (files, urlFragment) {
             var returnVal = "";
+            returnVal += '<script src="/js/common.js"></script>\n';
             files.forEach(function (file) {
                 returnVal += '<script src="/' + urlFragment + '/' + file + '"></script>\n';
             });

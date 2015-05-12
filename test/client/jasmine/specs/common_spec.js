@@ -46,7 +46,7 @@ describe("Common utilities", function () {
         expect(grid.at(2, 1)).toBe(2);
         expect(grid.at(2, 2)).toBe(4);
 
-        grid.run(function (x) {return x + 2;});
+        grid.replace(function (x) {return x + 2;});
 
         expect(grid.at(0, 0)).toBe(2);
         expect(grid.at(0, 1)).toBe(2);

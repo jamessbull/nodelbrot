@@ -14,6 +14,9 @@ jim.mandelbrotImage.create = function () {
         },
         zoomTo: function (selection) {
             state.zoomTo(selection);
+        },
+        zoomOut: function () {
+            state.zoomOut();
         }
     };
 };
