@@ -21,11 +21,17 @@ jim.mandelbrot.ui.create = function (mandelbrotSet, canvas, w, h) {
     canvas.onmousedown = function (e) {
         if (e.button === 0)
             actions.forEach(function (action) {action.leftMouseDown(e);});
+        if (e.button === 2)
+            actions.forEach(function (action) { action.rightMouseDown(e);});
     };
 
     canvas.onmouseup = function (e) {
-        if (e.button === 0)
-            actions.forEach(function (action) {action.leftMouseUp(e);});
+        actions.forEach(function (action) {
+            if (e.button === 0)
+                action.leftMouseUp(e);
+            if (e.button === 2)
+                action.rightMouseUp(e);
+        });
     };
 
     canvas.onmousemove = function (e) {
