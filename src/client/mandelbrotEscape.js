@@ -111,23 +111,32 @@ jim.mandelbrot.state.create = function (sizeX, sizeY) {
         colours         = jim.colourCalculator.create(jim.palette.create()),
 
         fromScreen = function (x, y) { return screen.at(x, y).translateTo(currentExtents);},
-        grid = aGrid(sizeX, sizeY, function (x, y) {
-            return aPoint(fromScreen(x, y));
-        });
+        newGrid = function () {
+            return aGrid(sizeX, sizeY, function (x, y) { return aPoint(fromScreen(x, y)); });
+        },
+        grid = newGrid();
 
     return {
         zoomTo: function (selection) {
             previousExtents.push(currentExtents.copy());
             currentExtents = selection.area().translateFrom(screen).to(currentExtents);
-            grid.iterate( function (point, x, y) { point.reset(fromScreen(x, y)); });
+            grid = newGrid();
             histogram.reset();
         },
         zoomOut: function () {
             if (previousExtents.length > 0) {
                 currentExtents = previousExtents.pop();
             }
-            grid.iterate( function (point, x, y) { point.reset(fromScreen(x, y)); });
+            grid = newGrid();
             histogram.reset();
+
+        },
+        move: function (moveX, moveY) {
+            var distance = fromScreen(moveX, moveY).distanceTo(currentExtents.topLeft());
+            currentExtents.move(0- distance.x, 0 -distance.y);
+            grid.translate(moveX, moveY);
+
+            // fixed zoom issues. copy rect was not honoring moves. sweet.
 
         },
         drawFunc: function (x, y) {

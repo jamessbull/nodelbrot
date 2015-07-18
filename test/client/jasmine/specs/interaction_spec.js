@@ -111,4 +111,30 @@ describe("The user interface action", function () {
         expect(localSelection.change).toHaveBeenCalled();
         expect(localSelection.end).toHaveBeenCalled();
     });
+
+    it("click and drag with right mouse button scrolls around mandelbrot set", function () {
+        var mset = {move: function () {}};
+        var moveAction = jim.actions.move.create(mset);
+
+        spyOn(mset, "move");
+
+        moveAction.rightMouseDown(event(10, 10));
+        moveAction.moveMouse(event(20, 20));
+        moveAction.rightMouseUp(event(20, 20));
+
+        expect(mset.move).toHaveBeenCalledWith(10, 10);
+    });
+
+    it("click and drag with right mouse button scrolls around mandelbrot set", function () {
+        var mset = {move: function () {}};
+        var moveAction = jim.actions.move.create(mset);
+
+        spyOn(mset, "move");
+
+        moveAction.rightMouseDown(event(10, 10));
+        moveAction.moveMouse(event(30, 30));
+        moveAction.rightMouseUp(event(100, 200));
+
+        expect(mset.move).toHaveBeenCalledWith(90, 190);
+    });
 });

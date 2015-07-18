@@ -73,3 +73,23 @@ jim.actions.selectArea.create = function (selection) {
 
     return select;
 };
+
+namespace("jim.actions.move");
+jim.actions.move.create = function (mset) {
+    "use strict";
+    var moving = false;
+    var start = jim.coord.create();
+    var action = jim.actions.createAction();
+
+    action.rightMouseDown = function (e) {
+        moving = true;
+        start.x = e.layerX;
+        start.y = e.layerY;
+    };
+    action.rightMouseUp = function (e) {
+        moving = false;
+        mset.move(e.layerX - start.x, e.layerY - start.y);
+    };
+    action.moveMouse = function (e) {};
+    return action;
+};

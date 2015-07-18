@@ -17,6 +17,9 @@ jim.mandelbrotImage.create = function () {
         },
         zoomOut: function () {
             state.zoomOut();
+        },
+        move: function (x, y) {
+            state.move(x, y);
         }
     };
 };
@@ -31,6 +34,9 @@ jim.init.run = function () {
             currentMandelbrotSet.draw();
             ui.draw(uiCanvas);
         };
+    uiCanvas.oncontextmenu = function (e) {
+        e.preventDefault();
+    };
     uiCanvas.width = currentMandelbrotSet.canvas().width;
     uiCanvas.height = currentMandelbrotSet.canvas().height;
     uiCanvas.className = "canvas";

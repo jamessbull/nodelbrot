@@ -92,6 +92,18 @@ jim.rectangle.create = function (one, two, width, height) {
         copy: function () {
             return jim.rectangle.create(x, y, w, h);
         },
+        move: function (ex, wy) {
+            x += ex;
+            y += wy;
+            topLeft.x += ex;
+            topLeft.y += wy;
+            topRight.x += ex;
+            topRight.y += wy;
+            bottomRight.x += ex;
+            bottomRight.y += wy;
+            bottomLeft.x += ex;
+            bottomLeft.y += wy;
+        },
         translateFrom: function (source) {
             var selection = this;
             return {
@@ -133,7 +145,77 @@ jim.common.grid.create = function (columnSize, rowSize, f) {
     var grid = [],
         row,
         column,
-        processor = jim.common.grid.processor.create();
+        processor = jim.common.grid.processor.create(),
+        xOffset = 0,
+        yOffset = 0,
+
+        addColumnToLeft = function (xIndex) {
+            var columnToAdd = [];
+            for (var i = 0 ; i < grid[0].length; i+=1) {
+                columnToAdd.push(f(xIndex, i - yOffset ));
+            }
+            grid.unshift(columnToAdd);
+        },
+        addColumnToRight = function () {
+            var columnToAdd = [];
+            var columnViewIndex = grid.length - xOffset;
+            for (var currentRow = 0; currentRow < grid[0].length; currentRow+=1) {
+                columnToAdd.push(f(columnViewIndex,currentRow - yOffset)); // seems I have forgotten offset values
+            }
+            grid.push(columnToAdd);
+        },
+        addColumnsToTheLeftResetXOffset = function (noToAdd) {
+            for (var column = noToAdd - 1; column >= 0; column -= 1) {
+                addColumnToLeft(column);
+            }
+            xOffset = 0;
+        },
+        addColumnsToTheRightLeaveXOffsetAlone = function (noToAdd) {
+            for (var i = 0 ; i < noToAdd; i+=1) {
+                addColumnToRight();
+            }
+        },
+        addRowToTop = function (yIndex) {
+            for(var i = 0; i < grid.length; i +=1) {
+                grid[i].unshift(f(i - xOffset, yIndex));
+            }
+        },
+        addRowToBottom = function () {
+            for (var i = 0; i < grid.length; i+=1) {
+                grid[i].push(f(i -xOffset, (grid[0].length - (yOffset + 1))));
+            }
+        },
+        addRowsOnBottomLeaveYOffsetAlone = function (noToAdd) {
+            for (var rowIndex = 0; rowIndex < noToAdd; rowIndex +=1) {
+                addRowToBottom();
+            }
+        },
+        addRowsToTopResetOffset = function (noToAdd) {
+            for (var i = noToAdd -1; i >= 0; i -=1) {
+                addRowToTop(i);
+            }
+            yOffset = 0;
+        },
+        numberToAddToLeft = function () {
+            return Math.abs(xOffset);
+        },
+        numberToAddToRight = function () {
+            var totalGridSize = xOffset + columnSize;
+            if (totalGridSize <= grid.length) {
+                return 0;
+            }
+            return totalGridSize - grid.length;
+        },
+        numberToAddTop = function () {
+            return Math.abs(yOffset);
+        },
+        numberToAddToBottom = function () {
+            var totalGridSize = yOffset + rowSize;
+            if (totalGridSize <= grid[0].length) {
+                return 0;
+            }
+            return totalGridSize - grid[0].length;
+        };
 
     for (row = 0; row < rowSize; row += 1) {
         for (column = 0; column < columnSize; column += 1) {
@@ -143,9 +225,11 @@ jim.common.grid.create = function (columnSize, rowSize, f) {
             grid[column].push(f(column, row));
         }
     }
+
+
     return {
         at: function (x, y) {
-            return grid[x][y];
+            return grid[x + xOffset][y + yOffset];
         },
         replace: function (f) {
             processor.process(grid, f);
@@ -153,7 +237,21 @@ jim.common.grid.create = function (columnSize, rowSize, f) {
         iterate: function (f) {
             processor.iterate(grid, f);
         },
-        grid: grid
+
+        translate: function (x, y) {
+            xOffset += x;
+            yOffset += y;
+            if (xOffset > 0){
+                addColumnsToTheRightLeaveXOffsetAlone(numberToAddToRight());
+            } else {
+                addColumnsToTheLeftResetXOffset(numberToAddToLeft());
+            }
+            if (yOffset > 0) {
+                addRowsOnBottomLeaveYOffsetAlone(numberToAddToBottom());
+            } else {
+                addRowsToTopResetOffset(numberToAddTop());
+            }
+        }
     };
 };
 

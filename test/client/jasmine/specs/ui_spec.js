@@ -11,7 +11,8 @@ describe("The user interface action", function () {
 
     var mset = {
             zoomTo: function(selection ) {},
-            zoomOut: function () {}
+            zoomOut: function () {},
+            move: function () {}
         },
         canvas = {},
         ui = jim.mandelbrot.ui.create(mset, canvas, 600, 480),

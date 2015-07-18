@@ -7,7 +7,8 @@ jim.mandelbrot.ui.create = function (mandelbrotSet, canvas, w, h) {
         timer = jim.stopwatch.create(),
         zoomAction = jim.actions.selectArea.create(selection),
         doubleClickAction = jim.actions.doubleclick.create(timer),
-        actions = [zoomAction, doubleClickAction];
+        moveAction = jim.actions.move.create(mandelbrotSet),
+        actions = [zoomAction, doubleClickAction, moveAction];
 
 
     zoomAction.onTrigger(function () {
