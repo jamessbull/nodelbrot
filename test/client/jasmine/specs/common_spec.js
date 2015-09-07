@@ -215,6 +215,31 @@ describe("Common utilities", function () {
 
     });
 
+    it("should be able to only iterate over the visible area of the grid", function () {
+        var visibleGrid = [];
+        var wholeGrid = [];
+
+        var grid = jim.common.grid.create(3, 3, function (x, y) { return x * y; });
+        grid.translate(5, 5);
+
+        grid.iterate(function (o) {wholeGrid.push(o); });
+        grid.iterateVisible(function (o) { visibleGrid.push(o); });
+
+        expect(visibleGrid.length).toBe(9);
+        expect(visibleGrid[0]).toBe(0);
+        expect(visibleGrid[1]).toBe(0);
+        expect(visibleGrid[2]).toBe(0);
+        expect(visibleGrid[3]).toBe(0);
+        expect(visibleGrid[4]).toBe(1);
+        expect(visibleGrid[5]).toBe(2);
+        expect(visibleGrid[6]).toBe(0);
+        expect(visibleGrid[7]).toBe(2);
+        expect(visibleGrid[8]).toBe(4);
+
+        expect(wholeGrid.length).toBe(64);
+
+    });
+
     it("should be able to create a rectangle from coords", function () {
         var r = jim.rectangle.create,
             c = jim.coord.create,

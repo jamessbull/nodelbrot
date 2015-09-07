@@ -8,7 +8,8 @@ jim.mandelbrot.ui.create = function (mandelbrotSet, canvas, w, h) {
         zoomAction = jim.actions.selectArea.create(selection),
         doubleClickAction = jim.actions.doubleclick.create(timer),
         moveAction = jim.actions.move.create(mandelbrotSet),
-        actions = [zoomAction, doubleClickAction, moveAction];
+        showPointDetailsAction = jim.actions.show.create(mandelbrotSet),
+        actions = [zoomAction, doubleClickAction, moveAction, showPointDetailsAction];
 
 
     zoomAction.onTrigger(function () {
@@ -42,8 +43,10 @@ jim.mandelbrot.ui.create = function (mandelbrotSet, canvas, w, h) {
     return {
         draw: function (canvas) {
             var context = canvas.getContext('2d');
+            var context1 = mandelbrotSet.canvas().getContext('2d');
             context.clearRect(0, 0, canvas.width, canvas.height);
             selection.show(context);
+            moveAction.show(context, canvas);
         },
         actions: actions,
         canvas: canvas

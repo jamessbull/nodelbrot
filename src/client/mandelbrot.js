@@ -18,6 +18,9 @@ jim.mandelbrotImage.create = function () {
         zoomOut: function () {
             state.zoomOut();
         },
+        point: function (x, y) {
+            return state.at(x,y);
+        },
         move: function (x, y) {
             state.move(x, y);
         }

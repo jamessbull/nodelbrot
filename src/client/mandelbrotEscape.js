@@ -11,6 +11,7 @@ jim.mandelbrot.basepoint = (function () {
         complete: false,
         alreadyEscaped: false,
         iterations: 0,
+        escapedAt:0,
         squaresSum: function () {
             return this.x * this.x + this.y * this.y;
         },
@@ -22,7 +23,8 @@ jim.mandelbrot.basepoint = (function () {
                 this.iterations += 1;
                 if (!this.alreadyEscaped && this.squaresSum() > 4) {
                     this.alreadyEscaped = true;
-                    histogram.add(this.iterations);
+                    this.escapedAt = this.iterations;
+                    histogram.add(this.escapedAt);
                 }
             }
         },
@@ -53,6 +55,7 @@ jim.mandelbrot.basepoint = (function () {
             this.y = 0;
             this.complete = false;
             this.alreadyEscaped = false;
+            this.escapedAt = 0;
         }
     };
 }());
@@ -135,8 +138,11 @@ jim.mandelbrot.state.create = function (sizeX, sizeY) {
             var distance = fromScreen(moveX, moveY).distanceTo(currentExtents.topLeft());
             currentExtents.move(0- distance.x, 0 -distance.y);
             grid.translate(moveX, moveY);
-
+            //histogram = jim.histogram.create();
+            histogram.rebuild(grid);
             // fixed zoom issues. copy rect was not honoring moves. sweet.
+            // I have a colouring issue where it goes red straight away. Odd
+            // Would be nice to be able to click on a pixel and see details of that point
 
         },
         drawFunc: function (x, y) {

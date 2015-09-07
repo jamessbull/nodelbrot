@@ -51,7 +51,7 @@ jim.histogram.create = function () {
         insertNewHistogramValue = function (number) {
             var index = insert(keys, number);
             if(index === 0) {
-                state[number] = 0
+                state[number] = 0;
             } else {
                 state[number] = state[keys[index - 1]];
             }
@@ -59,7 +59,7 @@ jim.histogram.create = function () {
         },
         findOrInsert = function (number) {
             if (!state[number]) {
-                return insertNewHistogramValue(number)
+                return insertNewHistogramValue(number);
             } else {
                 return find(keys, number);
             }
@@ -87,6 +87,15 @@ jim.histogram.create = function () {
                 return 0;
             }
             return escaped / total;
+        },
+        rebuild: function (grid) {
+            this.reset();
+            var that = this;
+            grid.iterateVisible(function (point) {
+                if (point.alreadyEscaped){
+                    that.add(point.escapedAt);
+                }
+            });
         },
         numberEscapedBy: function (iteration) {
             return this.get(iteration);

@@ -226,7 +226,6 @@ jim.common.grid.create = function (columnSize, rowSize, f) {
         }
     }
 
-
     return {
         at: function (x, y) {
             return grid[x + xOffset][y + yOffset];
@@ -237,7 +236,15 @@ jim.common.grid.create = function (columnSize, rowSize, f) {
         iterate: function (f) {
             processor.iterate(grid, f);
         },
-
+        iterateVisible: function (f) {
+            var i, j;
+            for (j = yOffset; j < (yOffset + rowSize); j +=1)
+            {
+                for (i = xOffset; i < (xOffset + columnSize); i +=1) {
+                    f(grid[i][j], i, j);
+                }
+            }
+        },
         translate: function (x, y) {
             xOffset += x;
             yOffset += y;

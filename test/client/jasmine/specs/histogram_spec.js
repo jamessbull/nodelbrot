@@ -80,6 +80,45 @@ describe("mandelbrot escape histogram", function () {
         expect(histogram.get(5)).toBe(8);
     });
 
+    it("should be able to rebuild the histogram from the current state", function () {
+        //set up state as follows
+        // 1 :true,  2 :false, 3 :true,  4 :false, 5 :true
+        // 6 :false, 7 :true   8 :false, 9 :true,  10:false
+        // 11:true,  12:false, 13:true,  14:false, 15:true
+        // 16:false, 17:true,  18:false, 19:true,  20:false
+        // 21:true, 22:false , 23:true,  24:false, 25:true
+
+        var i = 0, escaped = false;
+        var state = jim.common.grid.create(5,5, function () {
+            i += 1;
+            escaped = !escaped;
+            return {iterations: i, alreadyEscaped: escaped};
+        });
+
+        var histogram = jim.histogram.create();
+        histogram.rebuild(state);
+        expect(histogram.get(1)).toBe(1);
+        expect(histogram.get(5)).toBe(3);
+        expect(histogram.get(10)).toBe(5);
+        expect(histogram.get(15)).toBe(8);
+        expect(histogram.get(20)).toBe(10);
+        expect(histogram.get(25)).toBe(13);
+    });
+
+    it("after a move it should not count points which are not visible", function () {
+        var i = 0, escaped = false;
+        var state = jim.common.grid.create(5,5, function () {
+            i += 1;
+            escaped = !escaped;
+            return {iterations: i, alreadyEscaped: escaped};
+        });
+        state.translate(5,5);
+        var histogram = jim.histogram.create();
+        histogram.rebuild(state);
+        expect(i).toBe(100);
+        expect(histogram.get(100)).toBe(10);
+    });
+
     it("should find an element that exists", function () {
         var foo = [4, 7, 9, 23, 43, 54, 56], index;
         index = jim.arrays.find(foo, 4);
