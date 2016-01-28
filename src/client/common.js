@@ -266,6 +266,12 @@ namespace("jim.interpolator");
 jim.interpolator.create = function () {
     "use strict";
     return {
+        loginterpolate: function (from, to, fraction) {
+            var retVal = from + ((to - from) * fraction);
+            console.log("from " + from + " to " + to +" fraction " + fraction);
+            console.log("returning " + retVal);
+            return from + ((to - from) * fraction);
+        },
         interpolate: function (from, to, fraction) {
             return from + ((to - from) * fraction);
         }

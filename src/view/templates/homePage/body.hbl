@@ -1,37 +1,86 @@
-Hello {{{name}}}
-<input type="submit" value="Recalculate">
-<span id="numberEscaped">whassup</span>
 
 <script>
+var  handleClickfunction
   document.addEventListener("DOMContentLoaded", function(event) {
     jim.init.run();
   });
 </script>
 
 <style>
-    #mandelbrotCanvas { position: relative; }
     .canvas { position: absolute; top: 0; left: 0; }
+        #mandelbrotCanvas { position: relative; display: inline-block; margin-bottom:22px}
+        .pixelInfoCanvas {
+            position: relative; top:0px; left: 700px; width:162px; height:181px;
+            border-style: solid;
+            border-width: 2px;
+        }
+        .pixelInfo {
+            position: relative; top:10px; left: 700px; width:300px; height:181px;
+        }
+                    .styled-button-1 {
+                	    -webkit-box-shadow:rgba(0,0,0,0.2) 0 1px 0 0;
+                	    -moz-box-shadow:rgba(0,0,0,0.2) 0 1px 0 0;
+                    	box-shadow:rgba(0,0,0,0.2) 0 1px 0 0;
+                    	color:#333;
+                    	background-color:#FA2;
+                    	border-radius:5px;
+                    	-moz-border-radius:5px;
+                    	-webkit-border-radius:5px;
+                    	border:none;
+                    	font-family:'Helvetica Neue',Arial,sans-serif;
+                    	font-size:16px;
+                    	font-weight:700;
+                    	height:36px;
+                    	padding:4px 16px;
+                    	text-shadow:#FE6 0 1px 0
+                    }
+                    .colourGradient {
+                        position:absolute;
+                        top:419px;
+                        left:180px;
+                        }
+                    .colourPicker {
+                        position:absolute;
+                        top:461px;
+                    }.add {
+                        position:absolute;
+                        top:416px;
+                        left:10px;
+                    }.remove {
+                        position:absolute;
+                        top:416px;
+                        left:80px;
+                    }
+
 </style>
 
 <div id="mandelbrotCanvas"></div>
 
-<p>Position of the click</p>
-<label>
-X
-<span id="selectionX"></span>
-</label>
+<div class="pixelInfoCanvas">
+    <input type="checkbox" onClick="ui.handlePixelInfo()" name="selectPixelInfo" value="true">Select pixel info<br>
+    <canvas id="pixelInfoCanvas"></canvas>
+</div>
 
-<label>
-Y
-<span id="selectionY"></span>
-</label>
 
-<label>
-Width
-<span id="selectionWidth"></span>
-</label>
+<div class="pixelInfo" id=pixelInfo>
+   <ul>
+       <li id="iterations">iterations</li>
+       <li id="alreadyEscaped">alreadyEscaped</li>
+       <li id="escapedAt">escapedAt</li>
+       <li id="pixelComplete">escapedAt</li>
+       <li id="mx">mx</li>
+       <li id="my">my</li>
+       <li id="histogramPerc">percentage escaped by</li>
+       <li id="colourInfo">colour info</li>
+   </ul>
+</div>
+        <input type="submit" class="styled-button-1 add" value="Add" />
 
-<label>
-Height
-<span id="selectionHeight"></span>
-</label>
+
+        <input type="submit" class="styled-button-1 remove" value="Remove" />
+
+        <canvas class="colourGradient" id="colourGradientCanvas" width=528 height=30></canvas>
+
+<div>
+   <canvas id="colourPickerCanvas" class="colourPicker" width=700, height=100></canvas>
+</div>

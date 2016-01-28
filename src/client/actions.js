@@ -1,11 +1,10 @@
 namespace("jim.actions");
 jim.actions.baseAction = {
-    onTrigger: function() {},
-    leftMouseDown: function(e) {},
-    leftMouseUp: function(e) {},
-    rightMouseDown: function(e) {},
-    rightMouseUp: function(e) {},
-    moveMouse: function(e) {}
+    leftMouseDown: function(e, mode) {},
+    leftMouseUp: function(e, mode) {},
+    rightMouseDown: function(e, mode) {},
+    rightMouseUp: function(e, mode) {},
+    moveMouse: function(e, mode) {}
 };
 
 jim.actions.createAction = function () {
@@ -13,20 +12,21 @@ jim.actions.createAction = function () {
     return Object.create(jim.actions.baseAction);
 };
 
-
-
 namespace("jim.actions.doubleclick");
 
-jim.actions.doubleclick.create = function (timer) {
+jim.actions.doubleclick.create = function (timer, mandelbrotSet, state) {
     "use strict";
-    var action;
+    var action =  function () { mandelbrotSet.zoomOut(); };
     var doubleClickDuration;
     var doubleClickInProgress = false;
     var doubleClick = jim.actions.createAction();
-    doubleClick.leftMouseDown = function () {
-        timer.mark("doubleClickBegin");
+    doubleClick.leftMouseDown = function (e) {
+        if (!state.isSelectPixelMode()) {
+            timer.mark("doubleClickBegin");
+        }
     };
-    doubleClick.leftMouseUp = function () {
+    doubleClick.leftMouseUp = function (e) {
+        if (!state.isSelectPixelMode()) {
         var clickTime = timer.timeSinceMark("doubleClickBegin");
 
         if (doubleClickInProgress && (clickTime + doubleClickDuration) < 1000) {
@@ -38,36 +38,36 @@ jim.actions.doubleclick.create = function (timer) {
                 doubleClickInProgress = true;
             }
         }
+        }
     };
-    doubleClick.onTrigger = function (f) {
-        action = f;
-    };
-
     return doubleClick;
 };
 
 namespace("jim.actions.selectArea");
-jim.actions.selectArea.create = function (selection) {
+jim.actions.selectArea.create = function (selection, mandelbrotSet, state) {
     "use strict";
-    var action;
+    var action = function () {mandelbrotSet.zoomTo(selection);};
     var select = jim.actions.createAction();
-    select.onTrigger = function (f) {
-        action = f;
-    };
 
     select.leftMouseDown = function (e) {
-        selection.begin(e);
+        if (!state.isSelectPixelMode()) {
+            selection.begin(e);
+        }
     };
 
     select.moveMouse = function (e) {
         //if (selection.inProgress)
-        selection.change(e);
+        if (!state.isSelectPixelMode()) {
+            selection.change(e);
+        }
     };
 
     select.leftMouseUp = function (e) {
-        selection.end(e);
-        if (selection.area().width() > 10) {
-            action();
+        if (!state.isSelectPixelMode()) {
+            selection.end(e);
+            if (selection.area().width() > 10) {
+                action();
+            }
         }
     };
 
@@ -75,7 +75,7 @@ jim.actions.selectArea.create = function (selection) {
 };
 
 namespace("jim.actions.move");
-jim.actions.move.create = function (mset) {
+jim.actions.move.create = function (mset, state) {
     "use strict";
     var start = jim.coord.create();
     var action = jim.actions.createAction();
@@ -83,18 +83,22 @@ jim.actions.move.create = function (mset) {
     var lastMoved = 0;
     var stopwatch = jim.stopwatch.create();
     action.rightMouseDown = function (e) {
-        action.moving = true;
-        start.x = e.layerX;
-        start.y = e.layerY;
-        action.totalXMovement = 0;
-        action.totalYMovement = 0;
-        action.lastMouseXLocation = e.layerX;
-        action.lastMouseYLocation = e.layerY;
+        if (!state.isSelectPixelMode()) {
+            action.moving = true;
+            start.x = e.layerX;
+            start.y = e.layerY;
+            action.totalXMovement = 0;
+            action.totalYMovement = 0;
+            action.lastMouseXLocation = e.layerX;
+            action.lastMouseYLocation = e.layerY;
+        }
     };
     action.rightMouseUp = function (e) {
-        action.moving = false;
-        mset.canvas().getContext('2d').drawImage(action.canvas, 0, 0, action.canvas.width, action.canvas.height);
-        mset.move(e.layerX - start.x, e.layerY - start.y);
+        if (!state.isSelectPixelMode()) {
+            action.moving = false;
+            mset.canvas().getContext('2d').drawImage(action.canvas, 0, 0, action.canvas.width, action.canvas.height);
+            mset.move(e.layerX - start.x, e.layerY - start.y);
+        }
     };
 
     action.show = function (context, canvas) {
@@ -115,40 +119,49 @@ jim.actions.move.create = function (mset) {
     };
 
     action.moveMouse = function (e) {
-        action.totalXMovement = e.layerX - start.x;
-        action.totalYMovement = e.layerY - start.y;
-        action.deltaX = action.lastMouseXLocation - e.layerX;
-        action.deltaY = action.lastMouseYLocation - e.layerY;
-        action.lastMouseXLocation = e.layerX;
-        action.lastMouseYLocation = e.layerY;
-        action.cursorInMotion = true;
-        stopwatch.mark('mousemoved');
-
-        if(action.moving) {
-            //mset.move(-action.deltaX, -action.deltaY);
+        if (!state.isSelectPixelMode()) {
+            action.totalXMovement = e.layerX - start.x;
+            action.totalYMovement = e.layerY - start.y;
+            action.deltaX = action.lastMouseXLocation - e.layerX;
+            action.deltaY = action.lastMouseYLocation - e.layerY;
+            action.lastMouseXLocation = e.layerX;
+            action.lastMouseYLocation = e.layerY;
+            action.cursorInMotion = true;
+            stopwatch.mark('mousemoved');
         }
-    }
+    };
     return action;
 };
 
 namespace("jim.actions.show");
-jim.actions.show.create = function (mset) {
+jim.actions.show.create = function (magnifiedDisplay, state) {
     "use strict";
     var displayed = false;
     var start = jim.coord.create();
     var action = jim.actions.createAction();
 
+
+
+
     action.leftMouseDown = function (e) {
-        start.x = e.layerX;
-        start.y = e.layerY;
+        if (state.isSelectPixelMode()) {
+            start.x = e.layerX;
+            start.y = e.layerY;
+        }
     };
+
     action.leftMouseUp = function (e) {
-        //alert("Show a pixel at " + e.layerX + " " + e.layerY);
-        var point = mset.point(e.layerX, e.layerY);
-        console.log("Mandelbrot coord "+ point.mx +", " + point.my);
-        console.log("Has escaped: " + point.alreadyEscaped);
-        console.log("XY value " + point.x + ", "+point.y);
+        if (state.isSelectPixelMode()) {
+            state.setNormalMode();
+        }
     };
-    action.moveMouse = function (e) {};
+
+    action.moveMouse = function (e) {
+        if (state.isSelectPixelMode()) {
+            magnifiedDisplay.update(e.layerX, e.layerY);
+        }
+    };
     return action;
 };
+
+

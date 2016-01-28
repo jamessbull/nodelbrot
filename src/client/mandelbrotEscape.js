@@ -12,6 +12,7 @@ jim.mandelbrot.basepoint = (function () {
         alreadyEscaped: false,
         iterations: 0,
         escapedAt:0,
+        colour: jim.colour.create(0,0,0,0),
         squaresSum: function () {
             return this.x * this.x + this.y * this.y;
         },
@@ -35,9 +36,10 @@ jim.mandelbrot.basepoint = (function () {
                 }
                 this.calculate(histogram);
             }
-            return this.alreadyEscaped ?
+            this.colour = this.alreadyEscaped ?
                     colours.forPoint(this, histogram) :
                     colours.black;
+            return this.colour;
         },
         incomplete: function () {
             if (this.complete)
@@ -96,6 +98,21 @@ jim.colourCalculator.create = function (palette) {
             interpolatedColour = interpolate(lower, higher, fractionalPart);
             return palette.colourAt(interpolatedColour);
         },
+        getUsefulNumbersMessage: function (p, histogram) {
+            var zn,nu,iteration, lowerIteration, higherIteration, fractionalPart, lower, higher, interpolatedColour;
+            zn = Math.sqrt((p.x * p.x) + (p.y * p.y));
+            nu = Math.log(Math.log(zn) /  Math.LN2) / Math.LN2;
+            iteration = p.iterations + 1 - nu;
+            lowerIteration = Math.floor(iteration - 1);
+            higerIteration = Math.floor(iteration);
+            fractionalPart = iteration % 1;
+            lower = histogram.percentEscapedBy(lowerIteration);
+            higher = histogram.percentEscapedBy(higerIteration);
+            interpolatedColour = jim.interpolator.create().loginterpolate(lower, higher, fractionalPart);
+
+            var c = palette.colourAt(interpolatedColour);
+            return "lowerIteration: " + lowerIteration + " <br>higherIteration: "+ higerIteration +" <br>fraction: "+ fractionalPart + " \ninterpolated colour: " + interpolatedColour + "<br>colour calculated (rgb): " + c.r + " " + c.g + " " + c.b;
+        },
         black: jim.colour.create(0, 0, 0, 255)
     };
 };
@@ -106,6 +123,7 @@ jim.mandelbrot.state.create = function (sizeX, sizeY) {
     var aRectangle      = jim.rectangle.create,
         aGrid           = jim.common.grid.create,
         aPoint          = jim.mandelbrot.point.create,
+        timer           = jim.stopwatch.create(),
 
         currentExtents  = aRectangle(-2.5, -1, 3.5, 2),
         previousExtents = [],
@@ -138,15 +156,17 @@ jim.mandelbrot.state.create = function (sizeX, sizeY) {
             var distance = fromScreen(moveX, moveY).distanceTo(currentExtents.topLeft());
             currentExtents.move(0- distance.x, 0 -distance.y);
             grid.translate(moveX, moveY);
-            //histogram = jim.histogram.create();
             histogram.rebuild(grid);
-            // fixed zoom issues. copy rect was not honoring moves. sweet.
-            // I have a colouring issue where it goes red straight away. Odd
-            // Would be nice to be able to click on a pixel and see details of that point
 
         },
         drawFunc: function (x, y) {
             return grid.at(x, y).calculateCurrentColour(50, histogram, colours);
+        },
+        histogram: function () {
+            return histogram;
+        },
+        palette: function () {
+            return colours;
         },
         at: function (x, y) { return grid.at(x, y);}
     };

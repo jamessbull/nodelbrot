@@ -13,4 +13,6 @@
 <script src="/js/selection.js"></script>
 <script src="/js/mandelbrot-ui.js"></script>
 <script src="/js/mandelbrot.js"></script>
+<script src="/js/colourPicker.js"></script>
+<script src="/js/colourGradient.js"></script>
 

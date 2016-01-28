@@ -23,20 +23,40 @@ jim.mandelbrotImage.create = function () {
         },
         move: function (x, y) {
             state.move(x, y);
+        },
+        histogram: function() {
+            return state.histogram();
+        },
+        palette: function () {
+            return state.palette();
         }
     };
 };
+var ui = {};
 namespace("jim.init");
 jim.init.run = function () {
     "use strict";
     var currentMandelbrotSet = jim.mandelbrotImage.create(),
         canvasDiv = document.getElementById("mandelbrotCanvas"),
-        ui = jim.mandelbrot.ui.create(currentMandelbrotSet, canvasDiv, currentMandelbrotSet.canvas().width, currentMandelbrotSet.canvas().height),
+        pixelInfo = document.getElementById("pixelInfoCanvas"),
+        colourPickerCanvas = document.getElementById("colourPickerCanvas"),
+        colourGradientCanvas = document.getElementById("colourGradientCanvas"),
+        colourPicker = jim.colour.colourPicker.create(colourPickerCanvas),
+        colourGradientui = jim.colour.gradientui.create(colourGradientCanvas),
+        lui = jim.mandelbrot.ui.create(
+            currentMandelbrotSet,
+            canvasDiv,
+            currentMandelbrotSet.canvas().width,
+            currentMandelbrotSet.canvas().height,
+            pixelInfo),
         uiCanvas = document.createElement('canvas'),
         render = function () {
             currentMandelbrotSet.draw();
-            ui.draw(uiCanvas);
+            lui.draw(uiCanvas);
         };
+    pixelInfo.width = 162;
+    pixelInfo.height = 162;
+    ui = lui;
     uiCanvas.oncontextmenu = function (e) {
         e.preventDefault();
     };
@@ -45,6 +65,8 @@ jim.init.run = function () {
     uiCanvas.className = "canvas";
     canvasDiv.appendChild(currentMandelbrotSet.canvas());
     canvasDiv.appendChild(uiCanvas);
+    colourPicker.draw();
+    colourGradientui.draw();
     jim.anim.create(render).start();
 };
 

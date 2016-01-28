@@ -19,6 +19,11 @@ jim.stopwatch.create = function () {
         },
         timeSinceMark: function (mark) {
             return Date.now() - marks[mark];
+        }, timeFunction : function (f) {
+            this.start();
+            f();
+            this.stop();
+            return this.elapsed();
         }
     };
 };
