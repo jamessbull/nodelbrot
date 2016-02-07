@@ -50,6 +50,10 @@ var  handleClickfunction
                         position:absolute;
                         top:416px;
                         left:80px;
+                    }.download {
+                        position:absolute;
+                        top:580px;
+                        left:15px;
                     }
 
 </style>
@@ -74,13 +78,17 @@ var  handleClickfunction
        <li id="colourInfo">colour info</li>
    </ul>
 </div>
-        <input type="submit" class="styled-button-1 add" value="Add" />
+        <input id="addButton" type="submit" class="styled-button-1 add" value="Add" />
 
 
-        <input type="submit" class="styled-button-1 remove" value="Remove" />
+        <input id="removeButton"  type="submit" class="styled-button-1 remove" value="Remove" />
 
-        <canvas class="colourGradient" id="colourGradientCanvas" width=528 height=30></canvas>
+        <canvas class="colourGradient" id="colourGradientCanvas" width=528 height=40></canvas>
 
 <div>
    <canvas id="colourPickerCanvas" class="colourPicker" width=700, height=100></canvas>
+</div>
+
+<div class="download">
+    <a id="download" href="">Boo</a>
 </div>

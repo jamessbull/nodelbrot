@@ -1,5 +1,5 @@
 namespace("jim.colour.colourPicker");
-jim.colour.colourPicker.create = function (canvas) {
+jim.colour.colourPicker.create = function (canvas, gradient) {
     "use strict";
     var image = jim.image.createSimpleImage(canvas);
     var interpolate = jim.interpolator.create().interpolate;
@@ -19,6 +19,15 @@ jim.colour.colourPicker.create = function (canvas) {
         return toRgb(hue, 100, 100);
     };
 
+    var shade = function (x, y, verticalSize) {
+        var heightOffset = h - verticalSize;
+        var translatedY = y - heightOffset;
+        var saturation = interpolate(0, 1, (translatedY / verticalSize));
+
+        var value = interpolate(1, 0, x/w);
+        return {h:selectedHue, s:saturation, v:value};
+    };
+
     var shadePicker = function (x, y, verticalSize) {
         var heightOffset = h - verticalSize;
         var translatedY = y - heightOffset;
@@ -27,6 +36,8 @@ jim.colour.colourPicker.create = function (canvas) {
         var value = interpolate(1, 0, x/w);
         return toRgb(selectedHue, saturation, value);
     };
+
+
 
     var drawColourPicker = function (x, y) {
         var hueProportion = 0.3 * h;
@@ -42,6 +53,11 @@ jim.colour.colourPicker.create = function (canvas) {
         if (e.layerY <= h/2) {
             selectedHue =  interpolate(0, 359, e.layerX/w);
             draw();
+            gradient.setSelectedNodeColour(tinycolor({h:selectedHue, s:1, v:1}));
+        } else {
+            var hueProportion = 0.3 * h;
+            var shadeProportion = h - hueProportion;
+            gradient.setSelectedNodeColour(tinycolor(shade(e.layerX, e.layerY, shadeProportion)));
         }
     };
 

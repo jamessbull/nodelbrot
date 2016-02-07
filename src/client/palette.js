@@ -4,41 +4,67 @@ jim.palette.create = function () {
     var pal = [];
     var hsv = function (h, s, v){ return { h: h, s: s, v: v }; };
 
-    var orange = hsv(39,100,100);
-    var gold = hsv(51,100,100);
-    var yellow = hsv(60,100,100);
-    var blue = hsv(250,100,100);
-    var cyan = hsv(170,100,100);
+    var orange = hsv(39,"100%","100%");
+    var gold = hsv(51,"100%","100%");
+    var yellow = hsv(60,"100%","100%");
+    var blue = hsv(250,"100%","100%");
+    var cyan = hsv(170,"100%","100%");
+    var black = hsv(100,"0%","0%");
+    var white = hsv(100, "0%", "100%");
 
     var colourNode = function(hsv, position) {
         return {
-            hsv:hsv,
+            hsv:tinycolor(hsv).toHsv(),
+            colour:tinycolor(hsv),
             position:position,
+            setColour: function (tc) {
+                this.colour = tc;
+                this.hsv = this.colour.toHsv();
+            },
             before: function (n) { return this.position <= n; },
-            after: function (n) {return this.position >= n;}
+            after: function (n) {return this.position >= n;},
+            toRgb: function () {
+                var c = this.colour;
+                c.a = 255;
+                return c.toRgb();
+            }
         };
     };
+
+    var defaultFromNode = colourNode(black, 0);
+    var defaultToNode = colourNode(white, 1);
+
+
+    var find = function(nodes, f) {
+        var found = nodes[0];
+        nodes.forEach(function (node) {
+            if (f(found, node)) found = node;
+        });
+        return found;
+    };
+    var smallestNode = function (nodes) {
+        return find(nodes, function (n, n2) {return n2.position < n.position;});
+    };
+    var largestNode  = function (nodes) {
+        return find(nodes, function (n, n2) {return n2.position > n.position;});
+    };
+
+
     var interpolate = jim.interpolator.create().interpolate;
 
     var colourNodes = {
         nodes:[colourNode(orange,0), colourNode(gold, 0.5), colourNode(yellow, 0.85), colourNode(cyan,0.85),colourNode(blue,1)],
         from: function (n) {
-            var nodeToReturn = {};
-            this.nodes.forEach( function(node) {
-                if (node.before(n)) {
-                    nodeToReturn = node;
-                }
-            });
-            return nodeToReturn;
+            var smallerNodes = this.nodes.filter(function(node) { return node.before(n); });
+            return smallerNodes.length > 0 ?
+                largestNode(smallerNodes) :
+                defaultFromNode;
         },
         to: function (n) {
-            var nodeToReturn = "unset";
-            this.nodes.forEach(function (node) {
-                if(node.after(n) && nodeToReturn === "unset"){
-                    nodeToReturn = node;
-                }
-            });
-            return nodeToReturn;
+            var largerNodes = this.nodes.filter(function(node) { return node.after(n); });
+            return largerNodes.length > 0 ?
+                smallestNode(largerNodes) :
+                defaultToNode;
         },
         at: function (n) {
             var f = this.from(n);
@@ -52,19 +78,38 @@ jim.palette.create = function () {
         }
     };
 
-
-    // O.K. So to display colours for selection I need a colour wheel
-    // to do a colour wheel I need to do all pixels myself
-    // go through every pixel in the canvas
-    // if its not in the circle then it is white
-    // if it is in the circle then depending on the angle from vertical that determines the hue. In the hsv model an angle between 0 and 360 is the hue.
-    // the closer to the centre the lower the saturation
     return {
         colourAt: function (number) {
             var currentColour =  colourNodes.at(number).toRgb();
             currentColour.a = 255;
             return currentColour;
         },
-        toArray: function () { return pal; }
+        toArray: function () { return pal; },
+        nodes: function () { return colourNodes.nodes; },
+        setNodes: function (nodes) {
+            colourNodes.nodes = nodes;
+        }, addNode: function () {
+            var biggestGapNode;
+            var toBiggestNode;
+            var currentgap = 0;
+            if (colourNodes.nodes.length <1) {
+                biggestGapNode = defaultFromNode;
+            }
+            var lastNode = colourNodes.nodes[0];
+            colourNodes.nodes.forEach(function (node) {
+
+                var gap = node.position - lastNode.position;
+                if (gap > currentgap) {
+                    currentgap = gap;
+                    biggestGapNode = lastNode;
+                    toBiggestNode = node;
+                }
+                lastNode = node;
+            });
+            var newPos = biggestGapNode.position + ((toBiggestNode.position - biggestGapNode.position)/2);
+            var retVal = colourNode(blue, newPos);
+            colourNodes.nodes.push(retVal);
+            return retVal;
+        }
     };
 };

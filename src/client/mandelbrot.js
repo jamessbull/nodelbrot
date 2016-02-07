@@ -28,7 +28,7 @@ jim.mandelbrotImage.create = function () {
             return state.histogram();
         },
         palette: function () {
-            return state.palette();
+            return state.palette().palette;
         }
     };
 };
@@ -41,8 +41,10 @@ jim.init.run = function () {
         pixelInfo = document.getElementById("pixelInfoCanvas"),
         colourPickerCanvas = document.getElementById("colourPickerCanvas"),
         colourGradientCanvas = document.getElementById("colourGradientCanvas"),
-        colourPicker = jim.colour.colourPicker.create(colourPickerCanvas),
-        colourGradientui = jim.colour.gradientui.create(colourGradientCanvas),
+        addButton = document.getElementById("addButton"),
+        removeButton = document.getElementById("removeButton"),
+        colourGradientui = jim.colour.gradientui.create(colourGradientCanvas, addButton, removeButton, currentMandelbrotSet.palette()),
+        colourPicker = jim.colour.colourPicker.create(colourPickerCanvas, colourGradientui),
         lui = jim.mandelbrot.ui.create(
             currentMandelbrotSet,
             canvasDiv,
@@ -53,6 +55,7 @@ jim.init.run = function () {
         render = function () {
             currentMandelbrotSet.draw();
             lui.draw(uiCanvas);
+            colourGradientui.draw();
         };
     pixelInfo.width = 162;
     pixelInfo.height = 162;
@@ -66,7 +69,7 @@ jim.init.run = function () {
     canvasDiv.appendChild(currentMandelbrotSet.canvas());
     canvasDiv.appendChild(uiCanvas);
     colourPicker.draw();
-    colourGradientui.draw();
+
     jim.anim.create(render).start();
 };
 

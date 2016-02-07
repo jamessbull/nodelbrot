@@ -15,15 +15,6 @@ jim.mandelbrot.ui.state.create = function () {
     };
 };
 
-namespace("jim.mandelbrot.ui.paletteControl");
-jim.mandelbrot.ui.paletteControl.create = function (palette, paletteControlCanvas) {
-    "use strict";
-    // How is this going to work? I want to specify a number of colours 2 to start these give the extents of the palette
-    // shows two boxes connected by a line. Click the box and select a colour from a colour wheel.
-    //Before I add gui control I need to give myself the ability to configure the palette.
-    // palette default is two points with red at one side and white at the other.
-};
-
 namespace("jim.mandelbrot.ui.magnifiedDisplay");
 jim.mandelbrot.ui.magnifiedDisplay.create = function (mset, pixelInfo) {
     "use strict";

@@ -113,7 +113,8 @@ jim.colourCalculator.create = function (palette) {
             var c = palette.colourAt(interpolatedColour);
             return "lowerIteration: " + lowerIteration + " <br>higherIteration: "+ higerIteration +" <br>fraction: "+ fractionalPart + " \ninterpolated colour: " + interpolatedColour + "<br>colour calculated (rgb): " + c.r + " " + c.g + " " + c.b;
         },
-        black: jim.colour.create(0, 0, 0, 255)
+        black: jim.colour.create(0, 0, 0, 255),
+        palette: palette
     };
 };
 
