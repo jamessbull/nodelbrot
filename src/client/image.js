@@ -24,6 +24,20 @@ jim.image.createSimpleImage = function (canvas) {
             }
             context.putImageData(output, 0, 0);
         },
+        drawAndUpdate: function (f, reporter) {
+            var col, x, y, i;
+            for (i = 0; i < noOfPixels; i += 1) {
+                x = i % w;
+                y = Math.floor(i / w);
+                col = f(x, y);
+                reporter.report();
+                output.data[i * 4]     = col.r;
+                output.data[i * 4 + 1] = col.g;
+                output.data[i * 4 + 2] = col.b;
+                output.data[i * 4 + 3] = col.a;
+            }
+            context.putImageData(output, 0, 0);
+        },
         canvas: canvas
     };
 };
@@ -83,11 +97,6 @@ jim.image.create = function (size, sizeY, f) {
         },
         canvas: canvas
     };
-};
-namespace("jim.colour");
-jim.colour.create = function (r, g, b, a) {
-    "use strict";
-    return {r: r, g: g, b: b, a: a};
 };
 
 namespace("jim.canvas");

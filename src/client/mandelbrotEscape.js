@@ -25,7 +25,9 @@ jim.mandelbrot.basepoint = (function () {
                 if (!this.alreadyEscaped && this.squaresSum() > 4) {
                     this.alreadyEscaped = true;
                     this.escapedAt = this.iterations;
-                    histogram.add(this.escapedAt);
+                    if (histogram) {
+                        histogram.add(this.escapedAt);
+                    }
                 }
             }
         },
@@ -44,7 +46,7 @@ jim.mandelbrot.basepoint = (function () {
         incomplete: function () {
             if (this.complete)
                 return false;
-            if ((this.squaresSum()) < 65536 && this.iterations < 10000)
+            if ((this.squaresSum()) < 9007199254740991 && this.iterations < 200000)
                 return true;
             this.complete = true;
             return false;
@@ -58,9 +60,20 @@ jim.mandelbrot.basepoint = (function () {
             this.complete = false;
             this.alreadyEscaped = false;
             this.escapedAt = 0;
+        },
+        reset2: function (x, y) {
+            this.mx = x;
+            this.my = y;
+            this.iterations = 0;
+            this.x = 0;
+            this.y = 0;
+            this.complete = false;
+            this.alreadyEscaped = false;
+            this.escapedAt = 0;
         }
     };
 }());
+
 
 namespace("jim.mandelbrot.point");
 jim.mandelbrot.point.create = function (coord) {
@@ -69,6 +82,91 @@ jim.mandelbrot.point.create = function (coord) {
     point.mx = coord.x;
     point.my = coord.y;
     return point;
+};
+
+
+namespace("jim.mandelbrot.pointForDisplay");
+jim.mandelbrot.pointForDisplay.create = function (x, y, _displayWidth, _displayHeight, _extents, _completeCheck) {
+    "use strict";
+    var display = jim.rectangle.create(0,0, _displayWidth - 1, _displayHeight -1);
+    var mandelbrotCoord = display.at(x,y).translateTo(_extents);
+    var mandelbrotPoint = jim.mandelbrot.point.create(mandelbrotCoord);
+    var periodicity = jim.mandelbrot.periodicityChecker.create(15);
+
+    //var retVal =
+
+
+    var create =  function (w, h, disp, coord, point, extents, completeCheck, periodicity) {
+        var doneFunc = (function () {
+            if (completeCheck) {
+                return function (p) {return p.complete;};
+            } else {
+                return function (p) {return p.alreadyEscaped;};
+            }
+        }());
+
+        return {
+            calculate: function (histogram) {
+                mandelbrotPoint.calculate(histogram);
+            },
+            done: doneFunc,
+            displayWidth: w,
+            displayHeight: h,
+            display: disp,
+            mandelbrotCoord: coord,
+            mandelbrotPoint: point,
+            iterations:0,
+            bufferSize: 15,
+            timesChecked: 0,
+            inOrbit: false,
+            periodicityCheckingOn: false,
+            extents: extents,
+            periodicity: periodicity,
+            calculateTo: function (x, y, upTo, histogram, mandelbrotCoord, mandelbrotPoint, done) {
+                var timesChecked = 0;
+                var iterations = 0;
+                //var inOrbit = false;
+                //this.mandelbrotCoord = this.display.at(x,y).translateTo(this.extents);
+                //var done = this.done;
+                //var periodicity = this.periodicity;
+                //var periodicityCheckingOn = this.periodicityCheckingOn;
+                //mandelbrotPoint.reset(mandelbrotCoord);
+
+
+                while (!done(mandelbrotPoint) && iterations < upTo) {
+                    iterations +=1;
+                    mandelbrotPoint.calculate(histogram);
+                }
+                    //if (periodicityCheckingOn) {
+                        //timesChecked ++;
+                        //
+                    //}
+//                    if (timesChecked > 15) {
+//                        periodicityCheckingOn = false;
+//                    }
+   //             }
+
+//                if (iterations >= upTo) {
+//                    this.periodicityCheckingOn = true;
+//                } else {
+//                    this.periodicityCheckingOn = false;
+//                }
+            }, calculateToEscape: function (x, y, upTo, histogram) {
+                this.calculateTo(x, y, upTo, histogram, false);
+            },
+            calculateToDone: function (x, y, upTo, histogram) {
+                this.calculateTo(x, y, upTo, histogram, true);
+            },
+            underlyingPoint: function () {
+                return mandelbrotPoint;
+            },
+            periodicityIdentifiedCount: function () {
+                return periodicity.periodicityIdentifiedCount();
+            }
+        };
+    };
+
+    return create(_displayWidth, _displayHeight, display, mandelbrotCoord, mandelbrotPoint, _extents, _completeCheck, periodicity);
 };
 
 namespace("jim.colourCalculator");
@@ -119,18 +217,21 @@ jim.colourCalculator.create = function (palette) {
 };
 
 namespace("jim.mandelbrot.state");
-jim.mandelbrot.state.create = function (sizeX, sizeY) {
+jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent) {
     "use strict";
     var aRectangle      = jim.rectangle.create,
         aGrid           = jim.common.grid.create,
         aPoint          = jim.mandelbrot.point.create,
         timer           = jim.stopwatch.create(),
 
-        currentExtents  = aRectangle(-2.5, -1, 3.5, 2),
+        //currentExtents  = aRectangle(-2.5, -1, 3.5, 2),
+        currentExtents  = startingExtent,
         previousExtents = [],
         screen          = aRectangle(0, 0, sizeX - 1, sizeY - 1),
         histogram       = jim.histogram.create(),
         colours         = jim.colourCalculator.create(jim.palette.create()),
+        maxIterations   = 0,
+        chunkSize      = 25,
 
         fromScreen = function (x, y) { return screen.at(x, y).translateTo(currentExtents);},
         newGrid = function () {
@@ -144,6 +245,10 @@ jim.mandelbrot.state.create = function (sizeX, sizeY) {
             currentExtents = selection.area().translateFrom(screen).to(currentExtents);
             grid = newGrid();
             histogram.reset();
+        },
+        resize: function (sizeX, sizeY) {
+            screen = aRectangle(0, 0, sizeX - 1, sizeY - 1);
+            grid = aGrid(sizeX, sizeY, function (x, y) { return aPoint(fromScreen(x, y)); });
         },
         zoomOut: function () {
             if (previousExtents.length > 0) {
@@ -161,13 +266,31 @@ jim.mandelbrot.state.create = function (sizeX, sizeY) {
 
         },
         drawFunc: function (x, y) {
-            return grid.at(x, y).calculateCurrentColour(50, histogram, colours);
+            var p = grid.at(x, y);
+            if (p.iterations > maxIterations) maxIterations = p.iterations;
+            return p.calculateCurrentColour(chunkSize, histogram, colours);
         },
         histogram: function () {
             return histogram;
         },
         palette: function () {
             return colours;
+        },
+        setPalette: function (p) {
+            colours.palette = p;
+        },
+        getExtents: function () {
+            return currentExtents;
+        },
+        setExtents: function (extents) {
+            currentExtents = extents;
+            grid = newGrid();
+        },
+        maximumIteration: function () {
+            return maxIterations;
+        },
+        chunksize: function (c) {
+            chunkSize = c;
         },
         at: function (x, y) { return grid.at(x, y);}
     };

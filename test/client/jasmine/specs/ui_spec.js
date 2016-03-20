@@ -12,11 +12,14 @@ describe("The user interface action", function () {
     var mset = {
             zoomTo: function(selection ) {},
             zoomOut: function () {},
-            move: function () {}
+            move: function () {},
+            canvas: function () {return document.createElement('canvas');}
         },
         canvas = {},
-        ui = jim.mandelbrot.ui.create(mset, canvas, 600, 480),
+        pixelInfo = {onmousedown: function () {}},
+        ui = jim.mandelbrot.ui.create(mset, canvas, 640, 480, pixelInfo),
         action = ui.actions[0];
+        action.canvas = document.createElement('canvas');
 
     it("should only call rightMouseDown on actions when event button is 2", function () {
         spyOn(action, "rightMouseDown");

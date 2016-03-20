@@ -44,9 +44,13 @@ jim.actions.doubleclick.create = function (timer, mandelbrotSet, state) {
 };
 
 namespace("jim.actions.selectArea");
-jim.actions.selectArea.create = function (selection, mandelbrotSet, state) {
+jim.actions.selectArea.create = function (selection, mandelbrotSet, state, areaNotifier) {
     "use strict";
-    var action = function () {mandelbrotSet.zoomTo(selection);};
+    var action = function () {
+        mandelbrotSet.zoomTo(selection);
+        var a = mandelbrotSet.state().getExtents();
+        areaNotifier.notify({x: a.topLeft().x,y: a.topLeft().y,w: a.width(),h: a.height()});
+    };
     var select = jim.actions.createAction();
 
     select.leftMouseDown = function (e) {
@@ -75,13 +79,15 @@ jim.actions.selectArea.create = function (selection, mandelbrotSet, state) {
 };
 
 namespace("jim.actions.move");
-jim.actions.move.create = function (mset, state) {
+jim.actions.move.create = function (mset, state, areaNotifier) {
     "use strict";
     var start = jim.coord.create();
     var action = jim.actions.createAction();
+    action.canvas = mset.canvas();
     action.moving = false;
     var lastMoved = 0;
     var stopwatch = jim.stopwatch.create();
+
     action.rightMouseDown = function (e) {
         if (!state.isSelectPixelMode()) {
             action.moving = true;
@@ -93,11 +99,14 @@ jim.actions.move.create = function (mset, state) {
             action.lastMouseYLocation = e.layerY;
         }
     };
+
     action.rightMouseUp = function (e) {
         if (!state.isSelectPixelMode()) {
             action.moving = false;
             mset.canvas().getContext('2d').drawImage(action.canvas, 0, 0, action.canvas.width, action.canvas.height);
             mset.move(e.layerX - start.x, e.layerY - start.y);
+            var extents = mset.state().getExtents();
+            areaNotifier.notify({x: extents.topLeft().x,y: extents.topLeft().y,w: extents.width(),h: extents.height()});
         }
     };
 

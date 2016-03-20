@@ -92,7 +92,7 @@ describe("mandelbrot escape histogram", function () {
         var state = jim.common.grid.create(5,5, function () {
             i += 1;
             escaped = !escaped;
-            return {iterations: i, alreadyEscaped: escaped};
+            return {escapedAt: i, alreadyEscaped: escaped};
         });
 
         var histogram = jim.histogram.create();
@@ -110,7 +110,7 @@ describe("mandelbrot escape histogram", function () {
         var state = jim.common.grid.create(5,5, function () {
             i += 1;
             escaped = !escaped;
-            return {iterations: i, alreadyEscaped: escaped};
+            return {escapedAt: i, alreadyEscaped: escaped};
         });
         state.translate(5,5);
         var histogram = jim.histogram.create();

@@ -110,6 +110,17 @@ jim.palette.create = function () {
             var retVal = colourNode(blue, newPos);
             colourNodes.nodes.push(retVal);
             return retVal;
+        },
+        fromNodeList: function (nodeList) {
+            colourNodes.nodes = nodeList.map(function (node) {
+                return colourNode(node.colourDesc, node.position);
+            });
+        },
+        toNodeList: function () {
+            var nodeList = [];
+            return colourNodes.nodes.map(function (n) {
+                return {position: n.position, colourDesc: n.colour.getOriginalInput()};
+            });
         }
     };
 };

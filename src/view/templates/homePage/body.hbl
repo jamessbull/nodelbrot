@@ -54,6 +54,10 @@ var  handleClickfunction
                         position:absolute;
                         top:580px;
                         left:15px;
+                    }.main {
+                        position:absolute;
+                        top:416px;
+                        left:720px;
                     }
 
 </style>
@@ -89,6 +93,21 @@ var  handleClickfunction
    <canvas id="colourPickerCanvas" class="colourPicker" width=700, height=100></canvas>
 </div>
 
+<div id="mainControl" class="main">
+Max iteration reached <span id="maxIteration"></span><br>
+<input id="stop" type="submit" class="styled-button-1 stop" value="Stop" />
+<input id="start" type="submit" class="styled-button-1 start" value="Start" /><br>
+<input id="export" type="submit" class="styled-button-1 export" value="Export" /><br>
+<a id="bookmark" href="">Bookmark</a><br>
+
+<span id="speedout"/>
+Processed <span id="numberProcessedSoFar"/> of <span id="totalToProcess"/> pixels
+</div>
+
 <div class="download">
-    <a id="download" href="">Boo</a>
+    <span id="download" >Make ready for download</span>
+    <a target="_blank" id="export1" href="">Chunk1</a>
+    <a id="export2" href="">Chunk2</a>
+    <a id="export3" href="">Chunk3</a>
+    <a id="export4" href="">Chunk4</a>
 </div>

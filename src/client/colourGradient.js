@@ -1,5 +1,5 @@
 namespace("jim.colour.gradientui");
-jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton, palette) {
+jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton, palette, paletteNotifer) {
     "use strict";
     var calculateFillStyle = function (colour) {
         return "rgba(" + colour.r + "," + colour.g + ","  + colour.b + "," + colour.a +")";
@@ -78,6 +78,7 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
             var selX = ((fraction - this.selectionTolerance) * 500 ) + 10;
             var width = (x - selX) * 2;
             this.selectionMarkers.push({x: selX,y: 0,w: width,h: 40, ttl:10});
+
         },
         drawMarkers: function () {
             var self = this;
@@ -148,6 +149,12 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
         }, placeNewMarker: function () {
             var newNode = palette.addNode();
             this.add(newNode);
+        },build: function () {
+            this.nodes = [];
+            var self = this;
+            palette.nodes().forEach(function (node) {
+                self.add(node);
+            });
         }
 
     };
@@ -156,19 +163,19 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
         context.clearRect(0,0, gradientCanvas.width, gradientCanvas.height);
     };
 
-    palette.nodes().forEach(function (node) {
-        markers.add(node);
-    });
+    markers.build();
 
     addButton.onclick = function () {
         // where do I want to add new nodes?
         // How about right at the beginning because it is easy
         // Find largest gap and add node in middle
         markers.placeNewMarker();
+        paletteNotifer.notifyPalette(palette.toNodeList());
     };
 
     removeButton.onclick = function () {
         markers.removeSelectedNode();
+        paletteNotifer.notifyPalette(palette.toNodeList());
     };
 
     gradientCanvas.onmousedown = function (e) {
@@ -181,6 +188,7 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
 
     gradientCanvas.onmousemove = function (e) {
         markers.updatePosition(e.layerX);
+        paletteNotifer.notifyPalette(palette.toNodeList());
     };
 
     return {
@@ -193,6 +201,9 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
         },
         setSelectedNodeColour: function(tc) {
             markers.setColour(tc);
+        },
+        rebuildMarkers: function () {
+            markers.build();
         }
 
     };

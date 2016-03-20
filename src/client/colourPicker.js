@@ -50,7 +50,7 @@ jim.colour.colourPicker.create = function (canvas, gradient) {
     };
 
     canvas.onclick = function (e) {
-        if (e.layerY <= h/2) {
+        if (e.layerY <= h/3) {
             selectedHue =  interpolate(0, 359, e.layerX/w);
             draw();
             gradient.setSelectedNodeColour(tinycolor({h:selectedHue, s:1, v:1}));

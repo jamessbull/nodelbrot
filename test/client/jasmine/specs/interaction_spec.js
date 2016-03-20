@@ -17,18 +17,28 @@ describe("The user interface action", function () {
         };
     };
 
+    var actionFired = "notYet";
+    var mset = {};
+
+    mset.zoomOut = function () {
+        actionFired += "zoomOut";
+    };
+
+    mset.zoomTo = function () {
+        actionFired += "zoomTo";
+    };
+
+
+    var state = {};
+    state.isSelectPixelMode = function () {
+        return false;
+    };
+
     it("double click should take less than a second", function () {
-        fakeTimer.times = [50,1000000, 10];
-        var actions = jim.actions.doubleclick.create(fakeTimer);
-        var actionFired = "notYet";
-        var action = function (action) {
-            return function () { actionFired += action; };
-        };
+        fakeTimer.times = [50, 1000000, 10];
+        actionFired = "notYet";
 
-        actions.onTrigger(action("doubleClick"));
-        actions.leftMouseDown(event(100, 200));
-        actions.leftMouseUp(event(100, 200));
-        expect(actionFired).toBe("notYet");
+        var actions = jim.actions.doubleclick.create(fakeTimer, mset, state);
 
         actions.leftMouseDown(event(100, 200));
         actions.leftMouseUp(event(100, 200));
@@ -36,39 +46,36 @@ describe("The user interface action", function () {
 
         actions.leftMouseDown(event(100, 200));
         actions.leftMouseUp(event(100, 200));
-        expect(actionFired).toBe("notYetdoubleClick");
+        expect(actionFired).toBe("notYet");
+
+        actions.leftMouseDown(event(100, 200));
+        actions.leftMouseUp(event(100, 200));
+        expect(actionFired).toBe("notYetzoomOut");
     });
 
     it("double click is not triggered twice by three clicks inside a second", function () {
         fakeTimer.times = [40, 50, 900];
-        var action = jim.actions.doubleclick.create(fakeTimer);
-        var actionFired = "notYet";
-        var perform = function (action) {
-            return function () { actionFired += action; };
-        };
+        actionFired = "notYet";
 
-        action.onTrigger(perform("doubleClick"));
+        var action = jim.actions.doubleclick.create(fakeTimer,mset, state);
+
         action.leftMouseDown(event(100, 200));
         action.leftMouseUp(event(100, 200));
         expect(actionFired).toBe("notYet");
 
         action.leftMouseDown(event(100, 200));
         action.leftMouseUp(event(100, 200));
-        expect(actionFired).toBe("notYetdoubleClick");
+        expect(actionFired).toBe("notYetzoomOut");
 
         action.leftMouseDown(event(100, 200));
         action.leftMouseUp(event(100, 200));
-        expect(actionFired).toBe("notYetdoubleClick");
+        expect(actionFired).toBe("notYetzoomOut");
     });
 
     it("selection is triggered only if the mouse up position is more than 10 pixels from the start", function () {
         var localSelection = jim.selection.create(jim.rectangle.create(0,0, 600, 400));
-        var action = jim.actions.selectArea.create(localSelection);
-        var actionFired = "No";
-        var perform = function (action) {
-            return function () { actionFired += action; };
-        };
-        action.onTrigger(perform("selectArea"));
+        var action = jim.actions.selectArea.create(localSelection, mset, state);
+        actionFired = "No";
 
         action.leftMouseDown(event(100, 200));
         action.moveMouse(event(100, 200));
@@ -78,13 +85,13 @@ describe("The user interface action", function () {
         action.leftMouseDown(event(100, 200));
         action.moveMouse(event(100, 200));
         action.leftMouseUp(event(111, 200));
-        expect(actionFired).toBe("NoselectArea");
+        expect(actionFired).toBe("NozoomTo");
     });
 
     it("selection begun when left mouse button depressed selection ends when left button released", function () {
         var localSelection = jim.selection.create(jim.rectangle.create(0,0, 600, 400));
-        var action = jim.actions.selectArea.create(localSelection);
-        var actionFired = "No";
+        var action = jim.actions.selectArea.create(localSelection, mset, state);
+        actionFired = "No";
         var perform = function (action) {
             return function () { actionFired += action; };
         };
@@ -92,8 +99,6 @@ describe("The user interface action", function () {
         spyOn(localSelection, "begin");
         spyOn(localSelection, "change");
         spyOn(localSelection, "end");
-
-        action.onTrigger(perform("selectArea"));
 
         action.leftMouseDown(event(100, 200));
 
@@ -114,8 +119,14 @@ describe("The user interface action", function () {
 
     it("click and drag with right mouse button scrolls around mandelbrot set", function () {
         var mset = {move: function () {}};
-        var moveAction = jim.actions.move.create(mset);
-
+        mset.canvas = function () {
+            var c = document.createElement('canvas');
+            c.width = 100;
+            c.height = 100;
+            return c;
+        };
+        var moveAction = jim.actions.move.create(mset, state);
+        moveAction.canvas = document.createElement('canvas');
         spyOn(mset, "move");
 
         moveAction.rightMouseDown(event(10, 10));
@@ -127,7 +138,14 @@ describe("The user interface action", function () {
 
     it("click and drag with right mouse button scrolls around mandelbrot set", function () {
         var mset = {move: function () {}};
-        var moveAction = jim.actions.move.create(mset);
+        mset.canvas = function () {
+            var c = document.createElement('canvas');
+            c.width = 100;
+            c.height = 100;
+            return c;
+        };
+        var moveAction = jim.actions.move.create(mset, state);
+        moveAction.canvas = document.createElement('canvas');
 
         spyOn(mset, "move");
 

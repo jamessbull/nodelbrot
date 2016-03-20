@@ -6,7 +6,10 @@ exports.create = function () {
             routes.push(route);
         },
         routeFor: function (url) {
-            var matchingRoutes = routes.filter(function (route) { return route.url === url; });
+            var matchingRoutes = routes.filter(function (route) {
+                var split = url.split("?");
+                return route.url === split[0];
+            });
             return matchingRoutes[0];
         },
         asList: routes

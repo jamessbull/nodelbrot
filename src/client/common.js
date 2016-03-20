@@ -1,12 +1,18 @@
 var namespace = function (name) {
     "use strict";
-    var parts = name.split("."), partial = window;
+    var parts = name.split("."), partial = self;
     parts.forEach(function (part) {
         if (partial[part] === undefined) {
             partial[part] = {};
         }
         partial = partial[part];
     });
+};
+
+namespace("jim.colour");
+jim.colour.create = function (r, g, b, a) {
+    "use strict";
+    return {r: r, g: g, b: b, a: a};
 };
 
 namespace("jim.coord");
@@ -27,18 +33,34 @@ jim.coord.translator.create = function (fromRect, fromPoint) {
     return {
         translateTo: function (toRect) {
             return jim.coord.create(
-                toRect.topLeft().x + (((fromPoint.x - fromRect.topLeft().x) * toRect.width())  / fromRect.width()),
+                toRect.topLeft().x + (((fromPoint.x - fromRect.topLeft().x) * toRect.width()) / fromRect.width()),
                 toRect.topLeft().y + (((fromPoint.y - fromRect.topLeft().y) * toRect.height()) / fromRect.height())
             );
         }
     };
 };
 
+namespace("jim.coord.translator2");
+jim.coord.translator2.create = function () {
+    "use strict";
+    return {
+        translateX: function (fromTopLeftX, fromWidth, toTopLeftX, toWidth, x) {
+            return toTopLeftX + (((x - fromTopLeftX) * toWidth) / fromWidth);
+        },
+        translateY: function (fromTopLeftY, fromHeight, toTopLeftY, toHeight, y) {
+            return toTopLeftY + (((y - fromTopLeftY) * toHeight) / fromHeight);
+        }
+    };
+};
+
+
 namespace("jim.rectangle");
 jim.rectangle.create = function (one, two, width, height) {
     "use strict";
     var coord = jim.coord.create, x, y, w, h, topLeft, topRight, bottomLeft, bottomRight,
-        present = function (x) { return x !== undefined; };
+        present = function (x) {
+            return x !== undefined;
+        };
 
     if (present(one.x)) {
         x = one.x;
@@ -58,10 +80,18 @@ jim.rectangle.create = function (one, two, width, height) {
     bottomRight = coord(x + w, y + h);
 
     return {
-        topLeft:        function () { return topLeft; },
-        topRight:       function () { return topRight; },
-        bottomRight:    function () { return bottomRight; },
-        bottomLeft:     function () { return bottomLeft; },
+        topLeft: function () {
+            return topLeft;
+        },
+        topRight: function () {
+            return topRight;
+        },
+        bottomRight: function () {
+            return bottomRight;
+        },
+        bottomLeft: function () {
+            return bottomLeft;
+        },
         width: function (val) {
             if (present(val)) {
                 topRight.x = topLeft.x + val;
@@ -129,7 +159,7 @@ jim.common.grid.processor.create = function () {
                 });
             });
         },
-        iterate: function  (array, f) {
+        iterate: function (array, f) {
             array.forEach(function (nested, x) {
                 nested.forEach(function (value, y) {
                     f(array[x][y], x, y);
@@ -151,16 +181,16 @@ jim.common.grid.create = function (columnSize, rowSize, f) {
 
         addColumnToLeft = function (xIndex) {
             var columnToAdd = [];
-            for (var i = 0 ; i < grid[0].length; i+=1) {
-                columnToAdd.push(f(xIndex, i - yOffset ));
+            for (var i = 0; i < grid[0].length; i += 1) {
+                columnToAdd.push(f(xIndex, i - yOffset));
             }
             grid.unshift(columnToAdd);
         },
         addColumnToRight = function () {
             var columnToAdd = [];
             var columnViewIndex = grid.length - xOffset;
-            for (var currentRow = 0; currentRow < grid[0].length; currentRow+=1) {
-                columnToAdd.push(f(columnViewIndex,currentRow - yOffset)); // seems I have forgotten offset values
+            for (var currentRow = 0; currentRow < grid[0].length; currentRow += 1) {
+                columnToAdd.push(f(columnViewIndex, currentRow - yOffset)); // seems I have forgotten offset values
             }
             grid.push(columnToAdd);
         },
@@ -171,27 +201,27 @@ jim.common.grid.create = function (columnSize, rowSize, f) {
             xOffset = 0;
         },
         addColumnsToTheRightLeaveXOffsetAlone = function (noToAdd) {
-            for (var i = 0 ; i < noToAdd; i+=1) {
+            for (var i = 0; i < noToAdd; i += 1) {
                 addColumnToRight();
             }
         },
         addRowToTop = function (yIndex) {
-            for(var i = 0; i < grid.length; i +=1) {
+            for (var i = 0; i < grid.length; i += 1) {
                 grid[i].unshift(f(i - xOffset, yIndex));
             }
         },
         addRowToBottom = function () {
-            for (var i = 0; i < grid.length; i+=1) {
-                grid[i].push(f(i -xOffset, (grid[0].length - (yOffset + 1))));
+            for (var i = 0; i < grid.length; i += 1) {
+                grid[i].push(f(i - xOffset, (grid[0].length - (yOffset + 1))));
             }
         },
         addRowsOnBottomLeaveYOffsetAlone = function (noToAdd) {
-            for (var rowIndex = 0; rowIndex < noToAdd; rowIndex +=1) {
+            for (var rowIndex = 0; rowIndex < noToAdd; rowIndex += 1) {
                 addRowToBottom();
             }
         },
         addRowsToTopResetOffset = function (noToAdd) {
-            for (var i = noToAdd -1; i >= 0; i -=1) {
+            for (var i = noToAdd - 1; i >= 0; i -= 1) {
                 addRowToTop(i);
             }
             yOffset = 0;
@@ -238,9 +268,8 @@ jim.common.grid.create = function (columnSize, rowSize, f) {
         },
         iterateVisible: function (f) {
             var i, j;
-            for (j = yOffset; j < (yOffset + rowSize); j +=1)
-            {
-                for (i = xOffset; i < (xOffset + columnSize); i +=1) {
+            for (j = yOffset; j < (yOffset + rowSize); j += 1) {
+                for (i = xOffset; i < (xOffset + columnSize); i += 1) {
                     f(grid[i][j], i, j);
                 }
             }
@@ -248,7 +277,7 @@ jim.common.grid.create = function (columnSize, rowSize, f) {
         translate: function (x, y) {
             xOffset += x;
             yOffset += y;
-            if (xOffset > 0){
+            if (xOffset > 0) {
                 addColumnsToTheRightLeaveXOffsetAlone(numberToAddToRight());
             } else {
                 addColumnsToTheLeftResetXOffset(numberToAddToLeft());
@@ -268,7 +297,7 @@ jim.interpolator.create = function () {
     return {
         loginterpolate: function (from, to, fraction) {
             var retVal = from + ((to - from) * fraction);
-            console.log("from " + from + " to " + to +" fraction " + fraction);
+            console.log("from " + from + " to " + to + " fraction " + fraction);
             console.log("returning " + retVal);
             return from + ((to - from) * fraction);
         },

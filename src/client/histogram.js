@@ -111,3 +111,36 @@ jim.histogram.create = function () {
         }
     };
 };
+
+namespace("jim.twoPhaseHistogram");
+jim.twoPhaseHistogram.create = function (_size) {
+    "use strict";
+    var data = [], total = 0;
+    for (var i = 0; i < _size; i +=1) {
+        data[i] = 0;
+    }
+    var add = function (value) {
+        data[value] +=1;
+        total += 1;
+    };
+    var process = function () {
+        var total = 0;
+        for (var i = 0 ; i < _size; i +=1) {
+            total += data[i];
+            data[i] = total;
+        }
+    };
+    var percentEscapedBy = function (i) {
+        var no = data[i];
+        return no === 0 ? 0 : no / total;
+    };
+    return {
+        add: add,
+        percentEscapedBy: percentEscapedBy,
+        process: process,
+        setData: function (_data, _total) {
+            data = _data;
+            total = _total;
+        }
+    };
+};

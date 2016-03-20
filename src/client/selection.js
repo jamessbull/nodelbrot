@@ -31,4 +31,4 @@ jim.selection.create = function (rect) {
             }
         }
     };
-}
+};

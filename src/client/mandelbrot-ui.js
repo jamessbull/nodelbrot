@@ -78,7 +78,7 @@ jim.mandelbrot.ui.magnifiedDisplay.create = function (mset, pixelInfo) {
     };
 };
 
-jim.mandelbrot.ui.create = function (mandelbrotSet, canvas, w, h, pixelInfo) {
+jim.mandelbrot.ui.create = function (mandelbrotSet, canvas, w, h, pixelInfo, areaNotifier) {
     "use strict";
     var state = jim.mandelbrot.ui.state.create(),
         magnifiedDisplay = jim.mandelbrot.ui.magnifiedDisplay.create(mandelbrotSet, pixelInfo),
@@ -86,9 +86,9 @@ jim.mandelbrot.ui.create = function (mandelbrotSet, canvas, w, h, pixelInfo) {
         newSelection = jim.selection.create,
         selection = newSelection(rect(0, 0, w, h)),
         timer = jim.stopwatch.create(),
-        zoomAction = jim.actions.selectArea.create(selection, mandelbrotSet, state),
+        zoomAction = jim.actions.selectArea.create(selection, mandelbrotSet, state, areaNotifier),
         doubleClickAction = jim.actions.doubleclick.create(timer, mandelbrotSet, state),
-        moveAction = jim.actions.move.create(mandelbrotSet, state),
+        moveAction = jim.actions.move.create(mandelbrotSet, state, areaNotifier),
         showPointDetailsAction = jim.actions.show.create(magnifiedDisplay, state),
         actions = [zoomAction, doubleClickAction, moveAction, showPointDetailsAction],
         mode = "normal";
@@ -132,7 +132,6 @@ jim.mandelbrot.ui.create = function (mandelbrotSet, canvas, w, h, pixelInfo) {
                 canvasDiv.style.cursor="default";
                 state.setNormalMode();
             }
-
         }
     };
 };
