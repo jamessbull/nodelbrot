@@ -10,18 +10,27 @@ jim.palette.create = function () {
     var blue = hsv(250,"100%","100%");
     var cyan = hsv(170,"100%","100%");
     var black = hsv(100,"0%","0%");
-    var white = hsv(100, "0%", "100%");
+    var white = hsv(10, "0%", "100%");
 
+    var colourNodes = {};
     var colourNode = function(hsv, position) {
+        var tc = tinycolor(hsv);
+        var rgb = tc.toRgb();
+        rgb.a = 255;
         return {
-            hsv:tinycolor(hsv).toHsv(),
-            rgb:tinycolor(hsv).toRgb(),
-            colour:tinycolor(hsv),
+            hsv:tc.toHsv(),
+            rgb:rgb,
+            colour:tc,
             position:position,
+            setPosition: function (p) {
+                this.position = p;
+                colourNodes.sort();
+            },
             setColour: function (tc) {
                 this.colour = tc;
                 this.hsv = this.colour.toHsv();
                 this.rgb = this.colour.toRgb();
+                this.rgb.a = 255;
             },
             before: function (n) { return this.position <= n; },
             after: function (n) {return this.position >= n;},
@@ -51,10 +60,14 @@ jim.palette.create = function () {
         return find(nodes, function (n, n2) {return n2.position > n.position;});
     };
 
-
+// so the whole from thing is to find out what the from and to nodes are.
+// as it is called for every pixel we can iterate the nodes once. Best to sort the nodes when
+// the nodes are updated if we know they are sorted then I can iterate through until the node is bigger then get the previous one
+// if the first one is bigger then it is black and node 1 - if last one is smaller then it is last node and white
+// I want to sort nodes on add or change
     var interpolate = jim.interpolator.create().interpolate;
 
-    var colourNodes = {
+    colourNodes = {
         nodes:[colourNode(orange,0), colourNode(gold, 0.5), colourNode(yellow, 0.85), colourNode(cyan,0.85),colourNode(blue,1)],
         from: function (n) {
             var smallerNodes = this.nodes.filter(function(node) { return node.before(n); });
@@ -69,17 +82,39 @@ jim.palette.create = function () {
                 defaultToNode;
         },
         at: function (n) {
-            var f = this.from(n);
-            var t = this.to(n);
-            var fc = f.rgb;
-            var tc = t.rgb;
-            var n2 =  (n - f.position) / (t.position - f.position);
+            var l = this.nodes.length;
+            var from = defaultFromNode;
+            var to = defaultToNode;
+            var currentNode;
+            // if
+            for (var i = 0 ; i < l; i++) {
+                currentNode = this.nodes[i];
+                if (currentNode.position <= n) {
+                    from = this.nodes[i];
+                }
+
+                if (currentNode.position > n) {
+                    to = currentNode;
+                    break;
+                }
+            }
+            if (to.rgb == defaultToNode.rgb) {
+                var x = "foo";
+            }
+            var fc = from.rgb;
+            var tc = to.rgb;
+            var n2 =  (n - from.position) / (to.position - from.position);
             var rgba = {};
             rgba.r = interpolate(fc.r, tc.r, n2);
             rgba.g = interpolate(fc.g, tc.g, n2);
             rgba.b = interpolate(fc.b, tc.b, n2);
             rgba.a = 255;
             return rgba;
+        },
+        sort: function () {
+            this.nodes.sort(function (a, b) {
+                return a.position - b.position;
+            });
         }
     };
 
@@ -92,32 +127,17 @@ jim.palette.create = function () {
         setNodes: function (nodes) {
             colourNodes.nodes = nodes;
         }, addNode: function () {
-            var biggestGapNode;
-            var toBiggestNode;
-            var currentgap = 0;
-            if (colourNodes.nodes.length <1) {
-                biggestGapNode = defaultFromNode;
-            }
-            var lastNode = colourNodes.nodes[0];
-            colourNodes.nodes.forEach(function (node) {
-
-                var gap = node.position - lastNode.position;
-                if (gap > currentgap) {
-                    currentgap = gap;
-                    biggestGapNode = lastNode;
-                    toBiggestNode = node;
-                }
-                lastNode = node;
-            });
-            var newPos = biggestGapNode.position + ((toBiggestNode.position - biggestGapNode.position)/2);
+            var newPos = 0.5;
             var retVal = colourNode(blue, newPos);
             colourNodes.nodes.push(retVal);
+            colourNodes.sort();
             return retVal;
         },
         fromNodeList: function (nodeList) {
             colourNodes.nodes = nodeList.map(function (node) {
                 return colourNode(node.colourDesc, node.position);
             });
+            colourNodes.sort();
         },
         toNodeList: function () {
             var nodeList = [];

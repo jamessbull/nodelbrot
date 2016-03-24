@@ -104,7 +104,7 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
             var selecting = this.selecting;
             this.nodes.forEach(function (node) {
                 if (node.selected && selecting) {
-                    node.node.position = ((x - 10) / 500);
+                    node.node.setPosition(((x - 10) / 500));
                 }
             });
         },

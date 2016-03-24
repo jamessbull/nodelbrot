@@ -262,7 +262,6 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent) {
             var distance = fromScreen(moveX, moveY).distanceTo(currentExtents.topLeft());
             currentExtents.move(0- distance.x, 0 -distance.y);
             grid.translate(moveX, moveY);
-            histogram.rebuild(grid);
 
         },
         drawFunc: function (x, y) {
