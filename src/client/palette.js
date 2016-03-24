@@ -15,11 +15,13 @@ jim.palette.create = function () {
     var colourNode = function(hsv, position) {
         return {
             hsv:tinycolor(hsv).toHsv(),
+            rgb:tinycolor(hsv).toRgb(),
             colour:tinycolor(hsv),
             position:position,
             setColour: function (tc) {
                 this.colour = tc;
                 this.hsv = this.colour.toHsv();
+                this.rgb = this.colour.toRgb();
             },
             before: function (n) { return this.position <= n; },
             after: function (n) {return this.position >= n;},
@@ -69,21 +71,21 @@ jim.palette.create = function () {
         at: function (n) {
             var f = this.from(n);
             var t = this.to(n);
+            var fc = f.rgb;
+            var tc = t.rgb;
             var n2 =  (n - f.position) / (t.position - f.position);
-            return tinycolor({
-                h: interpolate(f.hsv.h, t.hsv.h, n2),
-                s: interpolate(f.hsv.s, t.hsv.s, n2),
-                v: interpolate(f.hsv.v, t.hsv.v, n2)
-            });
+            var rgba = {};
+            rgba.r = interpolate(fc.r, tc.r, n2);
+            rgba.g = interpolate(fc.g, tc.g, n2);
+            rgba.b = interpolate(fc.b, tc.b, n2);
+            rgba.a = 255;
+            return rgba;
         }
     };
 
     return {
-        // Can I store colour as rgb? Then interpolate those values rather than the hsv ones?
         colourAt: function (number) {
-            var currentColour =  colourNodes.at(number).toRgb();
-            currentColour.a = 255;
-            return currentColour;
+            return  colourNodes.at(number);
         },
         toArray: function () { return pal; },
         nodes: function () { return colourNodes.nodes; },

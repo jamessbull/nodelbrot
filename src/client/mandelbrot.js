@@ -115,6 +115,7 @@ jim.init.run = function () {
     }
 
     currentMandelbrotSet.state().setExtents(initialLocation);
+    areaNotifier.notify({x: initialLocation.topLeft().x, y: initialLocation.topLeft().y, w: initialLocation.width(), h: initialLocation.height()});
 
     exportButton.onclick = function () {
         var histogramBuilder = new Worker("/js/histogramCalculatingWorker.js");
