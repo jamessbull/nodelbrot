@@ -17,12 +17,13 @@ jim.mandelbrot.basepoint = (function () {
             return this.x * this.x + this.y * this.y;
         },
         calculate: function (histogram) {
+            var x = this.x, y = this.y, tempX;
             if (this.incomplete()) {
-                this.tempX = this.x * this.x - this.y * this.y + this.mx;
-                this.y = 2 * this.x * this.y + this.my;
-                this.x = this.tempX;
+                tempX = x * x - y * y + this.mx;
+                this.y = 2 * x * y + this.my;
+                this.x = tempX;
                 this.iterations += 1;
-                if (!this.alreadyEscaped && this.squaresSum() > 4) {
+                if (!this.alreadyEscaped && (x * x + y * y) > 4) {
                     this.alreadyEscaped = true;
                     this.escapedAt = this.iterations;
                     if (histogram) {
@@ -32,16 +33,47 @@ jim.mandelbrot.basepoint = (function () {
             }
         },
         calculateCurrentColour: function (times, histogram, colours) {
-            for (this.count = times; this.count > 0; this.count -= 1) {
-                if (this.complete) {
+            var c = times;
+            var x = this.x, y = this.y, tempX, iterations = this.iterations,
+                mx = this.mx, my = this.my, alreadyEscaped = this.alreadyEscaped,
+                escapedAt = this.escapedAt, colour, squaresSum,
+                complete = this.complete;
+            for (; c > 0; c -= 1) {
+                if (complete) {
                     break;
                 }
-                this.calculate(histogram);
+                squaresSum = x * x + y * y;
+                if (squaresSum < 9007199254740991 && iterations < 200000) {
+                    tempX = x * x - y * y + this.mx;
+                    y = 2 * x * y + my;
+                    x = tempX;
+                    iterations += 1;
+                    if (!alreadyEscaped && (squaresSum) > 4) {
+                        alreadyEscaped = true;
+                        escapedAt = iterations;
+                        if (histogram) {
+                            histogram.add(escapedAt);
+                        }
+                    }
+                } else {
+                    complete = true;
+                }
+
             }
-            this.colour = this.alreadyEscaped ?
-                    colours.forPoint(this, histogram) :
-                    colours.black;
-            return this.colour;
+
+            colour = alreadyEscaped ?
+                colours.forPoint(this, histogram) :
+                colours.black;
+
+            this.x = x;
+            this.y = y;
+            this.iterations = iterations;
+            this.mx = mx;
+            this.my = my;
+            this.alreadyEscaped = alreadyEscaped;
+            this.escapedAt = escapedAt;
+            this.colour = colour;
+            return colour;
         },
         incomplete: function () {
             if (this.complete)
@@ -93,9 +125,6 @@ jim.mandelbrot.pointForDisplay.create = function (x, y, _displayWidth, _displayH
     var mandelbrotPoint = jim.mandelbrot.point.create(mandelbrotCoord);
     var periodicity = jim.mandelbrot.periodicityChecker.create(15);
 
-    //var retVal =
-
-
     var create =  function (w, h, disp, coord, point, extents, completeCheck, periodicity) {
         var doneFunc = (function () {
             if (completeCheck) {
@@ -125,32 +154,10 @@ jim.mandelbrot.pointForDisplay.create = function (x, y, _displayWidth, _displayH
             calculateTo: function (x, y, upTo, histogram, mandelbrotCoord, mandelbrotPoint, done) {
                 var timesChecked = 0;
                 var iterations = 0;
-                //var inOrbit = false;
-                //this.mandelbrotCoord = this.display.at(x,y).translateTo(this.extents);
-                //var done = this.done;
-                //var periodicity = this.periodicity;
-                //var periodicityCheckingOn = this.periodicityCheckingOn;
-                //mandelbrotPoint.reset(mandelbrotCoord);
-
-
                 while (!done(mandelbrotPoint) && iterations < upTo) {
                     iterations +=1;
                     mandelbrotPoint.calculate(histogram);
                 }
-                    //if (periodicityCheckingOn) {
-                        //timesChecked ++;
-                        //
-                    //}
-//                    if (timesChecked > 15) {
-//                        periodicityCheckingOn = false;
-//                    }
-   //             }
-
-//                if (iterations >= upTo) {
-//                    this.periodicityCheckingOn = true;
-//                } else {
-//                    this.periodicityCheckingOn = false;
-//                }
             }, calculateToEscape: function (x, y, upTo, histogram) {
                 this.calculateTo(x, y, upTo, histogram, false);
             },
@@ -231,7 +238,7 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent) {
         histogram       = jim.histogram.create(),
         colours         = jim.colourCalculator.create(jim.palette.create()),
         maxIterations   = 0,
-        chunkSize      = 25,
+        chunkSize      = 50,
 
         fromScreen = function (x, y) { return screen.at(x, y).translateTo(currentExtents);},
         newGrid = function () {
