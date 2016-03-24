@@ -79,6 +79,7 @@ jim.palette.create = function () {
     };
 
     return {
+        // Can I store colour as rgb? Then interpolate those values rather than the hsv ones?
         colourAt: function (number) {
             var currentColour =  colourNodes.at(number).toRgb();
             currentColour.a = 255;
