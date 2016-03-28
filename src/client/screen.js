@@ -21,8 +21,8 @@ jim.screen.create = function (args) {
                 }
                 if (go) {
                     args.segments[n].draw(context);
-                    stopwatch.stop();
                 }
+                stopwatch.stop();
                 n += 1;
                 segmentCount +=1;
             }
@@ -31,6 +31,7 @@ jim.screen.create = function (args) {
         canvas: wholeScreen.canvas,
         context : context,
         stop: function () {
+            console.log('About to stop');
             go = false;
         },
         go: function () {

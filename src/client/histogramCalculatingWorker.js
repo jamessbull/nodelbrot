@@ -47,6 +47,8 @@ onmessage = function(e) {
     for (var d = 0; d < maxIter; d+=1) {
         histogramData[d] = 0;
     }
+    console.log('About to start to calcing histogram');
+
     for (var j = 0 ; j < height; j +=1) {
         for (var i = 0 ; i < width; i += 1) {
             iterations = 0;

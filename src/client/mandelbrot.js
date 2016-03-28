@@ -36,6 +36,8 @@ jim.mandelbrotImage.create = function () {
         },
         stop: function () {
             screen.stop();
+            console.log('ADun stoppinm');
+
         },
         go: function() {
             screen.go();
@@ -118,6 +120,8 @@ jim.init.run = function () {
     areaNotifier.notify({x: initialLocation.topLeft().x, y: initialLocation.topLeft().y, w: initialLocation.width(), h: initialLocation.height()});
 
     exportButton.onclick = function () {
+        console.log('About to start to building histogram');
+
         var histogramBuilder = new Worker("/js/histogramCalculatingWorker.js");
         var imageCalculator = new Worker("/js/mandelbrotImageCalculatingWorker.js");
         var stopwatch = jim.stopwatch.create();
@@ -170,6 +174,8 @@ jim.init.run = function () {
 
     stopButton.onclick = function () {
         currentMandelbrotSet.stop();
+        console.log('Finished stopping on click');
+
     };
 
     startButton.onclick = function () {

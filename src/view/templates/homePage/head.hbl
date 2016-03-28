@@ -15,7 +15,4 @@
 <script src="/js/mandelbrot.js"></script>
 <script src="/js/colourPicker.js"></script>
 <script src="/js/colourGradient.js"></script>
-<script src="/js/yieldingIterators.js"></script>
 <script src="/js/periodicityChecker.js"></script>
-<script src="/js/mandelbrotImageCalculatingWorker.js"></script>
-
