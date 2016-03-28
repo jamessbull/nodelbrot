@@ -29,7 +29,7 @@ jim.mandelbrotImage.create = function () {
             return state.histogram();
         },
         palette: function () {
-            return state.palette().palette;
+            return state.palette();
         },
         state: function () {
             return state;

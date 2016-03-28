@@ -32,47 +32,49 @@ jim.mandelbrot.basepoint = (function () {
                 }
             }
         },
-        calculateCurrentColour: function (times, histogram, colours) {
-            var c = times;
-            var x = this.x, y = this.y, tempX, iterations = this.iterations,
-                mx = this.mx, my = this.my, alreadyEscaped = this.alreadyEscaped,
-                escapedAt = this.escapedAt, colour, squaresSum,
-                complete = this.complete;
-            for (; c > 0; c -= 1) {
-                if (complete) {
+        calculateCurrentColour: function (times, histogram, colours, palette) {
+            var x, y , tempX, iterations, mx, my, escaped, escapedAt, colour, squaresum,complete;
+            complete   = this.complete;
+            escaped    = this.alreadyEscaped;
+            escapedAt  = this.escapedAt;
+            x          = this.x;
+            y          = this.y;
+            mx         = this.mx;
+            my         = this.my;
+            iterations = this.iterations;
+
+            for (; times > 0; times -= 1) {
+                if (complete) { break; }
+                squaresum = x * x + y * y;
+                if (squaresum > 1024 || iterations >= 100000) {
+                    complete = true;
                     break;
                 }
-                squaresSum = x * x + y * y;
-                if (squaresSum < 9007199254740991 && iterations < 200000) {
-                    tempX = x * x - y * y + this.mx;
-                    y = 2 * x * y + my;
-                    x = tempX;
-                    iterations += 1;
-                    if (!alreadyEscaped && (squaresSum) > 4) {
-                        alreadyEscaped = true;
-                        escapedAt = iterations;
-                        if (histogram) {
-                            histogram.add(escapedAt);
-                        }
-                    }
-                } else {
-                    complete = true;
-                }
 
+                tempX = x * x - y * y + mx;
+                y = 2 * x * y + my;
+                x = tempX;
+                iterations += 1;
+                if (!escaped && (squaresum) > 4) {
+                    escaped = true;
+                    escapedAt = iterations;
+                    if (histogram) {
+                        histogram.add(escapedAt);
+                    }
+                }
             }
 
-            colour = alreadyEscaped ?
-                colours.forPoint(this, histogram) :
-                colours.black;
+            colour = escaped ? colours.forPoint(x,y, iterations, histogram, palette) : colours.black;
 
-            this.x = x;
-            this.y = y;
-            this.iterations = iterations;
-            this.mx = mx;
-            this.my = my;
-            this.alreadyEscaped = alreadyEscaped;
-            this.escapedAt = escapedAt;
-            this.colour = colour;
+            if (!this.complete) {
+                this.x = x;
+                this.y = y;
+                this.iterations = iterations;
+                this.alreadyEscaped = escaped;
+                this.escapedAt = escapedAt;
+                this.colour = colour;
+                this.complete = complete;
+            }
             return colour;
         },
         incomplete: function () {
@@ -177,49 +179,36 @@ jim.mandelbrot.pointForDisplay.create = function (x, y, _displayWidth, _displayH
 };
 
 namespace("jim.colourCalculator");
-jim.colourCalculator.create = function (palette) {
+jim.colourCalculator.create = function () {
     "use strict";
-    var zn,
-        nu,
-        lowerIteration,
-        higerIteration,
+    var interpolate = jim.interpolator.create().interpolate;
+    var nu,
+        iterationFloor,
         lower,
         higher,
         fractionalPart,
         iteration,
-        interpolatedColour,
-        interpolate = jim.interpolator.create().interpolate;
+        interpolatedColour;
 
+    var sqrt = Math.sqrt;
+    var log = Math.log;
+    var LN2 = Math.LN2;
+    var floor = Math.floor;
+    var test = {r:255, g:0,b:0,a:255};
     return {
-        forPoint: function (p, histogram) {
-            zn = Math.sqrt((p.x * p.x) + (p.y * p.y));
-            nu = Math.log(Math.log(zn) /  Math.LN2) / Math.LN2;
-            iteration = p.iterations + 1 - nu;
-            lowerIteration = Math.floor(iteration - 1);
-            higerIteration = Math.floor(iteration);
-            fractionalPart = iteration % 1;
-            lower = histogram.percentEscapedBy(lowerIteration);
-            higher = histogram.percentEscapedBy(higerIteration);
+        forPoint: function (x, y, iterations, histogram, palette) {
+            nu = log(log(sqrt((x * x) + (y * y))) /  LN2) / LN2;
+            iteration = iterations + 1 - nu;
+            iterationFloor = floor(iteration);
+
+            fractionalPart = iteration - iterationFloor;
+
+            lower = histogram.percentEscapedBy(iterationFloor - 1);
+            higher = histogram.percentEscapedBy(iterationFloor);
             interpolatedColour = interpolate(lower, higher, fractionalPart);
             return palette.colourAt(interpolatedColour);
         },
-        getUsefulNumbersMessage: function (p, histogram) {
-            var zn,nu,iteration, lowerIteration, higherIteration, fractionalPart, lower, higher, interpolatedColour;
-            zn = Math.sqrt((p.x * p.x) + (p.y * p.y));
-            nu = Math.log(Math.log(zn) /  Math.LN2) / Math.LN2;
-            iteration = p.iterations + 1 - nu;
-            lowerIteration = Math.floor(iteration - 1);
-            higerIteration = Math.floor(iteration);
-            fractionalPart = iteration % 1;
-            lower = histogram.percentEscapedBy(lowerIteration);
-            higher = histogram.percentEscapedBy(higerIteration);
-            interpolatedColour = jim.interpolator.create().loginterpolate(lower, higher, fractionalPart);
-
-            var c = palette.colourAt(interpolatedColour);
-            return "lowerIteration: " + lowerIteration + " <br>higherIteration: "+ higerIteration +" <br>fraction: "+ fractionalPart + " \ninterpolated colour: " + interpolatedColour + "<br>colour calculated (rgb): " + c.r + " " + c.g + " " + c.b;
-        },
-        black: jim.colour.create(0, 0, 0, 255),
-        palette: palette
+        black: jim.colour.create(0, 0, 0, 255)
     };
 };
 
@@ -230,16 +219,18 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent) {
         aGrid           = jim.common.grid.create,
         aPoint          = jim.mandelbrot.point.create,
         timer           = jim.stopwatch.create(),
+        palette         = jim.palette.create(),
 
         //currentExtents  = aRectangle(-2.5, -1, 3.5, 2),
         currentExtents  = startingExtent,
         previousExtents = [],
         screen          = aRectangle(0, 0, sizeX - 1, sizeY - 1),
         histogram       = jim.histogram.create(),
-        colours         = jim.colourCalculator.create(jim.palette.create()),
+        colours         = jim.colourCalculator.create(),
         maxIterations   = 0,
         chunkSize      = 50,
-
+        p,
+        test = {r:45,g:255,b:0,a:255},
         fromScreen = function (x, y) { return screen.at(x, y).translateTo(currentExtents);},
         newGrid = function () {
             return aGrid(sizeX, sizeY, function (x, y) { return aPoint(fromScreen(x, y)); });
@@ -269,21 +260,23 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent) {
             var distance = fromScreen(moveX, moveY).distanceTo(currentExtents.topLeft());
             currentExtents.move(0- distance.x, 0 -distance.y);
             grid.translate(moveX, moveY);
+            //histogram.rebuild(grid);
 
         },
         drawFunc: function (x, y) {
-            var p = grid.at(x, y);
+            p = grid.at(x, y);
             if (p.iterations > maxIterations) maxIterations = p.iterations;
-            return p.calculateCurrentColour(chunkSize, histogram, colours);
+            return p.calculateCurrentColour(chunkSize, histogram, colours, palette);
+            //return test;
         },
         histogram: function () {
             return histogram;
         },
         palette: function () {
-            return colours;
+            return palette;
         },
         setPalette: function (p) {
-            colours.palette = p;
+            palette = p;
         },
         getExtents: function () {
             return currentExtents;

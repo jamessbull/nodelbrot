@@ -38,9 +38,87 @@ jim.arrays.ripple = function (array, index, riplee) {
         riplee[array[i]] +=1;
     }
 };
+//New histogram
+//simple like the two phase histogram
+//array which gets added to
+// I just add at the appropriate number just need to ripple up on insert
+// to do that I just keep track of largest number yet reached
+// try splicing a new array when it reaches 10000? or make it 10,000 max and bail on max iterartions at 10k
 
 namespace("jim.histogram");
 jim.histogram.create = function () {
+    "use strict";
+    var data;
+    var total = 0;
+    var maxVal = 1;
+    var i;
+    var reset = function () {
+        total = 0;
+        maxVal = 1;
+        data = [];
+        for (i = 0; i < 10000; i +=1) {
+            data[i] = 0;
+        }
+    };
+    reset();
+    var add = function (value) {
+        // adding before latest value need to ripple up to maxValue
+        if (value < maxVal) {
+            for (i = value; i <= maxVal; i++) {
+                data[i] +=1;
+            }
+        }
+        // adding at the end just increment
+        if (value === maxVal) {
+            data[value] +=1;
+        }
+        // adding later than lastValue need to start at lastVal + 1 and go to value things will be 0 so set to total +1
+        if (value > maxVal) {
+            for (i = maxVal +1; i <= value; i ++) {
+                data[i] = total;
+            }
+            data[value] += 1;
+        }
+
+        total += 1;
+        if (maxVal < value) {
+            maxVal = value;
+        }
+    };
+    var no;
+    var percentEscapedBy = function (i) {
+        no = data[i];
+        return no === 0 ? 0 : no / total;
+    };
+    var get = function (n) {
+        return data[n];
+    };
+    var getTotal = function () {
+        return total;
+    };
+    var rebuild = function (grid) {
+        reset();
+        grid.iterateVisible(function (point) {
+            if (point.alreadyEscaped){
+                add(point.escapedAt);
+            }
+        });
+    };
+    return {
+        add :add,
+        get: get,
+        percentEscapedBy: percentEscapedBy,
+        total: getTotal,
+        reset: reset,
+        rebuild: rebuild,
+        data: function () {
+            return data;
+        }
+    };
+};
+
+namespace("jim.histogramold");
+jim.histogramold.create = function () {
     "use strict";
     var state = {},
         total = 0,

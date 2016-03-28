@@ -12,10 +12,8 @@ onmessage = function(e) {
     var height = e.data.exportHeight;
     var width = e.data.exportWidth;
     var maxIter = e.data.maxIterations;
-    //var histogram = jim.twoPhaseHistogram.create(maxIter);
     var mandelbrotBounds = jim.rectangle.create(e.data.mx, e.data.my, e.data.mw, e.data.mh);
     var displayBounds = jim.rectangle.create(0,0, width - 1, height -1);
-    //var mandelbrotCoord = displayBounds.at(0, 0).translateTo(mandelbrotBounds);
     var mx = 0;
     var my = 0;
     var x = 0;
@@ -34,8 +32,7 @@ onmessage = function(e) {
         retVal.histogramTotal = histogramTotal;
         return retVal;
     };
-// approx 0.21 - 0.22 seconds
-//    now takes 0.1
+
     var translator = jim.coord.translator2.create();
     var fromTopLeftX = displayBounds.topLeft().x;
     var fromTopLeftY = displayBounds.topLeft().y;
@@ -63,7 +60,7 @@ onmessage = function(e) {
                 y = 2 * x * y + my;
                 x = tempX;
             }
-            //if (iterations < maxIter) histogram.add(iterations);
+
             if (iterations < maxIter) {
                 histogramData[iterations] +=1;
                 histogramTotal +=1;

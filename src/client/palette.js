@@ -66,7 +66,15 @@ jim.palette.create = function () {
 // if the first one is bigger then it is black and node 1 - if last one is smaller then it is last node and white
 // I want to sort nodes on add or change
     var interpolate = jim.interpolator.create().interpolate;
-
+    var l;
+    var from;
+    var to;
+    var currentNode;
+    var fc;
+    var tc;
+    var n2;
+    var i;
+    var rgba = {};
     colourNodes = {
         nodes:[colourNode(orange,0), colourNode(gold, 0.5), colourNode(yellow, 0.85), colourNode(cyan,0.85),colourNode(blue,1)],
         from: function (n) {
@@ -82,12 +90,11 @@ jim.palette.create = function () {
                 defaultToNode;
         },
         at: function (n) {
-            var l = this.nodes.length;
-            var from = defaultFromNode;
-            var to = defaultToNode;
-            var currentNode;
-            // if
-            for (var i = 0 ; i < l; i++) {
+            l = this.nodes.length;
+            from = defaultFromNode;
+            to = defaultToNode;
+
+            for (i = 0 ; i < l; i++) {
                 currentNode = this.nodes[i];
                 if (currentNode.position <= n) {
                     from = this.nodes[i];
@@ -98,13 +105,10 @@ jim.palette.create = function () {
                     break;
                 }
             }
-            if (to.rgb == defaultToNode.rgb) {
-                var x = "foo";
-            }
-            var fc = from.rgb;
-            var tc = to.rgb;
-            var n2 =  (n - from.position) / (to.position - from.position);
-            var rgba = {};
+            fc = from.rgb;
+            tc = to.rgb;
+            n2 =  (n - from.position) / (to.position - from.position);
+
             rgba.r = interpolate(fc.r, tc.r, n2);
             rgba.g = interpolate(fc.g, tc.g, n2);
             rgba.b = interpolate(fc.b, tc.b, n2);

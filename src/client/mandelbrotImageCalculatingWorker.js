@@ -73,7 +73,7 @@ onmessage = function(e) {
                 y = 2 * x * y + my;
                 x = tempX;
             }
-            pixelColour = escapedAt !== 0 ? colour.forPoint({x:x, y:y, iterations: iterations}, histogram): {r:0, g:0, b:0, a:255};
+            pixelColour = escapedAt !== 0 ? colour.forPoint(x, y, iterations, histogram, palette): {r:0, g:0, b:0, a:255};
             currentArrayPos = (j * width + i) * 4;
             imgData[currentArrayPos] = pixelColour.r;
             imgData[currentArrayPos + 1] = pixelColour.g;
