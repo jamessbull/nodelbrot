@@ -85,7 +85,7 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
             this.nodes.forEach (function (nodeInfo) {
                 var x = Math.floor(interpolate(10, 510, nodeInfo.node.position));
                 x = x - 3;
-                drawMarker(x, 22, nodeInfo.node.toRgb(), nodeInfo.selected);
+                drawMarker(x, 22, nodeInfo.node.rgb, nodeInfo.selected);
             });
         },
         stopMoving : function () {
@@ -107,6 +107,7 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
                     node.node.setPosition(((x - 10) / 500));
                 }
             });
+            palette.sort();
         },
         at: function (x) {
             var nodeToReturn;
@@ -141,7 +142,7 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
         }, removeSelectedNode: function () {
             var selectedNodeInfo = this.nodes.filter(function (nodeInfo) {return nodeInfo.selected;})[0];
             this.nodes = this.nodes.filter(function (node) { return !node.selected; });
-            var filteredNodes = palette.nodes().filter(function (node) {
+            var filteredNodes = palette.getNodes().filter(function (node) {
                 var nodeToRemove = node.position === selectedNodeInfo.node.position;
                 return !nodeToRemove;
             });
@@ -152,7 +153,7 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
         },build: function () {
             this.nodes = [];
             var self = this;
-            palette.nodes().forEach(function (node) {
+            palette.getNodes().forEach(function (node) {
                 self.add(node);
             });
         }
@@ -166,9 +167,6 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
     markers.build();
 
     addButton.onclick = function () {
-        // where do I want to add new nodes?
-        // How about right at the beginning because it is easy
-        // Find largest gap and add node in middle
         markers.placeNewMarker();
         paletteNotifer.notifyPalette(palette.toNodeList());
     };

@@ -228,7 +228,7 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent) {
         histogram       = jim.histogram.create(),
         colours         = jim.colourCalculator.create(),
         maxIterations   = 0,
-        chunkSize      = 50,
+        chunkSize      = 100,
         p,
         test = {r:45,g:255,b:0,a:255},
         fromScreen = function (x, y) { return screen.at(x, y).translateTo(currentExtents);},
