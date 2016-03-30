@@ -44,44 +44,19 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
         drawLine(410, 0, 410, 3);
         drawLine(510, 0, 510, 3);
     };
-    var highlightSelectionRange = function (x, y, w, h) {
-       drawLine(x, y, x + w, y);
-       drawLine(x + w, y, x + w, y + h);
-       drawLine(x + w, y + h, x, y + h);
-       drawLine(x, y + h, x, y);
-    };
 
     var interpolate = jim.interpolator.create().interpolate;
-
-    // How do I select and move?
+    var selectedNode = null;
     var markers = {
         selecting: false,
+        length: 500,
         nodes: [],
         selectionTolerance: 0.025,
-        selectionMarkers: [],
-        drawSelection: function () {
-            this.selectionMarkers.forEach(function (marker) {
-                marker.ttl--;
-                highlightSelectionRange(marker.x, marker.y, marker.w, marker.h);
-            });
-            this.selectionMarkers = this.selectionMarkers.filter(function (m) {return m.ttl >0;});
-        },
-        setColour:function (tc) {
-            this.nodes.forEach(function (nodeInfo) {
-                if(nodeInfo.selected) {
-                    nodeInfo.node.setColour(tc);
-                }
-            });
-        },
-        addSelectionMarker: function (x) {
-            var fraction = (x - 10) / 500;
-            var selX = ((fraction - this.selectionTolerance) * 500 ) + 10;
-            var width = (x - selX) * 2;
-            this.selectionMarkers.push({x: selX,y: 0,w: width,h: 40, ttl:10});
 
+        setColour:function (tc) {
+            selectedNode.node.setColour(tc);
         },
         drawMarkers: function () {
-            var self = this;
             this.nodes.forEach (function (nodeInfo) {
                 var x = Math.floor(interpolate(10, 510, nodeInfo.node.position));
                 x = x - 3;
@@ -92,72 +67,44 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
             this.selecting = false;
         },
         add: function (node) {
-            this.nodes.push({
-                node: node,
-                selected: false,
-                select: function () {
-                    this.selected = true;
-                }
-            });
+            this.nodes.push({ node: node, selected: false });
         },
         updatePosition: function (x) {
-            var selecting = this.selecting;
-            this.nodes.forEach(function (node) {
-                if (node.selected && selecting) {
-                    node.node.setPosition(((x - 10) / 500));
-                }
-            });
-            palette.sort();
+            if (this.selecting) {
+                selectedNode.node.setPosition(this.fractionalPosition(x));
+                palette.sort();
+            }
+        },
+        fractionalPosition: function (x) {
+            return  (x - 10) / this.length;
         },
         at: function (x) {
-            var nodeToReturn;
             var self = this;
-            this.nodes.forEach(function (nodeInfo) {
-                var fraction = (x - 10) / 500;
-                var distanceToNode = Math.abs(nodeInfo.node.position - fraction);
-                if(distanceToNode < self.selectionTolerance ){
-                    nodeToReturn = nodeInfo;
-                }
-            });
-            return nodeToReturn;
+            var distanceToNode = function (nodeInfo, x) { return  Math.abs(nodeInfo.node.position - self.fractionalPosition(x)); };
+            return this.nodes.filter(function (nodeInfo) { return distanceToNode(nodeInfo, x) < self.selectionTolerance; })[0];
         },
-        select: function (x) {
+        select: function (position) {
             this.selecting = true;
-            this.nodes.forEach(function (n) {
-                n.selected = false;
-            });
-            this.addSelectionMarker(x);
-            var m = this.at(x);
-            if(m) {
-                m.select();
+            this.nodes.forEach(function (node) { node.selected = false; });
+            var potentialNode = this.at(position);
+            if(potentialNode) {
+                selectedNode = potentialNode;
+                potentialNode.selected = true;
             }
-        }, selected: function () {
-            var toReturn;
-            this.nodes.forEach(function (n) {
-                if(n.selected) {
-                  toReturn = n ;
-                }
-            });
-            return toReturn;
-        }, removeSelectedNode: function () {
-            var selectedNodeInfo = this.nodes.filter(function (nodeInfo) {return nodeInfo.selected;})[0];
+        },
+        selected: function () { return selectedNode; },
+        removeSelectedNode: function () {
+            palette.removeNode(selectedNode.node);
             this.nodes = this.nodes.filter(function (node) { return !node.selected; });
-            var filteredNodes = palette.getNodes().filter(function (node) {
-                var nodeToRemove = node.position === selectedNodeInfo.node.position;
-                return !nodeToRemove;
-            });
-            palette.setNodes(filteredNodes);
-        }, placeNewMarker: function () {
-            var newNode = palette.addNode();
-            this.add(newNode);
-        },build: function () {
+        },
+        placeNewMarker: function () {
+            this.add(palette.addNode());
+        },
+        build: function () {
             this.nodes = [];
             var self = this;
-            palette.getNodes().forEach(function (node) {
-                self.add(node);
-            });
+            palette.getNodes().forEach(function (node) { self.add(node); });
         }
-
     };
 
     var clearDisplay = function () {
@@ -195,7 +142,6 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
             drawTicks();
             drawLine(5, 3, 515, 3);
             markers.drawMarkers();
-            //markers.drawSelection();
         },
         setSelectedNodeColour: function(tc) {
             markers.setColour(tc);

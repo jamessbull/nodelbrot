@@ -1,10 +1,13 @@
 namespace("jim.palette.colourNode");
+var nodeid = 0;
 jim.palette.colourNode.create = function(hsv, position) {
     "use strict";
+    nodeid +=1;
     var tc = tinycolor(hsv);
     var rgb = tc.toRgb();
     rgb.a = 255;
     return {
+        id:nodeid,
         hsv:hsv,
         rgb:rgb,
         position:position,
@@ -75,6 +78,9 @@ jim.palette.create = function () {
             nodes.push(retVal);
             this.sort();
             return retVal;
+        },
+        removeNode: function (_node) {
+            nodes = nodes.filter(function (node) { return _node.id !== node.id; });
         },
         setNodes: function (_nodes) {
             nodes = _nodes;
