@@ -194,7 +194,7 @@ jim.colourCalculator.create = function () {
     var log = Math.log;
     var LN2 = Math.LN2;
     var floor = Math.floor;
-    var test = {r:255, g:0,b:0,a:255};
+
     return {
         forPoint: function (x, y, iterations, histogram, palette) {
             nu = log(log(sqrt((x * x) + (y * y))) /  LN2) / LN2;
