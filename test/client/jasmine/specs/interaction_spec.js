@@ -19,6 +19,13 @@ describe("The user interface action", function () {
 
     var actionFired = "notYet";
     var mset = {};
+    mset.state = function () {
+        return {
+            getExtents: function () {
+                return jim.rectangle.create(0,0,5,5);
+            }
+        };
+    };
 
     mset.zoomOut = function () {
         actionFired += "zoomOut";
@@ -74,7 +81,13 @@ describe("The user interface action", function () {
 
     it("selection is triggered only if the mouse up position is more than 10 pixels from the start", function () {
         var localSelection = jim.selection.create(jim.rectangle.create(0,0, 600, 400));
-        var action = jim.actions.selectArea.create(localSelection, mset, state);
+
+        var notifier = {
+            notify: function () {
+
+            }
+        };
+        var action = jim.actions.selectArea.create(localSelection, mset, state, notifier);
         actionFired = "No";
 
         action.leftMouseDown(event(100, 200));
@@ -125,7 +138,19 @@ describe("The user interface action", function () {
             c.height = 100;
             return c;
         };
-        var moveAction = jim.actions.move.create(mset, state);
+        mset.state = function () {
+            return {
+                getExtents: function () {
+                    return jim.rectangle.create(0,0,5,5);
+                }
+            };
+        };
+        var notifier = {
+            notify: function () {
+                return true;
+            }
+        };
+        var moveAction = jim.actions.move.create(mset, state, notifier);
         moveAction.canvas = document.createElement('canvas');
         spyOn(mset, "move");
 
@@ -144,7 +169,19 @@ describe("The user interface action", function () {
             c.height = 100;
             return c;
         };
-        var moveAction = jim.actions.move.create(mset, state);
+        mset.state = function () {
+            return {
+                getExtents: function () {
+                    return jim.rectangle.create(0,0,5,5);
+                }
+            };
+        };
+        var notifier = {
+            notify: function () {
+                return true;
+            }
+        };
+        var moveAction = jim.actions.move.create(mset, state, notifier);
         moveAction.canvas = document.createElement('canvas');
 
         spyOn(mset, "move");

@@ -61,7 +61,7 @@ jim.colour.colourPicker.create = function (canvas, gradient) {
         }
     };
 
-    selectedHue = huePicker(0);
+    selectedHue = 120;
     return {
         draw : draw
     };

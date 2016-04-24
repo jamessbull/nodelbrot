@@ -40,16 +40,6 @@ describe("The mandelbrot set", function () {
 
     });
 
-    it("should create a colour palette array where every element is a colour", function () {
-        var pal = jim.palette.create();
-
-        pal.toArray().forEach(function (colour) {
-            expect(colour.hasOwnProperty('r')).toBe(true);
-            expect(colour.hasOwnProperty('g')).toBe(true);
-            expect(colour.hasOwnProperty('b')).toBe(true);
-            expect(colour.hasOwnProperty('a')).toBe(true);
-        });
-    });
 
     it("should execute 250000 times in 8 ms", function () {
         var i = 0,
@@ -59,7 +49,7 @@ describe("The mandelbrot set", function () {
             histogram = jim.histogram.create();
 
         stopwatch.start();
-        mb = jim.mandelbrot.state.create(500, 500);
+        mb = jim.mandelbrot.state.create(500, 500, jim.rectangle.create(-2.5, -1, 3.5, 2));
         stopwatch.stop();
         console.log("initialisation took " + stopwatch.elapsed() + "ms");
 
@@ -75,7 +65,7 @@ describe("The mandelbrot set", function () {
     });
 
     it("should build initial state for mandelbrot calculation", function () {
-        var mb = jim.mandelbrot.state.create(500, 500);
+        var mb = jim.mandelbrot.state.create(500, 500, jim.rectangle.create(-2.5, -1, 3.5, 2));
 
         expect(mb.at(0, 0).mx).toBe(-2.5);
         expect(mb.at(0, 0).my).toBe(-1);
@@ -91,6 +81,24 @@ describe("The mandelbrot set", function () {
     });
 
     it("draws each segment in turn", function () {
+        var yay = true;
+        var s = {
+            start: function () {
+                yay = true;
+            },
+            elapsed: function () {
+                if (yay) {
+                    yay = false;
+                    return 10;
+                } else {
+                    return 50;
+                }
+            },
+            stop : function () {
+
+            }
+        };
+
         var result = "foo",
             seg1 = jim.segment.create(200, 200, 10, 10,  function () {
                 result = "seg1";
@@ -102,7 +110,7 @@ describe("The mandelbrot set", function () {
             }),
             segs = [seg1, seg2],
             image = {draw: function () {}},
-            screen = jim.screen.create({segments: segs, image: image});
+            screen = jim.screen.create({segments: segs, image: image}, s);
 
         screen.draw();
         expect(result).toBe("seg1");
@@ -136,7 +144,7 @@ describe("The mandelbrot set", function () {
     it("should calculate a colour based on the current state of the point calculation", function () {
         var p = jim.mandelbrot.point.create(jim.coord.create(0.1, 0.1)),
             palette = jim.palette.create(),
-            colours = jim.colourCalculator.create(palette),
+            colours = jim.colourCalculator.create(),
             colour,
             histogram = {percentEscapedBy: function (n) {return 0.2; }};
 
@@ -145,7 +153,7 @@ describe("The mandelbrot set", function () {
         p.y = 3;
 
         spyOn(palette, "colourAt").andReturn(jim.colour.create(8, 8, 8, 255));
-        colour = colours.forPoint(p, histogram);
+        colour = colours.forPoint(3.5,3, 1000, histogram, palette);
 
         expect(palette.colourAt).toHaveBeenCalledWith(0.2);
 

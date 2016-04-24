@@ -10,7 +10,7 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
         context.moveTo(fromX, fromY);
         context.lineTo(toX, toY);
         context.lineWidth = 1;
-        context.strokeStyle = 'black';
+        context.strokeStyle = 'rgba(30,255,30,255)';
         context.stroke();
     };
     var drawCircle = function (x, y, r, c, selected) {
@@ -19,7 +19,7 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
         context.fillStyle = 'rgba('+ c.r +',' + c.g + ',' + c.b + ',' + c.a + ')';
         context.fill();
         context.lineWidth = 1;
-        context.strokeStyle = !selected ? 'gray' : 'black';
+        context.strokeStyle = !selected ? 'gray' : 'antiquewhite';
         context.stroke();
     };
     var drawTriangle = function (x, y, w, h, selected) {
@@ -29,7 +29,7 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
         context.lineTo(x + (2 * w), y);
         context.lineTo(x, y);
         context.lineWidth = 1;
-        context.fillStyle = !selected ? 'gray' : 'black';
+        context.fillStyle = !selected ? 'gray' : 'antiquewhite';
         context.fill();
     };
     var drawMarker = function (x, y, c, selected) {
@@ -67,7 +67,9 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
             this.selecting = false;
         },
         add: function (node) {
-            this.nodes.push({ node: node, selected: false });
+            var n = { node: node, selected: true };
+            this.nodes.push(n);
+            selectedNode = n;
         },
         updatePosition: function (x) {
             if (this.selecting) {

@@ -7,107 +7,336 @@ var  handleClickfunction
 </script>
 
 <style>
+    .standard {
+        font-family:'Courier New';
+        color:rgba(0,255,0,255);
+        background-color: white;
+    }
+    .exportImage {
+        position: absolute; top: 197px; left: 716px; width: 193px; height:255px;
+        background-color: black;
+    }
     .canvas { position: absolute; top: 0; left: 0; }
-        #mandelbrotCanvas { position: relative; display: inline-block; margin-bottom:22px}
-        .pixelInfoCanvas {
-            position: relative; top:0px; left: 700px; width:162px; height:181px;
-            border-style: solid;
-            border-width: 2px;
+    #mandelbrotCanvas { position: absolute; top:52px; display: inline-block; margin-bottom:22px}
+    .examinePixels {
+        position: absolute; top:197px; left: 716px; width:193px; height:181px;
+        background-color: black;
+    }
+    .pixelInfoCanvas {
+        position: relative; top:0px; left: 0px; height:181px;
+        border:none;
+        background-color: black;
+
+    }
+    hidden {
+        display:none;
+    }
+    .pixelInfo {
+        position: relative; top: -16px; left: 0px;  height:181px;
+        background-color: black;
+    }
+
+    .titleBar {
+        width:894px;
+        position: absolute;
+        padding-left:7px;
+        top:8px;
+        left:8px;
+        background-color: black;
+        font-size: 2em;
+        cursor:default;
+
+    }
+    .toolbarButton {
+        //box-shadow:rgba(0,0,0,0.5) 0 2px 0 0;
+        padding-left: 5px;
+        padding-right: 5px;
+        position: relative;
+        top: -5px;
+        font-size: 0.5em;
+        height: 25px;
+        background-color:black;
+        border-style: solid;
+        border-width: 1px;
+        border-radius:3px;
+        cursor:default;
+    }
+    .toolbarButtonSelected {
+        //box-shadow: rgba(0,0,0,0) 0 2px 0 0;
+        padding-left: 5px;
+        padding-right: 5px;
+        position: relative;
+        top: -4px;
+        font-size: 0.5em;
+        height: 25px;
+        background-color:black;
+        border-style: solid;
+        border-radius:3px;
+        border-width: 2px;
+    }
+    .colourGradient {
+        position:relative;
+        left:4%;
+        top:10px;
         }
-        .pixelInfo {
-            position: relative; top:10px; left: 700px; width:300px; height:181px;
-        }
-                    .styled-button-1 {
-                	    -webkit-box-shadow:rgba(0,0,0,0.2) 0 1px 0 0;
-                	    -moz-box-shadow:rgba(0,0,0,0.2) 0 1px 0 0;
-                    	box-shadow:rgba(0,0,0,0.2) 0 1px 0 0;
-                    	color:#333;
-                    	background-color:#FA2;
-                    	border-radius:5px;
-                    	-moz-border-radius:5px;
-                    	-webkit-border-radius:5px;
-                    	border:none;
-                    	font-family:'Helvetica Neue',Arial,sans-serif;
-                    	font-size:16px;
-                    	font-weight:700;
-                    	height:36px;
-                    	padding:4px 16px;
-                    	text-shadow:#FE6 0 1px 0
-                    }
-                    .colourGradient {
-                        position:absolute;
-                        top:419px;
-                        left:180px;
-                        }
-                    .colourPicker {
-                        position:absolute;
-                        top:461px;
-                    }.add {
-                        position:absolute;
-                        top:416px;
-                        left:10px;
-                    }.remove {
-                        position:absolute;
-                        top:416px;
-                        left:80px;
-                    }.download {
-                        position:absolute;
-                        top:580px;
-                        left:15px;
-                    }.main {
-                        position:absolute;
-                        top:416px;
-                        left:720px;
-                    }
+    .colourPicker {
+        position:absolute;
+        top:459px;
+        background-color:black;
+        width:700px;
+    }.download {
+        position:absolute;
+        top:580px;
+        left:15px;
+    }.main {
+        position:absolute;
+        top:416px;
+        left:720px;
+    }.heading {
+        position:relative;
+        top:5%;
+        font-weight:bold;
+        padding-top:3%;
+    }.exportButton {
+        margin-top:4%;
+        margin-left:19%;
+        padding-left:15%;
+        width:25%;
+        position:relative;
+        top:4px;
+    }.button {
+    //box-shadow:3px 3px 2px 0px #C9C9C9;
+     //-webkit-box-shadow:3px 3px 2px 0px #C9C9C9;
+     border-radius:3px;
+     border-style:solid;
+     border-width:1px;
+        cursor:default;
+    }
+    .buttonSelected {
+        box-shadow:rgba(0,0,0,0) 0 2px 0 0;
+        cursor:default;
+    }
+    .pickerButtons {
+        background-color:black;
+        position:relative;
+        top:-13px;
+        left:7px;
+        padding:3px;
+    }
+    .huePicker {
+        position: relative;
+        top:503px;
+    }
+    .bodyText {
+        position:relative;
+        top:5%;
+        font-size:small;
+    }
+    .panelContent {
+        position:relative;
+        padding-left:5%;
+        left:5%;
+    }
+    .mainPanel {
+        position:absolute;
+        left:716px;
+        top:52px;
+        width:193px;
+        background-color:black;
+    }
+    .mainPanelContent {
+        position:relative;
+        width:194px;
+        height:100px;
+    }
+    .linkButton {
+        color: rgba(0,255,0,255);
+         text-decoration:initial;
+         font-size:1.0em;
+    }
+
+    .downloadButton {
+        position:relative;
+        left:15%;
+        top:6px;
+    }
+
+    .centred {
+        text-align:center;
+    }
+
+    .mainButtonBar {
+        position:relative;
+        top:10px;
+        left:3px;
+    }
+
+    .panelSwitcher {
+        background-color:black;
+        position:absolute;
+        top:160px;
+        width: 182px;
+        left:716px;
+        padding-left:11px;
+        font-size:2em;
+    }
+
+    .progressTable {
+        top: 7px;
+        left:5px;
+        position:relative;
+    }
+
+    .downloadButtonPosition {
+        position:relative;
+        top:10px;
+    }
+    div { outline-style:none;}
+    .instructions {
+        position:absolute;
+        left: 8px;
+        top: 619px;
+        background-color:black;
+        width:901px;
+        height:100px;
+        font-size:0.75em;
+    }
+
+    .buyUsAPint {
+        position:absolute;
+        left: 716px;
+        top: 459px;
+        background-color:black;
+        width:193px;
+        height:152px;
+        font-size:0.75em;
+    }
+
+    .instructionsTitle {
+        position:relative;
+        left:45px;
+    }
+    .histogramCanvas{
+        position:absolute;
+        top:100px;
+        left:100px;
+        width:700px;
+        height:400px;
+
+    }
 
 </style>
 
-<div id="mandelbrotCanvas"></div>
+<div class="standard">
+    <div class=titleBar>
+       Mandelbrot fractal explorer
+    </div>
 
-<div class="pixelInfoCanvas">
-    <input type="checkbox" onClick="ui.handlePixelInfo()" name="selectPixelInfo" value="true">Select pixel info<br>
-    <canvas id="pixelInfoCanvas"></canvas>
-</div>
+    <div id="mandelbrotCanvas"></div>
+
+    <div class="panelSwitcher">
+        <span id="pixelInfoButton" class = "toolbarButton">Examine</span>
+        <span id="exportImageButton" class = "toolbarButtonSelected">Export</span>
+    </div>
+
+    <div id = examinePixels class = "examinePixels">
+        <div class="pixelInfoCanvas">
+            <input type="checkbox" onClick="ui.handlePixelInfo()" name="selectPixelInfo" value="true">Select pixel info<br>
+            <canvas id="pixelInfoCanvas"></canvas>
+        </div>
+        <div class="pixelInfo" id=pixelInfo>
+           <ul>
+               <li id="iterations">iterations</li>
+               <li id="alreadyEscaped">alreadyEscaped</li>
+               <li id="escapedAt">escapedAt</li>
+               <li id="pixelComplete">escapedAt</li>
+               <li id="mx">mx</li>
+               <li id="my">my</li>
+               <li id="histogramPerc">percentage escaped by</li>
+               <li id="colourInfo">colour info</li>
+           </ul>
+        </div>
+    </div>
+
+    <div id = "exportImagePanel" class = "exportImage">
+        <div class="panelContent">
+            <table class="tableInfo">
+                <thead>
+                  <tr> <th colspan=2 class="heading">Export Image </th> </tr>
+                </thead>
+                <tbody>
+                    <tr> <td class="bodyText">Iterations</td> <td class="bodyText"><input size="8" id="exportDepth" type="text" class="export" value="1000" /></td> </tr>
+                    <tr> <td class="bodyText">Width</td> <td class="bodyText"><input size="8" id="exportWidth" type="text" class="export" value="700" /></td> </tr>
+                    <tr> <td class="bodyText">Height</td> <td class="bodyText"><input size="8" id="exportHeight" type="text" class="export" value="400" /></td> </tr>
+                </tbody>
+            </table>
+            <div id = "export" class = "exportButton button">Go</div>
+            <table class="progressTable">
+                <thead><tr><th colspan=2 class = heading>Progress</th></tr></thead>
+                <tbody>
+                    <tr>
+                        <td class="bodyText">Histogram:</td>
+                        <td class="bodyText" id="histogramProgress">0.00%</td>
+                    </tr>
+                    <tr>
+                        <td class="bodyText">Image:</td>
+                        <td class="bodyText" id="imageProgress">0.00%</td>
+                    </tr>
+                    <tr>
+                        <td class="bodyText">Elapsed:</td>
+                        <td class="bodyText"><span class="bodyText" id="elapsedTime">0</span> s</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="downloadButtonPosition">
+                <a class="toolbarButton linkButton downloadButton" target="_blank"  id="export1" href="" >Download</a>
+            </div>
+        </div>
+    </div>
 
 
-<div class="pixelInfo" id=pixelInfo>
-   <ul>
-       <li id="iterations">iterations</li>
-       <li id="alreadyEscaped">alreadyEscaped</li>
-       <li id="escapedAt">escapedAt</li>
-       <li id="pixelComplete">escapedAt</li>
-       <li id="mx">mx</li>
-       <li id="my">my</li>
-       <li id="histogramPerc">percentage escaped by</li>
-       <li id="colourInfo">colour info</li>
-   </ul>
-</div>
-        <input id="addButton" type="submit" class="styled-button-1 add" value="Add" />
-
-
-        <input id="removeButton"  type="submit" class="styled-button-1 remove" value="Remove" />
-
+    <div class="colourPicker">
+        <span id="addButton" class="button pickerButtons" >Add</span>
+        <span id="removeButton"class="button pickerButtons">Remove</span>
         <canvas class="colourGradient" id="colourGradientCanvas" width=528 height=40></canvas>
+    </div>
 
-<div>
-   <canvas id="colourPickerCanvas" class="colourPicker" width=700, height=100></canvas>
-</div>
+    <div>
+        <canvas id="colourPickerCanvas" class="huePicker" width=700, height=100></canvas>
+    </div>
 
-<div id="mainControl" class="main">
-Max iteration reached <span id="maxIteration"></span><br>
-<input id="stop" type="submit" class="styled-button-1 stop" value="Stop" />
-<input id="start" type="submit" class="styled-button-1 start" value="Start" /><br>
-<input id="export" type="submit" class="styled-button-1 export" value="Export" /><br>
-<a id="bookmark" href="">Bookmark</a><br>
+    <div id="mainControl" class="mainPanel">
+        <div class=mainPanelContent>
+            <div class="heading centred">Info</div>
+            <div class="bodyText">
+                Current Iteration
+                <span id="maxIteration"></span>
+            </div>
+            <div class="heading centred">Main Controls</div>
+            <div class="mainButtonBar">
+                <span id="stop" class="button">Stop</span>
+                <span id="start" class="button">Start</span>
+                <span id="bookmarkButton" class="button">Bookmark</span>
+            </div>
+        </div>
+    </div>
 
-<span id="speedout"/>
-Processed <span id="numberProcessedSoFar"/> of <span id="totalToProcess"/> pixels
-</div>
+    <div class="buyUsAPint">
+        Buy me a pint with Paypal!
+        <span id="showHistogramButton" class="button">Show histogram</span>
+    </div>
 
-<div class="download">
-    <span id="download" >Make ready for download</span>
-    <a target="_blank" id="export1" href="">Chunk1</a>
-    <a id="export2" href="">Chunk2</a>
-    <a id="export3" href="">Chunk3</a>
-    <a id="export4" href="">Chunk4</a>
+    <canvas id=histogramCanvas class="histogramCanvas" width=700 height=400>
+
+    </canvas>
+
+    <div class="instructions">
+        <div class="heading instructionsTitle">Instructions</div>
+        <div class="bodyText">Zoom in by selecting an area with the left mouse button.
+        Zoom out by double clicking. Right mouse button to scroll. Add and remove colour markers,
+        drag them up and down the colour line. Pick a colour for the selected marker. Export an image
+        to use as a desktop background or to print out. </div>
+    </div>
+
 </div>

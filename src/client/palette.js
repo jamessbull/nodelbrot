@@ -28,18 +28,15 @@ jim.palette.create = function () {
     "use strict";
     var colourNode = jim.palette.colourNode.create;
     var hsv = function (h, s, v){ return { h: h, s: s, v: v }; };
-    var orange = hsv(39,"100%","100%");
-    var gold = hsv(51,"100%","100%");
-    var yellow = hsv(60,"100%","100%");
+    var green = hsv(120,"100%","100%");
     var blue = hsv(250,"100%","100%");
-    var cyan = hsv(170,"100%","100%");
     var black = hsv(100,"0%","0%");
     var white = hsv(10, "0%", "100%");
     var defaultFromNode = colourNode(black, 0);
     var defaultToNode = colourNode(white, 1);
     var interpolate = jim.interpolator.create().interpolate;
     var rgb = {r:0,g:0,b:0,a:0};
-    var nodes = [colourNode(orange,0), colourNode(gold, 0.5), colourNode(yellow, 0.85), colourNode(cyan,0.85),colourNode(blue,1)];
+    var nodes = [colourNode(green,0.85)];
     var colourNodes = {
         colourAt: function (n) {
             var numberOfNodes = nodes.length;
@@ -74,7 +71,7 @@ jim.palette.create = function () {
             return actualColour;
         },
         addNode: function () {
-            var retVal = colourNode(blue, 0.5);
+            var retVal = colourNode(green, 0.5);
             nodes.push(retVal);
             this.sort();
             return retVal;

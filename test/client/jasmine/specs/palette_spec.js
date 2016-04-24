@@ -26,7 +26,8 @@ describe("The palette", function () {
             allTheSame;
 
         for (count = 0; count < 100; count += 1) {
-            colour1 = palette.colourAt(value);
+            var c = palette.colourAt(value);
+            colour1 = {r: c.r,g: c.g,b: c.b, a: c.a};
             value += 0.01;
             colour2 = palette.colourAt(value);
 

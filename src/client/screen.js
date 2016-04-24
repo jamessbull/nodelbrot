@@ -1,5 +1,5 @@
 jim.screen = {};
-jim.screen.create = function (args) {
+jim.screen.create = function (args, _stopwatch) {
     "use strict";
     var n = 0,
         segmentsLen = Math.sqrt(args.segments.length),
@@ -8,7 +8,8 @@ jim.screen.create = function (args) {
         go = true,
         wholeScreen = jim.image.create(segX * segmentsLen, segY * segmentsLen, function () {});
     var context = wholeScreen.canvas.getContext('2d');
-    var stopwatch = jim.stopwatch.create();
+
+    var stopwatch = _stopwatch ? _stopwatch : jim.stopwatch.create();
     var segmentCount = 0;
 
     return {

@@ -98,6 +98,7 @@ jim.mandelbrot.ui.create = function (mandelbrotSet, canvas, w, h, pixelInfo, are
             actions.forEach(function (action) {action.leftMouseDown(e);});
         if (e.button === 2)
             actions.forEach(function (action) { action.rightMouseDown(e);});
+        return false;
     };
 
     canvas.onmouseup = function (e) {

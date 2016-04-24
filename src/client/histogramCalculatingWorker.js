@@ -44,6 +44,8 @@ onmessage = function(e) {
     var toHeight = mandelbrotBounds.height();
     var histogramData = [];
     var histogramTotal = 0;
+    var percentComplete;
+    var floor = Math.floor;
     for (var d = 0; d < maxIter; d+=1) {
         histogramData[d] = 0;
     }
@@ -68,7 +70,9 @@ onmessage = function(e) {
                 histogramTotal +=1;
             }
         }
-        postMessage(response("Completed " + j + " of " + height + " rows.", false, undefined, undefined));
+        percentComplete = "" + (((j * (width))  /  (height * width)) * 100).toFixed(2);
+        postMessage(response("" + percentComplete + "%" , false, undefined, undefined));
     }
-    postMessage(response("Completed " + j + " of " + height + " rows.", true, histogramData, histogramTotal));
+    percentComplete = "" + (((j * (width))  /  (height * width)) * 100).toFixed(2);
+    postMessage(response("" + percentComplete + "%", true, histogramData, histogramTotal));
 };

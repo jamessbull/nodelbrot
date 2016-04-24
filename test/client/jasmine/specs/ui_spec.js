@@ -8,16 +8,27 @@ describe("The user interface action", function () {
             button: button
         };
     };
-
+    var notifier = {
+        notify: function () {
+            return true;
+        }
+    };
     var mset = {
             zoomTo: function(selection ) {},
             zoomOut: function () {},
             move: function () {},
-            canvas: function () {return document.createElement('canvas');}
+            canvas: function () {return document.createElement('canvas');},
+            state: function () {
+                return {
+                    getExtents: function () {
+                        return jim.rectangle.create(0,0,7,8);
+                    }
+                };
+            }
         },
         canvas = {},
         pixelInfo = {onmousedown: function () {}},
-        ui = jim.mandelbrot.ui.create(mset, canvas, 640, 480, pixelInfo),
+        ui = jim.mandelbrot.ui.create(mset, canvas, 640, 480, pixelInfo, notifier),
         action = ui.actions[0];
         action.canvas = document.createElement('canvas');
 

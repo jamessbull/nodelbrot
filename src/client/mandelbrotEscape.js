@@ -46,7 +46,7 @@ jim.mandelbrot.basepoint = (function () {
             for (; times > 0; times -= 1) {
                 if (complete) { break; }
                 squaresum = x * x + y * y;
-                if (squaresum > 1024 || iterations >= 100000) {
+                if (squaresum > 9007199254740991 || iterations >= 100000) {
                     complete = true;
                     break;
                 }
@@ -230,7 +230,6 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent) {
         maxIterations   = 0,
         chunkSize      = 100,
         p,
-        test = {r:45,g:255,b:0,a:255},
         fromScreen = function (x, y) { return screen.at(x, y).translateTo(currentExtents);},
         newGrid = function () {
             return aGrid(sizeX, sizeY, function (x, y) { return aPoint(fromScreen(x, y)); });
@@ -243,6 +242,7 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent) {
             currentExtents = selection.area().translateFrom(screen).to(currentExtents);
             grid = newGrid();
             histogram.reset();
+            maxIterations = 0;
         },
         resize: function (sizeX, sizeY) {
             screen = aRectangle(0, 0, sizeX - 1, sizeY - 1);
@@ -254,7 +254,7 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent) {
             }
             grid = newGrid();
             histogram.reset();
-
+            maxIterations = 0;
         },
         move: function (moveX, moveY) {
             var distance = fromScreen(moveX, moveY).distanceTo(currentExtents.topLeft());
@@ -290,6 +290,17 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent) {
         },
         chunksize: function (c) {
             chunkSize = c;
+        },
+        deadRegions : function () {
+            var regions = [];
+            grid.iterateVisible(function (p,x, y) {
+                if(p) {
+                    regions.push(p.alreadyEscaped);
+                } else {
+                    regions.push(false);
+                }
+            });
+            return  regions;
         },
         at: function (x, y) { return grid.at(x, y);}
     };
