@@ -20,7 +20,7 @@ exports.create = function () {
     nodelbrotRouter.addRoute("/", indexPageAction.contents);
     nodelbrotRouter.addRoute("/jasmine", clientJasmineTests.contents);
     addDirectory(nodelbrotRouter, "/js", "src/client/");
-    addDirectory(nodelbrotRouter, "/specs", "test/client/jasmine/specs/");
-    addDirectory(nodelbrotRouter, "/lib/jasmine-1.2.0", "test/client/jasmine/lib/jasmine-1.2.0/");
+    addDirectory(nodelbrotRouter, "/specs", "test/client/jasmine/spec/");
+    addDirectory(nodelbrotRouter, "/lib/jasmine-2.4.1", "test/client/jasmine/lib/jasmine-2.4.1/");
     return nodelbrotRouter;
 };

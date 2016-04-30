@@ -11,7 +11,7 @@
             return returnVal;
         },
         page = function (callback) {
-            fs.readdir("test/client/jasmine/specs", function (err, testFiles) {
+            fs.readdir("test/client/jasmine/spec", function (err, testFiles) {
                 fs.readdir("src/client", function (err, srcFiles) {
                     template("specRunner", {
                         sourceFiles: filesToScripts(srcFiles, "js"),

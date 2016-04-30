@@ -226,6 +226,24 @@ jim.init.run = function () {
             console.log("Not exporting");
             return false ;
         }
+        //What is best way to split this up?
+        // have x workers
+        // each chunk of work is one line of the image.
+        // i set off x workers
+        // each time a worker calls me back i check to see if we are finished.
+        // if we are not finished i send another line
+        // i take the meaage I get back and use it to add to the export image
+        //more pseudo codey
+        // have x workers
+        // split work into lines jobs have an array of jobs
+        // eacj job is a structure i can pass
+        // job gets calced message posted
+        // message used to add to image
+        // so have rect and split it into array of rects where each is a line
+        // transform lines into jobs
+
+        //
+
         console.log("exporting now");
         exporting = true;
         var histogramBuilder = new Worker("/js/histogramCalculatingWorker.js");

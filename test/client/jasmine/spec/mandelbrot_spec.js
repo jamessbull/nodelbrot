@@ -152,7 +152,7 @@ describe("The mandelbrot set", function () {
         p.x = 3.5;
         p.y = 3;
 
-        spyOn(palette, "colourAt").andReturn(jim.colour.create(8, 8, 8, 255));
+        spyOn(palette, "colourAt").and.returnValue(jim.colour.create(8, 8, 8, 255));
         colour = colours.forPoint(3.5,3, 1000, histogram, palette);
 
         expect(palette.colourAt).toHaveBeenCalledWith(0.2);

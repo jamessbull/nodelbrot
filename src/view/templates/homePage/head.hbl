@@ -1,4 +1,6 @@
 <title>Hello Me</title>
+<script src="/js/parallelJobRunner.js"></script>
+<script src="/js/multiWorkerHistogramGenerator.js"></script>
 <script src="/js/common.js"></script>
 <script src="/js/stopWatch.js"></script>
 <script src="/js/actions.js"></script>
