@@ -7,7 +7,7 @@ importScripts('/js/common.js','/js/stopWatch.js', '/js/tinycolor.js', '/js/palet
 
 onmessage = function(e) {
     "use strict";
-    console.log('About to start to building histogram');
+    //console.log('About to start to building histogram');
 
     var height = e.data.exportHeight;
     var width = e.data.exportWidth;
@@ -21,15 +21,16 @@ onmessage = function(e) {
     var iterations = 0;
     var tempX = 0;
     var escapeCheck = function (x, y) {
-        return ((x * x) + (y * y)) < 4;
+        return ((x * x) + (y * y)) <= 4;
     };
     var response = function (progress, complete, histogramData, histogramTotal) {
-        var retVal = {};
-        retVal.progress = progress;
-        retVal.chunkComplete = complete;
-        retVal.histogramData = histogramData;
-        retVal.histogramSize = maxIter;
-        retVal.histogramTotal = histogramTotal;
+        var retVal = e.data;
+        retVal.result = {};
+        retVal.result.progress = progress;
+        retVal.result.chunkComplete = complete;
+        retVal.result.histogramData = histogramData;
+        retVal.result.histogramSize = maxIter;
+        retVal.result.histogramTotal = histogramTotal;
         return retVal;
     };
 
@@ -49,7 +50,6 @@ onmessage = function(e) {
     for (var d = 0; d < maxIter; d+=1) {
         histogramData[d] = 0;
     }
-    console.log('About to start to calcing histogram');
 
     for (var j = 0 ; j < height; j +=1) {
         for (var i = 0 ; i < width; i += 1) {
@@ -58,6 +58,7 @@ onmessage = function(e) {
             y = 0;
             mx = translator.translateX(fromTopLeftX, fromWidth, toTopLeftX, toWidth, i);
             my = translator.translateY(fromTopLeftY, fromHeight, toTopLeftY, toHeight, j);
+
             while (escapeCheck(x, y) && iterations <= maxIter) {
                 iterations ++;
                 tempX = x * x - y * y + mx;
@@ -66,7 +67,7 @@ onmessage = function(e) {
             }
 
             if (iterations < maxIter) {
-                histogramData[iterations] +=1;
+                histogramData[iterations+1] +=1;
                 histogramTotal +=1;
             }
         }

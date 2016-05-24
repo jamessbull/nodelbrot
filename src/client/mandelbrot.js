@@ -1,3 +1,6 @@
+namespace("jim.defaults");
+jim.defaults.mandelbrotExtents = jim.rectangle.create(-2.5, -1, 3.5, 2);
+
 namespace("jim.mandelbrotImage");
 jim.mandelbrotImage.create = function () {
     "use strict";
@@ -55,6 +58,7 @@ jim.init.run = function () {
     var area = {x: -2.5, y: -1, w: 3.5, h: 2};
     var nodes = currentMandelbrotSet.palette().toNodeList();
     var currentLocation = "";
+    var parallelHistogram = jim.parallelHistogramGenerator.create();
     var areaNotifier = {
             notify: function (_area) {
                 area = _area;
@@ -219,6 +223,25 @@ jim.init.run = function () {
     setButtonState(examineMenuButton, false);
     hide(examinePixelsPanel);
 
+    var imageGenerator = jim.parallelImageGenerator.create();
+
+    events.listenTo("imageComplete", function (e) {
+        var exportCanvas = document.createElement('canvas');
+        exportCanvas.width = exportWidth.value;
+        exportCanvas.height = exportHeight.value;
+        var context = exportCanvas.getContext('2d');
+        var outImage = context.createImageData(exportCanvas.width, exportCanvas.height);
+        outImage.data.set(e.imgData);
+        context.putImageData(outImage, 0, 0);
+        document.getElementById("export1").href = exportCanvas.toDataURL("image/png");
+        exporting = false;
+    });
+
+    events.listenTo("histogramExported", function (e) {
+        imageGenerator.run(currentMandelbrotSet.state().getExtents(),
+            exportDepth.value, exportWidth.value, exportHeight.value,
+            e.histogramData, e.histogramTotal, currentMandelbrotSet.palette().toNodeList(), currentMandelbrotSet.state().deadRegions(), "imageComplete", 10);
+    });
 
     exportButton.onclick = function () {
         console.log('About to start to building histogram');
@@ -226,85 +249,10 @@ jim.init.run = function () {
             console.log("Not exporting");
             return false ;
         }
-        //What is best way to split this up?
-        // have x workers
-        // each chunk of work is one line of the image.
-        // i set off x workers
-        // each time a worker calls me back i check to see if we are finished.
-        // if we are not finished i send another line
-        // i take the meaage I get back and use it to add to the export image
-        //more pseudo codey
-        // have x workers
-        // split work into lines jobs have an array of jobs
-        // eacj job is a structure i can pass
-        // job gets calced message posted
-        // message used to add to image
-        // so have rect and split it into array of rects where each is a line
-        // transform lines into jobs
-
-        //
+        parallelHistogram.run(currentMandelbrotSet.state().getExtents(), exportDepth.value, exportWidth.value / 10, exportHeight.value / 10, "histogramExported", 10);
 
         console.log("exporting now");
         exporting = true;
-        var histogramBuilder = new Worker("/js/histogramCalculatingWorker.js");
-        var imageCalculator = new Worker("/js/mandelbrotImageCalculatingWorker.js");
-        var stopwatch = jim.stopwatch.create();
-
-        var width = exportWidth.value;
-        var height = exportHeight.value;
-        var maxIterations = exportDepth.value;
-        var extents = currentMandelbrotSet.state().getExtents();
-        var buildMessage = function (extents, height, width, iterations) {
-            var msg = {};
-            msg.mx = extents.topLeft().x;
-            msg.my = extents.topLeft().y;
-            msg.mw = extents.width();
-            msg.mh = extents.height();
-            msg.exportHeight = height;
-            msg.exportWidth = width;
-            msg.maxIterations = iterations;
-            msg.deadRegions = currentMandelbrotSet.state().deadRegions();
-            return msg;
-        };
-
-        imageCalculator.onmessage = function (e) {
-            stopwatch.stop();
-            var reportTime = (stopwatch.elapsed()/1000).toFixed(2);
-            timeReporter.report(reportTime);
-            imageReporter.report(e.data.progress);
-            if (e.data.imageDone) {
-                var exportCanvas = document.createElement('canvas');
-                exportCanvas.width = width;
-                exportCanvas.height = height;
-                var context = exportCanvas.getContext('2d');
-                var outImage = context.createImageData(exportCanvas.width, exportCanvas.width);
-                outImage.data.set(e.data.imgData);
-                context.putImageData(outImage, 0, 0);
-                var dataurl = exportCanvas.toDataURL("image/png");
-                document.getElementById("export1").href = dataurl;
-                exporting = false;
-                //document.getElementById("export2").href = dataurl.replace("data:image/png;", "data:application/octet-stream;");//data:application/octet-stream;base64 //data:image/png;
-            }
-        };
-
-        histogramBuilder.onmessage = function(e) {
-            stopwatch.stop();
-            var reportTime = (stopwatch.elapsed()/1000).toFixed(2);
-            timeReporter.report(reportTime);
-            histogramReporter.report(e.data.progress);
-            if (e.data.chunkComplete) {
-                var message = buildMessage(extents,height, width, maxIterations);
-                message.histogramData = e.data.histogramData;
-                message.histogramSize = e.data.histogramSize;
-                message.histogramTotal = e.data.histogramTotal;
-                message.paletteNodes = currentMandelbrotSet.palette().toNodeList();
-                imageCalculator.postMessage(message);
-            }
-        };
-        var msg = buildMessage(extents, height/10, width/10, maxIterations);
-
-        stopwatch.start();
-        histogramBuilder.postMessage(msg);
     };
 
     stopButton.onclick = function () {
@@ -330,51 +278,36 @@ jim.init.run = function () {
     canvasDiv.appendChild(uiCanvas);
     colourPicker.draw();
     hide(histogramCanvas);
+
+    var interpolate = jim.interpolator.create().interpolate;
+    var context = histogramCanvas.getContext('2d');
+    var drawLine = function (fromX, fromY, toX, toY) {
+        context.beginPath();
+        context.moveTo(fromX, fromY);
+        context.lineTo(toX, toY);
+        context.lineWidth = 1;
+        context.strokeStyle = 'rgba(30,255,30,255)';
+        context.stroke();
+    };
+    context.strokeStyle = 'rgba(0,255,0,255)';
+    context.fillStyle = 'rgba(0,0,0,255)';
+    context.fillRect(0,0,700,400);
+    var drawHistogram = function (e) {
+        context.clearRect(0,0, 700, 400);
+        var histogram = jim.twoPhaseHistogram.create(e.histogramData.length);
+        histogram.setData(e.histogramData, e.histogramTotal);
+        histogram.process();
+        for (var i = 0; i < 700; i++) {
+            var index = Math.floor(interpolate(0, e.histogramData.length, i / 700));
+            drawLine(i, 400, i, 400 - histogram.percentEscapedBy(index) * 400);
+        }
+    };
+    events.listenTo("histogramComplete", drawHistogram);
+
     histogramButton.onclick  = function () {
         console.log("About to toggle visibility");
         toggleElementDisplay(histogramCanvas);
-        var context = histogramCanvas.getContext('2d');
-        var drawLine = function (fromX, fromY, toX, toY) {
-            context.beginPath();
-            context.moveTo(fromX, fromY);
-            context.lineTo(toX, toY);
-            context.lineWidth = 1;
-            context.strokeStyle = 'rgba(30,255,30,255)';
-            context.stroke();
-        };
-        var buildMessage = function (extents, height, width, iterations) {
-            var msg = {};
-            msg.mx = extents.topLeft().x;
-            msg.my = extents.topLeft().y;
-            msg.mw = extents.width();
-            msg.mh = extents.height();
-            msg.exportHeight = height;
-            msg.exportWidth = width;
-            msg.maxIterations = iterations;
-            msg.deadRegions = [];
-            return msg;
-        };
-        context.strokeStyle = 'rgba(0,255,0,255)';
-        context.fillStyle = 'rgba(0,0,0,255)';
-        context.fillRect(0,0,700,400);
-        var interpolate = jim.interpolator.create().interpolate;
-        var histogramBuilder = new Worker("/js/histogramCalculatingWorker.js");
-        histogramBuilder.onmessage = function(e) {
-            console.log("Line done");
-            if (e.data.chunkComplete) {
-                var histogram = jim.twoPhaseHistogram.create(e.data.histogramSize);
-                histogram.setData(e.data.histogramData, e.data.histogramTotal);
-                histogram.process();
-                for (var i = 0; i < 700; i++) {
-                    var index = Math.floor(interpolate(0, e.data.histogramSize, i / 700));
-                    drawLine(i,400,i, 400 - histogram.percentEscapedBy(index) * 400);
-                }
-            }
-        };
-
-        var msg = buildMessage(currentMandelbrotSet.state().getExtents(), 70, 40, 200000);
-        histogramBuilder.postMessage(msg);
-
+        parallelHistogram.run(currentMandelbrotSet.state().getExtents(),20000, 140, 80);
     };
 
     jim.anim.create(render).start();

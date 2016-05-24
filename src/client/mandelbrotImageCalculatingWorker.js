@@ -13,6 +13,7 @@ var drp = function (i, j) {
 
 var amIBothered = function (i, j, deadRegionInfo) {
     "use strict";
+    //return true;
     pos = (floor(j/subsampleMultiplier) * 700) + floor(i/subsampleMultiplier);
     return deadRegionInfo[pos - 701] || deadRegionInfo[pos - 700] || deadRegionInfo[pos - 699] ||
            deadRegionInfo[pos - 1]   || deadRegionInfo[pos]       || deadRegionInfo[pos + 1]   ||
@@ -21,7 +22,6 @@ var amIBothered = function (i, j, deadRegionInfo) {
 
 onmessage = function(e) {
     "use strict";
-    console.log('About to start to building mandelbrot image data');
 
     var height = e.data.exportHeight;
     var width = e.data.exportWidth;
@@ -38,20 +38,22 @@ onmessage = function(e) {
     var iterations = 0;
     var tempX = 0;
     var escapeCheck = function (x, y) {
-        return ((x * x) + (y * y)) < 4;
+        return ((x * x) + (y * y)) <= 4;
     };
     var palette = jim.palette.create();
     palette.fromNodeList(e.data.paletteNodes);
+
     var colour = jim.colourCalculator.create(palette);
 
     var doneCheck = function (x, y) {
-        return ((x * x) + (y * y)) < 9007199254740991;
+        return ((x * x) + (y * y)) < 9007199254740991; //9007199254740991
     };
     var response = function (progress, complete, imgData) {
-        var retVal = {};
-        retVal.progress = progress;
-        retVal.imageDone = complete;
-        retVal.imgData = imgData;
+        var retVal = e.data;
+        retVal.result = {};
+        retVal.result.progress = progress;
+        retVal.result.imageDone = complete;
+        retVal.result.imgData = imgData;
         return retVal;
     };
 
@@ -78,10 +80,6 @@ onmessage = function(e) {
     var noOfPixels = height * width;
     var deadRegionPos = 0;
 
-
-
-    var testVal = ((400/2)* 700)+(700/2);
-    console.log("but is " + testVal);
     for (var j = 0 ; j < height; j +=1) {
         for (var i = 0 ; i < width; i += 1) {
             iterations = 0;
@@ -91,6 +89,7 @@ onmessage = function(e) {
             currentPixelPos = (j * width + i);
             mx = translator.translateX(fromTopLeftX, fromWidth, toTopLeftX, toWidth, i);
             my = translator.translateY(fromTopLeftY, fromHeight, toTopLeftY, toHeight, j);
+
             while (doneCheck(x, y) && iterations <= maxIter && amIBothered(i,j, deadRegionInfo)) {
                 iterations ++;
                 if (escapedAt === 0 && !escapeCheck(x, y)) {
@@ -102,6 +101,7 @@ onmessage = function(e) {
             }
 
             currentRGBArrayPos = currentPixelPos * 4;
+
             pixelColour = escapedAt !== 0 ? colour.forPoint(x, y, iterations, histogram, palette): {r:0, g:0, b:0, a:255};
             imgData[currentRGBArrayPos] = pixelColour.r;
             imgData[currentRGBArrayPos + 1] = pixelColour.g;
@@ -111,6 +111,7 @@ onmessage = function(e) {
         percentComplete = "" + (((j * (width))  /  (height * width)) * 100).toFixed(2);
         postMessage(response("" + percentComplete + "%", false, []));
     }
+
     percentComplete = "" + (((j * (width))  /  (height * width)) * 100).toFixed(2);
     postMessage(response("" + percentComplete +"%", true, imgData));
 };

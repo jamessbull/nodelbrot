@@ -376,3 +376,55 @@ describe("Common utilities", function () {
         expect(interpolator.interpolate(100, 200, 0.1)).toBe(110);
     });
 });
+
+describe("a rectangle", function () {
+    "use strict";
+
+    var checkRect = function (r, _x, _y, _w, _h) {
+        expect(r.topLeft().x).toBe(_x);
+        expect(r.topLeft().y).toBe(_y);
+        expect(r.width()).toBe(_w);
+        expect(r.height()).toBe(_h);
+    };
+
+    it("should split a 0 positioned rectangle correctly into two rows", function () {
+        var r = jim.rectangle.create(0, 0, 10, 10);
+        var split = r.split(2);
+        checkRect(split[0], 0, 0, 10, 5);
+        expect(split[0].bottomLeft().x).toBe(split[1].topLeft().x);
+        expect(split[0].bottomLeft().y).toBe(split[1].topLeft().y);
+        checkRect(split[1], 0, 5, 10, 5);
+    });
+
+    it("should split a rectangle at 3, 3 correctly into ten rows", function () {
+        var r = jim.rectangle.create(3, 3, 10, 10);
+        var split = r.split(10);
+
+        checkRect(split[0], 3, 3, 10, 1);
+        checkRect(split[1], 3, 4, 10, 1);
+        checkRect(split[2], 3, 5, 10, 1);
+        checkRect(split[3], 3, 6, 10, 1);
+        checkRect(split[4], 3, 7, 10, 1);
+        checkRect(split[5], 3, 8, 10, 1);
+        checkRect(split[6], 3, 9, 10, 1);
+        checkRect(split[7], 3, 10, 10, 1);
+        checkRect(split[8], 3, 11, 10, 1);
+        checkRect(split[9], 3, 12, 10, 1);
+    });
+
+    it("should split a rectangle at -3, -3 correctly into ten rows", function () {
+        var r = jim.rectangle.create(-3, -3, 10, 10);
+        var split = r.split(10);
+
+        checkRect(split[0], -3, -3, 10, 1);
+        checkRect(split[1], -3, -2, 10, 1);
+        checkRect(split[2], -3, -1, 10, 1);
+        checkRect(split[3], -3, 0, 10, 1);
+        checkRect(split[4], -3, 1, 10, 1);
+        checkRect(split[5], -3, 2, 10, 1);
+        checkRect(split[6], -3, 3, 10, 1);
+        checkRect(split[7], -3, 4, 10, 1);
+        checkRect(split[8], -3, 5, 10, 1);
+        checkRect(split[9], -3, 6, 10, 1);
+    });
+});

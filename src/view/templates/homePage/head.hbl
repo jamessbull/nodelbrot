@@ -1,7 +1,8 @@
 <title>Hello Me</title>
-<script src="/js/parallelJobRunner.js"></script>
-<script src="/js/multiWorkerHistogramGenerator.js"></script>
 <script src="/js/common.js"></script>
+<script src="/js/events.js"></script>
+<script src="/js/parallelJobRunner.js"></script>
+<script src="/js/multiworkerHistogramGenerator.js"></script>
 <script src="/js/stopWatch.js"></script>
 <script src="/js/actions.js"></script>
 <script src="/js/tinycolor.js"></script>
@@ -18,3 +19,4 @@
 <script src="/js/colourPicker.js"></script>
 <script src="/js/colourGradient.js"></script>
 <script src="/js/periodicityChecker.js"></script>
+<script src="/js/deadSectionSplitter.js"></script>

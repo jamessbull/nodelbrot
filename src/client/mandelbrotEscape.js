@@ -51,7 +51,7 @@ jim.mandelbrot.basepoint = (function () {
                     break;
                 }
 
-                tempX = x * x - y * y + mx;
+                tempX = (x * x) - (y * y) + mx;
                 y = 2 * x * y + my;
                 x = tempX;
                 iterations += 1;
@@ -194,7 +194,7 @@ jim.colourCalculator.create = function () {
     var log = Math.log;
     var LN2 = Math.LN2;
     var floor = Math.floor;
-
+    var pixelCount = 0;
     return {
         forPoint: function (x, y, iterations, histogram, palette) {
             nu = log(log(sqrt((x * x) + (y * y))) /  LN2) / LN2;
@@ -205,6 +205,20 @@ jim.colourCalculator.create = function () {
 
             lower = histogram.percentEscapedBy(iterationFloor - 1);
             higher = histogram.percentEscapedBy(iterationFloor);
+
+
+            if (pixelCount < 0) {
+                console.log("Printing details of pixel " + pixelCount);
+                console.log("x is " + x);
+                console.log("y is " + y);
+                console.log("iterations is " + iterations);
+                console.log("lower is " + lower);
+                console.log("higher is " + higher);
+                console.log("iteration floor is " + iterationFloor);
+                console.log("percent escaped by 1 is " + iterationFloor);
+                pixelCount +=1;
+            }
+
             interpolatedColour = interpolate(lower, higher, fractionalPart);
             return palette.colourAt(interpolatedColour);
         },
@@ -235,7 +249,6 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent) {
             return aGrid(sizeX, sizeY, function (x, y) { return aPoint(fromScreen(x, y)); });
         },
         grid = newGrid();
-
     return {
         zoomTo: function (selection) {
             previousExtents.push(currentExtents.copy());

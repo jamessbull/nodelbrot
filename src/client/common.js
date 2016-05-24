@@ -53,7 +53,6 @@ jim.coord.translator2.create = function () {
     };
 };
 
-
 namespace("jim.rectangle");
 jim.rectangle.create = function (one, two, width, height) {
     "use strict";
@@ -133,6 +132,16 @@ jim.rectangle.create = function (one, two, width, height) {
             bottomRight.y += wy;
             bottomLeft.x += ex;
             bottomLeft.y += wy;
+        },
+        split: function (numberOfRows) {
+            var split = [];
+            var newHeight = h / numberOfRows;
+
+            for (var i = 0 ; i < numberOfRows; i +=1) {
+                var y = topLeft.y + (i * newHeight);
+                split.push(jim.rectangle.create(topLeft.x, y, w, newHeight));
+            }
+            return split;
         },
         translateFrom: function (source) {
             var selection = this;
@@ -305,4 +314,4 @@ jim.interpolator.create = function () {
             return from + ((to - from) * fraction);
         }
     };
-}
+};

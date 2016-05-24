@@ -13,6 +13,9 @@ jim.events.create = function () {
             if (listeners[event]) {
                 listeners[event].forEach(function (action) { action(arg); });
             }
+        },
+        clear:function () {
+            listeners = {};
         }
     };
 };

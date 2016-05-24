@@ -16,7 +16,7 @@ jim.screen.create = function (args, _stopwatch) {
         draw: function () {
             stopwatch.start();
             segmentCount = 0;
-            while (stopwatch.elapsed() < 30) {
+            while (stopwatch.elapsed() < 30 && go) {
                 if (n === (args.segments.length)) {
                     n = 0;
                 }
