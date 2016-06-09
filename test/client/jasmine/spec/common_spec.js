@@ -427,4 +427,40 @@ describe("a rectangle", function () {
         checkRect(split[8], -3, 5, 10, 1);
         checkRect(split[9], -3, 6, 10, 1);
     });
+
+    it("should report the histogram progress", function () {
+        var reportTarget = document.createElement("div");
+        var events = jim.events.create();
+        var reporter = jim.common.imageExportProgressReporter.create(events, "imageExportProgress", reportTarget);
+        reporter.reportOn(10,10);
+        events.fire("imageExportProgress", 10);
+        expect(reportTarget.innerText).toEqual("10%");
+
+        events.fire("imageExportProgress", 50);
+        expect(reportTarget.innerText).toEqual("60%");
+
+        events.fire("imageExportProgress", 40);
+        expect(reportTarget.innerText).toEqual("100%");
+    });
+
+    it("should reset when it hits 100 %", function () {
+        var reportTarget = document.createElement("div");
+        var events = jim.events.create();
+
+
+        var reporter = jim.common.imageExportProgressReporter.create(events, "imageExportProgress", reportTarget);
+        reporter.reportOn(10,10);
+        events.fire("imageExportProgress", 10);
+        expect(reportTarget.innerText).toEqual("10%");
+
+        events.fire("imageExportProgress", 50);
+        expect(reportTarget.innerText).toEqual("60%");
+
+        events.fire("imageExportProgress", 40);
+        expect(reportTarget.innerText).toEqual("100%");
+
+
+        events.fire("imageExportProgress", 40);
+        expect(reportTarget.innerText).toEqual("40%");
+    });
 });

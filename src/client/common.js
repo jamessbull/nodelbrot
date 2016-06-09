@@ -300,16 +300,64 @@ jim.common.grid.create = function (columnSize, rowSize, f) {
     };
 };
 
+namespace("jim.common.imageExportProgressReporter");
+jim.common.imageExportProgressReporter.create = function (_events, _event, _target) {
+    "use strict";
+    var completedSoFar = 0;
+    var currentPercentComplete = 0;
+    var roundedPercent = 0;
+    var width = 0;
+    var height = 0;
+    _events.listenTo(_event, function (_number) {
+        var num = parseInt(_number);
+        var totalToComplete = width * height;
+        completedSoFar += num;
+        currentPercentComplete = (completedSoFar / totalToComplete) * 100;
+        roundedPercent = Math.round(currentPercentComplete * 100) / 100;
+        _target.innerText = "" + roundedPercent + "%";
+        if(roundedPercent >= 100) {
+            completedSoFar = 0;
+            currentPercentComplete = 0;
+            _target.innerText = "" + roundedPercent + "%";
+        }
+    });
+
+    return {
+        reportOn: function (w,h) {
+            width = w;
+            height = h;
+        }
+    };
+};
+namespace("jim.common.timeReporter");
+jim.common.timeReporter.create = function (_target) {
+    "use strict";
+    var interval;
+    var start = 0;
+    var stop = 0;
+    return {
+        start: function () {
+            start = new Date().getTime();
+
+            var timefunc = function () {
+                var time = Math.floor((new Date().getTime() - start) / 1000);
+                _target.innerHTML = time;
+            };
+
+            timefunc();
+            interval = setInterval(timefunc, 1000);
+        },
+        stop: function () {
+            clearInterval(interval);
+        }
+    };
+};
+
+
 namespace("jim.interpolator");
 jim.interpolator.create = function () {
     "use strict";
     return {
-        loginterpolate: function (from, to, fraction) {
-            var retVal = from + ((to - from) * fraction);
-            console.log("from " + from + " to " + to + " fraction " + fraction);
-            console.log("returning " + retVal);
-            return from + ((to - from) * fraction);
-        },
         interpolate: function (from, to, fraction) {
             return from + ((to - from) * fraction);
         }

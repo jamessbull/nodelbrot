@@ -1,5 +1,13 @@
 onmessage = function (message) {
     "use strict";
+
+    var progressReport = {};
+
+    progressReport.event = {};
+    progressReport.type = "progressReport";
+    progressReport.event.msg = "Partially eaten";
+    postMessage(progressReport);
+
     var response = {};
     response.type = message.data.type;
     response.result = {};

@@ -20,28 +20,27 @@ jim.parallelHistogramGenerator.create = function () {
 
     var runner = newRunner(events, "/js/histogramCalculatingWorker.js");
 
+    events.listenTo("jim.histogramGenerator.parallelJob", function (jobs) {
+        var completeHistogramData = [];
+        var completeHistogramTotal = 0;
+        jobs.forEach(function (job) {
+            completeHistogramTotal += job.result.histogramTotal;
+            job.result.histogramData.forEach(function (datum, index) {
+                if(!completeHistogramData[index]) {
+                    completeHistogramData[index] = 0;
+                }
+                completeHistogramData[index] = completeHistogramData[index] + datum;
+            });
+        });
+        console.log("Histogram generation complete");
+        events.fire(eventToFire, {histogramData: completeHistogramData, histogramTotal: completeHistogramTotal});
+    });
+
     return {
-        run: function (_extents, _iter, _width, _height, _eventToFire, _numberOfParts) {
+        run: function (_extents, _iter, _width, _height, _eventToFire, _progressEvent, _numberOfParts) {
             if (_eventToFire) {
                 eventToFire = _eventToFire;
             }
-
-            events.listenTo(eventToFire + "parallelJob", function (jobs) {
-                var completeHistogramData = [];
-                var completeHistogramTotal = 0;
-                jobs.forEach(function (job) {
-                    completeHistogramTotal += job.result.histogramTotal;
-                    job.result.histogramData.forEach(function (datum, index) {
-                        if(!completeHistogramData[index]) {
-                            completeHistogramData[index] = 0;
-                        }
-                        completeHistogramData[index] = completeHistogramData[index] + datum;
-                    });
-                });
-                events.fire(eventToFire, {histogramData: completeHistogramData, histogramTotal: completeHistogramTotal});
-            });
-
-            //var split = _extents.split(_numberOfParts);
 
             var jobs = [];
             var partHeight = _height / _numberOfParts;
@@ -51,7 +50,7 @@ jim.parallelHistogramGenerator.create = function () {
                 var r = jim.rectangle.create(_extents.topLeft().x, startY, _extents.width(), (partHeight-1) * offset);
                 jobs[i] = newJob(_iter, _width, partHeight, r);
             }
-            runner.run(jobs, eventToFire + "parallelJob");
+            runner.run(jobs, "jim.histogramGenerator.parallelJob", _progressEvent);
         }
     };
 };
@@ -82,7 +81,7 @@ jim.parallelImageGenerator.create = function () {
     var eventToFire = "imageComplete";
     var data;
     var runner = newRunner(events, "/js/mandelbrotImageCalculatingWorker.js");
-    events.listenTo("imageDone", function (jobs) {
+    events.listenTo("jim.parallelimagegenerator.imageDone", function (jobs) {
         var tmpData = [];
         jobs.forEach(function (job) {
             var arr = job.result.imgData;
@@ -99,11 +98,11 @@ jim.parallelImageGenerator.create = function () {
         events.fire(eventToFire, {imgData: data});
     });
     return {
-        run: function (_extents, _iter, _width, _height,  _histogramData, _histogramTotal, _nodeList, _deadRegions,  _eventToFire, _numberOfParts) {
+        run: function (_extents, _iter, _width, _height,  _histogramData, _histogramTotal, _nodeList, _deadRegions,  _eventToFire, _progressEvent, _numberOfParts) {
+            console.log("Beginning image generation");
             if (_eventToFire) {
                 eventToFire = _eventToFire;
             }
-
             var regularChunkWidth = _extents.width();
             var chunkSizePerLine = _extents.height()/ (_height - 1 ); // why -1?
             var regularLinesPerChunk = Math.floor(_height / _numberOfParts);
@@ -128,7 +127,7 @@ jim.parallelImageGenerator.create = function () {
                 currentChunkY = currentChunkY + (regularChunkOffset);
             }
 
-            runner.run(jobs, "imageDone");
+            runner.run(jobs, "jim.parallelimagegenerator.imageDone", _progressEvent);
         }
     };
 };

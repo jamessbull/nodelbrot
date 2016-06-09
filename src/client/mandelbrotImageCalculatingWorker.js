@@ -51,6 +51,12 @@ onmessage = function(e) {
     var response = function (progress, complete, imgData) {
         var retVal = e.data;
         retVal.result = {};
+        //var progressReport = {};
+        //progressReport.event = {};
+
+        retVal.type = "progressReport";
+        retVal.event = {msg: progress};
+
         retVal.result.progress = progress;
         retVal.result.imageDone = complete;
         retVal.result.imgData = imgData;
@@ -67,7 +73,6 @@ onmessage = function(e) {
     var toWidth      = mandelbrotBounds.width();
     var toHeight     = mandelbrotBounds.height();
     var histogram    = jim.twoPhaseHistogram.create(e.data.histogramSize);
-    var floor        = Math.floor;
     var deadRegionInfo = e.data.deadRegions;
     histogram.setData(e.data.histogramData, e.data.histogramTotal);
     histogram.process();
@@ -75,10 +80,6 @@ onmessage = function(e) {
     var currentPixelPos = 0;
     var currentRGBArrayPos = 0;
     var pixelColour = {};
-    var percentComplete;
-    var translatedIndex = 0;
-    var noOfPixels = height * width;
-    var deadRegionPos = 0;
 
     for (var j = 0 ; j < height; j +=1) {
         for (var i = 0 ; i < width; i += 1) {
@@ -108,10 +109,6 @@ onmessage = function(e) {
             imgData[currentRGBArrayPos + 2] = pixelColour.b;
             imgData[currentRGBArrayPos + 3] = pixelColour.a;
         }
-        percentComplete = "" + (((j * (width))  /  (height * width)) * 100).toFixed(2);
-        postMessage(response("" + percentComplete + "%", false, []));
     }
-
-    percentComplete = "" + (((j * (width))  /  (height * width)) * 100).toFixed(2);
-    postMessage(response("" + percentComplete +"%", true, imgData));
+    postMessage(response(width * height, true, imgData));
 };

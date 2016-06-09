@@ -7,8 +7,6 @@ importScripts('/js/common.js','/js/stopWatch.js', '/js/tinycolor.js', '/js/palet
 
 onmessage = function(e) {
     "use strict";
-    //console.log('About to start to building histogram');
-
     var height = e.data.exportHeight;
     var width = e.data.exportWidth;
     var maxIter = e.data.maxIterations;
@@ -25,6 +23,8 @@ onmessage = function(e) {
     };
     var response = function (progress, complete, histogramData, histogramTotal) {
         var retVal = e.data;
+        retVal.type = "progressReport";
+        retVal.event = {msg: progress};
         retVal.result = {};
         retVal.result.progress = progress;
         retVal.result.chunkComplete = complete;
@@ -46,7 +46,6 @@ onmessage = function(e) {
     var histogramData = [];
     var histogramTotal = 0;
     var percentComplete;
-    var floor = Math.floor;
     for (var d = 0; d < maxIter; d+=1) {
         histogramData[d] = 0;
     }
@@ -72,8 +71,8 @@ onmessage = function(e) {
             }
         }
         percentComplete = "" + (((j * (width))  /  (height * width)) * 100).toFixed(2);
-        postMessage(response("" + percentComplete + "%" , false, undefined, undefined));
+        //postMessage(response("" + percentComplete + "%" , false, undefined, undefined));
     }
     percentComplete = "" + (((j * (width))  /  (height * width)) * 100).toFixed(2);
-    postMessage(response("" + percentComplete + "%", true, histogramData, histogramTotal));
+    postMessage(response(width * height, true, histogramData, histogramTotal));
 };

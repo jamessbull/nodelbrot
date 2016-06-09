@@ -2,6 +2,11 @@ var router = require("routing/router.js"),
     fs = require("fs");
 exports.create = function () {
     "use strict";
+
+    var has = function (str1, str2) {
+        return str1.indexOf(str2) !== -1;
+    };
+
     var nodelbrotRouter = router.create(),
         clientJasmineTests = require("pages/jasmineClientTests.js"),
         indexPageAction = require("pages/homePage.js"),
@@ -12,7 +17,9 @@ exports.create = function () {
                     var handleCallBack = function (err, data) { callback(data); };
                     fs.readFile(path + file, handleCallBack);
                 };
-                router.addRoute(url + "/" + file, readFile);
+                if (has(file, ".js") || has(file, ".css") || has(file, ".png")) {
+                    router.addRoute(url + "/" + file, readFile);
+                }
             });
         };
 
@@ -20,6 +27,7 @@ exports.create = function () {
     nodelbrotRouter.addRoute("/", indexPageAction.contents);
     nodelbrotRouter.addRoute("/jasmine", clientJasmineTests.contents);
     addDirectory(nodelbrotRouter, "/js", "src/client/");
+    addDirectory(nodelbrotRouter, "/js/export", "src/client/export/");
     addDirectory(nodelbrotRouter, "/specs", "test/client/jasmine/spec/");
     addDirectory(nodelbrotRouter, "/lib/jasmine-2.4.1", "test/client/jasmine/lib/jasmine-2.4.1/");
     return nodelbrotRouter;

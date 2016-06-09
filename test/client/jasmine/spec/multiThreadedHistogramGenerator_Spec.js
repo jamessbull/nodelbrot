@@ -21,9 +21,29 @@ describe("the multithreaded job runner", function () {
             done();
         });
 
-        runner.run(jobs, "jobComplete");
+        runner.run(jobs, "jobComplete", "myTestProgress");
     });
+
+    it("should publish events sent to it by the job", function (done) {
+        var events = jim.events.create();
+        var jobSpec = function (_type, _id) {
+            return {action: "Eat Cheese", type: _type, id: _id};
+        };
+        var worker = "/specs/testWorker.js";
+        var jobs =  [ jobSpec("Edam", 0) ];
+        var runner = jim.parallel.jobRunner.create(events, worker);
+
+        events.listenTo("myTestProgress", function (jobs) {
+            expect(jobs).toBe("Partially eaten");
+            done();
+        });
+
+        runner.run(jobs, "jobComplete", "myTestProgress");
+    });
+
 });
+
+
 
 describe("the histogram Job Builder", function () {
     "use strict";
