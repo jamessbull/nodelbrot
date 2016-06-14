@@ -172,5 +172,3 @@ jim.actions.show.create = function (magnifiedDisplay, state) {
     };
     return action;
 };
-
-

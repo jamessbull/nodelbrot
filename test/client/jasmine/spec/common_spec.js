@@ -463,4 +463,15 @@ describe("a rectangle", function () {
         events.fire("imageExportProgress", 40);
         expect(reportTarget.innerText).toEqual("40%");
     });
+
+    it("should round to a specified number of decimal places", function () {
+        var x = 1.11111;
+        var none = jim.common.round(x, 0);
+        var one = jim.common.round(x, 1);
+        var two = jim.common.round(x, 2);
+
+        expect(none).toBe(1);
+        expect(one).toBe(1.1);
+        expect(two).toBe(1.11);
+    });
 });

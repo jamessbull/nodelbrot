@@ -363,3 +363,16 @@ jim.interpolator.create = function () {
         }
     };
 };
+
+namespace("jim.common");
+jim.common.round = function (number, decimalPlaces) {
+    "use strict";
+    var multiplier = 1;
+
+    for (var i = 0 ; i < decimalPlaces ; i+=1) {
+        multiplier *= 10;
+    }
+    return Math.round(number * multiplier) / multiplier;
+};
+
+

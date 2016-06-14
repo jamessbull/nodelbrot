@@ -206,19 +206,6 @@ jim.colourCalculator.create = function () {
             lower = histogram.percentEscapedBy(iterationFloor - 1);
             higher = histogram.percentEscapedBy(iterationFloor);
 
-
-            if (pixelCount < 0) {
-                console.log("Printing details of pixel " + pixelCount);
-                console.log("x is " + x);
-                console.log("y is " + y);
-                console.log("iterations is " + iterations);
-                console.log("lower is " + lower);
-                console.log("higher is " + higher);
-                console.log("iteration floor is " + iterationFloor);
-                console.log("percent escaped by 1 is " + iterationFloor);
-                pixelCount +=1;
-            }
-
             interpolatedColour = interpolate(lower, higher, fractionalPart);
             return palette.colourAt(interpolatedColour);
         },
@@ -314,6 +301,10 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent) {
                 }
             });
             return  regions;
+        },
+        currentPointColour: function (x,y) {
+            var point = grid.at(x,y);
+            return colours.forPoint(point.x, point.y, point.iterations, histogram, palette);
         },
         at: function (x, y) { return grid.at(x, y);}
     };

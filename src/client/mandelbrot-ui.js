@@ -19,12 +19,13 @@ namespace("jim.mandelbrot.ui.magnifiedDisplay");
 jim.mandelbrot.ui.magnifiedDisplay.create = function (mset, pixelInfo) {
     "use strict";
     var myContext;
+    var round = jim.common.round;
     var gridSize  = 3;
-    var calculateFillStyle = function (point) {
-        return "rgba(" + point.colour.r + "," + point.colour.g + ","  + point.colour.b + "," + point.colour.a +")";
+    var calculateFillStyle = function (colour) {
+        return "rgba(" + round(colour.r, 0) + "," + round(colour.g, 0) + ","  + round(colour.b, 0) + "," + round(colour.a, 0) +")";
     };
-    var drawBigPixel = function (x, y, w, h, point) {
-        myContext.fillStyle = calculateFillStyle(point);
+    var drawBigPixel = function (x, y, w, h, colour) {
+        myContext.fillStyle = calculateFillStyle(colour);
         myContext.fillRect(x, y, w, h);
     };
     var setText = function (id, text) {
@@ -63,17 +64,15 @@ jim.mandelbrot.ui.magnifiedDisplay.create = function (mset, pixelInfo) {
             currentX = x;
             currentY = y;
 
-            drawBigPixel(increment * 0, increment * 0, increment, increment, mset.point(x - 1, y - 1));
-            drawBigPixel(increment * 1, increment * 0, increment, increment, mset.point(x, y - 1));
-            drawBigPixel(increment * 2, increment * 0, increment, increment, mset.point(x + 1, y - 1));
-
-            drawBigPixel(increment * 0, increment * 1, increment, increment, mset.point(x - 1, y));
-            drawBigPixel(increment * 1, increment * 1, increment, increment, mset.point(x, y));
-            drawBigPixel(increment * 2, increment * 1, increment, increment, mset.point(x + 1, y));
-
-            drawBigPixel(increment * 0, increment * 2, increment, increment, mset.point(x - 1, y + 1));
-            drawBigPixel(increment * 1, increment * 2, increment, increment, mset.point(x, y + 1));
-            drawBigPixel(increment * 2, increment * 2, increment, increment, mset.point(x + 1, y + 1));
+            drawBigPixel(increment * 0, increment * 0, increment, increment, mset.state().currentPointColour(x - 1, y - 1));
+            drawBigPixel(increment * 1, increment * 0, increment, increment, mset.state().currentPointColour(x, y - 1));
+            drawBigPixel(increment * 2, increment * 0, increment, increment, mset.state().currentPointColour(x + 1, y - 1));
+            drawBigPixel(increment * 0, increment * 1, increment, increment, mset.state().currentPointColour(x - 1, y));
+            drawBigPixel(increment * 1, increment * 1, increment, increment, mset.state().currentPointColour(x, y));
+            drawBigPixel(increment * 2, increment * 1, increment, increment, mset.state().currentPointColour(x + 1, y));
+            drawBigPixel(increment * 0, increment * 2, increment, increment, mset.state().currentPointColour(x - 1, y + 1));
+            drawBigPixel(increment * 1, increment * 2, increment, increment, mset.state().currentPointColour(x, y + 1));
+            drawBigPixel(increment * 2, increment * 2, increment, increment, mset.state().currentPointColour(x + 1, y + 1));
         }
     };
 };
@@ -126,6 +125,7 @@ jim.mandelbrot.ui.create = function (mandelbrotSet, canvas, w, h, pixelInfo, are
         canvas: canvas,
         handlePixelInfo: function () {
             var canvasDiv = document.getElementById("mandelbrotCanvas");
+            console.log("ello");
             if (canvasDiv.style.cursor!=="crosshair") {
                 canvasDiv.style.cursor="crosshair";
                 state.setSelectPixelMode();

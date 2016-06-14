@@ -116,8 +116,6 @@ jim.init.run = function () {
         window.location = currentLocation;
     };
 
-//
-
     jim.mandelbrot.ui.elements.create(currentMandelbrotSet);
 
     pixelInfo.width = 162;
