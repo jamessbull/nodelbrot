@@ -45,14 +45,14 @@ jim.mandelbrot.ui.magnifiedDisplay.create = function (mset, pixelInfo) {
 
         var point = mset.point(currentX + column, currentY + row);
 
-        setText("iterations", "Iterations so far : " + point.iterations);
-        setText("escapedAt", "escaped at : " + point.escapedAt);
-        setText("alreadyEscaped", "already escaped : " + point.alreadyEscaped);
-        setText("pixelComplete", "complete : " + point.complete);
-        setText("mx", "mx : " + point.mx);
-        setText("my", "my : " + point.my);
-        setText("histogramPerc", "percent escaped By  : " + mset.histogram().percentEscapedBy(point.iterations));
-        setText("colourInfo", "Colour Info: " + mset.palette().getUsefulNumbersMessage(point, mset.histogram()));
+        setText("iterations", "" + point.iterations);
+        setText("escapedAt", point.escapedAt);
+        setText("alreadyEscaped", point.alreadyEscaped);
+        setText("pixelComplete", point.complete);
+        setText("mx", point.mx);
+        setText("my", point.my);
+        setText("histogramPerc", mset.histogram().percentEscapedBy(point.iterations));
+        setText("colourInfo", mset.state().currentPointColour(currentX + column, currentY + row));
 
         console.log("row :" + row + " column : " + column);
     };

@@ -13,18 +13,19 @@ var  handleClickfunction
         background-color: white;
     }
     .exportImage {
-        position: absolute; top: 197px; left: 716px; width: 193px; height:255px;
+        position: absolute; top: 220px; left: 716px; width: 193px; height:391px;
         background-color: black;
     }
     .canvas { position: absolute; top: 0; left: 0; }
     #mandelbrotCanvas { position: absolute; top:52px; display: inline-block; margin-bottom:22px}
     .examinePixels {
-        position: absolute; top:197px; left: 716px; width:193px; height:181px;
+        position: absolute; top:220px; left: 716px; width:193px; height:391px;
         background-color: black;
     }
     .pixelInfoCanvas {
-        position: relative; top:0px; left: 0px; height:181px;
+        position: relative; top:0px; left: 0px; height:220px;
         border:none;
+        margin-left:15px;
         background-color: black;
 
     }
@@ -149,7 +150,7 @@ var  handleClickfunction
     .mainPanelContent {
         position:relative;
         width:194px;
-        height:100px;
+        height:125px;
     }
     .linkButton {
         color: rgba(0,255,0,255);
@@ -176,7 +177,7 @@ var  handleClickfunction
     .panelSwitcher {
         background-color:black;
         position:absolute;
-        top:160px;
+        top:184px;
         width: 182px;
         left:716px;
         padding-left:11px;
@@ -204,20 +205,7 @@ var  handleClickfunction
         font-size:0.75em;
     }
 
-    .buyUsAPint {
-        position:absolute;
-        left: 716px;
-        top: 459px;
-        background-color:black;
-        width:193px;
-        height:152px;
-        font-size:0.75em;
-    }
 
-    .instructionsTitle {
-        position:relative;
-        left:45px;
-    }
     .histogramCanvas{
         position:absolute;
         top:100px;
@@ -225,6 +213,12 @@ var  handleClickfunction
         width:700px;
         height:400px;
 
+    }
+    .pixelDetail {
+        list-style-type: none;
+        font-size:x-small;
+        padding-left:5px;
+        white-space:nowrap;
     }
 
 </style>
@@ -238,7 +232,7 @@ var  handleClickfunction
 
     <div class="panelSwitcher">
         <span id="pixelInfoButton" class = "toolbarButton">Examine</span>
-        <span id="exportImageButton" class = "toolbarButtonSelected">Export</span>
+        <span id="exportImageButton" class = "toolbarButton">Export</span>
     </div>
 
     <div id = examinePixels class = "examinePixels">
@@ -247,16 +241,16 @@ var  handleClickfunction
             <canvas id="pixelInfoCanvas"></canvas>
         </div>
         <div class="pixelInfo" id=pixelInfo>
-           <ul>
-               <li id="iterations">iterations</li>
-               <li id="alreadyEscaped">alreadyEscaped</li>
-               <li id="escapedAt">escapedAt</li>
-               <li id="pixelComplete">escapedAt</li>
-               <li id="mx">mx</li>
-               <li id="my">my</li>
-               <li id="histogramPerc">percentage escaped by</li>
-               <li id="colourInfo">colour info</li>
-           </ul>
+            <table class = pixelDetail>
+                <tr> <td>Iterations</td> <td id="iterations"></td> </tr>
+                <tr> <td>Point Escaped</td><td id="alreadyEscaped"></td> </tr>
+                <tr> <td>Escape iteration</td><td id="escapedAt"></td> </tr>
+                <tr> <td>Colour complete</td><td id="pixelComplete"></td> </tr>
+                <tr> <td>Mandelbrot x</td><td id="mx"></td> </tr>
+                <tr> <td>Mandelbrot y</td><td id="my"></td> </tr>
+                <tr> <td> %age</td><td id="histogramPerc"></td> </tr>
+                <tr> <td>Colour</td><td id="colourInfo"></td> </tr>
+            </table>
         </div>
     </div>
 
@@ -268,8 +262,19 @@ var  handleClickfunction
                 </thead>
                 <tbody>
                     <tr> <td class="bodyText">Iterations</td> <td class="bodyText"><input size="8" id="exportDepth" type="text" class="export" value="1000" /></td> </tr>
-                    <tr> <td class="bodyText">Width</td> <td class="bodyText"><input size="8" id="exportWidth" type="text" class="export" value="700" /></td> </tr>
-                    <tr> <td class="bodyText">Height</td> <td class="bodyText"><input size="8" id="exportHeight" type="text" class="export" value="400" /></td> </tr>
+                    <tr>
+                        <td>
+                            Size
+                        </td>
+
+                        <td>
+                            <select id=exportSizeSelect>
+                                <option id="smallExport">Small</option>
+                                <option id="mediumExport">Medium</option>
+                                <option id="largeExport">Large</option>
+                            </select>
+                        </td>
+                    </tr>
                 </tbody>
             </table>
             <div id = "export" class = "exportButton button">Go</div>
@@ -310,12 +315,20 @@ var  handleClickfunction
 
     <div id="mainControl" class="mainPanel">
         <div class=mainPanelContent>
-            <div class="heading centred">Info</div>
+            <div class="heading centred">
+                Info
+            </div>
             <div class="bodyText">
                 Current Iteration
                 <span id="maxIteration"></span>
+                Points escaped
+                <span id="totalHistogramPerc"></span>%
+                Last escaped on
+                <span id="lastPointEscapedAt"></span>
             </div>
-            <div class="heading centred">Main Controls</div>
+            <div class="heading centred">
+                Main Controls
+            </div>
             <div class="mainButtonBar">
                 <span id="stop" class="button">Stop</span>
                 <span id="start" class="button">Start</span>
@@ -324,21 +337,6 @@ var  handleClickfunction
         </div>
     </div>
 
-    <div class="buyUsAPint">
-        Buy me a pint with Paypal!
-        <span id="showHistogramButton" class="button">Show histogram</span>
-    </div>
 
-    <canvas id=histogramCanvas class="histogramCanvas" width=700 height=400>
-
-    </canvas>
-
-    <div class="instructions">
-        <div class="heading instructionsTitle">Instructions</div>
-        <div class="bodyText">Zoom in by selecting an area with the left mouse button.
-        Zoom out by double clicking. Right mouse button to scroll. Add and remove colour markers,
-        drag them up and down the colour line. Pick a colour for the selected marker. Export an image
-        to use as a desktop background or to print out. </div>
-    </div>
 
 </div>

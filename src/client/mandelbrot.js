@@ -89,14 +89,47 @@ jim.init.run = function () {
             pixelInfo, areaNotifier),
         uiCanvas = document.createElement('canvas'),
         maxIteration = document.getElementById("maxIteration"),
-
+        percEscaped = document.getElementById("totalHistogramPerc"),
+        round = jim.common.round,
+        lastEscapedOn = document.getElementById("lastPointEscapedAt"),
+        smallExport = document.getElementById("smallExport"),
+        mediumExport = document.getElementById("mediumExport"),
+        largeExport = document.getElementById("largeExport"),
+        exportSizeSelect = document.getElementById("exportSizeSelect"),
         render = function () {
             currentMandelbrotSet.draw();
-            maxIteration.innerText = currentMandelbrotSet.state().maximumIteration();
+            var iter = currentMandelbrotSet.state().maximumIteration();
+            maxIteration.innerText = iter;
+            var total = 700 * 400;
+            var escapedThisIteration = currentMandelbrotSet.histogram().get(iter);
+            var escaped = total - escapedThisIteration;
+
+            if (escapedThisIteration > 0) {
+                percEscaped.innerText = round((100 - ((escaped / total) * 100)), 2);
+                lastEscapedOn.innerText = iter;
+            }
             lui.draw(uiCanvas);
             colourGradientui.draw();
         };
+    var exportDimensions = {height: 400, width: 700};
 
+    exportSizeSelect.onchange = function () {
+        if (smallExport.selected) {
+            console.log("large");
+            exportDimensions.width = 700;
+            exportDimensions.height = 400;
+        }
+        if (mediumExport.selected) {
+            console.log("medium");
+            exportDimensions.width = 2100;
+            exportDimensions.height = 1200;
+        }
+        if (largeExport.selected) {
+            console.log("large");
+            exportDimensions.width = 4200;
+            exportDimensions.height = 2400;
+        }
+    };
     var hash = decodeURI(window.location.hash);
     var initialLocation;
 
@@ -116,7 +149,8 @@ jim.init.run = function () {
         window.location = currentLocation;
     };
 
-    jim.mandelbrot.ui.elements.create(currentMandelbrotSet);
+
+    jim.mandelbrot.ui.elements.create(exportDimensions, currentMandelbrotSet);
 
     pixelInfo.width = 162;
     pixelInfo.height = 162;
@@ -134,15 +168,22 @@ jim.init.run = function () {
     jim.anim.create(render).start();
 };
 
-//histogram visualisation not working - it is now
-// pull it out write some tests?
-// pixel inspector not working
-// pull it out and write some tests?
-// button highlighting not working some now do
-// prefer dropdown menu with preset options for export
-// split export again into a number of parts
-    //may as well make use of existing splitting as I know it is right. I just need to apportioin it to different canvases
+//text of pixel info display too large
 
-// butttons?
-// stop / start?
+// What do I want to do to go live?
+
+// Ideally - Functionality
+// Time estimate for export
+// Make pixel display show black again and do a five by five grid
+// Make user interaction better on pixel investigation
+// Make two webworkers the same if I can
+// ensure an image where all pixels escape quickly exports in the same time regardless of number of iterations specified
+// Pull all functionality out of mandelbrot.js
+// add info icons with hover and helpful text
+
+//Go live tasks
+// minify js
+// make sure it works on firefox safari and at least one version of ie
+// make it work on ipad too?
+// make it estimate best level of parallelism? Optional
 
