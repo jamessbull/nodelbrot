@@ -263,7 +263,7 @@ var  handleClickfunction
                 <tbody>
                     <tr> <td class="bodyText">Iterations</td> <td class="bodyText"><input size="8" id="exportDepth" type="text" class="export" value="1000" /></td> </tr>
                     <tr>
-                        <td>
+                        <td class="bodyText">
                             Size
                         </td>
 
