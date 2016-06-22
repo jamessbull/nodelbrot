@@ -168,17 +168,15 @@ jim.init.run = function () {
     jim.anim.create(render).start();
 };
 
-//text of pixel info display too large
-
 // What do I want to do to go live?
 
 // Ideally - Functionality
-// Time estimate for export
 // Make pixel display show black again and do a five by five grid
 // Make user interaction better on pixel investigation
 // Make two webworkers the same if I can
 // ensure an image where all pixels escape quickly exports in the same time regardless of number of iterations specified
 // Pull all functionality out of mandelbrot.js
+// Time estimate for export
 // add info icons with hover and helpful text
 
 //Go live tasks

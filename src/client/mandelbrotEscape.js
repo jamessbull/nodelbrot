@@ -231,6 +231,7 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent) {
         maxIterations   = 0,
         chunkSize      = 100,
         p,
+        black = jim.colour.create(0,0,0,255),
         fromScreen = function (x, y) { return screen.at(x, y).translateTo(currentExtents);},
         newGrid = function () {
             return aGrid(sizeX, sizeY, function (x, y) { return aPoint(fromScreen(x, y)); });
@@ -304,7 +305,8 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent) {
         },
         currentPointColour: function (x,y) {
             var point = grid.at(x,y);
-            return colours.forPoint(point.x, point.y, point.iterations, histogram, palette);
+            var escaped = point.alreadyEscaped;
+            return escaped ? colours.forPoint(point.x, point.y, point.iterations, histogram, palette):black;
         },
         at: function (x, y) { return grid.at(x, y);}
     };
