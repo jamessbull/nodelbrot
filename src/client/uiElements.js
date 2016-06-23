@@ -138,10 +138,3 @@ jim.mandelbrot.ui.elements.create = function (_exportDimensions, _mandelbrotSet)
     //var histogramDisplay = jim.mandelbrot.ui.histogram.create(parallelHistogram, _mandelbrotSet, dom);
 
 };
-
-//tan 45 = o / 8ft
-//tan 45 * 8 = o
-
-// 30 * 13   /9.1  - 1.2 = 7.9 /
-//9.1m by 3.9m
-// 6.5 8

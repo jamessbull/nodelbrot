@@ -20,10 +20,11 @@ jim.mandelbrot.ui.magnifiedDisplay.create = function (mset, pixelInfo) {
     "use strict";
     var myContext;
     var round = jim.common.round;
-    var gridSize  = 3;
+    var gridSize  = 9;
     var calculateFillStyle = function (colour) {
         return "rgba(" + round(colour.r, 0) + "," + round(colour.g, 0) + ","  + round(colour.b, 0) + "," + round(colour.a, 0) +")";
     };
+
     var drawBigPixel = function (x, y, w, h, colour) {
         myContext.fillStyle = calculateFillStyle(colour);
         myContext.fillRect(x, y, w, h);
@@ -34,16 +35,52 @@ jim.mandelbrot.ui.magnifiedDisplay.create = function (mset, pixelInfo) {
 
     var currentX = 0;
     var currentY = 0;
+    myContext = pixelInfo.getContext('2d');
+
+    myContext.strokeStyle = ("rgba(0,255,0,255)");
+    myContext.strokeRect(0,0, pixelInfo.width, pixelInfo.height);
+
+
+    var drawRow = function (_gridSize, _increment, _rowNumber, x, y) {
+        var rowStart =  x - Math.floor(gridSize / 2);
+        var colStart =  y - Math.floor(gridSize / 2);
+        for (var i = 0 ; i < _gridSize; i ++) {
+            drawBigPixel(_increment * i, _increment * _rowNumber, _increment, _increment, mset.state().currentPointColour(rowStart + i, colStart + _rowNumber));
+        }
+    };
+    var update = function (x, y) {
+        myContext = pixelInfo.getContext('2d');
+        var increment = pixelInfo.width / gridSize;
+        currentX = x;
+        currentY = y;
+
+        for (var i = 0; i < gridSize; i++) {
+            drawRow(gridSize, increment, i, x, y);
+        }
+
+        myContext.strokeStyle = ("rgba(0,255,0,255)");
+        myContext.strokeRect(0,0, pixelInfo.width, pixelInfo.height);
+    };
 
     pixelInfo.onmousedown = function (e) {
         console.log("mouse down on pixel info");
 
         var squareSize = pixelInfo.width / gridSize;
 
-        var row = Math.floor(e.layerY / squareSize)-1;
-        var column = Math.floor(e.layerX / squareSize)-1;
 
-        var point = mset.point(currentX + column, currentY + row);
+
+        var row = Math.floor(e.layerY / squareSize);
+        var column = Math.floor(e.layerX / squareSize);
+
+        var rowStart =  currentX - Math.floor(gridSize / 2);
+        var colStart =  currentY - Math.floor(gridSize / 2);
+
+        var point = mset.point(rowStart + column, colStart + row);
+        update(currentX, currentY);
+
+        myContext.strokeStyle = ("rgba(0,255,0,255)");
+        myContext.strokeRect(column * squareSize ,row * squareSize, squareSize, squareSize);
+
 
         setText("iterations", "" + point.iterations);
         setText("escapedAt", point.escapedAt);
@@ -58,22 +95,7 @@ jim.mandelbrot.ui.magnifiedDisplay.create = function (mset, pixelInfo) {
     };
 
     return {
-        update: function (x, y) {
-            myContext = pixelInfo.getContext('2d');
-            var increment = pixelInfo.width / gridSize;
-            currentX = x;
-            currentY = y;
-
-            drawBigPixel(increment * 0, increment * 0, increment, increment, mset.state().currentPointColour(x - 1, y - 1));
-            drawBigPixel(increment * 1, increment * 0, increment, increment, mset.state().currentPointColour(x, y - 1));
-            drawBigPixel(increment * 2, increment * 0, increment, increment, mset.state().currentPointColour(x + 1, y - 1));
-            drawBigPixel(increment * 0, increment * 1, increment, increment, mset.state().currentPointColour(x - 1, y));
-            drawBigPixel(increment * 1, increment * 1, increment, increment, mset.state().currentPointColour(x, y));
-            drawBigPixel(increment * 2, increment * 1, increment, increment, mset.state().currentPointColour(x + 1, y));
-            drawBigPixel(increment * 0, increment * 2, increment, increment, mset.state().currentPointColour(x - 1, y + 1));
-            drawBigPixel(increment * 1, increment * 2, increment, increment, mset.state().currentPointColour(x, y + 1));
-            drawBigPixel(increment * 2, increment * 2, increment, increment, mset.state().currentPointColour(x + 1, y + 1));
-        }
+        update: update
     };
 };
 
