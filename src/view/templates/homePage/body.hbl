@@ -237,7 +237,7 @@ var  handleClickfunction
 
     <div id = examinePixels class = "examinePixels">
         <div class="pixelInfoCanvas">
-            <input type="checkbox" onClick="ui.handlePixelInfo()" name="selectPixelInfo" value="true">Select pixel info<br>
+            <input id="searchImageCheckbox" type="checkbox" onClick="ui.handlePixelInfo()" name="selectPixelInfo" value="true">Searching image info<br>
             <canvas id="pixelInfoCanvas"></canvas>
         </div>
         <div class="pixelInfo" id=pixelInfo>
@@ -249,7 +249,9 @@ var  handleClickfunction
                 <tr> <td>Mandelbrot x</td><td id="mx"></td> </tr>
                 <tr> <td>Mandelbrot y</td><td id="my"></td> </tr>
                 <tr> <td> %age</td><td id="histogramPerc"></td> </tr>
-                <tr> <td>Colour</td><td id="colourInfo"></td> </tr>
+                <tr> <td>Colour</td><td id="colourInfor"></td> </tr>
+                <tr> <td></td><td id="colourInfog"></td> </tr>
+                <tr> <td></td><td id="colourInfob"></td> </tr>
             </table>
         </div>
     </div>
@@ -272,6 +274,7 @@ var  handleClickfunction
                                 <option id="smallExport">Small</option>
                                 <option id="mediumExport">Medium</option>
                                 <option id="largeExport">Large</option>
+                                <option id="veryLargeExport">Huge</option>
                             </select>
                         </td>
                     </tr>

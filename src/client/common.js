@@ -266,6 +266,12 @@ jim.common.grid.create = function (columnSize, rowSize, f) {
     }
 
     return {
+        xSize: function () {
+            return grid.length;
+        },
+        ySize: function () {
+            return grid[0].length;
+        },
         at: function (x, y) {
             return grid[x + xOffset][y + yOffset];
         },

@@ -16,7 +16,7 @@ jim.mandelbrot.ui.state.create = function () {
 };
 
 namespace("jim.mandelbrot.ui.magnifiedDisplay");
-jim.mandelbrot.ui.magnifiedDisplay.create = function (mset, pixelInfo) {
+jim.mandelbrot.ui.magnifiedDisplay.create = function (mset, pixelInfo, _state) {
     "use strict";
     var myContext;
     var round = jim.common.round;
@@ -45,7 +45,8 @@ jim.mandelbrot.ui.magnifiedDisplay.create = function (mset, pixelInfo) {
         var rowStart =  x - Math.floor(gridSize / 2);
         var colStart =  y - Math.floor(gridSize / 2);
         for (var i = 0 ; i < _gridSize; i ++) {
-            drawBigPixel(_increment * i, _increment * _rowNumber, _increment, _increment, mset.state().currentPointColour(rowStart + i, colStart + _rowNumber));
+            var colour = mset.state().currentPointColour(rowStart + i, colStart + _rowNumber);
+            drawBigPixel(_increment * i, _increment * _rowNumber, _increment, _increment, colour);
         }
     };
     var update = function (x, y) {
@@ -55,7 +56,7 @@ jim.mandelbrot.ui.magnifiedDisplay.create = function (mset, pixelInfo) {
         currentY = y;
 
         for (var i = 0; i < gridSize; i++) {
-            drawRow(gridSize, increment, i, x, y);
+            drawRow(gridSize, increment, i, currentX, currentY);
         }
 
         myContext.strokeStyle = ("rgba(0,255,0,255)");
@@ -76,6 +77,8 @@ jim.mandelbrot.ui.magnifiedDisplay.create = function (mset, pixelInfo) {
         var colStart =  currentY - Math.floor(gridSize / 2);
 
         var point = mset.point(rowStart + column, colStart + row);
+
+        var round = jim.common.round;
         update(currentX, currentY);
 
         myContext.strokeStyle = ("rgba(0,255,0,255)");
@@ -86,12 +89,26 @@ jim.mandelbrot.ui.magnifiedDisplay.create = function (mset, pixelInfo) {
         setText("escapedAt", point.escapedAt);
         setText("alreadyEscaped", point.alreadyEscaped);
         setText("pixelComplete", point.complete);
-        setText("mx", point.mx);
-        setText("my", point.my);
-        setText("histogramPerc", mset.histogram().percentEscapedBy(point.iterations));
-        setText("colourInfo", mset.state().currentPointColour(currentX + column, currentY + row));
+        setText("mx", round(point.mx, 3));
+        setText("my", round(point.my, 3));
+        setText("histogramPerc", round(mset.histogram().percentEscapedBy(point.iterations) * 100, 3));
 
-        console.log("row :" + row + " column : " + column);
+        var col = mset.state().currentPointColour(rowStart + column, colStart + row);
+        setText("colourInfor", "r:" + round(col.r,3));
+        setText("colourInfog", "g:" + round(col.g, 3));
+        setText("colourInfob", "b:" + round(col.b,3));
+    };
+
+    pixelInfo.onmouseenter = function () {
+        _state.setNormalMode();
+        var searchingCheckbox = document.getElementById("searchImageCheckbox");
+        searchingCheckbox.checked = false;
+    };
+
+    pixelInfo.onmouseleave = function () {
+        _state.setSelectPixelMode();
+        var searchingCheckbox = document.getElementById("searchImageCheckbox");
+        searchingCheckbox.checked = true;
     };
 
     return {
@@ -102,7 +119,7 @@ jim.mandelbrot.ui.magnifiedDisplay.create = function (mset, pixelInfo) {
 jim.mandelbrot.ui.create = function (mandelbrotSet, canvas, w, h, pixelInfo, areaNotifier) {
     "use strict";
     var state = jim.mandelbrot.ui.state.create(),
-        magnifiedDisplay = jim.mandelbrot.ui.magnifiedDisplay.create(mandelbrotSet, pixelInfo),
+        magnifiedDisplay = jim.mandelbrot.ui.magnifiedDisplay.create(mandelbrotSet, pixelInfo, state),
         rect = jim.rectangle.create,
         newSelection = jim.selection.create,
         selection = newSelection(rect(0, 0, w, h)),
@@ -138,7 +155,6 @@ jim.mandelbrot.ui.create = function (mandelbrotSet, canvas, w, h, pixelInfo, are
     return {
         draw: function (canvas) {
             var context = canvas.getContext('2d');
-            //var context1 = mandelbrotSet.canvas().getContext('2d');
             context.clearRect(0, 0, canvas.width, canvas.height);
             selection.show(context);
             moveAction.show(context, canvas);
@@ -146,14 +162,12 @@ jim.mandelbrot.ui.create = function (mandelbrotSet, canvas, w, h, pixelInfo, are
         actions: actions,
         canvas: canvas,
         handlePixelInfo: function () {
-            var canvasDiv = document.getElementById("mandelbrotCanvas");
             console.log("ello");
-            if (canvasDiv.style.cursor!=="crosshair") {
-                canvasDiv.style.cursor="crosshair";
-                state.setSelectPixelMode();
-            } else {
-                canvasDiv.style.cursor="default";
+            if (state.isSelectPixelMode()) {
                 state.setNormalMode();
+
+            } else {
+                state.setSelectPixelMode();
             }
         }
     };

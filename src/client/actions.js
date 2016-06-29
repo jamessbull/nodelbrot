@@ -149,9 +149,6 @@ jim.actions.show.create = function (magnifiedDisplay, state) {
     var start = jim.coord.create();
     var action = jim.actions.createAction();
 
-
-
-
     action.leftMouseDown = function (e) {
         if (state.isSelectPixelMode()) {
             start.x = e.layerX;
@@ -161,6 +158,8 @@ jim.actions.show.create = function (magnifiedDisplay, state) {
 
     action.leftMouseUp = function (e) {
         if (state.isSelectPixelMode()) {
+            var searchingCheckbox = document.getElementById("searchImageCheckbox");
+            searchingCheckbox.checked = false;
             state.setNormalMode();
         }
     };

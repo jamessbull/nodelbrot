@@ -236,7 +236,9 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent) {
         newGrid = function () {
             return aGrid(sizeX, sizeY, function (x, y) { return aPoint(fromScreen(x, y)); });
         },
+
         grid = newGrid();
+
     return {
         zoomTo: function (selection) {
             previousExtents.push(currentExtents.copy());
@@ -304,10 +306,19 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent) {
             return  regions;
         },
         currentPointColour: function (x,y) {
+            if(grid.xSize()<=x || grid.ySize()<=y || x<0 || y<0) {
+                return jim.colour.create(100,100,100,255);
+            }
             var point = grid.at(x,y);
+
             var escaped = point.alreadyEscaped;
             return escaped ? colours.forPoint(point.x, point.y, point.iterations, histogram, palette):black;
         },
-        at: function (x, y) { return grid.at(x, y);}
+        at: function (x, y) {
+            if (grid.xSize()<=x || grid.ySize()<=y || x<0 || y<0) {
+                return Object.create(jim.mandelbrot.basepoint);
+            }
+            return grid.at(x, y);
+        }
     };
 };

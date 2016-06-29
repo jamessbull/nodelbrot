@@ -95,6 +95,7 @@ jim.init.run = function () {
         smallExport = document.getElementById("smallExport"),
         mediumExport = document.getElementById("mediumExport"),
         largeExport = document.getElementById("largeExport"),
+        veryLargeExport = document.getElementById("veryLargeExport"),
         exportSizeSelect = document.getElementById("exportSizeSelect"),
         render = function () {
             currentMandelbrotSet.draw();
@@ -128,6 +129,11 @@ jim.init.run = function () {
             console.log("large");
             exportDimensions.width = 4200;
             exportDimensions.height = 2400;
+        }
+        if (veryLargeExport.selected) {
+            console.log("very large");
+            exportDimensions.width = 6139;
+            exportDimensions.height = 3508;
         }
     };
     var hash = decodeURI(window.location.hash);
@@ -171,13 +177,15 @@ jim.init.run = function () {
 // What do I want to do to go live?
 
 // Ideally - Functionality
-// Make pixel display show black again and do a five by five grid
-// Make user interaction better on pixel investigation
 // Make two webworkers the same if I can
 // ensure an image where all pixels escape quickly exports in the same time regardless of number of iterations specified
 // Pull all functionality out of mandelbrot.js
 // Time estimate for export
 // add info icons with hover and helpful text
+
+//Nice to have
+// Try webworkers to drive main display
+// Try multiple canvases
 
 //Go live tasks
 // minify js
