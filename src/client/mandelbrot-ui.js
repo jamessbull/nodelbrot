@@ -67,9 +67,6 @@ jim.mandelbrot.ui.magnifiedDisplay.create = function (mset, pixelInfo, _state) {
         console.log("mouse down on pixel info");
 
         var squareSize = pixelInfo.width / gridSize;
-
-
-
         var row = Math.floor(e.layerY / squareSize);
         var column = Math.floor(e.layerX / squareSize);
 
@@ -89,8 +86,8 @@ jim.mandelbrot.ui.magnifiedDisplay.create = function (mset, pixelInfo, _state) {
         setText("escapedAt", point.escapedAt);
         setText("alreadyEscaped", point.alreadyEscaped);
         setText("pixelComplete", point.complete);
-        setText("mx", round(point.mx, 3));
-        setText("my", round(point.my, 3));
+        setText("mx", round(point.mx, 9));
+        setText("my", round(point.my, 9));
         setText("histogramPerc", round(mset.histogram().percentEscapedBy(point.iterations) * 100, 3));
 
         var col = mset.state().currentPointColour(rowStart + column, colStart + row);
