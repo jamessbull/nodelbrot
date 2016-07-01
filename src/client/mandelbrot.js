@@ -177,7 +177,9 @@ jim.init.run = function () {
 // What do I want to do to go live?
 
 // Ideally - Functionality
-// Make two webworkers the same if I can
+//make workers use common file which they both import
+// differences
+// The image calculator needs deadRegions a palette and a complete function the histogram calc does not
 // ensure an image where all pixels escape quickly exports in the same time regardless of number of iterations specified
 // Pull all functionality out of mandelbrot.js
 // Time estimate for export
