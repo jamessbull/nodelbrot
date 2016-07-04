@@ -46,7 +46,7 @@ jim.mandelbrot.basepoint = (function () {
             for (; times > 0; times -= 1) {
                 if (complete) { break; }
                 squaresum = x * x + y * y;
-                if (squaresum > 9007199254740991 || iterations >= 100000) {
+                if (squaresum > 9007199254740991 || iterations >= 250000) {
                     complete = true;
                     break;
                 }

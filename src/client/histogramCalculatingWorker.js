@@ -17,13 +17,21 @@ var worker = jim.worker.msetProcessor.create;
 onmessage = function(e) {
     "use strict";
     var mainWorker = worker(e.data);
-    var height = mainWorker.height;
-    var width = mainWorker.width;
     var maxIter = mainWorker.maximumNumberOfIterations;
 
-    var escapeCheck = function (x, y) {
-        return ((x * x) + (y * y)) <= 4;
+    var histogramData = [];
+    var histogramTotal = 0;
+    for (var d = 0; d < maxIter; d+=1) {
+        histogramData[d] = 0;
+    }
+
+    var processPixelResult = function (i,j,x,y,iterations) {
+        if (iterations < maxIter) {
+            histogramData[iterations+1] +=1;
+            histogramTotal +=1;
+        }
     };
+
     var response = function (progress, complete, histogramData, histogramTotal) {
         var retVal = e.data;
         retVal.type = "progressReport";
@@ -37,25 +45,8 @@ onmessage = function(e) {
         return retVal;
     };
 
-    var histogramData = [];
-    var histogramTotal = 0;
-    for (var d = 0; d < maxIter; d+=1) {
-        histogramData[d] = 0;
-    }
-
-    var thisPixelHasNotFinished = function (x,y,i,j,iterations) {
-        return escapeCheck(x, y) && iterations <= maxIter;
-    };
-
-    var processPixelResult = function (i,j,x,y,iterations, escapedAt) {
-        if (iterations < maxIter) {
-            histogramData[iterations+1] +=1;
-            histogramTotal +=1;
-        }
-    };
-
-    mainWorker.setThisPixelHasNotFinished(thisPixelHasNotFinished);
     mainWorker.setProcessPixelResult(processPixelResult);
     mainWorker.processSet();
-    postMessage(response(width * height, true, histogramData, histogramTotal));
+
+    postMessage(response(mainWorker.width *  mainWorker.height, true, histogramData, histogramTotal));
 };
