@@ -13,7 +13,6 @@ jim.worker.msetProcessor.create = function (data) {
     var processSet = function (_deadRegionInfo) {
         var mx = 0;
         var my = 0;
-        //var tempX = 0;
         var translator   = jim.coord.translator2.create();
 
         var fromTopLeftX = displayBounds.topLeft().x;
@@ -27,13 +26,9 @@ jim.worker.msetProcessor.create = function (data) {
         var toHeight     = mandelbrotBounds.height();
 
         var maxIter = data.maxIterations;
-
-        //var pointNeedsDoing = true;
         var deadRegionInfo = _deadRegionInfo;
         var subsampleMultiplier = width/700;
-
         var escapeTest;
-
         var pos;
 
         var pointNotInDeadRegion = function (i, j, deadRegionInfo) {
