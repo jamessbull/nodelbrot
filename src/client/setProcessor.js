@@ -11,14 +11,9 @@ jim.worker.msetProcessor.create = function (data) {
     var mandelbrotBounds = jim.rectangle.create(data.mx, data.my, data.mw, data.mh);
 
     var processSet = function (_deadRegionInfo) {
-
-        var iterations = 0;
         var mx = 0;
         var my = 0;
-        var x = 0;
-        var y = 0;
-        var escapedAt = 0;
-        var tempX = 0;
+        //var tempX = 0;
         var translator   = jim.coord.translator2.create();
 
         var fromTopLeftX = displayBounds.topLeft().x;
@@ -33,13 +28,11 @@ jim.worker.msetProcessor.create = function (data) {
 
         var maxIter = data.maxIterations;
 
-        var pointNeedsDoing = true;
+        //var pointNeedsDoing = true;
         var deadRegionInfo = _deadRegionInfo;
         var subsampleMultiplier = width/700;
 
-        var escapeVal = 0;
         var escapeTest;
-        var iterationsCount = 0;
 
         var pos;
 
@@ -58,31 +51,51 @@ jim.worker.msetProcessor.create = function (data) {
         } else {
             escapeTest = 4;
         }
+
+        function calculatePoint(mx, my, iterationsCount, escapeTest, returnVal) {
+            var x = 0;
+            var y = 0;
+            var iterations = 0;
+            var escapedAt = 0;
+            var xSquared = 0;
+            var ySquared = 0;
+            var xSquaredPlusYSquared = 0;
+
+            while (iterationsCount>0) {
+                xSquared = x * x;
+                ySquared = y * y;
+                xSquaredPlusYSquared = xSquared + ySquared;
+
+                if(escapedAt === 0 && xSquaredPlusYSquared > escapeTest) {
+                    escapedAt = iterations;
+                    break;
+                }
+
+                iterations++;
+                y = ((x * y) *2 ) + my;
+                x = xSquared - ySquared + mx;
+                iterationsCount-=1;
+            }
+            returnVal.x = x;
+            returnVal.y = y;
+            returnVal.iterations = iterations;
+            returnVal.escapedAt = escapedAt;
+            return returnVal;
+        }
+        var pixelResult = {x:0, y:0, iterations:0, escapedAt:0};
         for (var j = 0 ; j < height; j +=1) {
             for (var i = 0 ; i < width; i += 1) {
-                iterations = 0;
-                x = 0;
-                y = 0;
-                escapedAt = 0;
                 mx = translator.translateX(fromTopLeftX, fromWidth, toTopLeftX, toWidth, i);
                 my = translator.translateY(fromTopLeftY, fromHeight, toTopLeftY, toHeight, j);
-                pointNeedsDoing = pointNotInDeadRegion(i, j, deadRegionInfo);
-                if (pointNeedsDoing) {
-                    iterationsCount = maxIter;
-                    for (iterationsCount; iterationsCount>0; iterationsCount-=1) {
-                        escapeVal = (x * x) + (y * y);
-                        if (escapedAt === 0 && escapeVal > 4){
-                            escapedAt = iterations;
-                        }
-                        if (escapeVal > escapeTest) break;
-
-                        iterations ++;
-                        tempX = x * x - y * y + mx;
-                        y = 2 * x * y + my;
-                        x = tempX;
-                    }
+                if (pointNotInDeadRegion(i, j, deadRegionInfo)) {
+                    pixelResult = calculatePoint(mx, my, maxIter, escapeTest, pixelResult);
+                } else {
+                    pixelResult.x = 0;
+                    pixelResult.y = 0;
+                    pixelResult.iterations = 0;
+                    pixelResult.escapedAt = 0;
                 }
-                processPixelResult(i,j,x,y,iterations, escapedAt);
+                processPixelResult(i,j,pixelResult.x,pixelResult.y,pixelResult.iterations, pixelResult.escapedAt);
             }
         }
     };
