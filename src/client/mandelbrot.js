@@ -177,15 +177,20 @@ jim.init.run = function () {
 // What do I want to do to go live?
 
 // Ideally - Functionality
-//make workers use common file which they both import
-// differences
-// The image calculator needs deadRegions a palette and a complete function the histogram calc does not
-// ensure an image where all pixels escape quickly exports in the same time regardless of number of iterations specified
+
 // Pull all functionality out of mandelbrot.js
-// Time estimate for export
+// Huge needs to adjust number of pixels needed to surround a pixel before considering it to be dead.
+// can I do that at the getdeadPixels thing and assume that if the p picked is surrounded by 2 pixels of dead in all directions then
 // add info icons with hover and helpful text
+// Need to give sizes for exports and pick sensible defaults
+// go through and remove any unused code / methods
 
 //Nice to have
+// // Time estimate for export
+//zoom animates
+// scrolling messages
+// play with canvas distortion effects and css transforms
+// maybe the display can be tiled and each tile flips on zoom
 // Try webworkers to drive main display
 // Try multiple canvases
 

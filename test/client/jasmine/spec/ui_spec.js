@@ -27,7 +27,14 @@ describe("The user interface action", function () {
             }
         },
         canvas = {},
-        pixelInfo = {onmousedown: function () {}},
+        pixelInfo = {
+            onmousedown: function () {},
+            getContext: function (s) {
+                return {strokeRect: function () {
+                   console.log("strokeRect called");
+                }};
+            }
+        },
         ui = jim.mandelbrot.ui.create(mset, canvas, 640, 480, pixelInfo, notifier),
         action = ui.actions[0];
         action.canvas = document.createElement('canvas');

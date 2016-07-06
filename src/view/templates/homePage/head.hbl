@@ -22,3 +22,4 @@
 <script src="/js/deadSectionSplitter.js"></script>
 <script src="/js/export/exporter.js"></script>
 <script src="/js/uiElements.js"></script>
+<script src="/js/deadRegions.js"></script>
