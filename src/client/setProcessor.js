@@ -36,9 +36,7 @@ jim.worker.msetProcessor.create = function (data) {
                 return true;
             }
             pos = (floor(j/subsampleMultiplier) * 700) + floor(i/subsampleMultiplier);
-            return deadRegionInfo[pos - 701] || deadRegionInfo[pos - 700] || deadRegionInfo[pos - 699] ||
-                deadRegionInfo[pos - 1] || deadRegionInfo[pos] || deadRegionInfo[pos + 1] ||
-                deadRegionInfo[pos + 699] || deadRegionInfo[pos + 700] || deadRegionInfo[pos + 701];
+            return !deadRegionInfo[pos];
         };
 
         if(doingImage) {

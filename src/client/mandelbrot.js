@@ -2,10 +2,10 @@ namespace("jim.defaults");
 jim.defaults.mandelbrotExtents = jim.rectangle.create(-2.5, -1, 3.5, 2);
 
 namespace("jim.mandelbrotImage");
-jim.mandelbrotImage.create = function () {
+jim.mandelbrotImage.create = function (_events) {
     "use strict";
     var startingExtent = jim.rectangle.create(-2.5, -1, 3.5, 2),
-        state = jim.mandelbrot.state.create(700, 400, startingExtent),
+        state = jim.mandelbrot.state.create(700, 400, startingExtent, _events),
         segments2 = jim.segment.createSegments(700, 400, 4, state),
         screen = jim.screen.create({segments: segments2});
 
@@ -51,7 +51,7 @@ var ui = {};
 namespace("jim.init");
 jim.init.run = function () {
     "use strict";
-    var currentMandelbrotSet = jim.mandelbrotImage.create();
+    var currentMandelbrotSet = jim.mandelbrotImage.create(events);
     var area = {x: -2.5, y: -1, w: 3.5, h: 2};
     var nodes = currentMandelbrotSet.palette().toNodeList();
     var currentLocation = "";
@@ -96,8 +96,14 @@ jim.init.run = function () {
         mediumExport = document.getElementById("mediumExport"),
         largeExport = document.getElementById("largeExport"),
         veryLargeExport = document.getElementById("veryLargeExport"),
-        exportSizeSelect = document.getElementById("exportSizeSelect"),
-        render = function () {
+        exportSizeSelect = document.getElementById("exportSizeSelect");
+
+
+    var exportDimensions = {height: 400, width: 700};
+    var deadRegionsCanvas = document.createElement('canvas');
+    jim.mandelbrot.ui.elements.create(exportDimensions, currentMandelbrotSet, deadRegionsCanvas, events);
+
+    var render = function () {
             currentMandelbrotSet.draw();
             var iter = currentMandelbrotSet.state().maximumIteration();
             maxIteration.innerText = iter;
@@ -112,12 +118,11 @@ jim.init.run = function () {
             lui.draw(uiCanvas);
             colourGradientui.draw();
         };
-    var exportDimensions = {height: 400, width: 700};
 
     exportSizeSelect.onchange = function () {
         if (smallExport.selected) {
             console.log("large");
-            exportDimensions.width = 700;
+            exportDimensions.width = 700;// 700 * 4 = 2800
             exportDimensions.height = 400;
         }
         if (mediumExport.selected) {
@@ -137,26 +142,37 @@ jim.init.run = function () {
         }
     };
     var hash = decodeURI(window.location.hash);
-    var initialLocation;
 
-    if (hash.length >1) {
-        var initialArgs = JSON.parse(decodeURI(window.location.hash.substring(1)));
-        initialLocation = jim.rectangle.create(initialArgs.position.x, initialArgs.position.y, initialArgs.position.w, initialArgs.position.h);
-        currentMandelbrotSet.palette().fromNodeList(initialArgs.nodes);
+    var changeLocation = function() {
+        var initialState = {};
+
+        if (hash.length >1) {
+            var initialArgs = JSON.parse(decodeURI(window.location.hash.substring(1)));
+            initialState.location = jim.rectangle.create(initialArgs.position.x, initialArgs.position.y, initialArgs.position.w, initialArgs.position.h);
+            initialState.nodelist = initialArgs.nodes;
+
+        } else {
+            initialState.location = jim.rectangle.create(-2.5, -1, 3.5, 2);
+            initialState.nodelist = currentMandelbrotSet.palette().toNodeList();
+        }
+
+        currentMandelbrotSet.palette().fromNodeList(initialState.nodelist);
         colourGradientui.rebuildMarkers();
-    } else {
-        initialLocation = jim.rectangle.create(-2.5, -1, 3.5, 2);
-    }
-
-    currentMandelbrotSet.state().setExtents(initialLocation);
-    areaNotifier.notify({x: initialLocation.topLeft().x, y: initialLocation.topLeft().y, w: initialLocation.width(), h: initialLocation.height()});
-
-    bookmarkButton.onclick = function () {
-        window.location = currentLocation;
+        currentMandelbrotSet.state().setExtents(initialState.location);
+        areaNotifier.notify({x:  initialState.location.topLeft().x, y:  initialState.location.topLeft().y, w:  initialState.location.width(), h:  initialState.location.height()});
     };
 
+    changeLocation();
+    window.onhashchange = function () {
+        changeLocation();
+    };
 
-    jim.mandelbrot.ui.elements.create(exportDimensions, currentMandelbrotSet);
+    bookmarkButton.onclick = function () {
+        var a = currentMandelbrotSet.state().getExtents();
+        areaNotifier.notify({x: a.topLeft().x,y: a.topLeft().y,w: a.width(),h: a.height()});
+        areaNotifier.notifyPalette(currentMandelbrotSet.palette().toNodeList());
+        window.location = currentLocation;
+    };
 
     pixelInfo.width = 162;
     pixelInfo.height = 162;
@@ -164,11 +180,19 @@ jim.init.run = function () {
     uiCanvas.oncontextmenu = function (e) {
         e.preventDefault();
     };
+    deadRegionsCanvas.oncontextmenu = function (e) {
+        e.preventDefault();
+    };
+    deadRegionsCanvas.width = currentMandelbrotSet.canvas().width;
+    deadRegionsCanvas.height = currentMandelbrotSet.canvas().height;
+    deadRegionsCanvas.className = "canvas";
+
     uiCanvas.width = currentMandelbrotSet.canvas().width;
     uiCanvas.height = currentMandelbrotSet.canvas().height;
     uiCanvas.className = "canvas";
     canvasDiv.appendChild(currentMandelbrotSet.canvas());
     canvasDiv.appendChild(uiCanvas);
+    canvasDiv.appendChild(deadRegionsCanvas);
     colourPicker.draw();
 
     jim.anim.create(render).start();
@@ -179,8 +203,14 @@ jim.init.run = function () {
 // Ideally - Functionality
 
 // Pull all functionality out of mandelbrot.js
-// Huge needs to adjust number of pixels needed to surround a pixel before considering it to be dead.
-// can I do that at the getdeadPixels thing and assume that if the p picked is surrounded by 2 pixels of dead in all directions then
+
+// Replace use of notifiers with events.
+// very slow to move. Can I calculate a really quick full histogram on zooms?
+// using same technique as for full export? No need for histogram update at all then may make stuff generally faster.
+// can use an effect where I zoom in / out to mask it?
+
+
+// Then investigate why it crashes chrome at 250k iterations. Memory issue with a webWorker?
 // add info icons with hover and helpful text
 // Need to give sizes for exports and pick sensible defaults
 // go through and remove any unused code / methods

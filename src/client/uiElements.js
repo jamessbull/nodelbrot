@@ -88,7 +88,7 @@ jim.mandelbrot.ui.histogram.create = function (_parallelHistogram, _mandelbrotSe
 };
 
 namespace("jim.mandelbrot.ui.elements");
-jim.mandelbrot.ui.elements.create = function (_exportDimensions, _mandelbrotSet) {
+jim.mandelbrot.ui.elements.create = function (_exportDimensions, _mandelbrotSet, _deadRegionsCanvas, _events) {
     "use strict";
     var dom = jim.dom.functions.create();
 
@@ -133,8 +133,47 @@ jim.mandelbrot.ui.elements.create = function (_exportDimensions, _mandelbrotSet)
     dom.deselectButton(examineMenuButton);
     dom.hide(examinePixelsPanel);
 
+    var ignoreDeadPixelsCheckbox = document.getElementById("ignoreDeadPixels");
+    var ignoreDeadPixelsRadius = document.getElementById("ignoreDeadPixelsRadius");
+    var ignoreChecked = false;
+    ignoreDeadPixelsCheckbox.checked = false;
+
+
+    var updateDeadRegions = function (black) {
+        var context = _deadRegionsCanvas.getContext('2d');
+        var radius = ignoreDeadPixelsRadius.value;
+        var deadRegions = _mandelbrotSet.state().deadRegions(radius);
+        context.fillStyle = "rgba(255, " + 255 + ", 255, 0.6)";
+
+        if (black) {
+            context.clearRect(0,0, _deadRegionsCanvas.width, _deadRegionsCanvas.height);
+        } else {
+            for (var y = 0; y < 400; y+=1) {
+                for (var x = 0 ; x < 700; x += 1) {
+                    if(deadRegions[y * 700 + x]) {
+                        context.fillRect(x, y, 1, 1);
+                    }
+                }
+            }
+        }
+    };
+
+    var killDeadRegionDisplay = function () {
+        ignoreDeadPixelsCheckbox.checked = false;
+        updateDeadRegions(true);
+    };
+
+    _events.listenTo("zoomIn", function () { killDeadRegionDisplay(); });
+    _events.listenTo("zoomOut", function () { killDeadRegionDisplay(); });
+    _events.listenTo("moved", function () { killDeadRegionDisplay(); });
+
+    ignoreDeadPixelsCheckbox.onclick= function () {
+        ignoreChecked = !ignoreChecked;
+        ignoreDeadPixelsCheckbox.checked = ignoreChecked;
+        updateDeadRegions(!ignoreChecked);
+    };
+
     var parallelHistogram = jim.parallelHistogramGenerator.create();
     jim.mandelbrot.image.exporter.create(_exportDimensions, _mandelbrotSet, parallelHistogram, dom);
     //var histogramDisplay = jim.mandelbrot.ui.histogram.create(parallelHistogram, _mandelbrotSet, dom);
-
 };

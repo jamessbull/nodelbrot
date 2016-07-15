@@ -278,6 +278,16 @@ var  handleClickfunction
                             </select>
                         </td>
                     </tr>
+                    <tr>
+                        <td class="bodyText">Ignore dead </td>
+                        <td> <input id="ignoreDeadPixels" type="checkbox"/></td>
+
+                    </tr>
+
+                    <tr>
+                        <td class="bodyText">Dead radius</td>
+                        <td><input size="8" id="ignoreDeadPixelsRadius" type="text" class="export" value="1" /></td>
+                    </tr>
                 </tbody>
             </table>
             <div id = "export" class = "exportButton button">Go</div>

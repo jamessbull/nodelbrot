@@ -214,7 +214,7 @@ jim.colourCalculator.create = function () {
 };
 
 namespace("jim.mandelbrot.state");
-jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent) {
+jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
     "use strict";
     var aRectangle      = jim.rectangle.create,
         aGrid           = jim.common.grid.create,
@@ -246,6 +246,7 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent) {
             grid = newGrid();
             histogram.reset();
             maxIterations = 0;
+            _events.fire("zoomIn");
         },
         resize: function (sizeX, sizeY) {
             screen = aRectangle(0, 0, sizeX - 1, sizeY - 1);
@@ -258,8 +259,10 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent) {
             grid = newGrid();
             histogram.reset();
             maxIterations = 0;
+            _events.fire("zoomOut");
         },
         move: function (moveX, moveY) {
+            _events.fire("moved");
             var distance = fromScreen(moveX, moveY).distanceTo(currentExtents.topLeft());
             currentExtents.move(0- distance.x, 0 -distance.y);
             grid.translate(moveX, moveY);
@@ -287,6 +290,9 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent) {
         setExtents: function (extents) {
             currentExtents = extents;
             grid = newGrid();
+            histogram.reset();
+            maxIterations = 0;
+            _events.fire("moved");
         },
         maximumIteration: function () {
             return maxIterations;
@@ -294,7 +300,7 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent) {
         chunksize: function (c) {
             chunkSize = c;
         },
-        deadRegions : function () {
+        deadRegions : function (radius) {
             var regions = [];
             grid.iterateVisible(function (p,x, y) {
                 if(p) {
@@ -303,7 +309,9 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent) {
                     regions.push(false);
                 }
             });
-            return  regions;
+            var deadRegions = jim.mandelbrot.deadRegions.create(regions, sizeX);
+            var parsedRadius = parseInt(radius ? radius : 1, 10);
+            return  deadRegions.regions(parsedRadius);
         },
         currentPointColour: function (x,y) {
             if(grid.xSize()<=x || grid.ySize()<=y || x<0 || y<0) {

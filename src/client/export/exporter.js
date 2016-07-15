@@ -33,10 +33,11 @@ jim.mandelbrot.image.exporter.create = function (_exportDimensions, _mandelbrotS
 
     events.listenTo("histogramExported", function (e) {
         console.log("Histogram exported");
+        var ignoreDeadPixelsRadius = document.getElementById("ignoreDeadPixelsRadius");
         imageGenerator.run(_mandelbrotSet.state().getExtents(),
             exportDepth.value,  _exportDimensions.width, _exportDimensions.height,
             e.histogramData, e.histogramTotal,
-            _mandelbrotSet.palette().toNodeList(), _mandelbrotSet.state().deadRegions(),
+            _mandelbrotSet.palette().toNodeList(), _mandelbrotSet.state().deadRegions(ignoreDeadPixelsRadius.value),
             "imageComplete", "imageExportProgress", 100);
     });
 
