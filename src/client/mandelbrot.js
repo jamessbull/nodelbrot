@@ -100,9 +100,11 @@ jim.init.run = function () {
         exportSizeSelect = document.getElementById("exportSizeSelect");
 
 
-    var exportDimensions = {height: 400, width: 700};
     var deadRegionsCanvas = document.createElement('canvas');
-    jim.mandelbrot.ui.elements.create(exportDimensions, currentMandelbrotSet, deadRegionsCanvas, events);
+
+    var exportSizeDropdown = jim.mandelbrot.exportDropdown.create(exportSizeSelect, [smallExport, mediumExport, largeExport, veryLargeExport]);
+
+    jim.mandelbrot.ui.elements.create(exportSizeDropdown, currentMandelbrotSet, deadRegionsCanvas, events);
 
     var render = function () {
             currentMandelbrotSet.draw();
@@ -119,30 +121,6 @@ jim.init.run = function () {
             lui.draw(uiCanvas);
             colourGradientui.draw();
         };
-
-    exportSizeSelect.onchange = function () {
-        if (smallExport.selected) {
-            console.log("large");
-            exportDimensions.width = 700;// 700 * 4 = 2800
-            exportDimensions.height = 400;
-        }
-        if (mediumExport.selected) {
-            console.log("medium");
-            exportDimensions.width = 2100;
-            exportDimensions.height = 1200;
-        }
-        if (largeExport.selected) {
-            console.log("large");
-            exportDimensions.width = 4200;
-            exportDimensions.height = 2400;
-        }
-        if (veryLargeExport.selected) {
-            console.log("very large");
-            exportDimensions.width = 6139;
-            exportDimensions.height = 3508;
-        }
-    };
-
 
     var bookmarker = jim.mandelbrot.bookmark.create(bookmarkButton, areaNotifier, currentMandelbrotSet, colourGradientui);
     bookmarker.changeLocation();

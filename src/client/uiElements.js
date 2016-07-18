@@ -88,7 +88,7 @@ jim.mandelbrot.ui.histogram.create = function (_parallelHistogram, _mandelbrotSe
 };
 
 namespace("jim.mandelbrot.ui.elements");
-jim.mandelbrot.ui.elements.create = function (_exportDimensions, _mandelbrotSet, _deadRegionsCanvas, _events) {
+jim.mandelbrot.ui.elements.create = function (_exportSizeDropdown, _mandelbrotSet, _deadRegionsCanvas, _events) {
     "use strict";
     var dom = jim.dom.functions.create();
 
@@ -174,6 +174,6 @@ jim.mandelbrot.ui.elements.create = function (_exportDimensions, _mandelbrotSet,
     };
 
     var parallelHistogram = jim.parallelHistogramGenerator.create();
-    jim.mandelbrot.image.exporter.create(_exportDimensions, _mandelbrotSet, parallelHistogram, dom);
+    jim.mandelbrot.image.exporter.create(_exportSizeDropdown, _mandelbrotSet, parallelHistogram, dom);
     //var histogramDisplay = jim.mandelbrot.ui.histogram.create(parallelHistogram, _mandelbrotSet, dom);
 };
