@@ -54,8 +54,9 @@ jim.init.run = function () {
     var currentMandelbrotSet = jim.mandelbrotImage.create(events);
     var area = {x: -2.5, y: -1, w: 3.5, h: 2};
     var nodes = currentMandelbrotSet.palette().toNodeList();
-    var currentLocation = "";
+    //var currentLocation = "";
     var areaNotifier = {
+            currentLocation: "",
             notify: function (_area) {
                 area = _area;
                 this.build();
@@ -68,7 +69,7 @@ jim.init.run = function () {
                 var base = window.location.origin;
                 var path = window.location.pathname;
                 var hash = encodeURI(JSON.stringify({position: area, nodes: nodes}));
-                currentLocation = base + path + "#" + hash;
+                this.currentLocation = base + path + "#" + hash;
             }
         },
         canvasDiv = document.getElementById("mandelbrotCanvas"),
@@ -141,38 +142,10 @@ jim.init.run = function () {
             exportDimensions.height = 3508;
         }
     };
-    var hash = decodeURI(window.location.hash);
 
-    var changeLocation = function() {
-        var initialState = {};
 
-        if (hash.length >1) {
-            var initialArgs = JSON.parse(decodeURI(window.location.hash.substring(1)));
-            initialState.location = jim.rectangle.create(initialArgs.position.x, initialArgs.position.y, initialArgs.position.w, initialArgs.position.h);
-            initialState.nodelist = initialArgs.nodes;
-
-        } else {
-            initialState.location = jim.rectangle.create(-2.5, -1, 3.5, 2);
-            initialState.nodelist = currentMandelbrotSet.palette().toNodeList();
-        }
-
-        currentMandelbrotSet.palette().fromNodeList(initialState.nodelist);
-        colourGradientui.rebuildMarkers();
-        currentMandelbrotSet.state().setExtents(initialState.location);
-        areaNotifier.notify({x:  initialState.location.topLeft().x, y:  initialState.location.topLeft().y, w:  initialState.location.width(), h:  initialState.location.height()});
-    };
-
-    changeLocation();
-    window.onhashchange = function () {
-        changeLocation();
-    };
-
-    bookmarkButton.onclick = function () {
-        var a = currentMandelbrotSet.state().getExtents();
-        areaNotifier.notify({x: a.topLeft().x,y: a.topLeft().y,w: a.width(),h: a.height()});
-        areaNotifier.notifyPalette(currentMandelbrotSet.palette().toNodeList());
-        window.location = currentLocation;
-    };
+    var bookmarker = jim.mandelbrot.bookmark.create(bookmarkButton, areaNotifier, currentMandelbrotSet, colourGradientui);
+    bookmarker.changeLocation();
 
     pixelInfo.width = 162;
     pixelInfo.height = 162;
@@ -211,6 +184,8 @@ jim.init.run = function () {
 
 
 // Then investigate why it crashes chrome at 250k iterations. Memory issue with a webWorker?
+// Looks like webworkers themselves should be ok.
+//Think it is main thread crashing when data posted back. Shoud be the same though
 // add info icons with hover and helpful text
 // Need to give sizes for exports and pick sensible defaults
 // go through and remove any unused code / methods
