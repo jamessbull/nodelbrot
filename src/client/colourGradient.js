@@ -1,5 +1,5 @@
 namespace("jim.colour.gradientui");
-jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton, palette, paletteNotifer) {
+jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton, palette, _events) {
     "use strict";
     var calculateFillStyle = function (colour) {
         return "rgba(" + colour.r + "," + colour.g + ","  + colour.b + "," + colour.a +")";
@@ -117,12 +117,10 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
 
     addButton.onclick = function () {
         markers.placeNewMarker();
-        paletteNotifer.notifyPalette(palette.toNodeList());
     };
 
     removeButton.onclick = function () {
         markers.removeSelectedNode();
-        paletteNotifer.notifyPalette(palette.toNodeList());
     };
 
     gradientCanvas.onmousedown = function (e) {
@@ -135,7 +133,6 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
 
     gradientCanvas.onmousemove = function (e) {
         markers.updatePosition(e.layerX);
-        paletteNotifer.notifyPalette(palette.toNodeList());
     };
 
     return {

@@ -8,11 +8,7 @@ describe("The user interface action", function () {
             button: button
         };
     };
-    var notifier = {
-        notify: function () {
-            return true;
-        }
-    };
+
     var mset = {
             zoomTo: function(selection ) {},
             zoomOut: function () {},

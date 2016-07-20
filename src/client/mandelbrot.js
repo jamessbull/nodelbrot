@@ -39,8 +39,6 @@ jim.mandelbrotImage.create = function (_events) {
         },
         stop: function () {
             screen.stop();
-            console.log('Stopped rendering main screen');
-
         },
         go: function() {
             screen.go();
@@ -52,34 +50,14 @@ namespace("jim.init");
 jim.init.run = function () {
     "use strict";
     var currentMandelbrotSet = jim.mandelbrotImage.create(events);
-    var area = {x: -2.5, y: -1, w: 3.5, h: 2};
-    var nodes = currentMandelbrotSet.palette().toNodeList();
-    //var currentLocation = "";
-    var areaNotifier = {
-            currentLocation: "",
-            notify: function (_area) {
-                area = _area;
-                this.build();
-            },
-            notifyPalette: function (_nodes) {
-                nodes = _nodes;
-                this.build();
-            },
-            build: function () {
-                var base = window.location.origin;
-                var path = window.location.pathname;
-                var hash = encodeURI(JSON.stringify({position: area, nodes: nodes}));
-                this.currentLocation = base + path + "#" + hash;
-            }
-        },
-        canvasDiv = document.getElementById("mandelbrotCanvas"),
+    var canvasDiv = document.getElementById("mandelbrotCanvas"),
         pixelInfo = document.getElementById("pixelInfoCanvas"),
         colourPickerCanvas = document.getElementById("colourPickerCanvas"),
         colourGradientCanvas = document.getElementById("colourGradientCanvas"),
         addButton = document.getElementById("addButton"),
         removeButton = document.getElementById("removeButton"),
         bookmarkButton = document.getElementById("bookmarkButton"),
-        colourGradientui = jim.colour.gradientui.create(colourGradientCanvas, addButton, removeButton, currentMandelbrotSet.palette(), areaNotifier),
+        colourGradientui = jim.colour.gradientui.create(colourGradientCanvas, addButton, removeButton, currentMandelbrotSet.palette(), events),
         colourPicker = jim.colour.colourPicker.create(colourPickerCanvas, colourGradientui),
 
         lui = jim.mandelbrot.ui.create(
@@ -87,7 +65,7 @@ jim.init.run = function () {
             canvasDiv,
             currentMandelbrotSet.canvas().width,
             currentMandelbrotSet.canvas().height,
-            pixelInfo, areaNotifier),
+            pixelInfo),
         uiCanvas = document.createElement('canvas'),
         maxIteration = document.getElementById("maxIteration"),
         percEscaped = document.getElementById("totalHistogramPerc"),
@@ -122,7 +100,7 @@ jim.init.run = function () {
             colourGradientui.draw();
         };
 
-    var bookmarker = jim.mandelbrot.bookmark.create(bookmarkButton, areaNotifier, currentMandelbrotSet, colourGradientui);
+    var bookmarker = jim.mandelbrot.bookmark.create(bookmarkButton, currentMandelbrotSet, colourGradientui);
     bookmarker.changeLocation();
 
     pixelInfo.width = 162;
@@ -155,7 +133,7 @@ jim.init.run = function () {
 
 // Pull all functionality out of mandelbrot.js
 
-// Replace use of notifiers with events.
+
 // very slow to move. Can I calculate a really quick full histogram on zooms?
 // using same technique as for full export? No need for histogram update at all then may make stuff generally faster.
 // can use an effect where I zoom in / out to mask it?

@@ -145,11 +145,7 @@ describe("The user interface action", function () {
                 }
             };
         };
-        var notifier = {
-            notify: function () {
-                return true;
-            }
-        };
+
         var moveAction = jim.actions.move.create(mset, state, notifier);
         moveAction.canvas = document.createElement('canvas');
         spyOn(mset, "move");
@@ -176,11 +172,7 @@ describe("The user interface action", function () {
                 }
             };
         };
-        var notifier = {
-            notify: function () {
-                return true;
-            }
-        };
+
         var moveAction = jim.actions.move.create(mset, state, notifier);
         moveAction.canvas = document.createElement('canvas');
 

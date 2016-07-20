@@ -1,8 +1,6 @@
 describe("The mandelbrot set", function () {
     "use strict";
 
-    var notifier = {notify: function () {}};
-
     it("can take several iterations to escape", function () {
         var mandelbrotCoord = {x: -0.3, y: -0.9},
             histogram = jim.histogram.create(),

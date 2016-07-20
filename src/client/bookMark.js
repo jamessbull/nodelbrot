@@ -1,39 +1,57 @@
 namespace("jim.mandelbrot.bookmark");
-jim.mandelbrot.bookmark.create = function (bookmarkButton,  areaNotifier, currentMandelbrotSet, colourGradientui) {
+jim.mandelbrot.bookmark.create = function (bookmarkButton, currentMandelbrotSet, colourGradientui) {
 
     "use strict";
-    var changeLocation = function() {
+    var justBookmarked = false;
+
+    var newLocation = function (pos, nodes) {
+        return {
+            location: jim.rectangle.create(pos.x, pos.y, pos.w, pos.h),
+            nodes: nodes
+        };
+    };
+
+    var defaultMandelbrotInfo = function () {
+        return newLocation({x:-2.5,y:-1, w:3.5, h: 2}, currentMandelbrotSet.palette().toNodeList());
+    };
+
+    var mandelbrotInfoFromUrl = function () {
+        var decoded = JSON.parse(decodeURI(window.location.hash.substring(1)));
+        return newLocation(decoded.location, decoded.nodes);
+    };
+
+    var currentMandelbrotInfo = function() {
         var hash = decodeURI(window.location.hash);
-        var initialState = {};
-        console.log("");
-        if (hash.length >1) {
-            var initialArgs = JSON.parse(decodeURI(window.location.hash.substring(1)));
-            initialState.location = jim.rectangle.create(initialArgs.position.x, initialArgs.position.y, initialArgs.position.w, initialArgs.position.h);
-            initialState.nodelist = initialArgs.nodes;
+        return hash.length > 1 ? mandelbrotInfoFromUrl() : defaultMandelbrotInfo();
+    };
 
-        } else {
-            initialState.location = jim.rectangle.create(-2.5, -1, 3.5, 2);
-            initialState.nodelist = currentMandelbrotSet.palette().toNodeList();
-        }
-
-        currentMandelbrotSet.palette().fromNodeList(initialState.nodelist);
+    var changeCurrentMandelbrotStateToMatchUrl = function () {
+        var mandelbrotInfo = currentMandelbrotInfo();
+        currentMandelbrotSet.palette().fromNodeList(mandelbrotInfo.nodes);
         colourGradientui.rebuildMarkers();
-        currentMandelbrotSet.state().setExtents(initialState.location);
-        areaNotifier.notify({x:  initialState.location.topLeft().x, y:  initialState.location.topLeft().y, w:  initialState.location.width(), h:  initialState.location.height()});
+        currentMandelbrotSet.state().setExtents(mandelbrotInfo.location);
     };
 
     window.onhashchange = function () {
-        changeLocation();
+        if (!justBookmarked) {
+            changeCurrentMandelbrotStateToMatchUrl();
+        }
+        justBookmarked = false;
+    };
+
+    var currentMandelbrotInfoToUrl = function () {
+        var a = currentMandelbrotSet.state().getExtents();
+        var location = newLocation({x: a.topLeft().x,y: a.topLeft().y,w: a.width(),h: a.height()}, currentMandelbrotSet.palette().toNodeList());
+        var hash = encodeURI(JSON.stringify(location));
+        return window.location.origin + window.location.pathname + "#" + hash;
     };
 
     bookmarkButton.onclick = function () {
-        var a = currentMandelbrotSet.state().getExtents();
-        areaNotifier.notify({x: a.topLeft().x,y: a.topLeft().y,w: a.width(),h: a.height()});
-        areaNotifier.notifyPalette(currentMandelbrotSet.palette().toNodeList());
-        window.location = areaNotifier.currentLocation;
+        justBookmarked = true;
+        window.location = currentMandelbrotInfoToUrl();
     };
 
     return {
-        changeLocation: changeLocation
+        changeLocation: changeCurrentMandelbrotStateToMatchUrl
     };
 };

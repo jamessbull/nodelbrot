@@ -44,12 +44,10 @@ jim.actions.doubleclick.create = function (timer, mandelbrotSet, state) {
 };
 
 namespace("jim.actions.selectArea");
-jim.actions.selectArea.create = function (selection, mandelbrotSet, state, areaNotifier) {
+jim.actions.selectArea.create = function (selection, mandelbrotSet, state) {
     "use strict";
     var action = function () {
         mandelbrotSet.zoomTo(selection);
-        var a = mandelbrotSet.state().getExtents();
-        areaNotifier.notify({x: a.topLeft().x,y: a.topLeft().y,w: a.width(),h: a.height()});
     };
     var select = jim.actions.createAction();
 
@@ -79,7 +77,7 @@ jim.actions.selectArea.create = function (selection, mandelbrotSet, state, areaN
 };
 
 namespace("jim.actions.move");
-jim.actions.move.create = function (mset, state, areaNotifier) {
+jim.actions.move.create = function (mset, state) {
     "use strict";
     var start = jim.coord.create();
     var action = jim.actions.createAction();
@@ -105,8 +103,6 @@ jim.actions.move.create = function (mset, state, areaNotifier) {
             action.moving = false;
             mset.canvas().getContext('2d').drawImage(action.canvas, 0, 0, action.canvas.width, action.canvas.height);
             mset.move(e.layerX - start.x, e.layerY - start.y);
-            var extents = mset.state().getExtents();
-            areaNotifier.notify({x: extents.topLeft().x,y: extents.topLeft().y,w: extents.width(),h: extents.height()});
         }
     };
 
