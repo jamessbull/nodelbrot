@@ -45,42 +45,47 @@ jim.mandelbrotImage.create = function (_events) {
         }
     };
 };
-var ui = {};
 namespace("jim.init");
 jim.init.run = function () {
     "use strict";
-    var newMainUI = jim.mandelbrot.ui.create;
-    var dom = jim.dom.functions.create();
-    var mandelbrot = jim.mandelbrotImage.create(events);
-    var mandelCanvas = mandelbrot.canvas();
-    var canvasDiv = dom.element("mandelbrotCanvas");
-    var pixelInfo = dom.element("pixelInfoCanvas");
-    var colourPickerCanvas = dom.element("colourPickerCanvas");
-    var colourGradientCanvas = dom.element("colourGradientCanvas");
-    var addButton = dom.element("addButton");
-    var removeButton = dom.element("removeButton");
-    var bookmarkButton = dom.element("bookmarkButton");
-    var colourGradientui = jim.colour.gradientui.create(colourGradientCanvas, addButton, removeButton, mandelbrot.palette(), events);
-    var colourPicker = jim.colour.colourPicker.create(colourPickerCanvas, colourGradientui);
-    var mainDisplayUI = newMainUI(mandelbrot, canvasDiv, mandelCanvas.width, mandelCanvas.height, pixelInfo);
-    var uiCanvas = document.createElement('canvas');
-    var maxIteration = dom.element("maxIteration");
-    var percEscaped = dom.element("totalHistogramPerc");
-    var round = jim.common.round;
-    var lastEscapedOn = dom.element("lastPointEscapedAt");
-    var smallExport = dom.element("smallExport");
-    var mediumExport = dom.element("mediumExport");
-    var largeExport = dom.element("largeExport");
-    var veryLargeExport = dom.element("veryLargeExport");
-    var exportSizeSelect = dom.element("exportSizeSelect");
+    var round                   = jim.common.round;
+    var newMainUI               = jim.mandelbrot.ui.create;
+    var dom                     = jim.dom.functions.create();
+    var mandelbrot              = jim.mandelbrotImage.create(events);
+    var newColourGradientUI     = jim.colour.gradientui.create;
+    var newColourPicker         = jim.colour.colourPicker.create;
+    var newExportSizeDropdown   = jim.mandelbrot.exportDropdown.create;
+    var newMiscUiElements       =  jim.mandelbrot.ui.elements.create;
+    var newBookmarker           = jim.mandelbrot.bookmark.create;
+    var mandelCanvas            = mandelbrot.canvas();
 
+    var uiCanvas                = document.createElement('canvas');
+    var deadRegionsCanvas       = document.createElement('canvas');
 
-    var deadRegionsCanvas = document.createElement('canvas');
+    var canvasDiv               = dom.element("mandelbrotCanvas");
+    var pixelInfoCanvas         = dom.element("pixelInfoCanvas");
+    var colourPickerCanvas      = dom.element("colourPickerCanvas");
+    var colourGradientCanvas    = dom.element("colourGradientCanvas");
+    var addButton               = dom.element("addButton");
+    var removeButton            = dom.element("removeButton");
+    var bookmarkButton          = dom.element("bookmarkButton");
+    var maxIteration            = dom.element("maxIteration");
+    var percEscaped             = dom.element("totalHistogramPerc");
+    var lastEscapedOn           = dom.element("lastPointEscapedAt");
+    var smallExport             = dom.element("smallExport");
+    var mediumExport            = dom.element("mediumExport");
+    var largeExport             = dom.element("largeExport");
+    var veryLargeExport         = dom.element("veryLargeExport");
+    var exportSizeSelect        = dom.element("exportSizeSelect");
 
-    var exportSizeDropdown = jim.mandelbrot.exportDropdown.create(exportSizeSelect, [smallExport, mediumExport, largeExport, veryLargeExport]);
-    jim.mandelbrot.ui.elements.create(exportSizeDropdown, mandelbrot, deadRegionsCanvas, events);
-    var bookmarker = jim.mandelbrot.bookmark.create(bookmarkButton, mandelbrot, colourGradientui);
+    var mainDisplayUI = newMainUI(mandelbrot, canvasDiv, mandelCanvas.width, mandelCanvas.height, pixelInfoCanvas);
+    var colourGradientui = newColourGradientUI(colourGradientCanvas, addButton, removeButton, mandelbrot.palette(), events);
+    var colourPicker = newColourPicker(colourPickerCanvas, colourGradientui);
+    var exportSizeDropdown = newExportSizeDropdown(exportSizeSelect, [smallExport, mediumExport, largeExport, veryLargeExport]);
+    newMiscUiElements(exportSizeDropdown, mandelbrot, deadRegionsCanvas, events);
+    var bookmarker = newBookmarker(bookmarkButton, mandelbrot, colourGradientui);
     bookmarker.changeLocation();
+
     var render = function () {
             mandelbrot.draw();
             var iter = mandelbrot.state().maximumIteration();
@@ -97,11 +102,8 @@ jim.init.run = function () {
             colourGradientui.draw();
         };
 
-
-
-    pixelInfo.width = 162;
-    pixelInfo.height = 162;
-    ui = mainDisplayUI;
+    pixelInfoCanvas.width = 162;
+    pixelInfoCanvas.height = 162;
     uiCanvas.oncontextmenu = function (e) {
         e.preventDefault();
     };
@@ -127,15 +129,13 @@ jim.init.run = function () {
 
 // Ideally - Functionality
 
-// Pull all functionality out of mandelbrot.js
-
-
 // very slow to move. Can I calculate a really quick full histogram on zooms?
 // using same technique as for full export? No need for histogram update at all then may make stuff generally faster.
 // can use an effect where I zoom in / out to mask it?
 
 
 // Then investigate why it crashes chrome at 250k iterations. Memory issue with a webWorker?
+// Does it crash at 250k on small images
 // Looks like webworkers themselves should be ok.
 //Think it is main thread crashing when data posted back. Shoud be the same though
 // add info icons with hover and helpful text
