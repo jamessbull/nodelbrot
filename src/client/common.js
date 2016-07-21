@@ -60,18 +60,25 @@ jim.rectangle.create = function (one, two, width, height) {
         present = function (x) {
             return x !== undefined;
         };
-
-    if (present(one.x)) {
+    if(present(one.w)) {
         x = one.x;
         y = one.y;
-        w = two.x;
-        h = two.y;
+        w = one.w;
+        h = one.h;
     } else {
-        x = one;
-        y = two;
-        w = width;
-        h = height;
+        if (present(one.x)) {
+            x = one.x;
+            y = one.y;
+            w = two.x;
+            h = two.y;
+        } else {
+            x = one;
+            y = two;
+            w = width;
+            h = height;
+        }
     }
+
 
     topLeft = coord(x, y);
     topRight = coord(x + w, y);
@@ -379,6 +386,50 @@ jim.common.round = function (number, decimalPlaces) {
         multiplier *= 10;
     }
     return Math.round(number * multiplier) / multiplier;
+};
+
+namespace("jim.dom.functions");
+jim.dom.functions.create = function () {
+    "use strict";
+    var buttonSelectedClass = "buttonSelected";
+
+    var addClass = function (_element, _className) {
+        _element.className = _element.className + " " + _className;
+    };
+
+    var removeClass = function (_element, _className) {
+        _element.classList.remove(_className);
+    };
+
+    var selectButton = function (_button) {
+        addClass(_button, buttonSelectedClass);
+    };
+
+    var deselectButton = function (button) {
+        removeClass(button, buttonSelectedClass);
+    };
+
+    var hide = function (e) {
+        e.style.display="none";
+    };
+
+    var show = function (e) {
+        e.style.display = "";
+    };
+
+    var getElement = function (id) {
+        return document.getElementById(id);
+    };
+
+    return {
+        addClass: addClass,
+        removeClass: removeClass,
+        selectButton: selectButton,
+        deselectButton: deselectButton,
+        hide: hide,
+        show: show,
+        element: getElement
+    };
 };
 
 

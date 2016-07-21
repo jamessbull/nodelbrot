@@ -49,77 +49,73 @@ var ui = {};
 namespace("jim.init");
 jim.init.run = function () {
     "use strict";
-    var currentMandelbrotSet = jim.mandelbrotImage.create(events);
-    var canvasDiv = document.getElementById("mandelbrotCanvas"),
-        pixelInfo = document.getElementById("pixelInfoCanvas"),
-        colourPickerCanvas = document.getElementById("colourPickerCanvas"),
-        colourGradientCanvas = document.getElementById("colourGradientCanvas"),
-        addButton = document.getElementById("addButton"),
-        removeButton = document.getElementById("removeButton"),
-        bookmarkButton = document.getElementById("bookmarkButton"),
-        colourGradientui = jim.colour.gradientui.create(colourGradientCanvas, addButton, removeButton, currentMandelbrotSet.palette(), events),
-        colourPicker = jim.colour.colourPicker.create(colourPickerCanvas, colourGradientui),
-
-        lui = jim.mandelbrot.ui.create(
-            currentMandelbrotSet,
-            canvasDiv,
-            currentMandelbrotSet.canvas().width,
-            currentMandelbrotSet.canvas().height,
-            pixelInfo),
-        uiCanvas = document.createElement('canvas'),
-        maxIteration = document.getElementById("maxIteration"),
-        percEscaped = document.getElementById("totalHistogramPerc"),
-        round = jim.common.round,
-        lastEscapedOn = document.getElementById("lastPointEscapedAt"),
-        smallExport = document.getElementById("smallExport"),
-        mediumExport = document.getElementById("mediumExport"),
-        largeExport = document.getElementById("largeExport"),
-        veryLargeExport = document.getElementById("veryLargeExport"),
-        exportSizeSelect = document.getElementById("exportSizeSelect");
+    var newMainUI = jim.mandelbrot.ui.create;
+    var dom = jim.dom.functions.create();
+    var mandelbrot = jim.mandelbrotImage.create(events);
+    var mandelCanvas = mandelbrot.canvas();
+    var canvasDiv = dom.element("mandelbrotCanvas");
+    var pixelInfo = dom.element("pixelInfoCanvas");
+    var colourPickerCanvas = dom.element("colourPickerCanvas");
+    var colourGradientCanvas = dom.element("colourGradientCanvas");
+    var addButton = dom.element("addButton");
+    var removeButton = dom.element("removeButton");
+    var bookmarkButton = dom.element("bookmarkButton");
+    var colourGradientui = jim.colour.gradientui.create(colourGradientCanvas, addButton, removeButton, mandelbrot.palette(), events);
+    var colourPicker = jim.colour.colourPicker.create(colourPickerCanvas, colourGradientui);
+    var mainDisplayUI = newMainUI(mandelbrot, canvasDiv, mandelCanvas.width, mandelCanvas.height, pixelInfo);
+    var uiCanvas = document.createElement('canvas');
+    var maxIteration = dom.element("maxIteration");
+    var percEscaped = dom.element("totalHistogramPerc");
+    var round = jim.common.round;
+    var lastEscapedOn = dom.element("lastPointEscapedAt");
+    var smallExport = dom.element("smallExport");
+    var mediumExport = dom.element("mediumExport");
+    var largeExport = dom.element("largeExport");
+    var veryLargeExport = dom.element("veryLargeExport");
+    var exportSizeSelect = dom.element("exportSizeSelect");
 
 
     var deadRegionsCanvas = document.createElement('canvas');
 
     var exportSizeDropdown = jim.mandelbrot.exportDropdown.create(exportSizeSelect, [smallExport, mediumExport, largeExport, veryLargeExport]);
-
-    jim.mandelbrot.ui.elements.create(exportSizeDropdown, currentMandelbrotSet, deadRegionsCanvas, events);
-
+    jim.mandelbrot.ui.elements.create(exportSizeDropdown, mandelbrot, deadRegionsCanvas, events);
+    var bookmarker = jim.mandelbrot.bookmark.create(bookmarkButton, mandelbrot, colourGradientui);
+    bookmarker.changeLocation();
     var render = function () {
-            currentMandelbrotSet.draw();
-            var iter = currentMandelbrotSet.state().maximumIteration();
+            mandelbrot.draw();
+            var iter = mandelbrot.state().maximumIteration();
             maxIteration.innerText = iter;
             var total = 700 * 400;
-            var escapedThisIteration = currentMandelbrotSet.histogram().get(iter);
+            var escapedThisIteration = mandelbrot.histogram().get(iter);
             var escaped = total - escapedThisIteration;
 
             if (escapedThisIteration > 0) {
                 percEscaped.innerText = round((100 - ((escaped / total) * 100)), 2);
                 lastEscapedOn.innerText = iter;
             }
-            lui.draw(uiCanvas);
+            mainDisplayUI.draw(uiCanvas);
             colourGradientui.draw();
         };
 
-    var bookmarker = jim.mandelbrot.bookmark.create(bookmarkButton, currentMandelbrotSet, colourGradientui);
-    bookmarker.changeLocation();
+
 
     pixelInfo.width = 162;
     pixelInfo.height = 162;
-    ui = lui;
+    ui = mainDisplayUI;
     uiCanvas.oncontextmenu = function (e) {
         e.preventDefault();
     };
     deadRegionsCanvas.oncontextmenu = function (e) {
         e.preventDefault();
     };
-    deadRegionsCanvas.width = currentMandelbrotSet.canvas().width;
-    deadRegionsCanvas.height = currentMandelbrotSet.canvas().height;
+    deadRegionsCanvas.width = mandelCanvas.width;
+    deadRegionsCanvas.height = mandelCanvas.height;
     deadRegionsCanvas.className = "canvas";
 
-    uiCanvas.width = currentMandelbrotSet.canvas().width;
-    uiCanvas.height = currentMandelbrotSet.canvas().height;
+    uiCanvas.width = mandelCanvas.width;
+    uiCanvas.height = mandelCanvas.height;
     uiCanvas.className = "canvas";
-    canvasDiv.appendChild(currentMandelbrotSet.canvas());
+    canvasDiv.appendChild(mandelbrot.canvas());
     canvasDiv.appendChild(uiCanvas);
     canvasDiv.appendChild(deadRegionsCanvas);
     colourPicker.draw();
