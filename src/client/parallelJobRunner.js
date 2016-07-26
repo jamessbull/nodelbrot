@@ -27,7 +27,16 @@ jim.parallel.jobRunner.create = function (_events, _worker) {
         });
         workers = [];
     };
+    var data;
     var progressReported = 0;
+
+    var initDataArray = function (result) {
+        if (data === undefined) {
+            var length = result.imgData.length * jobsToRun.length;
+            data = new Uint8ClampedArray(length);
+        }
+    };
+
     var onJobComplete = function (msg) {
         var result = msg.data.result;
         var type = msg.data.type;
@@ -38,13 +47,34 @@ jim.parallel.jobRunner.create = function (_events, _worker) {
         }
 
         if (result && (result.chunkComplete || result.imageDone)) {
+
             var job = jobsToRun[msg.data.id];
+
+            if (result.imageDone) {
+                var jobIndex = parseInt(job.id);
+                initDataArray(result);
+                var resultLength = result.imgData.length;
+                var startIndex = jobIndex * resultLength;
+                for (var i = 0; i < resultLength; i += 1) {
+                    data[ startIndex +i ] = result.imgData[i];
+                }
+                console.log("Stitched job " + job.id);
+            } else {
+                job.result = msg.data.result;
+            }
+
             job.status = "Complete";
-            job.result = msg.data.result;
+            console.log("job done " + msg.data.id);
             jobsDone +=1;
             if (jobsDone >= jobsToRun.length) {
                 console.log("Job Runner finished all jobs " + jobCount );
-                _events.fire(completeEvent, jobsToRun);
+                if(result.imageDone) {
+                    events.fire("imageComplete", {imgData: data});
+                    data = [];
+                } else {
+                    _events.fire(completeEvent, jobsToRun);
+                }
+                console.log("firing " + completeEvent);
                 dispose();
 
             }

@@ -81,22 +81,25 @@ jim.parallelImageGenerator.create = function () {
     var eventToFire = "imageComplete";
     var data;
     var runner = newRunner(events, "/js/mandelbrotImageCalculatingWorker.js");
-    events.listenTo("jim.parallelimagegenerator.imageDone", function (jobs) {
-        var tmpData = [];
-        jobs.forEach(function (job) {
-            var arr = job.result.imgData;
-            for (var i = 0; i < arr.length; i += 1) {
-                tmpData.push(arr[i]);
-            }
-        });
-        var i = 0;
-        var length = data.length;
-
-        for (i = 0; i <length; i +=1) {
-            data[i] = tmpData[i];
-        }
-        events.fire(eventToFire, {imgData: data});
-    });
+//    events.listenTo("jim.parallelimagegenerator.imageDone", function (jobs) {
+//        console.log("About to stitch job results together");
+//        var tmpData = [];
+//        jobs.forEach(function (job) {
+//            var arr = job.result.imgData;
+//            for (var i = 0; i < arr.length; i += 1) {
+//                tmpData.push(arr[i]);
+//            }
+//            console.log("Stitched job " + job.id);
+//        });
+//        console.log("Stitched all jobs");
+//        var i = 0;
+//        var length = data.length;
+//
+//        for (i = 0; i <length; i +=1) {
+//            data[i] = tmpData[i];
+//        }
+//        events.fire(eventToFire, {imgData: data});
+//    });
     return {
         run: function (_extents, _iter, _width, _height,  _histogramData, _histogramTotal, _nodeList, _deadRegions,  _eventToFire, _progressEvent, _numberOfParts) {
             console.log("Beginning image generation");

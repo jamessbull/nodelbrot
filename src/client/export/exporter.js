@@ -17,14 +17,20 @@ jim.mandelbrot.image.exporter.create = function (_exportDimensions, _mandelbrotS
     var imageReporter = jim.common.imageExportProgressReporter.create(events, "imageExportProgress", imageProgress);
 
     events.listenTo("imageComplete", function (e) {
+        console.log("Image workers all ready about to add all data to export canvas");
         _dom.deselectButton(exportButton);
         _dom.selectButton(downloadButton);
+        console.log("performing event complete action");
         var exportCanvas = document.createElement('canvas');
         exportCanvas.width = exportDimensions.width;
         exportCanvas.height = exportDimensions.height;
         var context = exportCanvas.getContext('2d');
         var outImage = context.createImageData(exportCanvas.width, exportCanvas.height);
+        console.log("About to set image data");
+
         outImage.data.set(e.imgData);
+        console.log("Image data set");
+
         context.putImageData(outImage, 0, 0);
         downloadButton.href = exportCanvas.toDataURL("image/png");
         exporting = false;
@@ -36,7 +42,7 @@ jim.mandelbrot.image.exporter.create = function (_exportDimensions, _mandelbrotS
         var ignoreDeadPixelsRadius = document.getElementById("ignoreDeadPixelsRadius");
         imageGenerator.run(_mandelbrotSet.state().getExtents(),
             exportDepth.value,  exportDimensions.width, exportDimensions.height,
-            e.histogramData, e.histogramTotal,
+            e.histogramData,  e.histogramTotal,
             _mandelbrotSet.palette().toNodeList(), _mandelbrotSet.state().deadRegions(ignoreDeadPixelsRadius.value),
             "imageComplete", "imageExportProgress", 100);
     });
