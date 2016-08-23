@@ -126,51 +126,14 @@ jim.init.run = function () {
 };
 
 // What do I want to do to go live?
-
-// Ideally - Functionality
-
-// very slow to move. Can I calculate a really quick full histogram on zooms?
-// using same technique as for full export? No need for histogram update at all then may make stuff generally faster.
-// can use an effect where I zoom in / out to mask it?
-
-
-// Then investigate why it crashes chrome at 250k iterations. Memory issue with a webWorker?
-// Does it crash at 250k on small images
-
-// likely related to the histogram. A large number of iterations means a large sparsely populated array
-// can I stop generating the histogram when the rate of escape slows sufficiently?
-
-
-// Memory usage is governed by a number of factors
-//  1 The number of iterations. By virtue of the histogram required to store the colour data
-//  2 The size of the export
-//  3 The efficiency of the algorithm used to stitch the results together
-// I can limit the memory usage for export by limiting export options - Done
-//  Job two make sure the stitching does not make unnecessary copies of the results data done
-// The results from the worker are uint8 clamped arrays.
-// As the results come in just copy them straight to the array which will be set on the image
-
-// Can I limit the histogram size?
-// I could calculate the histogram until the slope of the line reaches a threshold value
-// if there is no value then I could extrapolate forwards using the last data point and the threshold slope
-// I could also look at the rate of change of slope?
-
-// add info icons with hover and helpful text
-// Need to give sizes for exports and pick sensible defaults
-// go through and remove any unused code / methods
-
-//Nice to have
-// // Time estimate for export
-//zoom animates
-// scrolling messages
-// play with canvas distortion effects and css transforms
-// maybe the display can be tiled and each tile flips on zoom
-// Try webworkers to drive main display
-// Try multiple canvases
-
-//Go live tasks
+// Fix move
+// Do SIMD
+// Show export progress better dim lines as they finish
+// auto start stop when exporting / not exporting
+// make main display multicore and use webworker for extra speed
+// progress messages during export
+// Help icons with hover
+// animated zoom
+// make size switchable
 // minify js
-// make sure it works on firefox safari and at least one version of ie
-// make it work on ipad too?
-// make it estimate best level of parallelism? Optional
-
+// remove all dead code
