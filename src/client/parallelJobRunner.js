@@ -58,13 +58,13 @@ jim.parallel.jobRunner.create = function (_events, _worker) {
                 for (var i = 0; i < resultLength; i += 1) {
                     data[ startIndex +i ] = result.imgData[i];
                 }
-                console.log("Stitched job " + job.id);
+                //console.log("Stitched job " + job.id);
             } else {
                 job.result = msg.data.result;
             }
 
             job.status = "Complete";
-            console.log("job done " + msg.data.id);
+            //console.log("job done " + msg.data.id);
             jobsDone +=1;
             if (jobsDone >= jobsToRun.length) {
                 console.log("Job Runner finished all jobs " + jobCount );

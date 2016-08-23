@@ -18,7 +18,7 @@ onmessage = function(e) {
     "use strict";
     var setProcessor = newSetProcessor(e.data);
     var id = e.data.id;
-    console.log("Starting " + id);
+    //console.log("Starting " + id);
 
     var palette = jim.palette.create();
     palette.fromNodeList(e.data.paletteNodes);
@@ -57,7 +57,7 @@ onmessage = function(e) {
 
     setProcessor.setProcessPixelResult(processPixelResult);
     setProcessor.processSetForImage(e.data.deadRegions);
-    console.log("Finished " + id);
+    //console.log("Finished " + id);
 
     postMessage(response(setProcessor.width * setProcessor.height, true, imgData));
 };

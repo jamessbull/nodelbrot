@@ -50,7 +50,7 @@ describe("the parallel image generator", function () {
             totalPixelsReported += numberDone;
         });
 
-        events.listenTo("imageDone", function (result) {
+        events.listenTo("imageComplete", function (result) {
             expect(totalPixelsReported).toBe(27);
             done();
         });

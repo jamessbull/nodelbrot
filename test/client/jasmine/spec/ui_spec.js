@@ -31,7 +31,7 @@ describe("The user interface action", function () {
                 }};
             }
         },
-        ui = jim.mandelbrot.ui.create(mset, canvas, 640, 480, pixelInfo, notifier),
+        ui = jim.mandelbrot.ui.create(mset, canvas, 640, 480, pixelInfo),
         action = ui.actions[0];
         action.canvas = document.createElement('canvas');
 
