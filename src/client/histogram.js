@@ -66,39 +66,64 @@ jim.histogram.create = function () {
         rebuild: rebuild,
         data: function () {
             return data;
+        },
+        id : function () {
+            //console.log("riginal an ting");
         }
     };
 };
 
 namespace("jim.twoPhaseHistogram");
-jim.twoPhaseHistogram.create = function (_size) {
+    jim.twoPhaseHistogram.create = function (_size) {
     "use strict";
     var data = [], total = 0;
     for (var i = 0; i < _size; i +=1) {
         data[i] = 0;
     }
+
     var add = function (value) {
         data[value] +=1;
         total += 1;
     };
+
     var process = function () {
-        var total = 0;
-        for (var i = 0 ; i < _size; i +=1) {
-            total += data[i];
-            data[i] = total;
+        var localTotal = 0;
+        for (var i = 0 ; i < data.length; i +=1) {
+            if(!data[i]) {
+                data[i] = 0;
+            }
+            localTotal += data[i];
+            data[i] = localTotal;
         }
+        total = data[data.length -1];
     };
+
     var percentEscapedBy = function (i) {
         var no = data[i];
-        return no === 0 ? 0 : no / total;
+        return no === undefined ? 1 : no === 0 ? 0 : no / total;
     };
+
+    var get = function (n) {
+        return data[n];
+    };
+
     return {
         add: add,
         percentEscapedBy: percentEscapedBy,
         process: process,
+        get: get,
         setData: function (_data, _total) {
             data = _data;
             total = _total;
+        },
+        id: function () {
+            //console.log("Two phase histo. Length is " + data.length );
+        },
+        total: function () {
+            return total;
+        },
+        data: function () {
+            return data;
         }
     };
 };

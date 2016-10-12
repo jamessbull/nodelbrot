@@ -1,5 +1,6 @@
 <title>Hello Me</title>
 <script src="/js/common.js"></script>
+<script src="/js/mandelbrotPoint.js"></script>
 <script src="/js/events.js"></script>
 <script src="/js/parallelJobRunner.js"></script>
 <script src="/js/multiworkerHistogramGenerator.js"></script>

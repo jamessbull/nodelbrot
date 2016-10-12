@@ -1,7 +1,30 @@
-namespace("jim.parallelHistogramGenerator.message");
-jim.parallelHistogramGenerator.message.create = function (_iter, _width, _height, _extents) {
+namespace("jim.mandelbrot.worker.state");
+jim.mandelbrot.worker.state.create = function (_height, _width) {
     "use strict";
+    var state = [];
+    for (var i1 = 0 ; i1 <= (_height * _width); i1+=1 ) {
+        var s = {
+            x:0,
+            y:0,
+            iterations:0,
+            escapedAt:0
+        };
+        state.push(s);
+    }
+    return state;
+};
+namespace("jim.parallelHistogramGenerator.message");
+jim.parallelHistogramGenerator.message.create = function (_iter, _width, _height, _extents, _state, _start) {
+    "use strict";
+    var state = _state;
+    var start = _start;
+
+    if(!start) {
+        start = 0;
+    }
     return {
+        state: state,
+        start: start,
         maxIterations: _iter,
         exportWidth: _width,
         exportHeight: _height,
@@ -23,17 +46,22 @@ jim.parallelHistogramGenerator.create = function () {
     events.listenTo("jim.histogramGenerator.parallelJob", function (jobs) {
         var completeHistogramData = [];
         var completeHistogramTotal = 0;
+        var maxIter = jobs[0].maxIterations;
         jobs.forEach(function (job) {
             completeHistogramTotal += job.result.histogramTotal;
-            job.result.histogramData.forEach(function (datum, index) {
+            var histoDataArray = new Uint32Array(job.result.histogramData);
+            histoDataArray.forEach(function (datum, index) {
                 if(!completeHistogramData[index]) {
                     completeHistogramData[index] = 0;
                 }
                 completeHistogramData[index] = completeHistogramData[index] + datum;
             });
         });
-        console.log("Histogram generation complete");
-        events.fire(eventToFire, {histogramData: completeHistogramData, histogramTotal: completeHistogramTotal});
+        var histo = jim.twoPhaseHistogram.create(0);
+        histo.setData(completeHistogramData, 0);
+        histo.process();
+        //console.log("Histogram generation complete");
+        events.fire(eventToFire, {histogramData: histo.data(), histogramTotal: histo.total()});
     });
 
     return {
@@ -48,7 +76,7 @@ jim.parallelHistogramGenerator.create = function () {
                 var offset = _extents.height()/(_height - 1);
                 var startY = _extents.topLeft().y + (partHeight * i * offset);
                 var r = jim.rectangle.create(_extents.topLeft().x, startY, _extents.width(), (partHeight-1) * offset);
-                jobs[i] = newJob(_iter, _width, partHeight, r);
+                jobs[i] = newJob(_iter, _width, partHeight, r, undefined, 0);
             }
             runner.run(jobs, "jim.histogramGenerator.parallelJob", _progressEvent);
         }
@@ -58,7 +86,10 @@ jim.parallelHistogramGenerator.create = function () {
 namespace("jim.parallelImageGenerator.message");
 jim.parallelImageGenerator.message.create = function (_iter, _width, _height, _extents, _histogramData, _histogramTotal, _nodeList, _deadRegions) {
     "use strict";
+    var state;
+
     return {
+        state: state,
         deadRegions: _deadRegions,
         histogramData: _histogramData,
         histogramSize: _histogramData.length,

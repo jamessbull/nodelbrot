@@ -38,8 +38,9 @@ jim.mandelbrot.image.exporter.create = function (_exportDimensions, _mandelbrotS
     });
 
     events.listenTo("histogramExported", function (e) {
-        console.log("Histogram exported");
+        //console.log("Histogram exported");
         var ignoreDeadPixelsRadius = document.getElementById("ignoreDeadPixelsRadius");
+        //console.log("export depth is " + exportDepth.value)
         imageGenerator.run(_mandelbrotSet.state().getExtents(),
             exportDepth.value,  exportDimensions.width, exportDimensions.height,
             e.histogramData,  e.histogramTotal,
@@ -51,15 +52,17 @@ jim.mandelbrot.image.exporter.create = function (_exportDimensions, _mandelbrotS
     exportButton.onclick = function () {
         exportDimensions = _exportDimensions.dimensions();
         _dom.selectButton(exportButton);
-        imageReporter.reportOn( exportDimensions.width, exportDimensions.height);
-        histogramReporter.reportOn( exportDimensions.width / 10, exportDimensions.height / 10);
+        var roundedWidth = Math.floor(exportDimensions.width / 10);
+        imageReporter.reportOn(roundedWidth, exportDimensions.height);
+        var roundedHeight = Math.floor(exportDimensions.height / 10);
+        histogramReporter.reportOn( roundedWidth, roundedHeight);
         timeReporter.start();
         console.log('Building histogram');
         if (exporting === true) {
             console.log("Can't export while export already in progress");
             return false ;
         }
-        _histogramGenerator.run(_mandelbrotSet.state().getExtents(), exportDepth.value, exportDimensions.width / 10, exportDimensions.height / 10, "histogramExported", "histogramExportProgress",10);
+        _histogramGenerator.run(_mandelbrotSet.state().getExtents(), exportDepth.value, roundedWidth, roundedHeight, "histogramExported", "histogramExportProgress",10);
         exporting = true;
     };
 };

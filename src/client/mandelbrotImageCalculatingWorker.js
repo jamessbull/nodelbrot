@@ -1,6 +1,7 @@
 var window = self;
 
 importScripts('/js/common.js',
+    '/js/mandelbrotPoint.js',
     '/js/stopWatch.js',
     '/js/tinycolor.js',
     '/js/palette.js',
@@ -13,20 +14,21 @@ importScripts('/js/common.js',
     '/js/setProcessor.js');
 
 var newSetProcessor = jim.worker.msetProcessor.create;
-
+var noOfMessagesProcessed = 0;
 onmessage = function(e) {
     "use strict";
-    var setProcessor = newSetProcessor(e.data);
+    noOfMessagesProcessed +=1;
     var id = e.data.id;
+    var setProcessor = newSetProcessor(e.data, id+" image set processor " + noOfMessagesProcessed);
     //console.log("Starting " + id);
 
     var palette = jim.palette.create();
     palette.fromNodeList(e.data.paletteNodes);
-    var colour = jim.colourCalculator.create(palette);
+    var colour = jim.colourCalculator.create();
 
     var histogram    = jim.twoPhaseHistogram.create(e.data.histogramSize);
     histogram.setData(e.data.histogramData, e.data.histogramTotal);
-    histogram.process();
+    //histogram.process();
 
     var imgData = new Uint8ClampedArray(setProcessor.height * setProcessor.width * 4);
     var currentPixelPos = 0;
@@ -56,8 +58,10 @@ onmessage = function(e) {
     };
 
     setProcessor.setProcessPixelResult(processPixelResult);
-    setProcessor.processSetForImage(e.data.deadRegions);
+    console.log("About to process set for image calculator " + id);
+
+    var result = setProcessor.processSetForImage(e.data.deadRegions, e.data.state, e.data.maxIterations, 0, colour, histogram, palette);
     //console.log("Finished " + id);
 
-    postMessage(response(setProcessor.width * setProcessor.height, true, imgData));
+    postMessage(response(setProcessor.width * setProcessor.height, true, result.imgData));
 };

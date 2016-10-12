@@ -67,14 +67,12 @@ jim.parallel.jobRunner.create = function (_events, _worker) {
             //console.log("job done " + msg.data.id);
             jobsDone +=1;
             if (jobsDone >= jobsToRun.length) {
-                console.log("Job Runner finished all jobs " + jobCount );
                 if(result.imageDone) {
                     events.fire("imageComplete", {imgData: data});
                     data = [];
                 } else {
                     _events.fire(completeEvent, jobsToRun);
                 }
-                console.log("firing " + completeEvent);
                 dispose();
 
             }

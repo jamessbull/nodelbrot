@@ -1,5 +1,5 @@
 jim.screen = {};
-jim.screen.create = function (args, _stopwatch) {
+jim.screen.create = function (args, _stopwatch, _events) {
     "use strict";
     var n = 0,
         segmentsLen = Math.sqrt(args.segments.length),
@@ -27,12 +27,11 @@ jim.screen.create = function (args, _stopwatch) {
                 n += 1;
                 segmentCount +=1;
             }
-            //console.log("Segments drawn this frame is " + segmentCount);
         },
         canvas: wholeScreen.canvas,
         context : context,
         stop: function () {
-            console.log('About to stop');
+            _events.fire("stopConcHistogram");
             go = false;
         },
         go: function () {

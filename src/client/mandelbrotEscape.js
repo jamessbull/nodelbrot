@@ -58,9 +58,6 @@ jim.mandelbrot.basepoint = (function () {
                 if (!escaped && (squaresum) > 4) {
                     escaped = true;
                     escapedAt = iterations;
-                    if (histogram) {
-                        histogram.add(escapedAt);
-                    }
                 }
             }
 
@@ -213,6 +210,67 @@ jim.colourCalculator.create = function () {
     };
 };
 
+namespace("jim.mandelbrot.webworkerHistogram");
+jim.mandelbrot.webworkerHistogram.create = function (_events) {
+    "use strict";
+    var newWorker = function () {
+        return new Worker("/js/histogramCalculatingWorker.js");
+    };
+    var newEmptyState = jim.mandelbrot.worker.state.create;
+    var newJob = jim.parallelHistogramGenerator.message.create;
+    var worker;
+
+    var extents = {};
+    var maxIterations = 100000;
+    var fullHistoData;
+    var fullHistoTotal = 0;
+    var noOfIterations = 1000;
+    var currentPosition = 0;
+    var width = 70;
+    var height = 40;
+
+    var updateHistoData = function (_data, _start) {
+        var hist = jim.twoPhaseHistogram.create(0);
+        for (var i = 1 ; i <= noOfIterations ; i+=1) {
+            fullHistoData[_start + i] = (fullHistoTotal += _data[i]);
+        }
+        hist.setData(fullHistoData, fullHistoTotal);
+        return hist;
+    };
+
+    var myOnMessage = function (e) {
+        var updatedHistogram = updateHistoData(new Uint32Array(e.data.result.histogramData), e.data.result.histogramStartIteration);
+        _events.fire("histogramUpdateJustIn", updatedHistogram);
+
+        if((currentPosition += noOfIterations) < maxIterations) {
+            worker.postMessage(newJob(noOfIterations, width, height, extents, e.data.result.setState, currentPosition));
+        }
+    };
+
+    var start = function () {
+        worker = newWorker();
+        worker.onmessage = myOnMessage;
+        fullHistoData = new Uint32Array(new ArrayBuffer(4 * maxIterations));
+        fullHistoTotal = 0;
+        currentPosition = 0;
+        worker.postMessage(newJob(noOfIterations, width, height, extents, newEmptyState(height, width), 0));
+    };
+
+    var stop = function () {
+        if (worker) worker.terminate();
+    };
+
+    _events.listenTo("stopConcHistogram", function () {
+        stop();
+    });
+
+    _events.listenTo("NewHistoRequired", function (_extents) {
+        extents = _extents;
+        stop();
+        start();
+    });
+};
+
 namespace("jim.mandelbrot.state");
 jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
     "use strict";
@@ -221,7 +279,6 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
         aPoint          = jim.mandelbrot.point.create,
         timer           = jim.stopwatch.create(),
         palette         = jim.palette.create(),
-
         //currentExtents  = aRectangle(-2.5, -1, 3.5, 2),
         currentExtents  = startingExtent,
         previousExtents = [],
@@ -239,13 +296,21 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
 
         grid = newGrid();
 
-    return {
+        _events.fire("NewHistoRequired", currentExtents);
+
+
+        var getHistogram = function() {
+            return histogram;
+        };
+
+    var theState = {
         zoomTo: function (selection) {
             previousExtents.push(currentExtents.copy());
             currentExtents = selection.area().translateFrom(screen).to(currentExtents);
             grid = newGrid();
-            histogram.reset();
+
             maxIterations = 0;
+            _events.fire("NewHistoRequired", currentExtents);
             _events.fire("zoomIn");
         },
         resize: function (sizeX, sizeY) {
@@ -257,14 +322,14 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
                 currentExtents = previousExtents.pop();
             }
             grid = newGrid();
-            histogram.reset();
+            _events.fire("NewHistoRequired", currentExtents);
             maxIterations = 0;
             _events.fire("zoomOut");
         },
         move: function (moveX, moveY) {
             _events.fire("moved");
             var distance = fromScreen(moveX, moveY).distanceTo(currentExtents.topLeft());
-            currentExtents.move(0- distance.x, 0 -distance.y);
+            currentExtents.move(0 - distance.x, 0 - distance.y);
             grid.translate(moveX, moveY);
             //histogram.rebuild(grid);
 
@@ -272,11 +337,15 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
         drawFunc: function (x, y) {
             p = grid.at(x, y);
             if (p.iterations > maxIterations) maxIterations = p.iterations;
-            return p.calculateCurrentColour(chunkSize, histogram, colours, palette);
+            return p.calculateCurrentColour(chunkSize, getHistogram(), colours, palette);
+
             //return test;
         },
         histogram: function () {
-            return histogram;
+            return getHistogram();
+        },
+        setHistogram: function (h) {
+            histogram = h;
         },
         palette: function () {
             return palette;
@@ -290,9 +359,10 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
         setExtents: function (extents) {
             currentExtents = extents;
             grid = newGrid();
-            histogram.reset();
+            getHistogram().reset();
             maxIterations = 0;
             _events.fire("moved");
+            _events.fire("NewHistoRequired", currentExtents);
         },
         maximumIteration: function () {
             return maxIterations;
@@ -320,7 +390,7 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
             var point = grid.at(x,y);
 
             var escaped = point.alreadyEscaped;
-            return escaped ? colours.forPoint(point.x, point.y, point.iterations, histogram, palette):black;
+            return escaped ? colours.forPoint(point.x, point.y, point.iterations, getHistogram(), palette):black;
         },
         at: function (x, y) {
             if (grid.xSize()<=x || grid.ySize()<=y || x<0 || y<0) {
@@ -329,4 +399,8 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
             return grid.at(x, y);
         }
     };
+    _events.listenTo("histogramUpdateJustIn", function (_histogram) {
+        theState.setHistogram(_histogram);
+    });
+    return theState;
 };
