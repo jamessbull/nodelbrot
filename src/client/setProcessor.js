@@ -68,9 +68,8 @@ jim.worker.msetProcessor.create = function (data, id) {
             },
             putPixel: function (p, i, j) {
                 if (p.escapedAt !== 0 && p.escapedAt >= _startIteration && p.escapedAt <= (_startIteration + _noOfIterations)) {
-                    var currentPosition = p.escapedAt - _startIteration;
-                    this.histogramData[currentPosition] =
-                        this.histogramData[currentPosition] ? (this.histogramData[currentPosition] + 1) : 1;
+                    var pos = p.escapedAt - _startIteration;
+                    this.histogramData[pos] = this.histogramData[pos] + 1 || 1;
                 }
             }
         };
