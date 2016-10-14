@@ -83,10 +83,6 @@ jim.worker.msetProcessor.create = function (data, id) {
             width: width,
             state: _state,
             getPixel : function (i,j) {
-                var p = this.state[(j * this.width) + i];
-                if(p === undefined) {
-                    console.log("undefined on get for histo tracking");
-                }
                 return this.state[(j * this.width) + i];
             },
             putPixel: function (p, i, j) {
