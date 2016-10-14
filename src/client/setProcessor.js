@@ -60,42 +60,52 @@ jim.worker.msetProcessor.create = function (data, id) {
         return _pixelStateTracker;
     };
 
-    var processSetForHistogram = function (_state, _noOfIterations, _startIteration) {
-        var pixelStateTracker = {
-            histogramData: new Uint32Array(new ArrayBuffer(4 * (_noOfIterations + 1))),
+    var newHistogramDataArray = function (_noOfIterations) {
+        return new Uint32Array(new ArrayBuffer(4 * (_noOfIterations + 1)));
+    };
+
+    var pixelResultHandler = function (p, i, j, _startIteration, _noOfIterations, _currentNoOfEscapees) {
+        return (p.escapedAt !== 0 && p.escapedAt >= _startIteration && p.escapedAt <= (_startIteration + _noOfIterations)) ?
+            (_currentNoOfEscapees + 1 || 1) : 0;
+    };
+    var aHistogramPixelTracker = function (_noOfIterations, _startIteration, _pixelResultHandler) {
+        return {
+            histogramData: newHistogramDataArray(_noOfIterations),
             getPixel : function (i,j) {
                 return pixelResult(0,0,0,0);
             },
             putPixel: function (p, i, j) {
-                if (p.escapedAt !== 0 && p.escapedAt >= _startIteration && p.escapedAt <= (_startIteration + _noOfIterations)) {
-                    var pos = p.escapedAt - _startIteration;
-                    this.histogramData[pos] = this.histogramData[pos] + 1 || 1;
-                }
+                var escapeOffset = (p.escapedAt - _startIteration);
+                this.histogramData[escapeOffset] = _pixelResultHandler(p, i, j, _startIteration, _noOfIterations, this.histogramData[escapeOffset]);
             }
         };
-        processSet(undefined, _noOfIterations, _state, _startIteration, 4, pixelStateTracker);
-        return pixelStateTracker;
     };
-
-    var processSetForHistogramTrackingState = function (_state, _noOfIterations, _startIteration) {
-        var pixelStateTracker = {
-            histogramData:  new Uint32Array(new ArrayBuffer(4 * (_noOfIterations + 1))),
-            width: width,
+    var aHistogramPixelStateTracker = function (_state, _noOfIterations, _startIteration, _pixelResultHandler) {
+        return {
+            histogramData:  newHistogramDataArray(_noOfIterations),
             state: _state,
-            getPixel : function (i,j) {
+            width: width,
+            getPixel: function (i, j) {
                 return this.state[(j * this.width) + i];
             },
             putPixel: function (p, i, j) {
                 this.state[(j * this.width) + i] = p;
-                if (p.escapedAt !== 0 && p.escapedAt >= _startIteration && p.escapedAt <= (_startIteration + _noOfIterations)) {
-                    var currentPosition = p.escapedAt - _startIteration;
-                    this.histogramData[currentPosition] =
-                        this.histogramData[currentPosition] ? (this.histogramData[currentPosition] + 1) : 1;
-                }
+                var escapeOffset = p.escapedAt - _startIteration;
+                this.histogramData[escapeOffset] = _pixelResultHandler(p, i, j, _startIteration, _noOfIterations, this.histogramData[escapeOffset]);
             }
         };
-        processSet(undefined, _noOfIterations, _state, _startIteration, 4, pixelStateTracker);
-        return pixelStateTracker;
+    };
+
+    var processSetForHistogram = function (_state, _noOfIterations, _startIteration) {
+        var tracker = aHistogramPixelTracker(_noOfIterations, _startIteration, pixelResultHandler);
+        processSet(undefined, _noOfIterations, _state, _startIteration, 4, tracker);
+        return tracker;
+    };
+
+    var processSetForHistogramTrackingState = function (_state, _noOfIterations, _startIteration) {
+        var tracker = aHistogramPixelStateTracker(_state, _noOfIterations, _startIteration, pixelResultHandler);
+        processSet(undefined, _noOfIterations, _state, _startIteration, 4, tracker);
+        return tracker;
     };
 
     var processSetForImage = function (_deadRegionInfo, _state, _noOfIterations, _startIteration, _colour, _histogram, _palette) {
