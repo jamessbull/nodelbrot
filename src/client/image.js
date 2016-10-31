@@ -66,19 +66,19 @@ jim.image.create = function (size, sizeY, f) {
             context.putImageData(output, 0, 0);
         },
         drawXYOffset: function (xOff, yOff) {
-            var col, x, y, i, mandX, mandY;
-            for (i = 0; i < size * sizeY; i += 1) {
-                x = i % size;
-                y = Math.floor(i / size);
-                mandX = x + xOff;
-                mandY = y + yOff;
-                col = f(mandX, mandY);
-                output.data[i * 4]     = col.r;
-                output.data[i * 4 + 1] = col.g;
-                output.data[i * 4 + 2] = col.b;
-                output.data[i * 4 + 3] = col.a;
-            }
-            context.putImageData(output, 0, 0);
+//            var col, x, y, i, mandX, mandY;
+//            for (i = 0; i < size * sizeY; i += 1) {
+//                x = i % size;
+//                y = Math.floor(i / size);
+//                mandX = x + xOff;
+//                mandY = y + yOff;
+//                col = f(mandX, mandY);
+//                output.data[i * 4]     = col.r;
+//                output.data[i * 4 + 1] = col.g;
+//                output.data[i * 4 + 2] = col.b;
+//                output.data[i * 4 + 3] = col.a;
+//            }
+//            context.putImageData(output, 0, 0);
         },
         drawByIndex: function (f) {
             var col, i;

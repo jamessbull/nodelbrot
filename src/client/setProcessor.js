@@ -54,7 +54,41 @@ jim.worker.msetProcessor.create = function (data, id) {
                     r = pixelState;
                 }
                 _pixelStateTracker.putPixel(r, i, j);
-                processPixelResult(i, j, r.x, r.y, r.iterations, r.escapedAt);
+                //processPixelResult(i, j, r.x, r.y, r.iterations, r.escapedAt);
+            }
+        }
+        return _pixelStateTracker;
+    };
+
+    var processSet2 = function (_noOfIterations,  _startIteration, _escapeTest, _deadRegionInfo, _pixelStateTracker, _width, _height) {
+
+        var mx = 0;
+        var my = 0;
+        var translator   = jim.coord.translator2.create();
+
+        var subsampleMultiplier = _width/700;
+
+        var pointNotInDeadRegion = function (i, j, _deadRegionInfo) {
+            return _deadRegionInfo ? !_deadRegionInfo[((floor(j/subsampleMultiplier) * 700) + floor(i/subsampleMultiplier))] : true;
+        };
+
+        var point = jim.newMandelbrotPoint.create();
+        for (var j = 0 ; j < _height; j +=1) {
+            for (var i = 0 ; i < _width; i += 1) {
+                mx = translator.translateX(0, _width, mandelbrotBounds.topLeft().x, mandelbrotBounds.width(), i);
+                my = translator.translateY(0, _height, mandelbrotBounds.topLeft().y, mandelbrotBounds.height(), j);
+                var r;
+                var pixelState = _pixelStateTracker.getPixel(i,j);
+                if (pointNotInDeadRegion(i, j, _deadRegionInfo) && pixelState.imageEscapedAt === 0) {
+                    //
+                    r = point.calculate(mx, my, _noOfIterations, _escapeTest, pixelState.x, pixelState.y, _startIteration);
+                } else {
+                    r = pixelState;
+                }
+                if(pixelState.histogramEscapedAt !== 0) {
+                    r.histogramEscapedAt = pixelState.histogramEscapedAt;
+                }
+                _pixelStateTracker.putPixel(r, i, j);
             }
         }
         return _pixelStateTracker;
@@ -135,13 +169,12 @@ jim.worker.msetProcessor.create = function (data, id) {
         var pixelStateTracker = {
             imgData: new Uint8ClampedArray(height * width * 4),
             state: _state,
+            width: width,
             getPixel : function (i,j) {
-                if(p === undefined) {
-                    console.log("undefined on get");
-                }
                 return this.state[(j * this.width) + i];
             },
             putPixel: function (p, i, j) {
+                this.state[(j * this.width) + i] = p;
                 var currentPixelPos = (j * width + i);
                 var currentRGBArrayPos = currentPixelPos * 4;
 
@@ -157,6 +190,51 @@ jim.worker.msetProcessor.create = function (data, id) {
         return pixelStateTracker;
     };
 
+    function updateHistogramData(_p, _histogram, _startIteration, _noOfIterations) {
+        if (_p.histogramEscapedAt !== 0 && _p.histogramEscapedAt >= _startIteration && _p.histogramEscapedAt <= (_startIteration + _noOfIterations)) {
+            _histogram.add(_p.histogramEscapedAt);
+        }
+    }
+
+    function updateImageData(i, j, _p, _imageData, _histogram, _colour, _palette, _width) {
+        var currentPixelPos = (j * _width + i);
+        var currentRGBArrayPos = currentPixelPos * 4;
+
+        var pixelColour = _p.imageEscapedAt !== 0 ? _colour.forPoint(_p.x, _p.y, _p.imageEscapedAt, _histogram, _palette): {r:0, g:0, b:0, a:255};
+        _imageData[currentRGBArrayPos] = pixelColour.r;
+        _imageData[currentRGBArrayPos + 1] = pixelColour.g;
+        _imageData[currentRGBArrayPos + 2] = pixelColour.b;
+        _imageData[currentRGBArrayPos + 3] = pixelColour.a;
+    }
+
+    function muteIt(_xState, _yState, _escapeValues, _imageEscapeValues, _histogramData, _histogramTotal, _imageData, _iterations, _currentIteration, _width, _height, _colour, _palette) {
+        var histogram = jim.histogram.create();
+        histogram.setData(_histogramData, _histogramTotal, _currentIteration === 0 ? 0: (_currentIteration -1));
+        var pixelStateTracker = {
+            getPixel: function (i, j) {
+                var index = (j * _width) +i;
+                return {
+                    x: _xState[index],
+                    y: _yState[index],
+                    histogramEscapedAt: _escapeValues[index],
+                    imageEscapedAt: _imageEscapeValues[index]
+                };
+            },
+            putPixel: function (p,i,j) {
+                var index = (j * _width) +i;
+                _xState[index] = p.x;
+                _yState[index] = p.y;
+                _escapeValues[index] = p.histogramEscapedAt;
+                _imageEscapeValues[index] = p.imageEscapedAt;
+                updateHistogramData(p, histogram, _currentIteration, _iterations);
+                updateImageData(i, j, p, _imageData, histogram, _colour, _palette, _width);
+            }
+        };
+        processSet2( _iterations, _currentIteration, 9007199254740991, [], pixelStateTracker, _width, _height);
+        pixelStateTracker.histogramTotal = histogram.total();
+        return pixelStateTracker;
+    }
+
     return {
         setProcessPixelResult: function (_func) {
             processPixelResult = _func;
@@ -167,6 +245,7 @@ jim.worker.msetProcessor.create = function (data, id) {
         processSetForImage: processSetForImage,
         processSetForImageTrackingState: processSetForImageTrackingState,
         processSet: processSetForHistogram,
-        processSetTrackingState: processSetForHistogramTrackingState
+        processSetTrackingState: processSetForHistogramTrackingState,
+        processSetMutatingState: muteIt
     };
 };

@@ -67,6 +67,11 @@ jim.histogram.create = function () {
         data: function () {
             return data;
         },
+        setData: function (_data, _total, _maxVal) {
+            data = _data;
+            total = _total;
+            maxVal = _maxVal;
+        },
         id : function () {
             //console.log("riginal an ting");
         }

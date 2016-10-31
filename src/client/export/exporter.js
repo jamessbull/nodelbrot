@@ -41,10 +41,11 @@ jim.mandelbrot.image.exporter.create = function (_exportDimensions, _mandelbrotS
         //console.log("Histogram exported");
         var ignoreDeadPixelsRadius = document.getElementById("ignoreDeadPixelsRadius");
         //console.log("export depth is " + exportDepth.value)
+        _mandelbrotSet.state().setDeadPixelRadius(ignoreDeadPixelsRadius.value);
         imageGenerator.run(_mandelbrotSet.state().getExtents(),
             exportDepth.value,  exportDimensions.width, exportDimensions.height,
             e.histogramData,  e.histogramTotal,
-            _mandelbrotSet.palette().toNodeList(), _mandelbrotSet.state().deadRegions(ignoreDeadPixelsRadius.value),
+            _mandelbrotSet.palette().toNodeList(), _mandelbrotSet.state().deadRegions(),
             "imageComplete", "imageExportProgress", 100);
     });
 

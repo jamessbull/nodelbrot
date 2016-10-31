@@ -1,180 +1,3 @@
-namespace("jim.mandelbrot.basepoint");
-jim.mandelbrot.basepoint = (function () {
-    "use strict";
-    return {
-        mx: 0,
-        count: 0,
-        tempX: 0,
-        my: 0,
-        x: 0,
-        y: 0,
-        complete: false,
-        alreadyEscaped: false,
-        iterations: 0,
-        escapedAt:0,
-        colour: jim.colour.create(0,0,0,0),
-        squaresSum: function () {
-            return this.x * this.x + this.y * this.y;
-        },
-        calculate: function (histogram) {
-            var x = this.x, y = this.y, tempX;
-            if (this.incomplete()) {
-                tempX = x * x - y * y + this.mx;
-                this.y = 2 * x * y + this.my;
-                this.x = tempX;
-                this.iterations += 1;
-                if (!this.alreadyEscaped && (x * x + y * y) > 4) {
-                    this.alreadyEscaped = true;
-                    this.escapedAt = this.iterations;
-                    if (histogram) {
-                        histogram.add(this.escapedAt);
-                    }
-                }
-            }
-        },
-        calculateCurrentColour: function (times, histogram, colours, palette) {
-            var x, y , tempX, iterations, mx, my, escaped, escapedAt, colour, squaresum,complete;
-            complete   = this.complete;
-            escaped    = this.alreadyEscaped;
-            escapedAt  = this.escapedAt;
-            x          = this.x;
-            y          = this.y;
-            mx         = this.mx;
-            my         = this.my;
-            iterations = this.iterations;
-
-            for (; times > 0; times -= 1) {
-                if (complete) { break; }
-                squaresum = x * x + y * y;
-                if (squaresum > 9007199254740991 || iterations >= 250000) {
-                    complete = true;
-                    break;
-                }
-
-                tempX = (x * x) - (y * y) + mx;
-                y = 2 * x * y + my;
-                x = tempX;
-                iterations += 1;
-                if (!escaped && (squaresum) > 4) {
-                    escaped = true;
-                    escapedAt = iterations;
-                }
-            }
-
-            colour = escaped ? colours.forPoint(x,y, iterations, histogram, palette) : colours.black;
-
-            if (!this.complete) {
-                this.x = x;
-                this.y = y;
-                this.iterations = iterations;
-                this.alreadyEscaped = escaped;
-                this.escapedAt = escapedAt;
-                this.colour = colour;
-                this.complete = complete;
-            }
-            return colour;
-        },
-        incomplete: function () {
-            if (this.complete)
-                return false;
-            if ((this.squaresSum()) < 9007199254740991 && this.iterations < 200000)
-                return true;
-            this.complete = true;
-            return false;
-        },
-        reset: function (coord) {
-            this.mx = coord.x;
-            this.my = coord.y;
-            this.iterations = 0;
-            this.x = 0;
-            this.y = 0;
-            this.complete = false;
-            this.alreadyEscaped = false;
-            this.escapedAt = 0;
-        },
-        reset2: function (x, y) {
-            this.mx = x;
-            this.my = y;
-            this.iterations = 0;
-            this.x = 0;
-            this.y = 0;
-            this.complete = false;
-            this.alreadyEscaped = false;
-            this.escapedAt = 0;
-        }
-    };
-}());
-
-
-namespace("jim.mandelbrot.point");
-jim.mandelbrot.point.create = function (coord) {
-    "use strict";
-    var point = Object.create(jim.mandelbrot.basepoint);
-    point.mx = coord.x;
-    point.my = coord.y;
-    return point;
-};
-
-
-namespace("jim.mandelbrot.pointForDisplay");
-jim.mandelbrot.pointForDisplay.create = function (x, y, _displayWidth, _displayHeight, _extents, _completeCheck) {
-    "use strict";
-    var display = jim.rectangle.create(0,0, _displayWidth - 1, _displayHeight -1);
-    var mandelbrotCoord = display.at(x,y).translateTo(_extents);
-    var mandelbrotPoint = jim.mandelbrot.point.create(mandelbrotCoord);
-    var periodicity = jim.mandelbrot.periodicityChecker.create(15);
-
-    var create =  function (w, h, disp, coord, point, extents, completeCheck, periodicity) {
-        var doneFunc = (function () {
-            if (completeCheck) {
-                return function (p) {return p.complete;};
-            } else {
-                return function (p) {return p.alreadyEscaped;};
-            }
-        }());
-
-        return {
-            calculate: function (histogram) {
-                mandelbrotPoint.calculate(histogram);
-            },
-            done: doneFunc,
-            displayWidth: w,
-            displayHeight: h,
-            display: disp,
-            mandelbrotCoord: coord,
-            mandelbrotPoint: point,
-            iterations:0,
-            bufferSize: 15,
-            timesChecked: 0,
-            inOrbit: false,
-            periodicityCheckingOn: false,
-            extents: extents,
-            periodicity: periodicity,
-            calculateTo: function (x, y, upTo, histogram, mandelbrotCoord, mandelbrotPoint, done) {
-                var timesChecked = 0;
-                var iterations = 0;
-                while (!done(mandelbrotPoint) && iterations < upTo) {
-                    iterations +=1;
-                    mandelbrotPoint.calculate(histogram);
-                }
-            }, calculateToEscape: function (x, y, upTo, histogram) {
-                this.calculateTo(x, y, upTo, histogram, false);
-            },
-            calculateToDone: function (x, y, upTo, histogram) {
-                this.calculateTo(x, y, upTo, histogram, true);
-            },
-            underlyingPoint: function () {
-                return mandelbrotPoint;
-            },
-            periodicityIdentifiedCount: function () {
-                return periodicity.periodicityIdentifiedCount();
-            }
-        };
-    };
-
-    return create(_displayWidth, _displayHeight, display, mandelbrotCoord, mandelbrotPoint, _extents, _completeCheck, periodicity);
-};
-
 namespace("jim.colourCalculator");
 jim.colourCalculator.create = function () {
     "use strict";
@@ -209,77 +32,79 @@ jim.colourCalculator.create = function () {
         black: jim.colour.create(0, 0, 0, 255)
     };
 };
-
-namespace("jim.mandelbrot.webworkerHistogram");
-jim.mandelbrot.webworkerHistogram.create = function (_events) {
+namespace("jim.mandelbrot.webworkerInteractive");
+jim.mandelbrot.webworkerInteractive.start = function (_canvas, _width, _height, _state) {
     "use strict";
-    var newWorker = function () {
-        return new Worker("/js/histogramCalculatingWorker.js");
-    };
-    var newEmptyState = jim.mandelbrot.worker.state.create;
-    var newJob = jim.parallelHistogramGenerator.message.create;
-    var worker;
+    var worker = new Worker("/js/combinedWorker.js");
+    var noOfPixels = _width * _height;
+    function postMessage() {
+        worker.postMessage(message(), [_state.xState.buffer, _state.yState.buffer, _state.escapeValues.buffer, _state.imageEscapeValues.buffer, _state.histoData.buffer, _state.imgData.buffer]);
+    }
 
-    var extents = {};
-    var maxIterations = 100000;
-    var fullHistoData;
-    var fullHistoTotal = 0;
-    var noOfIterations = 1000;
-    var currentPosition = 0;
-    var width = 70;
-    var height = 40;
+    function updateImage() {
+        var context = _canvas.getContext('2d');
+        var imageData = new ImageData(_state.imgData, _width, _height);
+        context.putImageData(imageData, 0, 0);
+    }
 
-    var updateHistoData = function (_data, _start) {
-        var hist = jim.twoPhaseHistogram.create(0);
-        for (var i = 1 ; i <= noOfIterations ; i+=1) {
-            fullHistoData[_start + i] = (fullHistoTotal += _data[i]);
+    function message() {
+        var extents = _state.getExtents();
+        var palette = _state.palette();
+        return {
+            xStateBuffer: _state.xState.buffer,
+            histogramDataBuffer: _state.histoData.buffer,
+            imageDataBuffer:  _state.imgData.buffer,
+            yStateBuffer:  _state.yState.buffer,
+            escapeValuesBuffer:  _state.escapeValues.buffer,
+            imageEscapeValuesBuffer:  _state.imageEscapeValues.buffer,
+            currentIteration:  _state.currentIteration,
+            iterations:  _state.stepSize,
+            width: _width,
+            height: _height,
+            mx: extents.topLeft().x,
+            my: extents.topLeft().y,
+            mw: extents.width(),
+            mh: extents.height(),
+            paletteNodes:palette.toNodeList(),
+            histogramTotal: _state.histogramTotal
+        };
+    }
+
+    worker.onmessage = function (m) {
+        var msg = m.data;
+        if(!_state.reset) {
+            _state.xState = new Float64Array(msg.xStateBuffer);
+            _state.yState = new Float64Array(msg.yStateBuffer);
+            _state.escapeValues = new Uint32Array(msg.escapeValuesBuffer);
+            _state.imgData = new Uint8ClampedArray(msg.imageDataBuffer);
+            _state.histoData = new Uint32Array(msg.histogramDataBuffer);
+            _state.histogramTotal = msg.histogramTotal;
+            _state.imageEscapeValues = new Uint32Array(msg.imageEscapeValuesBuffer);
+            _state.currentIteration +=_state.stepSize;
+        } else {
+            _state.xState = new Float64Array(new ArrayBuffer(noOfPixels * 8));
+            _state.yState = new Float64Array(new ArrayBuffer(noOfPixels * 8));
+            _state.escapeValues = new Uint32Array(new ArrayBuffer(noOfPixels * 4));
+            _state.imageEscapeValues = new Uint32Array(new ArrayBuffer(noOfPixels * 4));
+            _state.histoData = new Uint32Array(250000);
+            _state.imgData = new Uint8ClampedArray(4 * noOfPixels);
+            _state.currentIteration = 0;
+            _state.stepSize = 100;
+            _state.histogramTotal = 0;
+            _state.reset=false;
         }
-        hist.setData(fullHistoData, fullHistoTotal);
-        return hist;
+        updateImage();
+        postMessage();
     };
-
-    var myOnMessage = function (e) {
-        var updatedHistogram = updateHistoData(new Uint32Array(e.data.result.histogramData), e.data.result.histogramStartIteration);
-        _events.fire("histogramUpdateJustIn", updatedHistogram);
-
-        if((currentPosition += noOfIterations) < maxIterations) {
-            worker.postMessage(newJob(noOfIterations, width, height, extents, e.data.result.setState, currentPosition));
-        }
-    };
-
-    var start = function () {
-        worker = newWorker();
-        worker.onmessage = myOnMessage;
-        fullHistoData = new Uint32Array(new ArrayBuffer(4 * maxIterations));
-        fullHistoTotal = 0;
-        currentPosition = 0;
-        worker.postMessage(newJob(noOfIterations, width, height, extents, newEmptyState(height, width), 0));
-    };
-
-    var stop = function () {
-        if (worker) worker.terminate();
-    };
-
-    _events.listenTo("stopConcHistogram", function () {
-        stop();
-    });
-
-    _events.listenTo("NewHistoRequired", function (_extents) {
-        extents = _extents;
-        stop();
-        start();
-    });
+    postMessage();
 };
+
 
 namespace("jim.mandelbrot.state");
 jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
     "use strict";
     var aRectangle      = jim.rectangle.create,
-        aGrid           = jim.common.grid.create,
-        aPoint          = jim.mandelbrot.point.create,
-        timer           = jim.stopwatch.create(),
         palette         = jim.palette.create(),
-        //currentExtents  = aRectangle(-2.5, -1, 3.5, 2),
         currentExtents  = startingExtent,
         previousExtents = [],
         screen          = aRectangle(0, 0, sizeX - 1, sizeY - 1),
@@ -288,56 +113,78 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
         maxIterations   = 0,
         chunkSize      = 100,
         p,
+        deadPixelRadius = 1,
         black = jim.colour.create(0,0,0,255),
-        fromScreen = function (x, y) { return screen.at(x, y).translateTo(currentExtents);},
-        newGrid = function () {
-            return aGrid(sizeX, sizeY, function (x, y) { return aPoint(fromScreen(x, y)); });
-        },
-
-        grid = newGrid();
-
-        _events.fire("NewHistoRequired", currentExtents);
+        fromScreen = function (x, y) { return screen.at(x, y).translateTo(currentExtents);};
 
 
         var getHistogram = function() {
             return histogram;
         };
+    var noOfPixels = sizeX * sizeY;
+    var xState;
+    var yState;
+    var escapeValues;
+    var imageEscapeValues;
+    var histoData;
+    var imgData;
+    var currentIteration;
+    var stepSize;
+    var histogramTotal;
+    var reset;
+
+    var resetState = function () {
+        xState = new Float64Array(new ArrayBuffer(sizeX * sizeY * 8));
+        yState = new Float64Array(new ArrayBuffer(noOfPixels * 8));
+        escapeValues = new Uint32Array(new ArrayBuffer(noOfPixels * 4));
+        imageEscapeValues = new Uint32Array(new ArrayBuffer(noOfPixels * 4));
+        histoData = new Uint32Array(250000);
+        imgData = new Uint8ClampedArray(4 * noOfPixels);
+        currentIteration = 0;
+        stepSize = 100;
+        histogramTotal = 0;
+        reset = true;
+    };
+    resetState();
 
     var theState = {
+        xState: xState,
+        yState: yState,
+        escapeValues: escapeValues,
+        imageEscapeValues: imageEscapeValues,
+        histoData: histoData,
+        imgData: imgData,
+        currentIteration: currentIteration,
+        stepSize: stepSize,
+        histogramTotal: histogramTotal,
+        reset: reset,
+
         zoomTo: function (selection) {
             previousExtents.push(currentExtents.copy());
             currentExtents = selection.area().translateFrom(screen).to(currentExtents);
-            grid = newGrid();
+            this.reset = true;
 
-            maxIterations = 0;
-            _events.fire("NewHistoRequired", currentExtents);
-            _events.fire("zoomIn");
         },
         resize: function (sizeX, sizeY) {
             screen = aRectangle(0, 0, sizeX - 1, sizeY - 1);
-            grid = aGrid(sizeX, sizeY, function (x, y) { return aPoint(fromScreen(x, y)); });
+            //grid = aGrid(sizeX, sizeY, function (x, y) { return aPoint(fromScreen(x, y)); });
         },
         zoomOut: function () {
             if (previousExtents.length > 0) {
                 currentExtents = previousExtents.pop();
+                this.reset = true;
             }
-            grid = newGrid();
-            _events.fire("NewHistoRequired", currentExtents);
-            maxIterations = 0;
-            _events.fire("zoomOut");
         },
         move: function (moveX, moveY) {
-            _events.fire("moved");
             var distance = fromScreen(moveX, moveY).distanceTo(currentExtents.topLeft());
             currentExtents.move(0 - distance.x, 0 - distance.y);
-            grid.translate(moveX, moveY);
-            //histogram.rebuild(grid);
-
+            //_events.fire("moved", currentExtents);
+            this.reset = true;
         },
         drawFunc: function (x, y) {
-            p = grid.at(x, y);
-            if (p.iterations > maxIterations) maxIterations = p.iterations;
-            return p.calculateCurrentColour(chunkSize, getHistogram(), colours, palette);
+//            p = grid.at(x, y);
+//            if (p.iterations > maxIterations) maxIterations = p.iterations;
+//            return p.calculateCurrentColour(chunkSize, getHistogram(), colours, palette);
 
             //return test;
         },
@@ -358,11 +205,11 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
         },
         setExtents: function (extents) {
             currentExtents = extents;
-            grid = newGrid();
+            //grid = newGrid();
             getHistogram().reset();
             maxIterations = 0;
-            _events.fire("moved");
-            _events.fire("NewHistoRequired", currentExtents);
+            _events.fire("moved", currentExtents);
+            //_events.fire("NewHistoRequired", currentExtents);
         },
         maximumIteration: function () {
             return maxIterations;
@@ -370,17 +217,16 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
         chunksize: function (c) {
             chunkSize = c;
         },
-        deadRegions : function (radius) {
-            var regions = [];
-            grid.iterateVisible(function (p,x, y) {
-                if(p) {
-                    regions.push(p.alreadyEscaped);
-                } else {
-                    regions.push(false);
-                }
+        setDeadPixelRadius: function (n) {
+            deadPixelRadius = parseInt(n);
+        },
+        deadRegions : function () {
+            var regions = escapeValues.map(function (escapeIteration) {
+                return escapeIteration === 0;
             });
+
             var deadRegions = jim.mandelbrot.deadRegions.create(regions, sizeX);
-            var parsedRadius = parseInt(radius ? radius : 1, 10);
+            var parsedRadius = parseInt(deadPixelRadius ? deadPixelRadius : 1, 10);
             return  deadRegions.regions(parsedRadius);
         },
         currentPointColour: function (x,y) {
@@ -399,6 +245,7 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
             return grid.at(x, y);
         }
     };
+
     _events.listenTo("histogramUpdateJustIn", function (_histogram) {
         theState.setHistogram(_histogram);
     });

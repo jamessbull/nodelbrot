@@ -2,20 +2,29 @@ namespace("jim.defaults");
 jim.defaults.mandelbrotExtents = jim.rectangle.create(-2.5, -1, 3.5, 2);
 
 namespace("jim.mandelbrotImage");
-jim.mandelbrotImage.create = function (_events) {
+jim.mandelbrotImage.create = function (_events, _width, _height) {
     "use strict";
+
     var startingExtent = jim.rectangle.create(-2.5, -1, 3.5, 2),
-        concHisto = jim.mandelbrot.webworkerHistogram.create(_events),
-        state = jim.mandelbrot.state.create(700, 400, startingExtent, _events, concHisto),
-        segments2 = jim.segment.createSegments(700, 400, 4, state),
+        //concHisto = jim.mandelbrot.webworkerHistogram.create(_events),
+        state = jim.mandelbrot.state.create(_width, _height, startingExtent, _events),
+        segments2 = jim.segment.createSegments(_width, _height, 4, state),
         screen = jim.screen.create({segments: segments2}, undefined, _events);
+
+    var canvas = document.createElement('canvas');
+    canvas.width = _width;
+    canvas.height = _height;
+    canvas.className = "canvas";
+      //  context = canvas.getContext('2d'),
+        //output = context.createImageData(_width, _height);
+    jim.mandelbrot.webworkerInteractive.start(canvas, _width, _height, state);
 
     return {
         canvas: function () {
-            return screen.canvas;
+            return canvas;
         },
         draw: function () {
-            screen.draw();
+            //screen.draw();
         },
         zoomTo: function (selection) {
             state.zoomTo(selection);
@@ -52,7 +61,7 @@ jim.init.run = function () {
     var round                   = jim.common.round;
     var newMainUI               = jim.mandelbrot.ui.create;
     var dom                     = jim.dom.functions.create();
-    var mandelbrot              = jim.mandelbrotImage.create(events);
+    var mandelbrot              = jim.mandelbrotImage.create(events, 700, 400);
     var newColourGradientUI     = jim.colour.gradientui.create;
     var newColourPicker         = jim.colour.colourPicker.create;
     var newExportSizeDropdown   = jim.mandelbrot.exportDropdown.create;
@@ -126,42 +135,17 @@ jim.init.run = function () {
     jim.anim.create(render).start();
 };
 
-// What do I want to do to go live?
-// Fix move
-// Done
 
-// now needs to deal with scenario when histo out of data
-// 1) Don't show black when no histo data
-// That makes things better
-// No need as histo calcs super fast
-// Ideally would be nice to have a single message -> response and loop in main thread
-// Done
-// Make export work again
-// Done
-// Once done can I make full image export work in the same way?
-// So currently setProcessor goes from state for a number of iterations and returns state
-// Thoughts - state object which has image data too? But same calc for both histo and image deal with pixels differently
-// Transferable - how will this work?
-// Well I could pack an array and have value 1 be x val 2 be y val 3 be escaped at val 4 iterations
-// x y it esc. A bit icky but doable. How much RAM for state? 8 bytes per num 4 nums per pixel - 32 bytes per pixel.
-// 832Mb? Ouch
-// Largest export has 21,000,000 pixels. Just not feasible to store whole state in addition to image data.
-// So How can I deal with this? I want good coverage across the image so I do want to do it in chunks
-// But if I do that then I need to store the state
-// 700 * 400 = 280,000 I can store state for that
-// so for image generation we need two modes of operation
-// one where we have  state and one where we don't
-//make sure image export continues to work as it does now.
-// add another mode of operation where the state is transferred back and forward
-// to save memory probably makes sense to have a number of arrays so x y big others not
-// 1, 2,4,8,16,32,64,128,  256, 512, 1024, 2048, 8096, 16192, 32384, 64768,
-// iterations should be 16 bit
-// histogram can use typed arrays
-// Create array and transfer it back - Done
-// Biggest gain got by removing two ways of doing stuff
-// If image generation is called with no state then don't return it
-// if it is called with state then do return state
+//
+// state transferred as arrays now.
+// combined webworker complete
+//combined webworker needs to honour both sorts of escape 4 and max int
+// store both sets of escape values as state now.
 
+// fix zoom
+// fix move
+// fix export
+// remove now unused code from mandelbrotescape.js
 // Do SIMD
 // Show export progress better dim lines as they finish
 // auto start stop when exporting / not exporting
