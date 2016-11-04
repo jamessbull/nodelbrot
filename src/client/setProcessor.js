@@ -23,16 +23,18 @@ jim.worker.msetProcessor.create = function (data, id) {
         var pointNotInDeadRegion = function (i, j, _deadRegionInfo) {
             return _deadRegionInfo ? !_deadRegionInfo[((floor(j/subsampleMultiplier) * 700) + floor(i/subsampleMultiplier))] : true;
         };
-
+        var mwidth = mandelbrotBounds.width();
+        var mheight = mandelbrotBounds.height();
+        var mnx = mandelbrotBounds.topLeft().x;
+        var mny = mandelbrotBounds.topLeft().y;
         var point = jim.newMandelbrotPoint.create();
         for (var j = 0 ; j < _height; j +=1) {
             for (var i = 0 ; i < _width; i += 1) {
-                mx = translator.translateX(0, _width, mandelbrotBounds.topLeft().x, mandelbrotBounds.width(), i);
-                my = translator.translateY(0, _height, mandelbrotBounds.topLeft().y, mandelbrotBounds.height(), j);
+                mx = translator.translateX(0, _width, mnx, mwidth, i);
+                my = translator.translateY(0, _height, mny, mheight, j);
                 var r;
                 var pixelState = _pixelStateTracker.getPixel(i,j);
                 if (pointNotInDeadRegion(i, j, _deadRegionInfo) && pixelState.imageEscapedAt === 0) {
-                    //
                     r = point.calculate(mx, my, _noOfIterations, _escapeTest, pixelState.x, pixelState.y, _startIteration);
                 } else {
                     r = pixelState;
@@ -96,27 +98,36 @@ jim.worker.msetProcessor.create = function (data, id) {
         return pixelStateTracker;
     };
 
-    function updateHistogramData(_p, _histogram, _startIteration, _noOfIterations) {
-        if (_p.histogramEscapedAt !== 0 && _p.histogramEscapedAt >= _startIteration && _p.histogramEscapedAt <= (_startIteration + _noOfIterations)) {
-            _histogram.add(_p.histogramEscapedAt);
-        }
-    }
 
-    function updateImageData(i, j, _p, _imageData, _histogram, _colour, _palette, _width) {
-        var currentPixelPos = (j * _width + i);
-        var currentRGBArrayPos = currentPixelPos * 4;
 
-        var pixelColour = _p.imageEscapedAt !== 0 ? _colour.forPoint(_p.x, _p.y, _p.imageEscapedAt, _histogram, _palette): {r:0, g:0, b:0, a:255};
-        _imageData[currentRGBArrayPos] = pixelColour.r;
-        _imageData[currentRGBArrayPos + 1] = pixelColour.g;
-        _imageData[currentRGBArrayPos + 2] = pixelColour.b;
-        _imageData[currentRGBArrayPos + 3] = pixelColour.a;
-    }
 
+
+    //I have escape values the index is the iteration the value is the no of pixels escaped
+    // is first iteration 0th iteration?
     function muteIt(_xState, _yState, _escapeValues, _imageEscapeValues, _histogramData, _histogramTotal, _imageData, _iterations, _currentIteration, _width, _height, _colour, _palette) {
         var histogram = jim.histogram.create();
         histogram.setData(_histogramData, _histogramTotal, _currentIteration === 0 ? 0: (_currentIteration -1));
+
         var pixelStateTracker = {
+            updateImageData: function (i, j, _p, _imageData, _histogram, _colour, _palette, _width, _currentIteration) {
+                var currentPixelPos = (j * _width + i);
+                var currentRGBArrayPos = currentPixelPos * 4;
+                //only update pixel colour if it's black or if current iteration mod 3 = 0
+                //
+                //
+                //if (_currentIteration%10 === 0) {
+                    var pixelColour = _p.imageEscapedAt !== 0 ? _colour.forPoint(_p.x, _p.y, _p.imageEscapedAt, _histogram, _palette): {r:0, g:0, b:0, a:255};
+                    _imageData[currentRGBArrayPos] = pixelColour.r;
+                    _imageData[currentRGBArrayPos + 1] = pixelColour.g;
+                    _imageData[currentRGBArrayPos + 2] = pixelColour.b;
+                    _imageData[currentRGBArrayPos + 3] = pixelColour.a;
+                //}
+            },
+            updateHistogramData: function (_p, _histogram, _startIteration, _noOfIterations) {
+                if (_p.histogramEscapedAt !== 0 && _p.histogramEscapedAt >= _startIteration && _p.histogramEscapedAt <= (_startIteration + _noOfIterations)) {
+                    _histogram.add(_p.histogramEscapedAt);
+                }
+            },
             getPixel: function (i, j) {
                 var index = (j * _width) +i;
                 return {
@@ -132,8 +143,8 @@ jim.worker.msetProcessor.create = function (data, id) {
                 _yState[index] = p.y;
                 _escapeValues[index] = p.histogramEscapedAt;
                 _imageEscapeValues[index] = p.imageEscapedAt;
-                updateHistogramData(p, histogram, _currentIteration, _iterations);
-                updateImageData(i, j, p, _imageData, histogram, _colour, _palette, _width);
+                this.updateHistogramData(p, histogram, _currentIteration, _iterations);
+                this.updateImageData(i, j, p, _imageData, histogram, _colour, _palette, _width, _currentIteration);
             }
         };
         processSet2( _iterations, _currentIteration, 9007199254740991, [], pixelStateTracker, _width, _height);

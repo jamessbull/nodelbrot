@@ -5,20 +5,16 @@ namespace("jim.mandelbrotImage");
 jim.mandelbrotImage.create = function (_events, _width, _height) {
     "use strict";
 
-    var startingExtent = jim.rectangle.create(-2.5, -1, 3.5, 2),
-        //concHisto = jim.mandelbrot.webworkerHistogram.create(_events),
-        state = jim.mandelbrot.state.create(_width, _height, startingExtent, _events),
-        segments2 = jim.segment.createSegments(_width, _height, 4, state),
-        screen = jim.screen.create({segments: segments2}, undefined, _events);
+    var startingExtent = jim.rectangle.create(-2.5, -1, 3.5, 2);
+    var state = jim.mandelbrot.state.create(_width, _height, startingExtent, _events);
 
     var canvas = document.createElement('canvas');
     canvas.width = _width;
     canvas.height = _height;
     canvas.className = "canvas";
-      //  context = canvas.getContext('2d'),
-        //output = context.createImageData(_width, _height);
-    jim.mandelbrot.webworkerInteractive.start(canvas, _width, _height, state);
 
+    var mandelbrotCalculator = jim.mandelbrot.webworkerInteractive.create(canvas, _width, _height, state);
+    mandelbrotCalculator.start();
     return {
         canvas: function () {
             return canvas;
@@ -48,10 +44,10 @@ jim.mandelbrotImage.create = function (_events, _width, _height) {
             return state;
         },
         stop: function () {
-            screen.stop();
+            mandelbrotCalculator.stop();
         },
         go: function() {
-            screen.go();
+            mandelbrotCalculator.start();
         }
     };
 };
@@ -89,6 +85,7 @@ jim.init.run = function () {
     var exportSizeSelect        = dom.element("exportSizeSelect");
 
     var mainDisplayUI = newMainUI(mandelbrot, canvasDiv, mandelCanvas.width, mandelCanvas.height, pixelInfoCanvas);
+    window.ui = mainDisplayUI;
     var colourGradientui = newColourGradientUI(colourGradientCanvas, addButton, removeButton, mandelbrot.palette(), events);
     var colourPicker = newColourPicker(colourPickerCanvas, colourGradientui);
     var exportSizeDropdown = newExportSizeDropdown(exportSizeSelect, [smallExport, mediumExport, largeExport, veryLargeExport]);
@@ -97,7 +94,6 @@ jim.init.run = function () {
     bookmarker.changeLocation();
 
     var render = function () {
-            mandelbrot.draw();
             var iter = mandelbrot.state().maximumIteration();
             maxIteration.innerText = iter;
             var total = 700 * 400;
@@ -114,12 +110,15 @@ jim.init.run = function () {
 
     pixelInfoCanvas.width = 162;
     pixelInfoCanvas.height = 162;
+
     uiCanvas.oncontextmenu = function (e) {
         e.preventDefault();
     };
+
     deadRegionsCanvas.oncontextmenu = function (e) {
         e.preventDefault();
     };
+
     deadRegionsCanvas.width = mandelCanvas.width;
     deadRegionsCanvas.height = mandelCanvas.height;
     deadRegionsCanvas.className = "canvas";
@@ -135,18 +134,18 @@ jim.init.run = function () {
     jim.anim.create(render).start();
 };
 
+//To Fix
+// Display of current iteration. Done!
+// Elapsed time on export and percentage display Done!
+// Start and stop buttons - Done!
+// dead region display and functionality
+// examine functionality
 
-//
-// state transferred as arrays now.
-// combined webworker complete
-//combined webworker needs to honour both sorts of escape 4 and max int
-// store both sets of escape values as state now.
+// To optimise
+// Alter step value automatically to balance frame rate with progress
+// Have multiple interactive webworkers
+// Do SIMD - But not until chrome supports it.
 
-// fix zoom
-// fix move
-// fix export
-// remove now unused code from mandelbrotescape.js
-// Do SIMD
 // Show export progress better dim lines as they finish
 // auto start stop when exporting / not exporting
 // make main display multicore and use webworker for extra speed

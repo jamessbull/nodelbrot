@@ -38,9 +38,7 @@ jim.mandelbrot.image.exporter.create = function (_exportDimensions, _mandelbrotS
     });
 
     events.listenTo("histogramExported", function (e) {
-        //console.log("Histogram exported");
         var ignoreDeadPixelsRadius = document.getElementById("ignoreDeadPixelsRadius");
-        //console.log("export depth is " + exportDepth.value)
         _mandelbrotSet.state().setDeadPixelRadius(ignoreDeadPixelsRadius.value);
         imageGenerator.run(_mandelbrotSet.state().getExtents(),
             exportDepth.value,  exportDimensions.width, exportDimensions.height,
@@ -53,8 +51,8 @@ jim.mandelbrot.image.exporter.create = function (_exportDimensions, _mandelbrotS
     exportButton.onclick = function () {
         exportDimensions = _exportDimensions.dimensions();
         _dom.selectButton(exportButton);
+        imageReporter.reportOn(exportDimensions.width, exportDimensions.height);
         var roundedWidth = Math.floor(exportDimensions.width / 10);
-        imageReporter.reportOn(roundedWidth, exportDimensions.height);
         var roundedHeight = Math.floor(exportDimensions.height / 10);
         histogramReporter.reportOn( roundedWidth, roundedHeight);
         timeReporter.start();

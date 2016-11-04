@@ -19,7 +19,6 @@
 <script src="/js/mandelbrot.js"></script>
 <script src="/js/colourPicker.js"></script>
 <script src="/js/colourGradient.js"></script>
-<script src="/js/periodicityChecker.js"></script>
 <script src="/js/deadSectionSplitter.js"></script>
 <script src="/js/export/exporter.js"></script>
 <script src="/js/uiElements.js"></script>

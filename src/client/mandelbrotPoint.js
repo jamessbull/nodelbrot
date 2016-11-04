@@ -11,7 +11,7 @@ jim.newMandelbrotPoint.create = function () {
     var calculate = function (_mx, _my, _noOfIterations, _escapeTest, _x, _y, _startIteration) {
         var x = _x === undefined ? 0 : _x;
         var y = _y === undefined ? 0 : _y;
-        var iterations = 0;
+        var iterations = 1;
         var imageEscapedAt = 0;
         var histogramEscapedAt = 0;
         var xSquared = 0;
