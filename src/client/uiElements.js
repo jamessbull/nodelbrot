@@ -99,26 +99,6 @@ jim.mandelbrot.ui.elements.create = function (_exportSizeDropdown, _mandelbrotSe
     var ignoreChecked = false;
     ignoreDeadPixelsCheckbox.checked = false;
 
-
-    var updateDeadRegions = function (black) {
-        var context = _deadRegionsCanvas.getContext('2d');
-        var radius = ignoreDeadPixelsRadius.value;
-        var deadRegions = _mandelbrotSet.state().deadRegions(radius);
-        context.fillStyle = "rgba(255, " + 255 + ", 255, 0.6)";
-
-        if (black) {
-            context.clearRect(0,0, _deadRegionsCanvas.width, _deadRegionsCanvas.height);
-        } else {
-            for (var y = 0; y < 400; y+=1) {
-                for (var x = 0 ; x < 700; x += 1) {
-                    if(deadRegions[y * 700 + x]) {
-                        context.fillRect(x, y, 1, 1);
-                    }
-                }
-            }
-        }
-    };
-
     var killDeadRegionDisplay = function () {
         ignoreDeadPixelsCheckbox.checked = false;
         updateDeadRegions(true);
@@ -131,7 +111,14 @@ jim.mandelbrot.ui.elements.create = function (_exportSizeDropdown, _mandelbrotSe
     ignoreDeadPixelsCheckbox.onclick= function () {
         ignoreChecked = !ignoreChecked;
         ignoreDeadPixelsCheckbox.checked = ignoreChecked;
-        updateDeadRegions(!ignoreChecked);
+        if (ignoreChecked) {
+            _events.fire("showDeadRegions", ignoreDeadPixelsRadius.value)
+        } else {
+            _events.fire("hideDeadRegions", ignoreDeadPixelsRadius.value)
+        }
+
+
+        //updateDeadRegions(!ignoreChecked);
     };
 
     var parallelHistogram = jim.parallelHistogramGenerator.create();

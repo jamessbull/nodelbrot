@@ -18,7 +18,7 @@ jim.worker.msetProcessor.create = function (data, id) {
         var my = 0;
         var translator   = jim.coord.translator2.create();
 
-        var subsampleMultiplier = _width/700;
+        var subsampleMultiplier = width/700;
 
         var pointNotInDeadRegion = function (i, j, _deadRegionInfo) {
             return _deadRegionInfo ? !_deadRegionInfo[((floor(j/subsampleMultiplier) * 700) + floor(i/subsampleMultiplier))] : true;
@@ -104,7 +104,7 @@ jim.worker.msetProcessor.create = function (data, id) {
 
     //I have escape values the index is the iteration the value is the no of pixels escaped
     // is first iteration 0th iteration?
-    function muteIt(_xState, _yState, _escapeValues, _imageEscapeValues, _histogramData, _histogramTotal, _imageData, _iterations, _currentIteration, _width, _height, _colour, _palette) {
+    function muteIt(_xState, _yState, _escapeValues, _imageEscapeValues, _histogramData, _histogramTotal, _imageData, _iterations, _currentIteration, _width, _height, _colour, _palette, _deadRegions)  {
         var histogram = jim.histogram.create();
         histogram.setData(_histogramData, _histogramTotal, _currentIteration === 0 ? 0: (_currentIteration -1));
 
@@ -147,7 +147,7 @@ jim.worker.msetProcessor.create = function (data, id) {
                 this.updateImageData(i, j, p, _imageData, histogram, _colour, _palette, _width, _currentIteration);
             }
         };
-        processSet2( _iterations, _currentIteration, 9007199254740991, [], pixelStateTracker, _width, _height);
+        processSet2( _iterations, _currentIteration, 9007199254740991, _deadRegions, pixelStateTracker, _width, _height);
         pixelStateTracker.histogramTotal = histogram.total();
         return pixelStateTracker;
     }

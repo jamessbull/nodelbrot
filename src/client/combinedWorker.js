@@ -42,7 +42,7 @@ onmessage = function(e) {
         };
     }
 
-     var tracker = setProcessor.processSetMutatingState(xState, yState, escapeValues, imageEscapeValues, histogramData, histogramTotal, imageData, msg.iterations, msg.currentIteration, msg.width, msg.height, colour, palette);
+     var tracker = setProcessor.processSetMutatingState(xState, yState, escapeValues, imageEscapeValues, histogramData, histogramTotal, imageData, msg.iterations, msg.currentIteration, msg.width, msg.height, colour, palette, []);
     histogramTotal = tracker.histogramTotal;
     postStateBack();
 };

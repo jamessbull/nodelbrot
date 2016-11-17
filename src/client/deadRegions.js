@@ -3,7 +3,7 @@ jim.mandelbrot.deadRegions.create = function (_escapeValues, _width) {
     "use strict";
     return {
         regions: function (safetyMargin) {
-            var deadRegions = [];
+            var deadRegions = new Uint32Array(_escapeValues.length);
             var sourceRegions = _escapeValues;
 
             var rowIsDead = function (_rowStart) {
@@ -15,7 +15,7 @@ jim.mandelbrot.deadRegions.create = function (_escapeValues, _width) {
 
                 for (var i = _rowStart ; i <= rowEnd; i+=1) {
 
-                    if (i >= 0 && i<sourceRegions.length && onSameRow(i, _rowStart + safetyMargin) && sourceRegions[i] ) {
+                    if (i >= 0 && i<sourceRegions.length && onSameRow(i, _rowStart + safetyMargin) && sourceRegions[i] !==0 ) {
                         return false;
                     }
                 }
@@ -34,7 +34,7 @@ jim.mandelbrot.deadRegions.create = function (_escapeValues, _width) {
             };
 
             _escapeValues.forEach(function (state, index) {
-                deadRegions.push(pixelIsDead(index));
+                deadRegions[index] = pixelIsDead(index);
             });
             return deadRegions;
         }

@@ -10,12 +10,25 @@ jim.parallel.jobRunner.create = function (_events, _worker) {
     var progressEvent = "progressReport";
     var jobCount = 0;
 
+    function shift(arr) {
+        return arr.shift();
+    }
+
+    function updateWorkerId(worker, id) {
+        worker.currentJobId = id;
+    }
+
+    function getJob(jobs, id) {
+        var job = jobs[id];
+        job.id = id;
+        return job;
+    }
+
     var run = function (worker) {
         if (jobIds.length > 0) {
-            var id = jobIds.shift();
-            worker.currentJobId = id;
-            var job = jobsToRun[id];
-            job.id = id;
+            var id = shift(jobIds);
+            updateWorkerId(worker, id);
+            var job = getJob(jobsToRun, id);
             worker.postMessage(job);
             jobCount += 1;
         }

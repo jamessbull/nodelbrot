@@ -43,12 +43,15 @@ jim.mandelbrot.image.exporter.create = function (_exportDimensions, _mandelbrotS
         imageGenerator.run(_mandelbrotSet.state().getExtents(),
             exportDepth.value,  exportDimensions.width, exportDimensions.height,
             e.histogramData,  e.histogramTotal,
-            _mandelbrotSet.palette().toNodeList(), _mandelbrotSet.state().deadRegions(),
+            _mandelbrotSet.palette().toNodeList(), _mandelbrotSet.state().deadRegions,
             "imageComplete", "imageExportProgress", 100);
     });
 
 
     exportButton.onclick = function () {
+
+
+
         exportDimensions = _exportDimensions.dimensions();
         _dom.selectButton(exportButton);
         imageReporter.reportOn(exportDimensions.width, exportDimensions.height);

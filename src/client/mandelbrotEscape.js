@@ -39,10 +39,22 @@ jim.colourCalculator.create = function () {
 
 
 namespace("jim.mandelbrot.webworkerInteractive");
-jim.mandelbrot.webworkerInteractive.create = function (_canvas, _width, _height, _state) {
+jim.mandelbrot.webworkerInteractive.create = function (_canvas, _width, _height, _state, _events) {
     "use strict";
     var worker = new Worker("/js/combinedWorker.js");
     var noOfPixels = _width * _height;
+    var shouldShowDeadRegions = false;
+    var shouldCalculateDeadRegions = false;
+    var deadRegionCanvas = document.createElement('canvas');
+    var radius = 0;
+
+    deadRegionCanvas.width = _width;
+    deadRegionCanvas.height = _height;
+
+    deadRegionCanvas.oncontextmenu = function (e) {
+        e.preventDefault();
+    };
+
     function postMessage() {
         worker.postMessage(message(), [_state.xState.buffer, _state.yState.buffer, _state.escapeValues.buffer, _state.imageEscapeValues.buffer, _state.histoData.buffer, _state.imgData.buffer]);
     }
@@ -52,6 +64,9 @@ jim.mandelbrot.webworkerInteractive.create = function (_canvas, _width, _height,
         var context = _canvas.getContext('2d');
         var imageData = new ImageData(_state.imgData, _width, _height);
         context.putImageData(imageData, 0, 0);
+        if (shouldShowDeadRegions) {
+            context.drawImage(deadRegionCanvas, 0, 0);
+        }
     }
 
     function message() {
@@ -94,6 +109,7 @@ jim.mandelbrot.webworkerInteractive.create = function (_canvas, _width, _height,
             _state.escapeValues = new Uint32Array(new ArrayBuffer(noOfPixels * 4));
             _state.imageEscapeValues = new Uint32Array(new ArrayBuffer(noOfPixels * 4));
             _state.histoData = new Uint32Array(250000);
+            _state.deadRegions = new Uint32Array(noOfPixels);
             _state.imgData = new Uint8ClampedArray(4 * noOfPixels);
             _state.currentIteration = 0;
             _state.stepSize = 50;
@@ -101,11 +117,57 @@ jim.mandelbrot.webworkerInteractive.create = function (_canvas, _width, _height,
             _state.reset=false;
             _state.maxIterations = 0;
         }
+        _events.fire("frameComplete", _state);
+        if (shouldCalculateDeadRegions) {
+            _state.deadRegions = calculateDeadRegions(radius);
+            //_events.fire("deadRegionsComplete", _state);
+        }
         updateImage();
         if(running) {
             postMessage();
         }
     };
+
+    function setPixel(index, array, colour) {
+        var base = index * 4;
+        array[base + 0] = colour.r;
+        array[base + 1] = colour.g;
+        array[base + 2] = colour.b;
+        array[base + 3] = colour.a;
+    }
+
+    function calculateDeadRegions(deadPixelRadius) {
+        var context = deadRegionCanvas.getContext('2d');
+        var deadRegionData = new Uint8ClampedArray(4 *_width * _height);
+        var deadRegions = jim.mandelbrot.deadRegions.create(_state.escapeValues, _width);
+        var parsedRadius = parseInt(deadPixelRadius ? deadPixelRadius : 1, 10);
+
+        var deadRegionsArray = deadRegions.regions(parsedRadius);
+
+        deadRegionsArray.forEach(function (deadPoint, i) {
+            if (deadPoint) {
+                setPixel(i, deadRegionData, {r:80,g:80,b:80,a:256});
+            } else {
+                setPixel(i, deadRegionData, {r:1,g:1,b:1,a:0});
+            }
+        });
+
+        context.putImageData(new ImageData(deadRegionData, _width, _height), 0, 0);
+        shouldCalculateDeadRegions = false;
+        return deadRegionsArray;
+    }
+
+    _events.listenTo("showDeadRegions", function (_radius) {
+        shouldCalculateDeadRegions = true;
+        shouldShowDeadRegions = true;
+        radius = _radius;
+    });
+
+    _events.listenTo("hideDeadRegions", function (_radius) {
+        shouldCalculateDeadRegions = false;
+        shouldShowDeadRegions = false;
+        radius = _radius;
+    });
 
     return {
         stop: function () {
@@ -151,6 +213,7 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
     var stepSize;
     var histogramTotal;
     var reset;
+    var deadRegions;
 
     var resetState = function () {
         xState = new Float64Array(new ArrayBuffer(sizeX * sizeY * 8));
@@ -163,6 +226,7 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
         stepSize = 10;
         histogramTotal = 0;
         reset = true;
+        deadRegions = new Uint32Array(noOfPixels);
     };
     resetState();
 
@@ -177,6 +241,7 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
         stepSize: stepSize,
         histogramTotal: histogramTotal,
         reset: reset,
+        deadRegions: deadRegions,
 
         zoomTo: function (selection) {
             previousExtents.push(currentExtents.copy());
@@ -222,15 +287,15 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
         setDeadPixelRadius: function (n) {
             deadPixelRadius = parseInt(n);
         },
-        deadRegions : function () {
-            var regions = escapeValues.map(function (escapeIteration) {
-                return escapeIteration === 0;
-            });
-
-            var deadRegions = jim.mandelbrot.deadRegions.create(regions, sizeX);
-            var parsedRadius = parseInt(deadPixelRadius ? deadPixelRadius : 1, 10);
-            return  deadRegions.regions(parsedRadius);
-        },
+//        deadRegions : function () {
+//            var regions = escapeValues.map(function (escapeIteration) {
+//                return escapeIteration === 0;
+//            });
+//
+//            var deadRegions = jim.mandelbrot.deadRegions.create(regions, sizeX);
+//            var parsedRadius = parseInt(deadPixelRadius ? deadPixelRadius : 1, 10);
+//            return  deadRegions.regions(parsedRadius);
+//        },
         currentPointColour: function (x,y) {
             var index = ((y * sizeX) +x) * 4;
             var r = imgData[index];

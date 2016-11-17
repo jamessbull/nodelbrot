@@ -13,7 +13,7 @@ jim.mandelbrotImage.create = function (_events, _width, _height) {
     canvas.height = _height;
     canvas.className = "canvas";
 
-    var mandelbrotCalculator = jim.mandelbrot.webworkerInteractive.create(canvas, _width, _height, state);
+    var mandelbrotCalculator = jim.mandelbrot.webworkerInteractive.create(canvas, _width, _height, state, _events);
     mandelbrotCalculator.start();
     return {
         canvas: function () {
@@ -111,17 +111,15 @@ jim.init.run = function () {
     pixelInfoCanvas.width = 162;
     pixelInfoCanvas.height = 162;
 
-    uiCanvas.oncontextmenu = function (e) {
-        e.preventDefault();
-    };
-
-    deadRegionsCanvas.oncontextmenu = function (e) {
-        e.preventDefault();
-    };
-
-    deadRegionsCanvas.width = mandelCanvas.width;
-    deadRegionsCanvas.height = mandelCanvas.height;
-    deadRegionsCanvas.className = "canvas";
+//    uiCanvas.oncontextmenu = function (e) {
+//        e.preventDefault();
+//    };
+//
+//
+//
+//    deadRegionsCanvas.width = mandelCanvas.width;
+//    deadRegionsCanvas.height = mandelCanvas.height;
+//    deadRegionsCanvas.className = "canvas";
 
     uiCanvas.width = mandelCanvas.width;
     uiCanvas.height = mandelCanvas.height;
@@ -134,12 +132,10 @@ jim.init.run = function () {
     jim.anim.create(render).start();
 };
 
-//To Fix
-// Display of current iteration. Done!
-// Elapsed time on export and percentage display Done!
-// Start and stop buttons - Done!
-// dead region display and functionality
-// examine functionality
+// examine functionality.
+
+// need to understand performance characteristics
+// how many fps? how much overhead is there in sending a message?
 
 // To optimise
 // Alter step value automatically to balance frame rate with progress
