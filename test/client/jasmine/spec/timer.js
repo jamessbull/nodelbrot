@@ -10,8 +10,10 @@ timer.create = function () {
         stop: function () {
             stop = Date.now();
         },
-        elapsed: function () {
-            return stop - start;
+        elapsed: function (message) {
+            var time = stop - start;
+            console.log("" + message + " " +time);
+            return  time;
         }
     };
 }

@@ -78,65 +78,37 @@ jim.parallelHistogramGenerator.create = function () {
                 var r = jim.rectangle.create(_extents.topLeft().x, startY, _extents.width(), (partHeight-1) * offset);
                 jobs[i] = newJob(_iter, _width, partHeight, r, undefined, 0);
             }
-            runner.run(jobs, "jim.histogramGenerator.parallelJob", _progressEvent);
+            //runner.run(jobs, "jim.histogramGenerator.parallelJob", _progressEvent);
+            return jobs;
         }
     };
 };
 
 namespace("jim.parallelImageGenerator.message");
-jim.parallelImageGenerator.message.create = function (_iter, _width, _height, _extents, _histogramData, _histogramTotal, _nodeList, _deadRegions, _state, _currentPosition) {
+jim.parallelImageGenerator.message.create = function (_iter, _width, _height, _extents, _deadRegions, _currentPosition) {
     "use strict";
 
     return {
-        state: _state,
         currentPosition: _currentPosition,
         deadRegions: _deadRegions,
-        histogramData: _histogramData,
-        histogramSize: _histogramData.length,
-        histogramTotal: _histogramTotal,
         maxIterations: _iter,
         exportWidth: _width,
         exportHeight: _height,
         mx: _extents.topLeft().x,
         my: _extents.topLeft().y,
         mw: _extents.width(),
-        mh: _extents.height(),
-        paletteNodes: _nodeList
+        mh: _extents.height()
     };
 };
 
 jim.parallelImageGenerator.create = function () {
     "use strict";
     var newJob = jim.parallelImageGenerator.message.create;
-    var newRunner = jim.parallel.jobRunner.create;
-    var eventToFire = "imageComplete";
-    var data;
-    var runner = newRunner(events, "/js/mandelbrotImageCalculatingWorker.js");
-//    events.listenTo("jim.parallelimagegenerator.imageDone", function (jobs) {
-//        console.log("About to stitch job results together");
-//        var tmpData = [];
-//        jobs.forEach(function (job) {
-//            var arr = job.result.imgData;
-//            for (var i = 0; i < arr.length; i += 1) {
-//                tmpData.push(arr[i]);
-//            }
-//            console.log("Stitched job " + job.id);
-//        });
-//        console.log("Stitched all jobs");
-//        var i = 0;
-//        var length = data.length;
-//
-//        for (i = 0; i <length; i +=1) {
-//            data[i] = tmpData[i];
-//        }
-//        events.fire(eventToFire, {imgData: data});
-//    });
+
     return {
-        run: function (_extents, _iter, _width, _height,  _histogramData, _histogramTotal, _nodeList, _deadRegions,  _eventToFire, _progressEvent, _numberOfParts) {
+        run: function (_extents, _iter, _width, _height, _deadRegions, _numberOfParts) {
             console.log("Beginning image generation");
-            if (_eventToFire) {
-                eventToFire = _eventToFire;
-            }
+
             var regularChunkWidth = _extents.width();
             var chunkSizePerLine = _extents.height()/ (_height - 1 ); // why -1?
             var regularLinesPerChunk = Math.floor(_height / _numberOfParts);
@@ -151,19 +123,18 @@ jim.parallelImageGenerator.create = function () {
                 return x === _numberOfParts - 1;
             };
             var jobs = [];
-            data = new Uint8ClampedArray(_height * _width * 4);
 
             var splitter = jim.common.arraySplitter.create();
             var deadSections = splitter.split(_deadRegions, _numberOfParts, 700);
             for (var i = 0 ; i < _numberOfParts; i +=1) {
                 var chunk = jim.rectangle.create(currentChunkX, currentChunkY, regularChunkWidth, isLast(i) ? finalChunkHeight : regularChunkHeight);
-                //newImgRequest(noOfIterations, width, height, extents,  histogramData, histogramTotal, nodeList, deadRegions, e.data.result.setState, currentPosition)
                 var height = isLast(i) ? numberOfLinesInFinalChunk : regularLinesPerChunk;
-                jobs[i] = newJob(_iter, _width,  height, chunk, _histogramData, _histogramTotal, _nodeList, deadSections[i], undefined, 0);
+                var job = newJob(_iter, _width,  height, chunk, deadSections[i], 0);
+                job.offset = (i * regularLinesPerChunk) * _width * 4;
+                jobs[i] = job;
                 currentChunkY = currentChunkY + (regularChunkOffset);
             }
-
-            runner.run(jobs, "jim.parallelimagegenerator.imageDone", _progressEvent);
+            return jobs;
         }
     };
 };

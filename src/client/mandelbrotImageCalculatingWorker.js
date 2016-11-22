@@ -14,6 +14,8 @@ importScripts('/js/common.js',
     '/js/setProcessor.js');
 
 var newSetProcessor = jim.worker.msetProcessor.create;
+var histogram;
+var palette = jim.palette.create();
 
 function getMessage(e) {
     "use strict";
@@ -27,39 +29,44 @@ function getColourCalculator() {
 
 function initPalette(msg) {
     "use strict";
-    var palette = jim.palette.create();
     palette.fromNodeList(msg.paletteNodes);
     return palette;
 }
 
 function initHistogram(msg) {
     "use strict";
-    var histogram    = jim.twoPhaseHistogram.create(msg.histogramSize);
-    histogram.setData(msg.histogramData, msg.histogramTotal);
-    return histogram;
+    histogram = jim.twoPhaseHistogram.create(msg.histogramSize);
+    var histogramDataArray = new Uint32Array(msg.histogramData);
+    histogram.setData(histogramDataArray, msg.histogramTotal);
 }
 
-function response (msg, progress, complete, imgData, _state) {
+function response (msg, imgData) {
     "use strict";
-    var retVal = msg;
-    retVal.type = "progressReport";
-    retVal.event = {msg: progress};
+    var retVal = {};
     retVal.result = {};
-    retVal.result.progress = progress;
-    retVal.result.imageDone = complete;
-    retVal.result.imgData = imgData;
-    retVal.result.state = _state;
+    retVal.result.imgData = imgData.buffer;
+    retVal.result.offset = msg.offset;
     return retVal;
+}
+
+function calculateSet(msg) {
+    "use strict";
+    var setProcessor = newSetProcessor(msg, " image set processor ");
+//    var palette = initPalette(msg);
+    var colour = getColourCalculator();
+    var result;
+    result = setProcessor.processSetForImage(msg.deadRegions, undefined, msg.maxIterations, msg.currentPosition, colour, histogram, palette);
+    var responseObject = response(msg, result.imgData);
+    postMessage(responseObject, [responseObject.result.imgData]);
 }
 
 onmessage = function(e) {
     "use strict";
     var msg = getMessage(e);
-    var setProcessor = newSetProcessor(msg, " image set processor ");
-    var palette = initPalette(msg);
-    var colour = getColourCalculator();
-    var histogram  = initHistogram(msg);
-    var result;
-    result = setProcessor.processSetForImage(msg.deadRegions, undefined, msg.maxIterations, msg.currentPosition, colour, histogram, palette);
-    postMessage(response(msg, setProcessor.width * setProcessor.height, true, result.imgData, undefined));
+    if (msg.updateHistogramData) {
+        initHistogram(msg);
+        initPalette(msg);
+    } else {
+        calculateSet(msg);
+    }
 };

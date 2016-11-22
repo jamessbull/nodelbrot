@@ -136,6 +136,19 @@ jim.init.run = function () {
 
 // need to understand performance characteristics
 // how many fps? how much overhead is there in sending a message?
+// so it looks like I'm spending a lot of time sending histo data back and forth. Less so now. o ly once per worker. Most time spent calcing now
+
+// transfer dead regions? only send palette once
+// stop histo generation using untyped arrays. transfer them
+// how does no of jobs affect overall time
+
+// Histogram optimisation
+// Don't use parallel jobs not necessary use worker pool type object
+// Re-assemble histogram more sensibly using typed arrays and set
+
+// Combined worker optimisation
+// Have three messages update palette, update histogram, request image update
+//
 
 // To optimise
 // Alter step value automatically to balance frame rate with progress

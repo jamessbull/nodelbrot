@@ -81,14 +81,14 @@ jim.histogram.create = function () {
 namespace("jim.twoPhaseHistogram");
     jim.twoPhaseHistogram.create = function (_size) {
     "use strict";
-    var data = [], total = 0;
-    for (var i = 0; i < _size; i +=1) {
-        data[i] = 0;
-    }
+    var  total = 0;
+    var data = new Uint32Array(_size);
 
     var add = function (value) {
-        data[value] +=1;
-        total += 1;
+        if(value < _size) {
+            data[value] +=1;
+            total += 1;
+        }
     };
 
     var process = function () {

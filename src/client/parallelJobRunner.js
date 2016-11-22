@@ -29,7 +29,11 @@ jim.parallel.jobRunner.create = function (_events, _worker) {
             var id = shift(jobIds);
             updateWorkerId(worker, id);
             var job = getJob(jobsToRun, id);
-            worker.postMessage(job);
+            if (job.histogramData) {
+                worker.postMessage(job, [job.histogramData]);
+            } else {
+                worker.postMessage(job);
+            }
             jobCount += 1;
         }
     };
