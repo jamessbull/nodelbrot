@@ -14,44 +14,24 @@ importScripts('/js/common.js',
     '/js/setProcessor.js');
 
 var worker = jim.worker.msetProcessor.create;
-var noOfMsgs = 0;
 onmessage = function(e) {
     "use strict";
-    noOfMsgs  +=1;
-    var id = e.data.id;
-    var mainWorker = worker(e.data, "woker " + id + " histogram set Processor " + noOfMsgs);
+    var mainWorker = worker(e.data, "worker histogram set Processor ");
     var maxIterations = e.data.maxIterations;
-    var histogramData = new Uint32Array(new ArrayBuffer(4 * (maxIterations + 1)));
-    var start = e.data.start;
-    var state = e.data.state;
 
-    var processPixelResult = function (i,j,x,y,iterations, escapedAt) {
-        if (escapedAt !== 0 && escapedAt >= start && escapedAt <= (start + maxIterations)) {
-            histogramData[escapedAt - start] = histogramData[escapedAt - start] ? (histogramData[escapedAt - start] + 1) : 1;
-        }
-    };
-
-    var response = function (progress, complete, histogramData, _state, _start) {
+    var response = function (progress, complete, histogramData) {
         var retVal = e.data;
         retVal.type = "progressReport";
         retVal.event = {msg: progress};
         retVal.result = {};
-        retVal.result.setState = _state;
         retVal.result.progress = progress;
         retVal.result.chunkComplete = complete;
         retVal.result.histogramData = histogramData;
-        retVal.result.histogramStartIteration = _start;
         return retVal;
     };
     var result;
-    mainWorker.setProcessPixelResult(processPixelResult);
-    if(state) {
-        result = mainWorker.processSetTrackingState(state, maxIterations, start);
-        postMessage(response(mainWorker.width * mainWorker.height, true, result.histogramData.buffer, result.state, start), [result.histogramData.buffer]);
+    result = mainWorker.processSet(maxIterations);
+    var responseMessage = response(mainWorker.width * mainWorker.height, true, result.histogramData.buffer);
+    postMessage(responseMessage, [result.histogramData.buffer]);
 
-    } else {
-        result = mainWorker.processSet(state, maxIterations, start);
-        postMessage(response(mainWorker.width * mainWorker.height, true, result.histogramData.buffer, undefined, start), [result.histogramData.buffer]);
-
-    }
 };

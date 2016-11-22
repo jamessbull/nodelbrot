@@ -43,7 +43,9 @@ jim.mandelbrot.image.exporter.create = function (_exportDimensions, _mandelbrotS
         for (var i = 0; i < noOfWorkers; i+=1) {
             var worker = new Worker(workerUrl);
             workers.push(worker);
-            worker.postMessage(initialJobs[i], [initialJobs[i][toTransfer]]);
+            if (initialJobs.length === noOfWorkers) {
+                worker.postMessage(initialJobs[i], [initialJobs[i][toTransfer]]);
+            }
         }
         return {
             consume: function (jobs, handler) {
@@ -99,6 +101,7 @@ jim.mandelbrot.image.exporter.create = function (_exportDimensions, _mandelbrotS
         var imageData = new Uint8ClampedArray(exportCanvas.width * exportCanvas.height * 4);
         var noOfJobs = jobs.length;
         var pixelsPerChunk = (exportDimensions.width * exportDimensions.height) / 100;
+
         workerPool.consume(jobs, function (_msg) {
             jobsComplete +=1;
             events.fire("imageExportProgress", pixelsPerChunk);
@@ -132,6 +135,9 @@ jim.mandelbrot.image.exporter.create = function (_exportDimensions, _mandelbrotS
             return false ;
         }
         var jobs = _histogramGenerator.run(_mandelbrotSet.state().getExtents(), exportDepth.value, roundedWidth, roundedHeight, "histogramExported", "histogramExportProgress",10);
+        var workerPool =  jim.worker.pool.create(8, "/js/histogramCalculatingWorker.js", [], "");
+
+
         runner.run(jobs, "jim.histogramGenerator.parallelJob", "histogramExportProgress");
         exporting = true;
     };

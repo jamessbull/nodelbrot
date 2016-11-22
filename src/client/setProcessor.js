@@ -69,9 +69,9 @@ jim.worker.msetProcessor.create = function (data, id) {
         };
     };
 
-    var processSetForHistogram = function (_state, _noOfIterations, _startIteration) {
-        var tracker = aHistogramPixelTracker(_noOfIterations, _startIteration, pixelResultHandler);
-        processSet2(_noOfIterations, _startIteration, 4, [], tracker, width, height);
+    var processSetForHistogram = function (_noOfIterations) {
+        var tracker = aHistogramPixelTracker(_noOfIterations, 0, pixelResultHandler);
+        processSet2(_noOfIterations, 0, 4, [], tracker, width, height);
         return tracker;
     };
 

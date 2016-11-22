@@ -14,16 +14,16 @@ jim.mandelbrot.worker.state.create = function (_height, _width) {
     return state;
 };
 namespace("jim.parallelHistogramGenerator.message");
-jim.parallelHistogramGenerator.message.create = function (_iter, _width, _height, _extents, _state, _start) {
+jim.parallelHistogramGenerator.message.create = function (_iter, _width, _height, _extents) {
     "use strict";
-    var state = _state;
-    var start = _start;
+    //var state = _state;
+    var start = 0;
 
     if(!start) {
         start = 0;
     }
     return {
-        state: state,
+        //state: state,
         start: start,
         maxIterations: _iter,
         exportWidth: _width,
@@ -76,7 +76,7 @@ jim.parallelHistogramGenerator.create = function () {
                 var offset = _extents.height()/(_height - 1);
                 var startY = _extents.topLeft().y + (partHeight * i * offset);
                 var r = jim.rectangle.create(_extents.topLeft().x, startY, _extents.width(), (partHeight-1) * offset);
-                jobs[i] = newJob(_iter, _width, partHeight, r, undefined, 0);
+                jobs[i] = newJob(_iter, _width, partHeight, r);
             }
             //runner.run(jobs, "jim.histogramGenerator.parallelJob", _progressEvent);
             return jobs;
