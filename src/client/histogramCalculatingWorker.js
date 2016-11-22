@@ -1,17 +1,12 @@
 var window = self;
 
-importScripts('/js/common.js',
+importScripts(
+    '/js/common.js',
     '/js/mandelbrotPoint.js',
-    '/js/stopWatch.js',
-    '/js/tinycolor.js',
     '/js/palette.js',
     '/js/histogram.js',
-    '/js/mandelbrotEscape.js',
-    '/js/selection.js',
-    '/js/mandelbrot-ui.js',
-    '/js/mandelbrot.js',
-    '/js/colourPicker.js',
-    '/js/setProcessor.js');
+    '/js/setProcessor.js'
+);
 
 var worker = jim.worker.msetProcessor.create;
 onmessage = function(e) {
