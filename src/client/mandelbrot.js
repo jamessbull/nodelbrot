@@ -111,16 +111,6 @@ jim.init.run = function () {
     pixelInfoCanvas.width = 162;
     pixelInfoCanvas.height = 162;
 
-//    uiCanvas.oncontextmenu = function (e) {
-//        e.preventDefault();
-//    };
-//
-//
-//
-//    deadRegionsCanvas.width = mandelCanvas.width;
-//    deadRegionsCanvas.height = mandelCanvas.height;
-//    deadRegionsCanvas.className = "canvas";
-
     uiCanvas.width = mandelCanvas.width;
     uiCanvas.height = mandelCanvas.height;
     uiCanvas.className = "canvas";
@@ -138,13 +128,10 @@ jim.init.run = function () {
 // how many fps? how much overhead is there in sending a message?
 // so it looks like I'm spending a lot of time sending histo data back and forth. Less so now. o ly once per worker. Most time spent calcing now
 
-// transfer dead regions? only send palette once
-// stop histo generation using untyped arrays. transfer them
-// how does no of jobs affect overall time
+// to fix - moving is a bit wonky
+// examine is broken
+// dead region display should not persist on move or zoom
 
-// Histogram optimisation
-// Don't use parallel jobs not necessary use worker pool type object
-// Re-assemble histogram more sensibly using typed arrays and set
 
 // Combined worker optimisation
 // Have three messages update palette, update histogram, request image update
