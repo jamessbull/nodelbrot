@@ -38,37 +38,9 @@ jim.parallelHistogramGenerator.message.create = function (_iter, _width, _height
 jim.parallelHistogramGenerator.create = function () {
     "use strict";
     var newJob = jim.parallelHistogramGenerator.message.create;
-    var newRunner = jim.parallel.jobRunner.create;
-    var eventToFire = "histogramComplete";
-
-    var runner = newRunner(events, "/js/histogramCalculatingWorker.js");
-
-    events.listenTo("jim.histogramGenerator.parallelJob", function (jobs) {
-        var completeHistogramData = [];
-        var completeHistogramTotal = 0;
-        var maxIter = jobs[0].maxIterations;
-        jobs.forEach(function (job) {
-            completeHistogramTotal += job.result.histogramTotal;
-            var histoDataArray = new Uint32Array(job.result.histogramData);
-            histoDataArray.forEach(function (datum, index) {
-                if(!completeHistogramData[index]) {
-                    completeHistogramData[index] = 0;
-                }
-                completeHistogramData[index] = completeHistogramData[index] + datum;
-            });
-        });
-        var histo = jim.twoPhaseHistogram.create(0);
-        histo.setData(completeHistogramData, 0);
-        histo.process();
-        //console.log("Histogram generation complete");
-        events.fire(eventToFire, {histogramData: histo.data(), histogramTotal: histo.total()});
-    });
 
     return {
-        run: function (_extents, _iter, _width, _height, _eventToFire, _progressEvent, _numberOfParts) {
-            if (_eventToFire) {
-                eventToFire = _eventToFire;
-            }
+        run: function (_extents, _iter, _width, _height, _numberOfParts) {
 
             var jobs = [];
             var partHeight = _height / _numberOfParts;
@@ -78,7 +50,6 @@ jim.parallelHistogramGenerator.create = function () {
                 var r = jim.rectangle.create(_extents.topLeft().x, startY, _extents.width(), (partHeight-1) * offset);
                 jobs[i] = newJob(_iter, _width, partHeight, r);
             }
-            //runner.run(jobs, "jim.histogramGenerator.parallelJob", _progressEvent);
             return jobs;
         }
     };

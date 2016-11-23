@@ -59,11 +59,16 @@ jim.worker.msetProcessor.create = function (data, id) {
     var aHistogramPixelTracker = function (_noOfIterations, _startIteration, _pixelResultHandler) {
         return {
             histogramData: newHistogramDataArray(_noOfIterations),
+            histogramTotal: 0,
             getPixel : function (i,j) {
                 return pixelResult(0,0,0,0,0);
             },
             putPixel: function (p, i, j) {
                 var escapeOffset = (p.histogramEscapedAt - _startIteration);
+                if (p.histogramEscapedAt !== 0) {
+                    this.histogramTotal +=1;
+                    //this.histogramData[p.histogramEscapedAt +1] +=1;
+                }
                 this.histogramData[escapeOffset] = _pixelResultHandler(p, i, j, _startIteration, _noOfIterations, this.histogramData[escapeOffset]);
             }
         };
