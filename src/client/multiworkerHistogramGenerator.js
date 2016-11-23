@@ -1,30 +1,9 @@
-namespace("jim.mandelbrot.worker.state");
-jim.mandelbrot.worker.state.create = function (_height, _width) {
-    "use strict";
-    var state = [];
-    for (var i1 = 0 ; i1 <= (_height * _width); i1+=1 ) {
-        var s = {
-            x:0,
-            y:0,
-            iterations:0,
-            escapedAt:0
-        };
-        state.push(s);
-    }
-    return state;
-};
+
 namespace("jim.parallelHistogramGenerator.message");
 jim.parallelHistogramGenerator.message.create = function (_iter, _width, _height, _extents) {
     "use strict";
-    //var state = _state;
-    var start = 0;
 
-    if(!start) {
-        start = 0;
-    }
     return {
-        //state: state,
-        start: start,
         maxIterations: _iter,
         exportWidth: _width,
         exportHeight: _height,
