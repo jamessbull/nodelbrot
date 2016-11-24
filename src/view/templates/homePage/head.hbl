@@ -2,7 +2,6 @@
 <script src="/js/common.js"></script>
 <script src="/js/mandelbrotPoint.js"></script>
 <script src="/js/events.js"></script>
-<script src="/js/parallelJobRunner.js"></script>
 <script src="/js/multiworkerHistogramGenerator.js"></script>
 <script src="/js/stopWatch.js"></script>
 <script src="/js/actions.js"></script>
@@ -12,8 +11,6 @@
 <script src="/js/histogram.js"></script>
 <script src="/js/mandelbrotEscape.js"></script>
 <script src="/js/anim.js"></script>
-<script src="/js/screen.js"></script>
-<script src="/js/segment.js"></script>
 <script src="/js/selection.js"></script>
 <script src="/js/mandelbrot-ui.js"></script>
 <script src="/js/mandelbrot.js"></script>

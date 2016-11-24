@@ -110,9 +110,11 @@ jim.worker.msetProcessor.create = function (data, id) {
     //I have escape values the index is the iteration the value is the no of pixels escaped
     // is first iteration 0th iteration?
     function muteIt(_xState, _yState, _escapeValues, _imageEscapeValues, _histogramData, _histogramTotal, _imageData, _iterations, _currentIteration, _width, _height, _colour, _palette, _deadRegions)  {
-        var histogram = jim.histogram.create();
-        histogram.setData(_histogramData, _histogramTotal, _currentIteration === 0 ? 0: (_currentIteration -1));
-
+        var histogram = jim.twoPhaseHistogram.create(0);
+        var histogramForColour = jim.twoPhaseHistogram.create(0);
+        histogram.setData( _histogramData, _histogramTotal);
+        histogramForColour.setData(new Uint32Array(_histogramData), _histogramTotal);
+        histogramForColour.process();
         var pixelStateTracker = {
             updateImageData: function (i, j, _p, _imageData, _histogram, _colour, _palette, _width, _currentIteration) {
                 var currentPixelPos = (j * _width + i);
@@ -149,7 +151,7 @@ jim.worker.msetProcessor.create = function (data, id) {
                 _escapeValues[index] = p.histogramEscapedAt;
                 _imageEscapeValues[index] = p.imageEscapedAt;
                 this.updateHistogramData(p, histogram, _currentIteration, _iterations);
-                this.updateImageData(i, j, p, _imageData, histogram, _colour, _palette, _width, _currentIteration);
+                this.updateImageData(i, j, p, _imageData, histogramForColour, _colour, _palette, _width, _currentIteration);
             }
         };
         processSet2( _iterations, _currentIteration, 9007199254740991, _deadRegions, pixelStateTracker, _width, _height);

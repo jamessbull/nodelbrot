@@ -34,9 +34,6 @@ jim.mandelbrotImage.create = function (_events, _width, _height) {
         move: function (x, y) {
             state.move(x, y);
         },
-        histogram: function() {
-            return state.histogram();
-        },
         palette: function () {
             return state.palette();
         },
@@ -97,7 +94,7 @@ jim.init.run = function () {
             var iter = mandelbrot.state().maximumIteration();
             maxIteration.innerText = iter;
             var total = 700 * 400;
-            var escapedThisIteration = mandelbrot.histogram().get(iter);
+            var escapedThisIteration = mandelbrot.state().escapedByCurrentIteration;
             var escaped = total - escapedThisIteration;
 
             if (escapedThisIteration > 0) {
@@ -122,12 +119,6 @@ jim.init.run = function () {
     jim.anim.create(render).start();
 };
 
-// examine functionality.
-
-// need to understand performance characteristics
-// how many fps? how much overhead is there in sending a message?
-// so it looks like I'm spending a lot of time sending histo data back and forth. Less so now. o ly once per worker. Most time spent calcing now
-
 // to fix - moving is a bit wonky
 // examine is broken
 // dead region display should not persist on move or zoom
@@ -135,7 +126,8 @@ jim.init.run = function () {
 
 // Combined worker optimisation
 // Have three messages update palette, update histogram, request image update
-//
+// The histogram has now got more complicated. I'm not rippling any more but this means I need to have two arrays for the histogram
+// one for the colour calculation which is totalled and one for the updates as we go which is not totalled.
 
 // To optimise
 // Alter step value automatically to balance frame rate with progress

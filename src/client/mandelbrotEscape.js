@@ -103,6 +103,7 @@ jim.mandelbrot.webworkerInteractive.create = function (_canvas, _width, _height,
             _state.histogramTotal = msg.histogramTotal;
             _state.imageEscapeValues = new Uint32Array(msg.imageEscapeValuesBuffer);
             _state.currentIteration +=_state.stepSize;
+            _state.escapedByCurrentIteration = _state.histoData[_state.currentIteration];
         } else {
             _state.xState = new Float64Array(new ArrayBuffer(noOfPixels * 8));
             _state.yState = new Float64Array(new ArrayBuffer(noOfPixels * 8));
@@ -189,7 +190,7 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
         currentExtents  = startingExtent,
         previousExtents = [],
         screen          = aRectangle(0, 0, sizeX - 1, sizeY - 1),
-        histogram       = jim.histogram.create(),
+        //histogram       = jim.histogram.create(),
         colours         = jim.colourCalculator.create(),
         maxIterations   = 0,
         chunkSize      = 100,
@@ -199,14 +200,15 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
         fromScreen = function (x, y) { return screen.at(x, y).translateTo(currentExtents);};
 
 
-        var getHistogram = function() {
-            return histogram;
-        };
+//        var getHistogram = function() {
+//            return histogram;
+//        };
     var noOfPixels = sizeX * sizeY;
     var xState;
     var yState;
     var escapeValues;
     var imageEscapeValues;
+    var escapedByCurrentIteration = 0;
     var histoData;
     var imgData;
     var currentIteration;
@@ -266,9 +268,9 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
         drawFunc: function (x, y) {
 
         },
-        histogram: function () {
-            return getHistogram();
-        },
+//        histogram: function () {
+//            return getHistogram();
+//        },
         palette: function () {
             return palette;
         },
@@ -277,7 +279,7 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
         },
         setExtents: function (extents) {
             currentExtents = extents;
-            getHistogram().reset();
+            //getHistogram().reset();
             maxIterations = 0;
             reset = true;
         },

@@ -37,8 +37,6 @@ jim.colour.colourPicker.create = function (canvas, gradient) {
         return toRgb(selectedHue, saturation, value);
     };
 
-
-
     var drawColourPicker = function (x, y) {
         var hueProportion = 0.3 * h;
         var shadeProportion = h - hueProportion;
