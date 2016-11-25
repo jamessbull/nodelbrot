@@ -129,6 +129,35 @@ jim.init.run = function () {
 // The histogram has now got more complicated. I'm not rippling any more but this means I need to have two arrays for the histogram
 // one for the colour calculation which is totalled and one for the updates as we go which is not totalled.
 
+//So. I want combined worker to send back histogram updates and get sent totalled histogram
+//Histogram starts empty.
+// Send first calculation message to worker.
+// It calculates pixels updates pixels escaped and sends back two things img data and histogram updates
+// main thread co-ordinates histogram updates between workers.
+// It has a single array which consists of un totalled data
+// on every message the histogram updates are added to this array.
+// histogram updates are sent as a separate message and are not done every frame
+// on message received if current array is empty then we send a histo update
+// to send a histo update we create a copy of the data, total it using histogram and
+// then send copies of the totalled histo to the workers unless this is the last worker in which case send the thing itself
+
+// For calculation updates deadRegions are not sent.
+// If we are doing same extents extents don't need to change
+// Have change extents message.
+// don't send state back and forth
+// Four messages
+// 1) Update histogram
+// 2) Set extents and output height and width
+// 3) calculate current extents
+// 4) update palette
+//
+// Worker keeps current state resets it when extents change
+// Worker creates new array each time and transfers it back to main thread?
+// Question. Is it quicker to transfer a single array back and forth or is it quicker to create a new array each time and send it in one direction?
+// don't send x and y state
+//Move pixel state trackers to their respective workers.
+//Do I really need three methods on setProcessor?
+
 // To optimise
 // Alter step value automatically to balance frame rate with progress
 // Have multiple interactive webworkers

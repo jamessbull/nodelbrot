@@ -8,14 +8,52 @@ importScripts(
     '/js/setProcessor.js'
 );
 
+
+function pixelTracker(_msg) {
+    "use strict";
+
+    var pixelResultHandler = function (p, i, j, _startIteration, _noOfIterations, _currentNoOfEscapees) {
+        return (p.histogramEscapedAt !== 0 && p.histogramEscapedAt >= _startIteration && p.histogramEscapedAt <= (_startIteration + _noOfIterations)) ?
+            (_currentNoOfEscapees + 1 || 1) : 0;
+    };
+
+    var newHistogramDataArray = function (_noOfIterations) {
+        return new Uint32Array(new ArrayBuffer(4 * (_noOfIterations + 1)));
+    };
+
+    var pixelResult = function (_x, _y, _iterations, _histogramEscapedAt, _imageEscapedAt) {
+        return {x:_x, y: _y, iterations:_iterations, histogramEscapedAt: _histogramEscapedAt, imageEscapedAt: _imageEscapedAt};
+    };
+
+    var startIteration = 0;
+    var noOfIterations = _msg.maxIterations;
+    return {
+        histogramData: newHistogramDataArray(noOfIterations),
+        histogramTotal: 0,
+        getPixel : function (i,j) {
+            return pixelResult(0,0,0,0,0);
+        },
+        putPixel: function (p, i, j) {
+            var escapeOffset = (p.histogramEscapedAt - startIteration);
+            if (p.histogramEscapedAt !== 0) {
+                this.histogramTotal +=1;
+            }
+            this.histogramData[escapeOffset] = pixelResultHandler(p, i, j, startIteration, noOfIterations, this.histogramData[escapeOffset]);
+        }
+    };
+}
+
 var worker = jim.worker.msetProcessor.create;
 onmessage = function(e) {
     "use strict";
-    var mainWorker = worker(e.data, "worker histogram set Processor ");
-    var maxIterations = e.data.maxIterations;
+    var msg = e.data;
+    var mainWorker = worker();
+    var maxIterations = msg.maxIterations;
+    var width = msg.exportWidth;
+    var height = msg.exportHeight;
 
     var response = function (progress, histogramTotal, complete, histogramData) {
-        var retVal = e.data;
+        var retVal = msg;
         retVal.type = "progressReport";
         retVal.event = {msg: progress};
         retVal.result = {};
@@ -26,8 +64,8 @@ onmessage = function(e) {
         return retVal;
     };
     var result;
-    result = mainWorker.processSet(parseInt(maxIterations));
-    var responseMessage = response(mainWorker.width * mainWorker.height, result.histogramTotal, true, result.histogramData.buffer);
+    result = mainWorker.processSet(msg, pixelTracker(msg), 0, parseInt(maxIterations),width, height, 4, []);
+    var responseMessage = response(width * height, result.histogramTotal, true, result.histogramData.buffer);
     postMessage(responseMessage, [result.histogramData.buffer]);
 
 };

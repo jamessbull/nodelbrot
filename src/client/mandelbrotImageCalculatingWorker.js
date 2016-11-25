@@ -51,13 +51,37 @@ function response (msg, imgData) {
 
 function calculateSet(msg) {
     "use strict";
-    var setProcessor = newSetProcessor(msg, " image set processor ");
-//    var palette = initPalette(msg);
-    var colour = getColourCalculator();
+    var setProcessor = newSetProcessor();
+    var width = msg.exportWidth;
+    var height = msg.exportHeight;
     var result;
-    result = setProcessor.processSetForImage(msg.deadRegions, undefined, msg.maxIterations, msg.currentPosition, colour, histogram, palette);
+    result = setProcessor.processSet(msg, pixelTracker(msg), 0, msg.maxIterations, width, height, 9007199254740991, msg.deadRegions);
     var responseObject = response(msg, result.imgData);
     postMessage(responseObject, [responseObject.result.imgData]);
+}
+
+function pixelTracker(_msg) {
+    "use strict";
+    var colour = getColourCalculator();
+    var pixelResult = function (_x, _y, _iterations, _histogramEscapedAt, _imageEscapedAt) {
+        return {x:_x, y: _y, iterations:_iterations, histogramEscapedAt: _histogramEscapedAt, imageEscapedAt: _imageEscapedAt};
+    };
+    return {
+        imgData: new Uint8ClampedArray(_msg.exportHeight * _msg.exportWidth * 4),
+        getPixel : function (i,j) {
+            return pixelResult(0,0,0,0,0);
+        },
+        putPixel: function (p, i, j) {
+            var currentPixelPos = (j * _msg.exportWidth + i);
+            var currentRGBArrayPos = currentPixelPos * 4;
+
+            var pixelColour = p.imageEscapedAt !== 0 ? colour.forPoint(p.x, p.y, p.iterations, histogram, palette): {r:0, g:0, b:0, a:255};
+            this.imgData[currentRGBArrayPos] = pixelColour.r;
+            this.imgData[currentRGBArrayPos + 1] = pixelColour.g;
+            this.imgData[currentRGBArrayPos + 2] = pixelColour.b;
+            this.imgData[currentRGBArrayPos + 3] = pixelColour.a;
+        }
+    };
 }
 
 onmessage = function(e) {
