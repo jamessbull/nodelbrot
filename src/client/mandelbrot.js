@@ -155,8 +155,10 @@ jim.init.run = function () {
 // Worker creates new array each time and transfers it back to main thread?
 // Question. Is it quicker to transfer a single array back and forth or is it quicker to create a new array each time and send it in one direction?
 // don't send x and y state
-//Move pixel state trackers to their respective workers.
-//Do I really need three methods on setProcessor?
+//Move pixel state trackers to their respective workers. Done
+//Do I really need three methods on setProcessor? No All gone.
+// I always go to image escpe value
+// do I need to? histo doesn't but that isn't an issue right now
 
 // To optimise
 // Alter step value automatically to balance frame rate with progress

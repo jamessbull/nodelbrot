@@ -64,7 +64,7 @@ onmessage = function(e) {
         return retVal;
     };
     var result;
-    result = mainWorker.processSet(msg, pixelTracker(msg), 0, parseInt(maxIterations),width, height, 4, []);
+    result = mainWorker.processSet(msg, pixelTracker(msg), 0, parseInt(maxIterations),width, height, []);
     var responseMessage = response(width * height, result.histogramTotal, true, result.histogramData.buffer);
     postMessage(responseMessage, [result.histogramData.buffer]);
 

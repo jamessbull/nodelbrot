@@ -85,6 +85,6 @@ onmessage = function(e) {
         }
     };
 
-    setProcessor.processSet(msg, pixelStateTracker, msg.currentIteration, msg.iterations, msg.width, msg.height, 9007199254740991, []);
+    setProcessor.processSet(msg, pixelStateTracker, msg.currentIteration, msg.iterations, msg.width, msg.height, []);
     postStateBack();
 };

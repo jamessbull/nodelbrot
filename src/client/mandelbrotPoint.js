@@ -8,12 +8,12 @@ jim.newMandelbrotPoint.create = function () {
     var histogramEscapeValue = 4;
     var imageEscapeValue = 9007199254740991;
 
-    var calculate = function (_mx, _my, _noOfIterations, _escapeTest, _x, _y, _startIteration) {
-        var x = _x === undefined ? 0 : _x;
-        var y = _y === undefined ? 0 : _y;
+    var calculate = function (_mx, _my, _noOfIterations, _currentPoint, _startIteration) {
+        var x = _currentPoint.x || 0;
+        var y = _currentPoint.y || 0;
         var iterations = 1;
         var imageEscapedAt = 0;
-        var histogramEscapedAt = 0;
+        var histogramEscapedAt = _currentPoint.histogramEscapedAt;
         var xSquared = 0;
         var ySquared = 0;
         var xSquaredPlusYSquared = 0;

@@ -55,7 +55,7 @@ function calculateSet(msg) {
     var width = msg.exportWidth;
     var height = msg.exportHeight;
     var result;
-    result = setProcessor.processSet(msg, pixelTracker(msg), 0, msg.maxIterations, width, height, 9007199254740991, msg.deadRegions);
+    result = setProcessor.processSet(msg, pixelTracker(msg), 0, msg.maxIterations, width, height, msg.deadRegions);
     var responseObject = response(msg, result.imgData);
     postMessage(responseObject, [responseObject.result.imgData]);
 }
