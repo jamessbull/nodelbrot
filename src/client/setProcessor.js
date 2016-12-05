@@ -7,7 +7,6 @@ jim.worker.msetProcessor.create = function () {
     var processSet = function (_msg, _pixelStateTracker, _startIteration, _noOfIterations, _width, _height, _deadRegionInfo) {
         var mx = 0;
         var my = 0;
-
         var subsampleMultiplier = _width/700;
 
         var shouldCalculatePoint = function (i, j, _deadRegionInfo) {

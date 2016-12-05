@@ -56,7 +56,7 @@ jim.mandelbrot.webworkerInteractive.create = function (_canvas, _width, _height,
     };
 
     function postMessage() {
-        worker.postMessage(message(), [_state.xState.buffer, _state.yState.buffer, _state.escapeValues.buffer, _state.imageEscapeValues.buffer, _state.histoData.buffer, _state.imgData.buffer]);
+        worker.postMessage(message(), [_state.histoData.buffer, _state.imgData.buffer]);
     }
 
     var running = true;
@@ -69,46 +69,42 @@ jim.mandelbrot.webworkerInteractive.create = function (_canvas, _width, _height,
         }
     }
 
+    function extentsTransfer(x, y, w, h) {
+        return {mx: x, my: y, mw: w, mh: h};
+    }
+
     function message() {
         var extents = _state.getExtents();
         var palette = _state.palette();
-        return {
-            xStateBuffer: _state.xState.buffer,
+        var messagePayload = {
             histogramDataBuffer: _state.histoData.buffer,
-            imageDataBuffer:  _state.imgData.buffer,
-            yStateBuffer:  _state.yState.buffer,
-            escapeValuesBuffer:  _state.escapeValues.buffer,
-            imageEscapeValuesBuffer:  _state.imageEscapeValues.buffer,
+            imageDataBuffer: _state.imgData.buffer,
             currentIteration:  _state.currentIteration,
-            iterations:  _state.stepSize,
+            iterations: _state.stepSize,
             width: _width,
             height: _height,
-            mx: extents.topLeft().x,
-            my: extents.topLeft().y,
-            mw: extents.width(),
-            mh: extents.height(),
-            paletteNodes:palette.toNodeList(),
             histogramTotal: _state.histogramTotal
         };
+        if (_state.shouldTransferExtents) {
+            messagePayload.extents = extentsTransfer(extents.topLeft().x, extents.topLeft().y, extents.width(), extents.height());
+            _state.shouldTransferExtents = false;
+        }
+        if (_state.shouldTransferPalette) {
+            messagePayload.paletteNodes = palette.toNodeList();
+            _state.shouldTransferPalette = false;
+        }
+        return messagePayload;
     }
 
     worker.onmessage = function (m) {
         var msg = m.data;
         if(!_state.reset) {
-            _state.xState = new Float64Array(msg.xStateBuffer);
-            _state.yState = new Float64Array(msg.yStateBuffer);
-            _state.escapeValues = new Uint32Array(msg.escapeValuesBuffer);
             _state.imgData = new Uint8ClampedArray(msg.imageDataBuffer);
             _state.histoData = new Uint32Array(msg.histogramDataBuffer);  //histogramDataBuffer
             _state.histogramTotal = msg.histogramTotal;
-            _state.imageEscapeValues = new Uint32Array(msg.imageEscapeValuesBuffer);
             _state.currentIteration +=_state.stepSize;
             _state.escapedByCurrentIteration = _state.histoData[_state.currentIteration];
         } else {
-            _state.xState = new Float64Array(new ArrayBuffer(noOfPixels * 8));
-            _state.yState = new Float64Array(new ArrayBuffer(noOfPixels * 8));
-            _state.escapeValues = new Uint32Array(new ArrayBuffer(noOfPixels * 4));
-            _state.imageEscapeValues = new Uint32Array(new ArrayBuffer(noOfPixels * 4));
             _state.histoData = new Uint32Array(250000);
             _state.deadRegions = new Uint32Array(noOfPixels);
             _state.imgData = new Uint8ClampedArray(4 * noOfPixels);
@@ -121,13 +117,13 @@ jim.mandelbrot.webworkerInteractive.create = function (_canvas, _width, _height,
         _events.fire("frameComplete", _state);
         if (shouldCalculateDeadRegions) {
             _state.deadRegions = calculateDeadRegions(radius);
-            //_events.fire("deadRegionsComplete", _state);
         }
         updateImage();
         if(running) {
             postMessage();
         }
     };
+
 
     function setPixel(index, array, colour) {
         var base = index * 4;
@@ -190,7 +186,6 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
         currentExtents  = startingExtent,
         previousExtents = [],
         screen          = aRectangle(0, 0, sizeX - 1, sizeY - 1),
-        //histogram       = jim.histogram.create(),
         colours         = jim.colourCalculator.create(),
         maxIterations   = 0,
         chunkSize      = 100,
@@ -199,13 +194,7 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
         black = jim.colour.create(0,0,0,255),
         fromScreen = function (x, y) { return screen.at(x, y).translateTo(currentExtents);};
 
-
-//        var getHistogram = function() {
-//            return histogram;
-//        };
     var noOfPixels = sizeX * sizeY;
-    var xState;
-    var yState;
     var escapeValues;
     var imageEscapeValues;
     var escapedByCurrentIteration = 0;
@@ -218,8 +207,6 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
     var deadRegions;
 
     var resetState = function () {
-        xState = new Float64Array(new ArrayBuffer(sizeX * sizeY * 8));
-        yState = new Float64Array(new ArrayBuffer(noOfPixels * 8));
         escapeValues = new Uint32Array(new ArrayBuffer(noOfPixels * 4));
         imageEscapeValues = new Uint32Array(new ArrayBuffer(noOfPixels * 4));
         histoData = new Uint32Array(250000);
@@ -233,10 +220,7 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
     resetState();
 
     var theState = {
-        xState: xState,
-        yState: yState,
-        escapeValues: escapeValues,
-        imageEscapeValues: imageEscapeValues,
+
         histoData: histoData,
         imgData: imgData,
         currentIteration: currentIteration,
@@ -244,10 +228,13 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
         histogramTotal: histogramTotal,
         reset: reset,
         deadRegions: deadRegions,
+        shouldTransferExtents: true,
+        shouldTransferPalette: true,
 
         zoomTo: function (selection) {
             previousExtents.push(currentExtents.copy());
             currentExtents = selection.area().translateFrom(screen).to(currentExtents);
+            this.shouldTransferExtents = true;
             this.reset = true;
 
         },
@@ -258,6 +245,7 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
             if (previousExtents.length > 0) {
                 currentExtents = previousExtents.pop();
                 this.reset = true;
+                this.shouldTransferExtents = true;
             }
         },
         move: function (moveX, moveY) {
@@ -268,9 +256,6 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
         drawFunc: function (x, y) {
 
         },
-//        histogram: function () {
-//            return getHistogram();
-//        },
         palette: function () {
             return palette;
         },
@@ -279,9 +264,9 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
         },
         setExtents: function (extents) {
             currentExtents = extents;
-            //getHistogram().reset();
             maxIterations = 0;
             reset = true;
+            this.shouldTransferExtents = true;
         },
         maximumIteration: function () {
             return this.currentIteration;
@@ -289,15 +274,6 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
         setDeadPixelRadius: function (n) {
             deadPixelRadius = parseInt(n);
         },
-//        deadRegions : function () {
-//            var regions = escapeValues.map(function (escapeIteration) {
-//                return escapeIteration === 0;
-//            });
-//
-//            var deadRegions = jim.mandelbrot.deadRegions.create(regions, sizeX);
-//            var parsedRadius = parseInt(deadPixelRadius ? deadPixelRadius : 1, 10);
-//            return  deadRegions.regions(parsedRadius);
-//        },
         currentPointColour: function (x,y) {
             var index = ((y * sizeX) +x) * 4;
             var r = imgData[index];
@@ -313,5 +289,10 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
             return grid.at(x, y);
         }
     };
+
+    _events.listenTo("paletteUpdated", function () {
+        theState.shouldTransferPalette = true;
+    });
+
     return theState;
 };

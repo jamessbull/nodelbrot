@@ -81,14 +81,13 @@ jim.init.run = function () {
     var veryLargeExport         = dom.element("veryLargeExport");
     var exportSizeSelect        = dom.element("exportSizeSelect");
 
+    var colourGradientui = newColourGradientUI(colourGradientCanvas, addButton, removeButton, mandelbrot.palette(), events);
+    var bookmarker = newBookmarker(bookmarkButton, mandelbrot, colourGradientui);
     var mainDisplayUI = newMainUI(mandelbrot, canvasDiv, mandelCanvas.width, mandelCanvas.height, pixelInfoCanvas);
     window.ui = mainDisplayUI;
-    var colourGradientui = newColourGradientUI(colourGradientCanvas, addButton, removeButton, mandelbrot.palette(), events);
     var colourPicker = newColourPicker(colourPickerCanvas, colourGradientui);
     var exportSizeDropdown = newExportSizeDropdown(exportSizeSelect, [smallExport, mediumExport, largeExport, veryLargeExport]);
     newMiscUiElements(exportSizeDropdown, mandelbrot, deadRegionsCanvas, events);
-    var bookmarker = newBookmarker(bookmarkButton, mandelbrot, colourGradientui);
-    bookmarker.changeLocation();
 
     var render = function () {
             var iter = mandelbrot.state().maximumIteration();
@@ -117,6 +116,8 @@ jim.init.run = function () {
     colourPicker.draw();
 
     jim.anim.create(render).start();
+    bookmarker.changeLocation();
+
 };
 
 // to fix - moving is a bit wonky
@@ -148,17 +149,52 @@ jim.init.run = function () {
 // Four messages
 // 1) Update histogram
 // 2) Set extents and output height and width
-// 3) calculate current extents
-// 4) update palette
-//
+// 3) calculate current extents based on current state. Worker creates own initial state if state does not exist.
+// 4) update palette - Palette is updated on change so whenever the user drags? Would need to to see it as I drag? It does it every fram right now so hey.
+// Do I do it as a separate message or as part of normal message so I check to see if a palette has been sent?
+// Make it optional part of message same for extents.
+// So if extents are specified then we change extents and create new empty state; and then calculate
+// If histo is specified we replace existing histo and then calculate
+// If palette is specified we update existing palette and then calculate
+// If nothing is specified we do nothing and then calculate
+// When we calculate we send back array of things wot escaped and array of image colour data as it is currently
+// What is best way to do this?
+// Start by making combined worker keep it's own state and not transfer it back? Then I don't know when extents change happen
+// Step one keep state locally and use that and update if it is set
 // Worker keeps current state resets it when extents change
 // Worker creates new array each time and transfers it back to main thread?
 // Question. Is it quicker to transfer a single array back and forth or is it quicker to create a new array each time and send it in one direction?
 // don't send x and y state
-//Move pixel state trackers to their respective workers. Done
-//Do I really need three methods on setProcessor? No All gone.
-// I always go to image escpe value
-// do I need to? histo doesn't but that isn't an issue right now
+
+// Plan 1) Store extents in worker - done
+//      2) Only send them when it changes - done but breaks bookmarking need to set the flag when extents are set - Done
+//      3) Next verify not sending dead regions - dead regions not sent
+//      4) Only send palette if a node position changes or a node is added or removed
+//          i) Make combined worker store palette and only update it if it sent - done
+//          ii) make palette fire events on change - done
+//          iii) listen to those events and set flag to true on state for should trnsfer palette done
+//          iv) finally only send palette if state says I should done
+
+
+//Next don't send xstate / ystate ever
+// change worker so that If undefined it gets initied
+// then keep it in the worker and don't read from message
+// then don't send and don't post back
+
+//Still sent
+// escape - image escape - histogram data
+// escape values same as histo data but histo data is totalled every frame?
+// I get sent entire histogram - could potentially send it less often we shall see
+// get histogram data - good - also need to send back updates to main thread.
+// get full histo data from main thread
+// during calculation record the image escape values and histo escape values
+// also create a new array to store histo updates and send those back
+// Do send histo updates don't send back image escape histo escape or histogram
+
+//in main thread receive update from workers and copy back data into histodata array
+//periodically every x frames say send back updated and totalled histogram then don't total histo in worker
+//Plan
+// escape values and image escape values are never used in main worker so don't send back
 
 // To optimise
 // Alter step value automatically to balance frame rate with progress
