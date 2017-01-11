@@ -16,7 +16,7 @@ namespace("jim.actions.doubleclick");
 
 jim.actions.doubleclick.create = function (timer, mandelbrotSet, state) {
     "use strict";
-    var action =  function () { mandelbrotSet.zoomOut(); };
+    var action =  function () { mandelbrotSet.state().zoomOut(); };
     var doubleClickDuration;
     var doubleClickInProgress = false;
     var doubleClick = jim.actions.createAction();
@@ -47,7 +47,7 @@ namespace("jim.actions.selectArea");
 jim.actions.selectArea.create = function (selection, mandelbrotSet, state) {
     "use strict";
     var action = function () {
-        mandelbrotSet.zoomTo(selection);
+        mandelbrotSet.state().zoomTo(selection);
     };
     var select = jim.actions.createAction();
 
@@ -88,6 +88,7 @@ jim.actions.move.create = function (mset, state) {
 
     action.rightMouseDown = function (e) {
         if (!state.isSelectPixelMode()) {
+            stopwatch.mark('mousemoved');
             action.moving = true;
             start.x = e.layerX;
             start.y = e.layerY;
@@ -101,8 +102,8 @@ jim.actions.move.create = function (mset, state) {
     action.rightMouseUp = function (e) {
         if (!state.isSelectPixelMode()) {
             action.moving = false;
-            mset.canvas().getContext('2d').drawImage(action.canvas, 0, 0, action.canvas.width, action.canvas.height);
             mset.move(e.layerX - start.x, e.layerY - start.y);
+            mset.canvas().getContext('2d').drawImage(action.canvas, 0, 0, action.canvas.width, action.canvas.height);
         }
     };
 
@@ -113,6 +114,7 @@ jim.actions.move.create = function (mset, state) {
             canvas.getContext('2d').fillRect(0, 0, canvas.width, canvas.height);
             canvas.getContext('2d').drawImage(mset.canvas(), -action.totalXMovement, -action.totalYMovement, canvas.width, canvas.height);
             if(stopwatch.timeSinceMark('mousemoved') > 500) {
+                console.log("Hello " + stopwatch.timeSinceMark('mousemoved'));
                 if(action.cursorInMotion) {
                     var e = {layerX: action.lastMouseXLocation, layerY: action.lastMouseYLocation};
                     action.rightMouseUp(e);

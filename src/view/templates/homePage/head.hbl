@@ -10,6 +10,7 @@
 <script src="/js/image.js"></script>
 <script src="/js/histogram.js"></script>
 <script src="/js/mandelbrotEscape.js"></script>
+<script src="/js/WebworkerBasedMandelbrotSet.js"></script>
 <script src="/js/anim.js"></script>
 <script src="/js/selection.js"></script>
 <script src="/js/mandelbrot-ui.js"></script>

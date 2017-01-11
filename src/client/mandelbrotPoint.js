@@ -8,17 +8,18 @@ jim.newMandelbrotPoint.create = function () {
     var histogramEscapeValue = 4;
     var imageEscapeValue = 9007199254740991;
 
-    var calculate = function (_mx, _my, _noOfIterations, _currentPoint, _startIteration) {
-        var x = _currentPoint.x || 0;
-        var y = _currentPoint.y || 0;
+    var calculate = function (_mx, _my, _noOfIterations, _startIteration, _x, _y, _histogramEscapedAt) {
+        var x = _x;
+        var y = _y;
+        var timesToRun = _noOfIterations;
         var iterations = 1;
         var imageEscapedAt = 0;
-        var histogramEscapedAt = _currentPoint.histogramEscapedAt;
+        var histogramEscapedAt = _histogramEscapedAt;
         var xSquared = 0;
         var ySquared = 0;
         var xSquaredPlusYSquared = 0;
 
-        while (_noOfIterations > 0) {
+        while (timesToRun > 0 && imageEscapedAt === 0) {
             xSquared = x * x;
             ySquared = y * y;
             xSquaredPlusYSquared = xSquared + ySquared;
@@ -29,13 +30,12 @@ jim.newMandelbrotPoint.create = function () {
 
             if(imageEscapedAt === 0 && xSquaredPlusYSquared > imageEscapeValue) {
                 imageEscapedAt = iterations;
-                break;
             }
 
             iterations++;
             y = ((x * y) *2 ) + _my;
             x = xSquared - ySquared + _mx;
-            _noOfIterations-=1;
+            timesToRun -=1;
         }
         var finalHistogramEscapeValue = histogramEscapedAt === 0 ? 0 : _startIteration + histogramEscapedAt;
         var finalImageEscapeValue = imageEscapedAt === 0 ? 0 : _startIteration + imageEscapedAt;

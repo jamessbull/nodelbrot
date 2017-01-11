@@ -73,7 +73,7 @@ jim.mandelbrot.ui.magnifiedDisplay.create = function (mset, pixelInfo, _state) {
         var rowStart =  currentX - Math.floor(gridSize / 2);
         var colStart =  currentY - Math.floor(gridSize / 2);
 
-        var point = mset.point(rowStart + column, colStart + row);
+        var point = mset.state().at(rowStart + column, colStart + row);
 
         var round = jim.common.round;
         update(currentX, currentY);

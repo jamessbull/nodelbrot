@@ -48,6 +48,7 @@ var pixelStateTracker = (function () {
     pixelStateTracker.updateHistogramData = function (_p, _histogram, _startIteration, _noOfIterations) {
         if (_p.histogramEscapedAt !== 0 && _p.histogramEscapedAt >= _startIteration && _p.histogramEscapedAt <= (_startIteration + _noOfIterations)) {
             _histogram.add(_p.histogramEscapedAt);
+            this.histogramUpdate[(_p.histogramEscapedAt - _startIteration)-1] +=1;
         }
     };
     pixelStateTracker.getPixel= function (i, j) {
@@ -76,13 +77,16 @@ onmessage = function(e) {
     "use strict";
     var msg = e.data;
     var noOfPixels = msg.width * msg.height;
+    var noOfIterations = msg.iterations;
+    var histogramUpdate = new Uint32Array(noOfIterations);
     var histogramData = new Uint32Array(msg.histogramDataBuffer);
     var histogramTotal = msg.histogramTotal;
 
-    pixelStateTracker.imageData = new Uint8ClampedArray(msg.imageDataBuffer);
-    pixelStateTracker.iterations = msg.iterations;
+    pixelStateTracker.imageData = new Uint8ClampedArray(4 * noOfPixels);
+    pixelStateTracker.iterations = noOfIterations;
     pixelStateTracker.currentIteration  = msg.currentIteration;
     pixelStateTracker.colour = colour;
+    pixelStateTracker.histogramUpdate = histogramUpdate;
 
     if (!xState || msg.extents) {
         initState(noOfPixels);
@@ -108,19 +112,17 @@ onmessage = function(e) {
 
 
     function postStateBack() {
-        postMessage(message(), [histogramData.buffer, pixelStateTracker.imageData.buffer]);
+        postMessage(message(), [pixelStateTracker.imageData.buffer, pixelStateTracker.histogramUpdate.buffer]);
     }
 
     function message () {
         return {
-            histogramDataBuffer: histogramData.buffer,
+            histogramUpdate: pixelStateTracker.histogramUpdate.buffer,
             imageDataBuffer: pixelStateTracker.imageData.buffer,
             histogramTotal: histogram.histogramTotal
         };
     }
 
-
-
-    setProcessor.processSet(extents, pixelStateTracker, msg.currentIteration, msg.iterations, msg.width, msg.height, undefined);
+    setProcessor.processSet(extents, pixelStateTracker, msg.currentIteration, noOfIterations, msg.width, msg.height, undefined);
     postStateBack();
 };
