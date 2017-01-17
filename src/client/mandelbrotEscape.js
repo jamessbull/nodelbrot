@@ -60,8 +60,6 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
     var histoData;
     var histoData2;
     var imgData;
-    var currentIteration;
-    var stepSize;
     var histogramTotal;
     var reset;
     var deadRegions;
@@ -72,8 +70,6 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
         histoData = new Uint32Array(250000);
         histoData2 = new Uint32Array(250000);  //histogramDataBuffer
         imgData = new Uint8ClampedArray(4 * noOfPixels);
-        currentIteration = 0;
-        stepSize = 10;
         histogramTotal = 0;
         reset = true;
         deadRegions = new Uint32Array(noOfPixels);
@@ -84,9 +80,6 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
 
         histoData: histoData,
         histoData2: histoData2,
-        //imgData: imgData,
-        currentIteration: currentIteration,
-        stepSize: stepSize,
         histogramTotal: histogramTotal,
         reset: reset,
         deadRegions: deadRegions,
