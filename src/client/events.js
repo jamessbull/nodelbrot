@@ -16,7 +16,10 @@ jim.events.create = function () {
         },
         clear:function () {
             listeners = {};
-        }
+        },
+        extentsUpdate: "extentsUpdate",
+        paletteChanged: "paletteUpdate",
+        maxIterationsUpdated: "maxIterationsUpdated"
     };
 };
 

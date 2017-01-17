@@ -79,21 +79,23 @@ jim.init.run = function () {
     var colourPicker = newColourPicker(colourPickerCanvas, colourGradientui);
     var exportSizeDropdown = newExportSizeDropdown(exportSizeSelect, [smallExport, mediumExport, largeExport, veryLargeExport]);
     newMiscUiElements(exportSizeDropdown, mandelbrot, deadRegionsCanvas, events);
-
+    var iter = 0;
     var render = function () {
-            var iter = mandelbrot.state().maximumIteration();
-            maxIteration.innerText = iter;
-            var total = 700 * 400;
-            var escapedThisIteration = mandelbrot.state().escapedByCurrentIteration;
-            var escaped = total - escapedThisIteration;
+        events.listenTo(events.maxIterationsUpdated, function (_iter) {
+            iter = _iter;
+        });
+        maxIteration.innerText = iter;
+        var total = 700 * 400;
+        var escapedThisIteration = mandelbrot.state().escapedByCurrentIteration;
+        var escaped = total - escapedThisIteration;
 
-            if (escapedThisIteration > 0) {
-                percEscaped.innerText = round((100 - ((escaped / total) * 100)), 2);
-                lastEscapedOn.innerText = iter;
-            }
-            mainDisplayUI.draw(uiCanvas);
-            colourGradientui.draw();
-        };
+        if (escapedThisIteration > 0) {
+            percEscaped.innerText = round((100 - ((escaped / total) * 100)), 2);
+            lastEscapedOn.innerText = iter;
+        }
+        mainDisplayUI.draw(uiCanvas);
+        colourGradientui.draw();
+    };
 
     pixelInfoCanvas.width = 162;
     pixelInfoCanvas.height = 162;
@@ -114,7 +116,7 @@ jim.init.run = function () {
 
 };
 
-// to fix - moving is a bit wonky
+// to fix - moving is a bit wonky - fixed now
 // examine is broken
 // dead region display should not persist on move or zoom
 
@@ -122,6 +124,44 @@ jim.init.run = function () {
 // split main display into separate threads.
 // I think breaking it up into three regions would be best
 // so refactor a bit to tidy everything up
+// So things I currently need from state are
+
+
+// important bits of data are
+// image data for examining pixels
+// the extents
+// the
+
+//  mstate(extents, palette, escapeHistogram, ) <- all affected by outside factors all need to be passed in as params
+// from, noOfIterations, width, height, all remembered by worker
+// var calculator = mset(extents, palette, escapeHistogram, onChunkComplete)
+//
+
+
+// extents - rectangle representing the relevant portion of mandelbrot set
+// palette - colouring information - only sent never retrieved?
+// state palette used in bookmark and other places
+// so worker doesn't own the palette but does need it
+// so webworker needs palette but can't own it as it needs to be shared between other workers
+// so to make it easily splittable the worker needs to
+// currentIteration - how many iterations have been calculated
+// stepSize - how many iterations are done in each request
+// histogramTotal - how many things have escaped - sum of histogram data - just being sent back and forth? or useful ?
+// shouldTransferExtents - needs to only include in request if changed
+// shouldTransfer palette - wait what? - worker does colouring too
+// histogram data - needed for colouring also
+// deadRegions - maybe can move
+// maxIteration
+// escapeValues - used to calc deadRegions
+
+// so palette is for whole thing not chunk so needs to remain external
+// same is true for
+// escape values max iteration histototal
+
+// all these from state. Only dead regions looks like it could move out
+// can I name things better?
+// is anything needed for anything else any more?
+
 // Make sure it is easy to split this into chunks.
 // Each chunk should be exactly the same as existing code but with different extents and a different canvas
 // so refactor until I can run the code mandelbrotRender(extents, canvas)
@@ -138,7 +178,10 @@ jim.init.run = function () {
 //
 //
 //
-//
+// so what happens?
+// I make a request to a worker that may or may not have various bits depending on whether something happened.
+// If the palette changes then I want to send the palette
+// if the extents change I want to send the extents
 
 
 // To optimise

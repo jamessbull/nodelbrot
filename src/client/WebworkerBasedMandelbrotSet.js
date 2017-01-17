@@ -9,6 +9,9 @@ jim.mandelbrot.webworkerInteractive.create = function (_canvas, _width, _height,
     var radius = 0;
     var copyOfHisto = new Uint32Array(250000);
     var displayCountdown = 0;
+    var stepSize = 50;
+    var currentIteration = 0;
+
 
     deadRegionCanvas.width = _width;
     deadRegionCanvas.height = _height;
@@ -40,8 +43,8 @@ jim.mandelbrot.webworkerInteractive.create = function (_canvas, _width, _height,
         var palette = _state.palette();
         var messagePayload = {
             histogramDataBuffer: copyOfHisto.buffer,
-            currentIteration:  _state.currentIteration,
-            iterations: _state.stepSize,
+            currentIteration:  currentIteration,
+            iterations: stepSize,
             width: _width,
             height: _height,
             histogramTotal: _state.histogramTotal
@@ -62,15 +65,16 @@ jim.mandelbrot.webworkerInteractive.create = function (_canvas, _width, _height,
         if(!_state.reset) {
             _state.histogramTotal = msg.histogramTotal;
             copyOfHisto = processHistogramUpdates(new Uint32Array(msg.histogramUpdate));
-            _state.currentIteration +=_state.stepSize;
-            _state.escapedByCurrentIteration = _state.histoData[_state.currentIteration];
+            currentIteration += stepSize;
+            _state.escapedByCurrentIteration = _state.histoData[currentIteration];
+            _events.fire(_events.maxIterationsUpdated, currentIteration);
 
         } else {
             _state.histoData = new Uint32Array(250000);
             copyOfHisto = new Uint32Array(250000);
             _state.deadRegions = new Uint32Array(noOfPixels);
-            _state.currentIteration = 0;
-            _state.stepSize = 50;
+            currentIteration = 0;
+            stepSize = 50;
             _state.histogramTotal = 0;
             _state.reset=false;
             _state.maxIterations = 0;
@@ -94,7 +98,7 @@ jim.mandelbrot.webworkerInteractive.create = function (_canvas, _width, _height,
 
     function processHistogramUpdates(updates) {
         for (var i = 0; i < updates.length; i+=1) {
-            _state.histoData[_state.currentIteration + i] += updates[i];
+            _state.histoData[currentIteration + i] += updates[i];
         }
         return new Uint32Array(_state.histoData);
     }
