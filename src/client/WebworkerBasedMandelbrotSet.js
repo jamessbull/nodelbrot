@@ -11,6 +11,8 @@ jim.mandelbrot.webworkerInteractive.create = function (_canvas, _width, _height,
     var displayCountdown = 0;
     var stepSize = 50;
     var currentIteration = 0;
+    var escapeValues;
+    var on = _events.listenTo;
 
 
     deadRegionCanvas.width = _width;
@@ -46,8 +48,7 @@ jim.mandelbrot.webworkerInteractive.create = function (_canvas, _width, _height,
             currentIteration:  currentIteration,
             iterations: stepSize,
             width: _width,
-            height: _height,
-            histogramTotal: _state.histogramTotal
+            height: _height
         };
         if (_state.shouldTransferExtents) {
             messagePayload.extents = extentsTransfer(extents.topLeft().x, extents.topLeft().y, extents.width(), extents.height());
@@ -63,28 +64,28 @@ jim.mandelbrot.webworkerInteractive.create = function (_canvas, _width, _height,
     worker.onmessage = function (m) {
         var msg = m.data;
         if(!_state.reset) {
-            _state.histogramTotal = msg.histogramTotal;
             copyOfHisto = processHistogramUpdates(new Uint32Array(msg.histogramUpdate));
             currentIteration += stepSize;
             _state.escapedByCurrentIteration = _state.histoData[currentIteration];
             _events.fire(_events.maxIterationsUpdated, currentIteration);
+            escapeValues = new Uint32Array(msg.escapeValues);
 
         } else {
             _state.histoData = new Uint32Array(250000);
             copyOfHisto = new Uint32Array(250000);
             _state.deadRegions = new Uint32Array(noOfPixels);
+            escapeValues = new Uint32Array(noOfPixels);
             currentIteration = 0;
             stepSize = 50;
-            _state.histogramTotal = 0;
             _state.reset=false;
             _state.maxIterations = 0;
         }
-        _events.fire("frameComplete", _state);
+        //_events.fire("frameComplete", _state);
         if (shouldCalculateDeadRegions) {
             _state.deadRegions = calculateDeadRegions(radius);
         }
         if(_state.shouldTransferExtents) {
-            displayCountdown = 3;
+            displayCountdown = 2;
         }
         if (displayCountdown >0 ) {
             displayCountdown -=1;
@@ -114,7 +115,7 @@ jim.mandelbrot.webworkerInteractive.create = function (_canvas, _width, _height,
     function calculateDeadRegions(deadPixelRadius) {
         var context = deadRegionCanvas.getContext('2d');
         var deadRegionData = new Uint8ClampedArray(4 *_width * _height);
-        var deadRegions = jim.mandelbrot.deadRegions.create(_state.escapeValues, _width);
+        var deadRegions = jim.mandelbrot.deadRegions.create(escapeValues, _width);
         var parsedRadius = parseInt(deadPixelRadius ? deadPixelRadius : 1, 10);
 
         var deadRegionsArray = deadRegions.regions(parsedRadius);
@@ -132,16 +133,22 @@ jim.mandelbrot.webworkerInteractive.create = function (_canvas, _width, _height,
         return deadRegionsArray;
     }
 
-    _events.listenTo("showDeadRegions", function (_radius) {
+    on("showDeadRegions", function (_radius) {
         shouldCalculateDeadRegions = true;
         shouldShowDeadRegions = true;
         radius = _radius;
     });
 
-    _events.listenTo("hideDeadRegions", function (_radius) {
+
+
+    on("hideDeadRegions", function (_radius) {
         shouldCalculateDeadRegions = false;
         shouldShowDeadRegions = false;
         radius = _radius;
+    });
+
+    on(_events.extentsUpdate, function () {
+        shouldShowDeadRegions = false;
     });
 
     return {

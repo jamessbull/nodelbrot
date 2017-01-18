@@ -80,7 +80,6 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
 
         histoData: histoData,
         histoData2: histoData2,
-        histogramTotal: histogramTotal,
         reset: reset,
         deadRegions: deadRegions,
         shouldTransferExtents: true,
@@ -91,7 +90,7 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
             currentExtents = selection.area().translateFrom(screen).to(currentExtents);
             this.shouldTransferExtents = true;
             this.reset = true;
-
+            _events.fire(_events.extentsUpdate, currentExtents);
         },
         resize: function (sizeX, sizeY) {
             screen = aRectangle(0, 0, sizeX - 1, sizeY - 1);
@@ -101,6 +100,7 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
                 currentExtents = previousExtents.pop();
                 this.reset = true;
                 this.shouldTransferExtents = true;
+                _events.fire(_events.extentsUpdate, currentExtents);
             }
         },
         move: function (moveX, moveY) {
@@ -108,6 +108,7 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
             currentExtents.move(0 - distance.x, 0 - distance.y);
             this.shouldTransferExtents = true;
             this.reset = true;
+            _events.fire(_events.extentsUpdate, currentExtents);
         },
 
         palette: function () {

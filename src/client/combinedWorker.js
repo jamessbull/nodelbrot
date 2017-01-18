@@ -81,6 +81,7 @@ onmessage = function(e) {
     var histogramUpdate = new Uint32Array(noOfIterations);
     var histogramData = new Uint32Array(msg.histogramDataBuffer);
     var histogramTotal = msg.histogramTotal;
+    var escapeValuesToTransfer;
 
     pixelStateTracker.imageData = new Uint8ClampedArray(4 * noOfPixels);
     pixelStateTracker.iterations = noOfIterations;
@@ -112,13 +113,15 @@ onmessage = function(e) {
 
 
     function postStateBack() {
-        postMessage(message(), [pixelStateTracker.imageData.buffer, pixelStateTracker.histogramUpdate.buffer]);
+        postMessage(message(), [pixelStateTracker.imageData.buffer, pixelStateTracker.histogramUpdate.buffer, escapeValuesToTransfer.buffer]);
     }
 
     function message () {
+        escapeValuesToTransfer = new Uint32Array(pixelStateTracker.escapeValues);
         return {
             histogramUpdate: pixelStateTracker.histogramUpdate.buffer,
             imageDataBuffer: pixelStateTracker.imageData.buffer,
+            escapeValues: escapeValuesToTransfer.buffer,
             histogramTotal: histogram.histogramTotal
         };
     }

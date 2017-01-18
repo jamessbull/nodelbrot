@@ -52,6 +52,7 @@ namespace("jim.mandelbrot.ui.elements");
 jim.mandelbrot.ui.elements.create = function (_exportSizeDropdown, _mandelbrotSet, _deadRegionsCanvas, _events) {
     "use strict";
     var dom = jim.dom.functions.create();
+    var on = _events.listenTo;
 
     var stopButton         = document.getElementById("stop");
     var startButton        = document.getElementById("start");
@@ -99,26 +100,19 @@ jim.mandelbrot.ui.elements.create = function (_exportSizeDropdown, _mandelbrotSe
     var ignoreChecked = false;
     ignoreDeadPixelsCheckbox.checked = false;
 
-    var killDeadRegionDisplay = function () {
+    on(_events.extentsUpdate, function () {
         ignoreDeadPixelsCheckbox.checked = false;
-        updateDeadRegions(true);
-    };
-
-    _events.listenTo("zoomIn", function () { killDeadRegionDisplay(); });
-    _events.listenTo("zoomOut", function () { killDeadRegionDisplay(); });
-    _events.listenTo("moved", function () { killDeadRegionDisplay(); });
+        ignoreChecked = false;
+    });
 
     ignoreDeadPixelsCheckbox.onclick= function () {
         ignoreChecked = !ignoreChecked;
         ignoreDeadPixelsCheckbox.checked = ignoreChecked;
         if (ignoreChecked) {
-            _events.fire("showDeadRegions", ignoreDeadPixelsRadius.value)
+            _events.fire("showDeadRegions", ignoreDeadPixelsRadius.value);
         } else {
-            _events.fire("hideDeadRegions", ignoreDeadPixelsRadius.value)
+            _events.fire("hideDeadRegions", ignoreDeadPixelsRadius.value);
         }
-
-
-        //updateDeadRegions(!ignoreChecked);
     };
 
     var parallelHistogram = jim.parallelHistogramGenerator.create();
