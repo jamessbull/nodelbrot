@@ -135,7 +135,7 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
 
     gradientCanvas.onmousemove = function (e) {
         markers.updatePosition(e.layerX);
-        _events.fire("paletteUpdated");
+        _events.fire(_events.paletteChanged);
     };
 
     return {

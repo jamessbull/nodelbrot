@@ -13,6 +13,8 @@ jim.mandelbrot.webworkerInteractive.create = function (_canvas, _width, _height,
     var currentIteration = 0;
     var escapeValues;
     var on = _events.listenTo;
+    var palette;
+    var transferPalette = true;
 
 
     deadRegionCanvas.width = _width;
@@ -42,7 +44,7 @@ jim.mandelbrot.webworkerInteractive.create = function (_canvas, _width, _height,
 
     function message() {
         var extents = _state.getExtents();
-        var palette = _state.palette();
+        palette = _state.palette();
         var messagePayload = {
             histogramDataBuffer: copyOfHisto.buffer,
             currentIteration:  currentIteration,
@@ -54,9 +56,9 @@ jim.mandelbrot.webworkerInteractive.create = function (_canvas, _width, _height,
             messagePayload.extents = extentsTransfer(extents.topLeft().x, extents.topLeft().y, extents.width(), extents.height());
             _state.shouldTransferExtents = false;
         }
-        if (_state.shouldTransferPalette) {
+        if (transferPalette) {
             messagePayload.paletteNodes = palette.toNodeList();
-            _state.shouldTransferPalette = false;
+            transferPalette = false;
         }
         return messagePayload;
     }
@@ -139,12 +141,15 @@ jim.mandelbrot.webworkerInteractive.create = function (_canvas, _width, _height,
         radius = _radius;
     });
 
-
-
     on("hideDeadRegions", function (_radius) {
         shouldCalculateDeadRegions = false;
         shouldShowDeadRegions = false;
         radius = _radius;
+    });
+
+    on(_events.paletteChanged, function (_palette) {
+        palette = _palette;
+        transferPalette = true;
     });
 
     on(_events.extentsUpdate, function () {

@@ -68,7 +68,6 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
         escapeValues = new Uint32Array(new ArrayBuffer(noOfPixels * 4));
         imageEscapeValues = new Uint32Array(new ArrayBuffer(noOfPixels * 4));
         histoData = new Uint32Array(250000);
-        histoData2 = new Uint32Array(250000);  //histogramDataBuffer
         imgData = new Uint8ClampedArray(4 * noOfPixels);
         histogramTotal = 0;
         reset = true;
@@ -79,7 +78,6 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
     var theState = {
 
         histoData: histoData,
-        histoData2: histoData2,
         reset: reset,
         deadRegions: deadRegions,
         shouldTransferExtents: true,

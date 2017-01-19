@@ -116,11 +116,8 @@ jim.init.run = function () {
 
 };
 
-// to fix - moving is a bit wonky - fixed now
 // examine is broken
-// dead region display should not persist on move or zoom
 
-//Fix up broken bits
 // split main display into separate threads.
 // I think breaking it up into three regions would be best
 // so refactor a bit to tidy everything up
