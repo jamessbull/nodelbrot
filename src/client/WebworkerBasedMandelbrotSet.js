@@ -13,9 +13,8 @@ jim.mandelbrot.webworkerInteractive.create = function (_canvas, _width, _height,
     var currentIteration = 0;
     var escapeValues;
     var on = _events.listenTo;
-    var palette;
-    var transferPalette = true;
 
+    var msgPayload = {};
 
     deadRegionCanvas.width = _width;
     deadRegionCanvas.height = _height;
@@ -25,7 +24,10 @@ jim.mandelbrot.webworkerInteractive.create = function (_canvas, _width, _height,
     };
 
     function postMessage() {
-        worker.postMessage(message(), [copyOfHisto.buffer]);
+        var msgToPost = message();
+        worker.postMessage(msgToPost, [copyOfHisto.buffer]);
+        msgPayload.paletteNodes = undefined;
+        msgPayload.extents = undefined;
     }
 
     var running = true;
@@ -44,23 +46,18 @@ jim.mandelbrot.webworkerInteractive.create = function (_canvas, _width, _height,
 
     function message() {
         var extents = _state.getExtents();
-        palette = _state.palette();
-        var messagePayload = {
-            histogramDataBuffer: copyOfHisto.buffer,
-            currentIteration:  currentIteration,
-            iterations: stepSize,
-            width: _width,
-            height: _height
-        };
+        msgPayload.histogramDataBuffer = copyOfHisto.buffer;
+        msgPayload.currentIteration = currentIteration;
+        msgPayload.iterations = stepSize;
+        msgPayload.width = _width;
+        msgPayload.height = _height;
+
         if (_state.shouldTransferExtents) {
-            messagePayload.extents = extentsTransfer(extents.topLeft().x, extents.topLeft().y, extents.width(), extents.height());
+            msgPayload.extents = extentsTransfer(extents.topLeft().x, extents.topLeft().y, extents.width(), extents.height());
             _state.shouldTransferExtents = false;
         }
-        if (transferPalette) {
-            messagePayload.paletteNodes = palette.toNodeList();
-            transferPalette = false;
-        }
-        return messagePayload;
+
+        return msgPayload;
     }
 
     worker.onmessage = function (m) {
@@ -148,8 +145,7 @@ jim.mandelbrot.webworkerInteractive.create = function (_canvas, _width, _height,
     });
 
     on(_events.paletteChanged, function (_palette) {
-        palette = _palette;
-        transferPalette = true;
+        msgPayload.paletteNodes = _palette.toNodeList();
     });
 
     on(_events.extentsUpdate, function () {

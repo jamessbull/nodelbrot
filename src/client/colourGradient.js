@@ -117,12 +117,12 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
 
     addButton.onclick = function () {
         markers.placeNewMarker();
-        _events.fire("paletteUpdated");
+        _events.fire(_events.paletteChanged, palette);
     };
 
     removeButton.onclick = function () {
         markers.removeSelectedNode();
-        _events.fire("paletteUpdated");
+        _events.fire(_events.paletteChanged, palette);
     };
 
     gradientCanvas.onmousedown = function (e) {
@@ -135,7 +135,7 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
 
     gradientCanvas.onmousemove = function (e) {
         markers.updatePosition(e.layerX);
-        _events.fire(_events.paletteChanged);
+        _events.fire(_events.paletteChanged, palette);
     };
 
     return {

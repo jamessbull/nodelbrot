@@ -142,10 +142,5 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
             return grid.at(x, y);
         }
     };
-
-    _events.listenTo("paletteUpdated", function () {
-        theState.shouldTransferPalette = true;
-    });
-
     return theState;
 };
