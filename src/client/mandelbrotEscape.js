@@ -109,9 +109,9 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
             _events.fire(_events.extentsUpdate, currentExtents);
         },
 
-        palette: function () {
-            return palette;
-        },
+//        palette: function () {
+//            return palette;
+//        },
         getExtents: function () {
             return currentExtents;
         },

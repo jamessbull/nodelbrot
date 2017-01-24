@@ -1,5 +1,5 @@
 namespace("jim.mandelbrot.image.exporter");
-jim.mandelbrot.image.exporter.create = function (_exportDimensions, _mandelbrotSet, _histogramGenerator, _dom) {
+jim.mandelbrot.image.exporter.create = function (_exportDimensions, _mandelbrotSet, _histogramGenerator, _dom, _events) {
     "use strict";
     var exporting = false;
 
@@ -11,6 +11,7 @@ jim.mandelbrot.image.exporter.create = function (_exportDimensions, _mandelbrotS
     var downloadButton = document.getElementById("export1");
     var exportDimensions;
     var imageGenerator = jim.parallelImageGenerator.create();
+    var palette;
 
     var timeReporter = jim.common.timeReporter.create(timeProgress);
     var histogramReporter = jim.common.imageExportProgressReporter.create(events, "histogramExportProgress", histogramProgress);
@@ -18,6 +19,10 @@ jim.mandelbrot.image.exporter.create = function (_exportDimensions, _mandelbrotS
     function log(thing) {
         console.log(thing);
     }
+
+    on(_events.paletteChanged, function (_palette) {
+        palette = _palette;
+    });
 
     namespace("jim.worker.pool");
     jim.worker.pool.create = function (noOfWorkers, workerUrl, initialJobs, toTransfer) {
@@ -75,7 +80,7 @@ jim.mandelbrot.image.exporter.create = function (_exportDimensions, _mandelbrotS
         timer.stop();
         console.log("Time taken to build 100 jobs " + timer.elapsed());
         timer.start();
-        var initialJobs = createInitialJobs(8, histogramData,  histogramTotal, _mandelbrotSet.palette().toNodeList());
+        var initialJobs = createInitialJobs(8, histogramData,  histogramTotal, palette.toNodeList());
         var workerPool =  jim.worker.pool.create(8, "/js/mandelbrotImageCalculatingWorker.js", initialJobs, "histogramData");
         timer.stop();
         timer.elapsed("Create workers and send histogram to them");

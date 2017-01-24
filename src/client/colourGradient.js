@@ -118,7 +118,7 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
     addButton.onclick = function () {
         markers.placeNewMarker();
         _events.fire(_events.paletteChanged, palette);
-    };
+     };
 
     removeButton.onclick = function () {
         markers.removeSelectedNode();

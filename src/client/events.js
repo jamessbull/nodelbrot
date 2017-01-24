@@ -24,3 +24,4 @@ jim.events.create = function () {
 };
 
 var events = jim.events.create();
+var on = events.listenTo;

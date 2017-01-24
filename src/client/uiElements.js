@@ -116,6 +116,6 @@ jim.mandelbrot.ui.elements.create = function (_exportSizeDropdown, _mandelbrotSe
     };
 
     var parallelHistogram = jim.parallelHistogramGenerator.create();
-    jim.mandelbrot.image.exporter.create(_exportSizeDropdown, _mandelbrotSet, parallelHistogram, dom);
+    jim.mandelbrot.image.exporter.create(_exportSizeDropdown, _mandelbrotSet, parallelHistogram, dom, _events);
     //var histogramDisplay = jim.mandelbrot.ui.histogram.create(parallelHistogram, _mandelbrotSet, dom);
 };

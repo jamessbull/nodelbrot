@@ -25,9 +25,6 @@ jim.mandelbrotImage.create = function (_events, _width, _height) {
         move: function (x, y) {
             state.move(x, y);
         },
-        palette: function () {
-            return state.palette();
-        },
         state: function () {
             return state;
         },
@@ -72,13 +69,14 @@ jim.init.run = function () {
     var veryLargeExport         = dom.element("veryLargeExport");
     var exportSizeSelect        = dom.element("exportSizeSelect");
 
-    var colourGradientui = newColourGradientUI(colourGradientCanvas, addButton, removeButton, mandelbrot.palette(), events);
-    var bookmarker = newBookmarker(bookmarkButton, mandelbrot, colourGradientui);
+    var palette = jim.palette.create();
+    var colourGradientui = newColourGradientUI(colourGradientCanvas, addButton, removeButton, palette, events);
+    var bookmarker = newBookmarker(bookmarkButton, mandelbrot, colourGradientui, events);
     var mainDisplayUI = newMainUI(mandelbrot, canvasDiv, mandelCanvas.width, mandelCanvas.height, pixelInfoCanvas);
     window.ui = mainDisplayUI;
     var colourPicker = newColourPicker(colourPickerCanvas, colourGradientui);
     var exportSizeDropdown = newExportSizeDropdown(exportSizeSelect, [smallExport, mediumExport, largeExport, veryLargeExport]);
-    newMiscUiElements(exportSizeDropdown, mandelbrot, deadRegionsCanvas, events);
+    newMiscUiElements(exportSizeDropdown, mandelbrot, deadRegionsCanvas, events, palette);
     var iter = 0;
     var render = function () {
         events.listenTo(events.maxIterationsUpdated, function (_iter) {
@@ -112,7 +110,10 @@ jim.init.run = function () {
     colourPicker.draw();
 
     jim.anim.create(render).start();
+
+    events.fire(events.paletteChanged, palette);
     bookmarker.changeLocation();
+    events.fire(events.paletteChanged, palette);
 
 };
 

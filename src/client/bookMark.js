@@ -1,9 +1,9 @@
 namespace("jim.mandelbrot.bookmark");
-jim.mandelbrot.bookmark.create = function (bookmarkButton, mandelbrot, colourGradientui) {
+jim.mandelbrot.bookmark.create = function (bookmarkButton, mandelbrot, colourGradientui, _events) {
 
     "use strict";
     var justBookmarked = false;
-
+    var palette;
     var newLocation = function (pos, nodes) {
         return {
             location: pos,
@@ -11,8 +11,12 @@ jim.mandelbrot.bookmark.create = function (bookmarkButton, mandelbrot, colourGra
         };
     };
 
+    on(_events.paletteChanged, function (_palette) {
+        palette = _palette;
+    });
+
     var defaultMandelbrotInfo = function () {
-        return newLocation({x:-2.5,y:-1, w:3.5, h: 2}, mandelbrot.palette().toNodeList());
+        return newLocation({x:-2.5,y:-1, w:3.5, h: 2}, palette.toNodeList());
     };
 
     var mandelbrotInfoFromUrl = function () {
@@ -28,7 +32,7 @@ jim.mandelbrot.bookmark.create = function (bookmarkButton, mandelbrot, colourGra
 
     var changeCurrentMandelbrotStateToMatchUrl = function () {
         var mandelbrotInfo = currentMandelbrotInfo();
-        mandelbrot.palette().fromNodeList(mandelbrotInfo.nodes);
+        palette.fromNodeList(mandelbrotInfo.nodes);
         colourGradientui.rebuildMarkers();
         mandelbrot.state().setExtents(jim.rectangle.create(mandelbrotInfo.location));
     };
@@ -47,7 +51,7 @@ jim.mandelbrot.bookmark.create = function (bookmarkButton, mandelbrot, colourGra
         var w = a.width();
         var h = a.height();
         var pos = {x:x, y:y, w:w, h:h};
-        var nodes = mandelbrot.palette().toNodeList();
+        var nodes = palette.toNodeList();
 
         var mandelbrotInfo = newLocation(pos, nodes);
         console.log("current location is " + JSON.stringify(mandelbrotInfo));
