@@ -19,7 +19,10 @@ jim.events.create = function () {
         },
         extentsUpdate: "extentsUpdate",
         paletteChanged: "paletteUpdate",
-        maxIterationsUpdated: "maxIterationsUpdated"
+        maxIterationsUpdated: "maxIterationsUpdated",
+        escapeValuesPublished: "escapeValuesPublished",
+        requestEscapeValues: "requestEscapeValues",
+        frameComplete: "frameComplete"
     };
 };
 

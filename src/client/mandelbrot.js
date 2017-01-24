@@ -33,6 +33,12 @@ jim.mandelbrotImage.create = function (_events, _width, _height) {
         },
         go: function() {
             mandelbrotCalculator.start();
+        },
+        width: function () {
+            return _width;
+        },
+        height: function () {
+            return _height;
         }
     };
 };
@@ -68,7 +74,13 @@ jim.init.run = function () {
     var largeExport             = dom.element("largeExport");
     var veryLargeExport         = dom.element("veryLargeExport");
     var exportSizeSelect        = dom.element("exportSizeSelect");
-
+    var deadRegionCanvas        = document.createElement('canvas');
+    deadRegionCanvas.width = mandelbrot.width();
+    deadRegionCanvas.height = mandelbrot.height();
+    deadRegionCanvas.oncontextmenu = function (e) {
+        e.preventDefault();
+    };
+    var deadRegions = jim.mandelbrot.deadRegions.create(events, deadRegionCanvas, mandelbrot.canvas());
     var palette = jim.palette.create();
     var colourGradientui = newColourGradientUI(colourGradientCanvas, addButton, removeButton, palette, events);
     var bookmarker = newBookmarker(bookmarkButton, mandelbrot, colourGradientui, events);

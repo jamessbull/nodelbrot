@@ -41,7 +41,6 @@ namespace("jim.mandelbrot.state");
 jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
     "use strict";
     var aRectangle      = jim.rectangle.create,
-        palette         = jim.palette.create(),
         currentExtents  = startingExtent,
         previousExtents = [],
         screen          = aRectangle(0, 0, sizeX - 1, sizeY - 1),
@@ -108,10 +107,6 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
             this.reset = true;
             _events.fire(_events.extentsUpdate, currentExtents);
         },
-
-//        palette: function () {
-//            return palette;
-//        },
         getExtents: function () {
             return currentExtents;
         },
