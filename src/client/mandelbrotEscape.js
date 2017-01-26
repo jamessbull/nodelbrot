@@ -44,49 +44,29 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
         currentExtents  = startingExtent,
         previousExtents = [],
         screen          = aRectangle(0, 0, sizeX - 1, sizeY - 1),
-        colours         = jim.colourCalculator.create(),
         maxIterations   = 0,
-        chunkSize      = 100,
-        p,
-        deadPixelRadius = 1,
-        black = jim.colour.create(0,0,0,255),
         fromScreen = function (x, y) { return screen.at(x, y).translateTo(currentExtents);};
 
     var noOfPixels = sizeX * sizeY;
-    var escapeValues;
-    var imageEscapeValues;
-    var escapedByCurrentIteration = 0;
     var histoData;
-    var histoData2;
     var imgData;
     var histogramTotal;
-    var reset;
-    var deadRegions;
 
     var resetState = function () {
-        escapeValues = new Uint32Array(new ArrayBuffer(noOfPixels * 4));
-        imageEscapeValues = new Uint32Array(new ArrayBuffer(noOfPixels * 4));
         histoData = new Uint32Array(250000);
         imgData = new Uint8ClampedArray(4 * noOfPixels);
         histogramTotal = 0;
-        reset = true;
-        deadRegions = new Uint32Array(noOfPixels);
     };
     resetState();
 
     var theState = {
 
         histoData: histoData,
-        reset: reset,
-        deadRegions: deadRegions,
-        shouldTransferExtents: true,
-        shouldTransferPalette: true,
 
         zoomTo: function (selection) {
             previousExtents.push(currentExtents.copy());
             currentExtents = selection.area().translateFrom(screen).to(currentExtents);
-            this.shouldTransferExtents = true;
-            this.reset = true;
+            resetState();
             _events.fire(_events.extentsUpdate, currentExtents);
         },
         resize: function (sizeX, sizeY) {
@@ -95,16 +75,14 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
         zoomOut: function () {
             if (previousExtents.length > 0) {
                 currentExtents = previousExtents.pop();
-                this.reset = true;
-                this.shouldTransferExtents = true;
+                resetState();
                 _events.fire(_events.extentsUpdate, currentExtents);
             }
         },
         move: function (moveX, moveY) {
             var distance = fromScreen(moveX, moveY).distanceTo(currentExtents.topLeft());
             currentExtents.move(0 - distance.x, 0 - distance.y);
-            this.shouldTransferExtents = true;
-            this.reset = true;
+            resetState();
             _events.fire(_events.extentsUpdate, currentExtents);
         },
         getExtents: function () {
@@ -113,14 +91,7 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
         setExtents: function (extents) {
             currentExtents = extents;
             maxIterations = 0;
-            reset = true;
-            this.shouldTransferExtents = true;
-        },
-        maximumIteration: function () {
-            return this.currentIteration;
-        },
-        setDeadPixelRadius: function (n) {
-            deadPixelRadius = parseInt(n);
+            _events.fire(_events.extentsUpdate, currentExtents);
         },
         currentPointColour: function (x,y) {
             var index = ((y * sizeX) +x) * 4;
@@ -129,12 +100,6 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
             var b = imgData[index] + 2;
             var a = imgData[index] + 3;
             return {r: r, g:g, b:b, a:a};
-        },
-        at: function (x, y) {
-            if (grid.xSize()<=x || grid.ySize()<=y || x<0 || y<0) {
-                return Object.create(jim.mandelbrot.basepoint);
-            }
-            return grid.at(x, y);
         }
     };
     return theState;

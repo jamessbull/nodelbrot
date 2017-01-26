@@ -2,14 +2,13 @@ namespace("jim.mandelbrot.webworkerInteractive");
 jim.mandelbrot.webworkerInteractive.create = function (_canvas, _width, _height, _state, _events) {
     "use strict";
     var worker = new Worker("/js/combinedWorker.js");
-    var noOfPixels = _width * _height;
     var shouldPublishEscapeValues = false;
     var copyOfHisto = new Uint32Array(250000);
     var displayCountdown = 0;
     var stepSize = 50;
     var currentIteration = 0;
-    var escapeValues;
     var msgPayload = {};
+    var extentsUpdated = true;
 
     function postMessage() {
         var msgToPost = message();
@@ -37,9 +36,8 @@ jim.mandelbrot.webworkerInteractive.create = function (_canvas, _width, _height,
         msgPayload.width = _width;
         msgPayload.height = _height;
 
-        if (_state.shouldTransferExtents) {
+        if (extentsUpdated) {
             msgPayload.extents = extentsTransfer(extents.topLeft().x, extents.topLeft().y, extents.width(), extents.height());
-            _state.shouldTransferExtents = false;
         }
 
         return msgPayload;
@@ -47,28 +45,20 @@ jim.mandelbrot.webworkerInteractive.create = function (_canvas, _width, _height,
 
     worker.onmessage = function (m) {
         var msg = m.data;
-        if(!_state.reset) {
+        if(!extentsUpdated) {
             copyOfHisto = processHistogramUpdates(new Uint32Array(msg.histogramUpdate));
             currentIteration += stepSize;
-            _state.escapedByCurrentIteration = _state.histoData[currentIteration];
             _events.fire(_events.maxIterationsUpdated, currentIteration);
-            escapeValues = new Uint32Array(msg.escapeValues);
-
         } else {
-            _state.histoData = new Uint32Array(250000);
             copyOfHisto = new Uint32Array(250000);
-            _state.deadRegions = new Uint32Array(noOfPixels);
-            escapeValues = new Uint32Array(noOfPixels);
             currentIteration = 0;
-            stepSize = 50;
-            _state.reset=false;
-            _state.maxIterations = 0;
+
         }
         if (shouldPublishEscapeValues) {
             _events.fire(_events.escapeValuesPublished, new Uint32Array(msg.escapeValues));
             shouldPublishEscapeValues = false;
         }
-        if(_state.shouldTransferExtents) {
+        if(extentsUpdated) {
             displayCountdown = 2;
         }
         if (displayCountdown >0 ) {
@@ -81,6 +71,7 @@ jim.mandelbrot.webworkerInteractive.create = function (_canvas, _width, _height,
         if(running) {
             postMessage();
         }
+        extentsUpdated = false;
     };
 
     function processHistogramUpdates(updates) {
@@ -99,7 +90,7 @@ jim.mandelbrot.webworkerInteractive.create = function (_canvas, _width, _height,
     });
 
     on(_events.extentsUpdate, function () {
-        shouldPublishEscapeValues = false;
+        extentsUpdated = true;
     });
 
     return {
