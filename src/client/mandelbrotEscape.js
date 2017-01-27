@@ -48,21 +48,16 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
         fromScreen = function (x, y) { return screen.at(x, y).translateTo(currentExtents);};
 
     var noOfPixels = sizeX * sizeY;
-    var histoData;
     var imgData;
     var histogramTotal;
 
     var resetState = function () {
-        histoData = new Uint32Array(250000);
         imgData = new Uint8ClampedArray(4 * noOfPixels);
         histogramTotal = 0;
     };
     resetState();
 
     var theState = {
-
-        histoData: histoData,
-
         zoomTo: function (selection) {
             previousExtents.push(currentExtents.copy());
             currentExtents = selection.area().translateFrom(screen).to(currentExtents);
@@ -103,4 +98,30 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
         }
     };
     return theState;
+};
+
+namespace("jim.mandelbrot.escapeDistributionHistogram");
+jim.mandelbrot.escapeDistributionHistogram.create = function (_events) {
+    "use strict";
+    var histoData = new Uint32Array(250000);
+
+    function processHistogramUpdates(updateInfo) {
+        var updates = updateInfo.update;
+        var currentIteration = updateInfo.currentIteration;
+
+        for (var i = 0; i < updates.length; i+=1) {
+            histoData[currentIteration + i] += updates[i];
+        }
+        return new Uint32Array(histoData);
+    }
+
+    on(_events.histogramUpdateReceivedFromWorker, function (updateInfo) {
+        var updated = processHistogramUpdates(updateInfo);
+        _events.fire(_events.histogramUpdated, updated);
+    });
+
+    on(_events.extentsUpdate, function () {
+        histoData = new Uint32Array(250000);
+    });
+    return {};
 };

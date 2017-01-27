@@ -46,7 +46,7 @@ jim.mandelbrot.webworkerInteractive.create = function (_canvas, _width, _height,
     worker.onmessage = function (m) {
         var msg = m.data;
         if(!extentsUpdated) {
-            copyOfHisto = processHistogramUpdates(new Uint32Array(msg.histogramUpdate));
+            _events.fire(_events.histogramUpdateReceivedFromWorker, {update: new Uint32Array(msg.histogramUpdate), currentIteration: currentIteration});
             currentIteration += stepSize;
             _events.fire(_events.maxIterationsUpdated, currentIteration);
         } else {
@@ -74,13 +74,6 @@ jim.mandelbrot.webworkerInteractive.create = function (_canvas, _width, _height,
         extentsUpdated = false;
     };
 
-    function processHistogramUpdates(updates) {
-        for (var i = 0; i < updates.length; i+=1) {
-            _state.histoData[currentIteration + i] += updates[i];
-        }
-        return new Uint32Array(_state.histoData);
-    }
-
     on(_events.requestEscapeValues, function () {
         shouldPublishEscapeValues = true;
     });
@@ -91,6 +84,10 @@ jim.mandelbrot.webworkerInteractive.create = function (_canvas, _width, _height,
 
     on(_events.extentsUpdate, function () {
         extentsUpdated = true;
+    });
+
+    on(_events.histogramUpdated, function (updatedHistogram) {
+        copyOfHisto = updatedHistogram;
     });
 
     return {

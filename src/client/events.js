@@ -22,7 +22,9 @@ jim.events.create = function () {
         maxIterationsUpdated: "maxIterationsUpdated",
         escapeValuesPublished: "escapeValuesPublished",
         requestEscapeValues: "requestEscapeValues",
-        frameComplete: "frameComplete"
+        frameComplete: "frameComplete",
+        histogramUpdateReceivedFromWorker: "histogramUpdateReceivedFromWorker",
+        histogramUpdated: "histogramUpdated"
     };
 };
 

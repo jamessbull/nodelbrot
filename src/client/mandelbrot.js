@@ -80,6 +80,7 @@ jim.init.run = function () {
     deadRegionCanvas.oncontextmenu = function (e) {
         e.preventDefault();
     };
+    var processor = jim.mandelbrot.escapeDistributionHistogram.create(events);
     var deadRegions = jim.mandelbrot.deadRegions.create(events, deadRegionCanvas, mandelbrot.canvas());
     var palette = jim.palette.create();
     var colourGradientui = newColourGradientUI(colourGradientCanvas, addButton, removeButton, palette, events);
