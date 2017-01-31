@@ -24,7 +24,8 @@ jim.events.create = function () {
         requestEscapeValues: "requestEscapeValues",
         frameComplete: "frameComplete",
         histogramUpdateReceivedFromWorker: "histogramUpdateReceivedFromWorker",
-        histogramUpdated: "histogramUpdated"
+        histogramUpdated: "histogramUpdated",
+        renderImage:"renderImage"
     };
 };
 

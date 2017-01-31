@@ -125,3 +125,15 @@ jim.mandelbrot.escapeDistributionHistogram.create = function (_events) {
     });
     return {};
 };
+
+namespace("jim.mandelbrot.imageRenderer");
+jim.mandelbrot.imageRenderer.create = function (_events, _canvas, _width, _height) {
+    "use strict";
+    on(_events.renderImage, function (_imgData) {
+        var context = _canvas.getContext('2d');
+        var imageData = new ImageData(_imgData, _width, _height);
+        context.putImageData(imageData, 0, 0);
+    });
+
+    return {};
+};

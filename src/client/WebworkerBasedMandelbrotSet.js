@@ -18,11 +18,6 @@ jim.mandelbrot.webworkerInteractive.create = function (_canvas, _width, _height,
     }
 
     var running = true;
-    function updateImage(_imgData) {
-        var context = _canvas.getContext('2d');
-        var imageData = new ImageData(_imgData, _width, _height);
-        context.putImageData(imageData, 0, 0);
-    }
 
     function extentsTransfer(x, y, w, h) {
         return {mx: x, my: y, mw: w, mh: h};
@@ -64,7 +59,7 @@ jim.mandelbrot.webworkerInteractive.create = function (_canvas, _width, _height,
         if (displayCountdown >0 ) {
             displayCountdown -=1;
         } else {
-            updateImage(new Uint8ClampedArray(msg.imageDataBuffer));
+            _events.fire(_events.renderImage, new Uint8ClampedArray(msg.imageDataBuffer));
         }
         _events.fire("frameComplete");
 

@@ -82,6 +82,7 @@ jim.init.run = function () {
     };
     var processor = jim.mandelbrot.escapeDistributionHistogram.create(events);
     var deadRegions = jim.mandelbrot.deadRegions.create(events, deadRegionCanvas, mandelbrot.canvas());
+    jim.mandelbrot.imageRenderer.create(events, mandelbrot.canvas(), mandelbrot.width(), mandelbrot.height());
     var palette = jim.palette.create();
     var colourGradientui = newColourGradientUI(colourGradientCanvas, addButton, removeButton, palette, events);
     var bookmarker = newBookmarker(bookmarkButton, mandelbrot, colourGradientui, events);
