@@ -12,6 +12,7 @@ jim.mandelbrot.image.exporter.create = function (_exportDimensions, _mandelbrotS
     var exportDimensions;
     var imageGenerator = jim.parallelImageGenerator.create();
     var palette;
+    var deadRegions;
 
     var timeReporter = jim.common.timeReporter.create(timeProgress);
     var histogramReporter = jim.common.imageExportProgressReporter.create(events, "histogramExportProgress", histogramProgress);
@@ -22,6 +23,10 @@ jim.mandelbrot.image.exporter.create = function (_exportDimensions, _mandelbrotS
 
     on(_events.paletteChanged, function (_palette) {
         palette = _palette;
+    });
+
+    on(_events.deadRegionsPublished, function (_deadRegions) {
+        deadRegions = _deadRegions;
     });
 
     namespace("jim.worker.pool");
@@ -71,11 +76,9 @@ jim.mandelbrot.image.exporter.create = function (_exportDimensions, _mandelbrotS
             return initialJobs;
         }
 
-        var ignoreDeadPixelsRadius = document.getElementById("ignoreDeadPixelsRadius");
-        _mandelbrotSet.state().setDeadPixelRadius(ignoreDeadPixelsRadius.value);
         var timer = jim.stopwatch.create();
         timer.start();
-        var jobs = imageGenerator.run(_mandelbrotSet.state().getExtents(), exportDepth.value,  exportDimensions.width, exportDimensions.height, _mandelbrotSet.state().deadRegions, 100);
+        var jobs = imageGenerator.run(_mandelbrotSet.state().getExtents(), exportDepth.value,  exportDimensions.width, exportDimensions.height, deadRegions, 100);
 
         timer.stop();
         console.log("Time taken to build 100 jobs " + timer.elapsed());

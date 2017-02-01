@@ -24,6 +24,7 @@ var xState;
 var yState;
 var escapeValues;
 var imageEscapeValues;
+var reset;
 
 function initState(_noOfPixels) {
     "use strict";
@@ -31,6 +32,7 @@ function initState(_noOfPixels) {
     yState = new Float64Array(_noOfPixels);
     escapeValues = new Uint32Array(_noOfPixels);
     imageEscapeValues = new Uint32Array(_noOfPixels);
+    reset = true;
 }
 
 var pixelStateTracker = (function () {
@@ -114,6 +116,7 @@ onmessage = function(e) {
 
     function postStateBack() {
         postMessage(message(), [pixelStateTracker.imageData.buffer, pixelStateTracker.histogramUpdate.buffer, escapeValuesToTransfer.buffer]);
+        reset = false;
     }
 
     function message () {
@@ -122,7 +125,8 @@ onmessage = function(e) {
             histogramUpdate: pixelStateTracker.histogramUpdate.buffer,
             imageDataBuffer: pixelStateTracker.imageData.buffer,
             escapeValues: escapeValuesToTransfer.buffer,
-            histogramTotal: histogram.histogramTotal
+            histogramTotal: histogram.histogramTotal,
+            reset: reset
         };
     }
 

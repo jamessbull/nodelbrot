@@ -147,6 +147,7 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
         },
         setSelectedNodeColour: function(tc) {
             markers.setColour(tc);
+            _events.fire(_events.paletteChanged, palette);
         },
         rebuildMarkers: function () {
             markers.build();

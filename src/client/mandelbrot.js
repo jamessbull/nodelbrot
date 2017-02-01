@@ -17,7 +17,7 @@ jim.mandelbrotImage.create = function (_events, _width, _height) {
     };
 
     var mandelbrotCalculator = jim.mandelbrot.webworkerInteractive.create(canvas, _width, _height, state, _events);
-    mandelbrotCalculator.start();
+    //mandelbrotCalculator.start();
     return {
         canvas: function () {
             return canvas;
@@ -85,6 +85,9 @@ jim.init.run = function () {
     jim.mandelbrot.imageRenderer.create(events, mandelbrot.canvas(), mandelbrot.width(), mandelbrot.height());
     var palette = jim.palette.create();
     var colourGradientui = newColourGradientUI(colourGradientCanvas, addButton, removeButton, palette, events);
+
+//    events.fire(events.extentsUpdate, mandelbrot.state().getExtents());
+
     var bookmarker = newBookmarker(bookmarkButton, mandelbrot, colourGradientui, events);
     var mainDisplayUI = newMainUI(mandelbrot, canvasDiv, mandelCanvas.width, mandelCanvas.height, pixelInfoCanvas);
     window.ui = mainDisplayUI;
@@ -154,3 +157,7 @@ jim.init.run = function () {
 // minify js
 // remove all dead code
 // estimate long tail cap histo size at 300k use last 100k to  estimate next 500k
+
+// fire event 1
+// fire event 2 extents are updated
+// event

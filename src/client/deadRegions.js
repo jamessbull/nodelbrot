@@ -30,7 +30,7 @@ jim.mandelbrot.deadRegions.create = function (_events, _canvas, _mandelbrotCanva
                 setPixel(i, deadRegionData, {r:1,g:1,b:1,a:0});
             }
         });
-
+        _events.fire(_events.deadRegionsPublished, deadRegionsArray);
         context.putImageData(new ImageData(deadRegionData, _width, _height), 0, 0);
 
         return deadRegionsArray;
@@ -102,6 +102,6 @@ jim.mandelbrot.deadRegions.create = function (_events, _canvas, _mandelbrotCanva
             });
             return deadRegions;
         }
-        }
+        };
     }
 };

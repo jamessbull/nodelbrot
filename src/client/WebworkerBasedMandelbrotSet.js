@@ -4,17 +4,25 @@ jim.mandelbrot.webworkerInteractive.create = function (_canvas, _width, _height,
     var worker = new Worker("/js/combinedWorker.js");
     var shouldPublishEscapeValues = false;
     var copyOfHisto = new Uint32Array(250000);
-    var displayCountdown = 0;
     var stepSize = 50;
     var currentIteration = 0;
-    var msgPayload = {};
-    var extentsUpdated = true;
+    var extents = null;
+    var palette = null;
+    var additionalMessagesInFlight = 0;
 
     function postMessage() {
-        var msgToPost = message();
-        worker.postMessage(msgToPost, [copyOfHisto.buffer]);
-        msgPayload.paletteNodes = undefined;
-        msgPayload.extents = undefined;
+        additionalMessagesInFlight +=1;
+        var msg = {
+            histogramDataBuffer: copyOfHisto.buffer,
+            currentIteration : currentIteration,
+            iterations : stepSize,
+            width :_width,
+            height :_height,
+            extents: extents,
+            paletteNodes: palette
+        };
+
+        worker.postMessage(msg, [copyOfHisto.buffer]);
     }
 
     var running = true;
@@ -23,50 +31,27 @@ jim.mandelbrot.webworkerInteractive.create = function (_canvas, _width, _height,
         return {mx: x, my: y, mw: w, mh: h};
     }
 
-    function message() {
-        var extents = _state.getExtents();
-        msgPayload.histogramDataBuffer = copyOfHisto.buffer;
-        msgPayload.currentIteration = currentIteration;
-        msgPayload.iterations = stepSize;
-        msgPayload.width = _width;
-        msgPayload.height = _height;
-
-        if (extentsUpdated) {
-            msgPayload.extents = extentsTransfer(extents.topLeft().x, extents.topLeft().y, extents.width(), extents.height());
-        }
-
-        return msgPayload;
-    }
-
     worker.onmessage = function (m) {
         var msg = m.data;
-        if(!extentsUpdated) {
-            _events.fire(_events.histogramUpdateReceivedFromWorker, {update: new Uint32Array(msg.histogramUpdate), currentIteration: currentIteration});
-            currentIteration += stepSize;
-            _events.fire(_events.maxIterationsUpdated, currentIteration);
-        } else {
-            copyOfHisto = new Uint32Array(250000);
-            currentIteration = 0;
+        additionalMessagesInFlight-=1;
+        if(additionalMessagesInFlight >0) return;
 
-        }
+        _events.fire(_events.histogramUpdateReceivedFromWorker, {update: new Uint32Array(msg.histogramUpdate), currentIteration: currentIteration});
+        _events.fire(_events.maxIterationsUpdated, currentIteration);
         if (shouldPublishEscapeValues) {
             _events.fire(_events.escapeValuesPublished, new Uint32Array(msg.escapeValues));
             shouldPublishEscapeValues = false;
         }
-        if(extentsUpdated) {
-            displayCountdown = 2;
-        }
-        if (displayCountdown >0 ) {
-            displayCountdown -=1;
-        } else {
-            _events.fire(_events.renderImage, new Uint8ClampedArray(msg.imageDataBuffer));
-        }
-        _events.fire("frameComplete");
+        currentIteration += stepSize;
+        _events.fire(_events.renderImage, new Uint8ClampedArray(msg.imageDataBuffer));
+        _events.fire(_events.frameComplete);
 
         if(running) {
             postMessage();
         }
-        extentsUpdated = false;
+
+        palette = undefined;
+        extents = undefined;
     };
 
     on(_events.requestEscapeValues, function () {
@@ -74,11 +59,15 @@ jim.mandelbrot.webworkerInteractive.create = function (_canvas, _width, _height,
     });
 
     on(_events.paletteChanged, function (_palette) {
-        msgPayload.paletteNodes = _palette.toNodeList();
+        palette = _palette.toNodeList();
     });
 
-    on(_events.extentsUpdate, function () {
-        extentsUpdated = true;
+    on(_events.extentsUpdate, function (_extents) {
+        copyOfHisto = new Uint32Array(250000);
+        currentIteration = 0;
+        extents = extentsTransfer(_extents.topLeft().x, _extents.topLeft().y, _extents.width(), _extents.height());
+        console.log("Calling post from extents update");
+        postMessage();
     });
 
     on(_events.histogramUpdated, function (updatedHistogram) {
