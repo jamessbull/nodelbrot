@@ -101,7 +101,8 @@ jim.mandelbrot.deadRegions.create = function (_events, _canvas, _mandelbrotCanva
                 deadRegions[index] = pixelIsDead(index);
             });
             return deadRegions;
-        }
+            }
         };
     }
+    return {calculator: calculator};
 };

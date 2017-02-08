@@ -35,10 +35,16 @@ describe("The user interface action", function () {
         actionFired += "zoomTo";
     };
 
-
     var state = {};
     state.isSelectPixelMode = function () {
         return false;
+    };
+
+    state.zoomOut =mset.zoomOut;
+    state.zoomTo = mset.zoomTo;
+
+    mset.state = function () {
+        return state;
     };
 
     it("double click should take less than a second", function () {

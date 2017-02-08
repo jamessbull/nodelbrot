@@ -18,6 +18,8 @@ describe("The user interface action", function () {
                 return {
                     getExtents: function () {
                         return jim.rectangle.create(0,0,7,8);
+                    }, zoomOut: function () {
+                        console.log("zoomed out");
                     }
                 };
             }
