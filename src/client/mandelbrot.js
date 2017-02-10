@@ -137,6 +137,7 @@ jim.init.run = function () {
 // examine is broken
 // observed difference between interactive and full export colouration
 // Likely a histogram issue
+// Export broken if dead regions have not been calculated
 
 // split main display into separate threads.
 // I think breaking it up into three regions would be best

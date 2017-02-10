@@ -123,36 +123,14 @@ jim.mandelbrot.image.exporter.create = function (_exportDimensions, _mandelbrotS
             console.log("Can't export while export already in progress");
             return false ;
         }
+        var depth = parseInt(exportDepth.value);
+        var source = _mandelbrotSet.state().getExtents();
+        var calculator = jim.mandelbrot.export.escapeHistogramCalculator.create();
+        var dest = jim.rectangle.create(0, 0, roundedWidth, roundedHeight);
+        var noOfParts = 10;
+        var noOfWorkers = 8;
+        calculator.calculate(source, dest, depth, noOfParts, noOfWorkers, exportImage);
 
-        function addFirstToSecond(arr1, arr2) {
-            for(var i = 1; i <= arr1.length; i +=1){
-                arr2[i] += arr1[i];
-            }
-        }
-
-        var fullHistogramData = new Uint32Array(parseInt(exportDepth.value) + 1);
-        var fullHistogramTotal = 0;
-        var jobs = _histogramGenerator.run(_mandelbrotSet.state().getExtents(), exportDepth.value, roundedWidth, roundedHeight,10);
-        var workerPool =  jim.worker.pool.create(8, "/js/histogramCalculatingWorker.js", [], "");
-
-        function onEveryJob(_msg) {
-            console.log("on every job");
-            fullHistogramTotal += _msg.result.histogramTotal;
-            addFirstToSecond(new Uint32Array(_msg.result.histogramData), fullHistogramData);
-            events.fire("histogramExportProgress", 280);
-            log("a histo job completed");
-        }
-
-        function onAllJobsComplete(_msg) {
-            console.log("on all complete in histo generator");
-            var h = jim.twoPhaseHistogram.create(fullHistogramData.length);
-            log("About to total up all the data");
-            h.setData(fullHistogramData, fullHistogramTotal);
-            h.process();
-            log("data well totalled");
-            exportImage(fullHistogramData, fullHistogramTotal);
-        }
-        workerPool.consume(jobs, onEveryJob, onAllJobsComplete);
         exporting = true;
     };
 };
