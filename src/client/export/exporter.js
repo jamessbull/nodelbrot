@@ -29,35 +29,6 @@ jim.mandelbrot.image.exporter.create = function (_exportDimensions, _mandelbrotS
         deadRegions = _deadRegions;
     });
 
-    namespace("jim.worker.pool");
-    jim.worker.pool.create = function (noOfWorkers, workerUrl, initialJobs, toTransfer) {
-        var workers = [];
-        for (var i = 0; i < noOfWorkers; i+=1) {
-            var worker = new Worker(workerUrl);
-            workers.push(worker);
-            if (initialJobs.length === noOfWorkers) {
-                worker.postMessage(initialJobs[i], [initialJobs[i][toTransfer]]);
-            }
-        }
-
-        return {
-            consume: function (_jobs, _onEachJob, _onAllJobsComplete) {
-                var jobsComplete = 0, jobsToComplete = _jobs.length;
-                workers.forEach(function (worker) {
-                    worker.onmessage = function (e) {
-                        var msg = e.data;
-                        jobsComplete +=1;
-                        var job = _jobs.pop();
-                        if (job) this.postMessage(job);
-                        _onEachJob(msg);
-                        if (jobsComplete === jobsToComplete) _onAllJobsComplete(msg);
-                    };
-                    worker.postMessage(_jobs.pop());
-                });
-            }
-        };
-    };
-
     function makeExportCanvas(_exportDimensions) {
         var exportCanvas = document.createElement('canvas');
         exportCanvas.width = _exportDimensions.width;

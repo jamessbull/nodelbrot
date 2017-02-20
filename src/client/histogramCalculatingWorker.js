@@ -7,7 +7,8 @@ importScripts(
     '/js/histogram.js',
     '/js/setProcessor.js'
 );
-
+var mxValues;
+var myValues;
 
 function pixelTracker(_msg) {
     "use strict";
@@ -27,17 +28,21 @@ function pixelTracker(_msg) {
 
     var startIteration = 0;
     var noOfIterations = _msg.maxIterations;
+    var width = _msg.exportWidth;
     return {
         histogramData: newHistogramDataArray(noOfIterations),
         histogramTotal: 0,
         getPixel : function (i,j) {
             return pixelResult(0,0,0,0,0);
         },
-        putPixel: function (p, i, j) {
+        putPixel: function (p, i, j, mx, my) {
             var escapeOffset = (p.histogramEscapedAt - startIteration);
             if (p.histogramEscapedAt !== 0) {
                 this.histogramTotal +=1;
             }
+            var index = (width * j) + i;
+            mxValues[index] = mx;
+            myValues[index] = my;
             this.histogramData[escapeOffset] = pixelResultHandler(p, i, j, startIteration, noOfIterations, this.histogramData[escapeOffset]);
         }
     };
@@ -51,8 +56,9 @@ onmessage = function(e) {
     var maxIterations = msg.maxIterations;
     var width = msg.exportWidth;
     var height = msg.exportHeight;
-
-    var response = function (progress, histogramTotal, complete, histogramData) {
+    mxValues = new Float64Array(width * height);
+    myValues = new Float64Array(width * height);
+    var response = function (progress, histogramTotal, complete, histogramData, _mxVals, _myVals) {
         var retVal = msg;
         retVal.type = "progressReport";
         retVal.event = {msg: progress};
@@ -61,11 +67,13 @@ onmessage = function(e) {
         retVal.result.chunkComplete = complete;
         retVal.result.histogramData = histogramData;
         retVal.result.histogramTotal = histogramTotal;
+        retVal.result.mxValues = _mxVals;
+        retVal.result.myValues = _myVals;
         return retVal;
     };
     var result;
     result = mainWorker.processSet(msg, pixelTracker(msg), 0, parseInt(maxIterations),width, height, []);
-    var responseMessage = response(width * height, result.histogramTotal, true, result.histogramData.buffer);
-    postMessage(responseMessage, [result.histogramData.buffer]);
+    var responseMessage = response(width * height, result.histogramTotal, true, result.histogramData.buffer, mxValues, myValues);
+    postMessage(responseMessage, [result.histogramData.buffer, mxValues.buffer, myValues.buffer]);
 
 };

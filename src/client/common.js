@@ -9,6 +9,35 @@ var namespace = function (name) {
     });
 };
 
+namespace("jim.worker.pool");
+jim.worker.pool.create = function (noOfWorkers, workerUrl, initialJobs, toTransfer) {
+    var workers = [];
+    for (var i = 0; i < noOfWorkers; i+=1) {
+        var worker = new Worker(workerUrl);
+        workers.push(worker);
+        if (initialJobs.length === noOfWorkers) {
+            worker.postMessage(initialJobs[i], [initialJobs[i][toTransfer]]);
+        }
+    }
+
+    return {
+        consume: function (_jobs, _onEachJob, _onAllJobsComplete) {
+            var jobsComplete = 0, jobsToComplete = _jobs.length;
+            workers.forEach(function (worker) {
+                worker.onmessage = function (e) {
+                    var msg = e.data;
+                    jobsComplete +=1;
+                    var job = _jobs.pop();
+                    if (job) this.postMessage(job);
+                    _onEachJob(msg);
+                    if (jobsComplete === jobsToComplete) _onAllJobsComplete(msg);
+                };
+                worker.postMessage(_jobs.pop());
+            });
+        }
+    };
+};
+
 namespace("jim.colour");
 jim.colour.create = function (r, g, b, a) {
     "use strict";
@@ -45,10 +74,12 @@ jim.coord.translator2.create = function () {
     "use strict";
     return {
         translateX: function (fromTopLeftX, fromWidth, toTopLeftX, toWidth, x) {
-            return toTopLeftX + (((x - fromTopLeftX) * toWidth) / fromWidth);
+            var totalAmount = (((toWidth * 10000) / fromWidth) * (x - fromTopLeftX));
+            return ((toTopLeftX * 10000) + totalAmount) / 10000;
         },
         translateY: function (fromTopLeftY, fromHeight, toTopLeftY, toHeight, y) {
-            return toTopLeftY + (((y - fromTopLeftY) * toHeight) / fromHeight);
+            var totalAmount = (((toHeight * 10000) / fromHeight) * (y - fromTopLeftY));
+            return ((toTopLeftY * 10000) + totalAmount) / 10000;
         }
     };
 };

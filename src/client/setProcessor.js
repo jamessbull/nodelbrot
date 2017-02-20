@@ -33,7 +33,7 @@ jim.worker.msetProcessor.create = function () {
                     currentPointHistoEscaped = currentPoint.histogramEscapedAt;
                     currentPoint = point.calculate(mx, my, _noOfIterations, _startIteration, currentPointX, currentPointY, currentPointHistoEscaped);
                 }
-                _pixelStateTracker.putPixel(currentPoint, i, j);
+                _pixelStateTracker.putPixel(currentPoint, i, j, mx, my);
             }
         }
         return _pixelStateTracker;
