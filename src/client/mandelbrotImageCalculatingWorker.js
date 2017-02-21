@@ -75,7 +75,7 @@ function pixelTracker(_msg) {
             var currentPixelPos = (j * _msg.exportWidth + i);
             var currentRGBArrayPos = currentPixelPos * 4;
 
-            var pixelColour = p.imageEscapedAt !== 0 ? colour.forPoint(p.x, p.y, p.iterations, histogram, palette): {r:0, g:0, b:0, a:255};
+            var pixelColour = p.imageEscapedAt !== 0 ? colour.forPoint(p.x, p.y, p.imageEscapedAt, histogram, palette): {r:0, g:0, b:0, a:255};
             this.imgData[currentRGBArrayPos] = pixelColour.r;
             this.imgData[currentRGBArrayPos + 1] = pixelColour.g;
             this.imgData[currentRGBArrayPos + 2] = pixelColour.b;

@@ -36,7 +36,7 @@ function pixelTracker(_msg) {
             return pixelResult(0,0,0,0,0);
         },
         putPixel: function (p, i, j, mx, my) {
-            var escapeOffset = (p.histogramEscapedAt - startIteration);
+            var escapeOffset = (p.histogramEscapedAt - startIteration - 1);
             if (p.histogramEscapedAt !== 0) {
                 this.histogramTotal +=1;
             }

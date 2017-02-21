@@ -16,19 +16,18 @@ jim.colourCalculator.create = function () {
             var fractionalPart;
             var iteration;
             var interpolatedColour;
-            var sqrt = Math.sqrt;
             var log = Math.log;
             var LN2 = Math.LN2;
             var floor = Math.floor;
 
-            //nu = log(log(sqrt((x * x) + (y * y))) /  LN2) / LN2;
-            iteration = iterations + 1 - this.nu(x, y, LN2, sqrt, log);
+            nu = log( log( x*x + y*y ) / 2 / LN2 ) / LN2;
+            iteration = iterations + 1 - nu;
             iterationFloor = floor(iteration);
 
-            fractionalPart = iteration - iterationFloor;
+            fractionalPart = iteration % 1;
 
-            lower = histogram.percentEscapedBy(iterationFloor - 1);
-            higher = histogram.percentEscapedBy(iterationFloor);
+            lower = histogram.percentEscapedBy(iterationFloor);
+            higher = histogram.percentEscapedBy(iterationFloor + 1);
 
             interpolatedColour = this.interpolate(lower, higher, fractionalPart);
             return palette.colourAt(interpolatedColour);
