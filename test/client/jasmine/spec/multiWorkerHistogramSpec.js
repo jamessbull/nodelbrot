@@ -72,3 +72,10 @@ describe("the multiworker histogram", function () {
 
     });
 });
+
+describe("The combined worker", function () {
+    "use strict";
+   it("should create the same histo as the multiworker generator", function () {
+       var mset =jim.mandelbrot.webworkerInteractive.create (_canvas, _width, _height, _state, _events);
+   });
+});

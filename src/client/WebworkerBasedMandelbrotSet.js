@@ -1,5 +1,5 @@
 namespace("jim.mandelbrot.webworkerInteractive");
-jim.mandelbrot.webworkerInteractive.create = function (_canvas, _width, _height, _state, _events) {
+jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events) {
     "use strict";
     var worker = new Worker("/js/combinedWorker.js");
     var shouldPublishEscapeValues = false;
