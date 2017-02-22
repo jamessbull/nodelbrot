@@ -1,3 +1,16 @@
+var total = function (arr) {
+    "use strict";
+    var arrResult = [];
+    arr.forEach(function (e, i) {
+        if (i === 0) {
+            arrResult[i] = e;
+        } else {
+             arrResult[i] = arrResult[i - 1] + e;
+        }
+    });
+    return arrResult;
+};
+
 var namespace = function (name) {
     "use strict";
     var parts = name.split("."), partial = self;

@@ -16,7 +16,7 @@ jim.mandelbrotImage.create = function (_events, _width, _height) {
         e.preventDefault();
     };
 
-    var mandelbrotCalculator = jim.mandelbrot.webworkerInteractive.create(_width, _height, _events);
+    var mandelbrotCalculator = jim.mandelbrot.webworkerInteractive.create(_width, _height, _events, 50);
     //mandelbrotCalculator.start();
     return {
         canvas: function () {

@@ -75,7 +75,29 @@ describe("the multiworker histogram", function () {
 
 describe("The combined worker", function () {
     "use strict";
-   it("should create the same histo as the multiworker generator", function () {
-       var mset =jim.mandelbrot.webworkerInteractive.create (_canvas, _width, _height, _state, _events);
+   it("should create the same histo as the multiworker generator", function (done) {
+       var palette = jim.palette.create();
+
+       var expectedHistogramValuesForTwentyIterations =
+           [0, 47152, 64849, 123537, 152463, 170141, 180458, 187793, 192719,
+            196514, 199337, 201628, 203402, 204944, 206130, 207202, 208118,
+            208860, 209563, 210162, 210162];
+
+
+       var currentExtents = jim.rectangle.create(-2.5, -1, 3.5, 2);
+       var mset = jim.mandelbrot.webworkerInteractive.create (700, 400, events, 20);
+
+       on(events.histogramUpdateReceivedFromWorker, function (update) {
+           var histoData = total(update.update);
+           for (var i = 0 ; i < 10 ; i +=1) {
+               expect(histoData[i]).toBe(expectedHistogramValuesForTwentyIterations[i]);
+               console.log("Histo value " +i + " for combined worker is " + update.update[i]);
+           }
+           mset.stop();
+           done();
+       });
+
+       events.fire(events.paletteChanged, palette);
+       events.fire(events.extentsUpdate, currentExtents);
    });
 });

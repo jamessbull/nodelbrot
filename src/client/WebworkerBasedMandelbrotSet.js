@@ -1,10 +1,10 @@
 namespace("jim.mandelbrot.webworkerInteractive");
-jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events) {
+jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events, _stepSize) {
     "use strict";
     var worker = new Worker("/js/combinedWorker.js");
     var shouldPublishEscapeValues = false;
     var copyOfHisto = new Uint32Array(250000);
-    var stepSize = 50;
+    var stepSize = _stepSize;
     var currentIteration = 0;
     var extents = null;
     var palette = null;
