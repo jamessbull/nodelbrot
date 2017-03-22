@@ -47,10 +47,10 @@ var pixelStateTracker = (function () {
         _imageData[currentRGBArrayPos + 2] = pixelColour.b;
         _imageData[currentRGBArrayPos + 3] = pixelColour.a;
     };
-    pixelStateTracker.updateHistogramData = function (_p, _histogram, _startIteration, _noOfIterations) {
-        if (_p.histogramEscapedAt !== 0 && _p.histogramEscapedAt >= _startIteration && _p.histogramEscapedAt <= (_startIteration + _noOfIterations)) {
-            _histogram.add(_p.histogramEscapedAt);
-            this.histogramUpdate[(_p.histogramEscapedAt - _startIteration)-1] +=1;
+
+    pixelStateTracker.updateHistogramData = function (_p, _startIteration, _noOfIterations, i, j) {
+        if (_p.histogramEscapedAt !== 0 && _p.histogramEscapedAt > _startIteration && _p.histogramEscapedAt <= (_startIteration + _noOfIterations)) {
+            this.histogramUpdate[(_p.histogramEscapedAt - _startIteration) -1] +=1;  // things end up odd when I do this without -1 why?
         }
     };
     pixelStateTracker.getPixel= function (i, j) {
@@ -63,13 +63,13 @@ var pixelStateTracker = (function () {
         };
         return newPixel;
     };
-    pixelStateTracker.putPixel= function (p,i,j) {
+    pixelStateTracker.putPixel= function (p,i,j,mx,my) {
         var index = (j * this.width) +i;
         this.xState[index] = p.x;
         this.yState[index] = p.y;
         this.escapeValues[index] = p.histogramEscapedAt;
         this.imageEscapeValues[index] = p.imageEscapedAt;
-        this.updateHistogramData(p, this.histogram, this.currentIteration, this.iterations);
+        this.updateHistogramData(p, this.currentIteration, this.iterations,i ,j);
         this.updateImageData(i, j, p, this.imageData, this.histogramForColour, this.colour, this.palette, this.width);
     };
     return pixelStateTracker;
@@ -107,17 +107,10 @@ onmessage = function(e) {
     }
     pixelStateTracker.palette = palette;
 
-    histogram.setData( histogramData, histogramTotal);
     histogramForColour.setData(new Uint32Array(histogramData), histogramTotal);
     histogramForColour.process();
-    pixelStateTracker.histogram = histogram;
     pixelStateTracker.histogramForColour = histogramForColour;
-
-
-    function postStateBack() {
-        postMessage(message(), [pixelStateTracker.imageData.buffer, pixelStateTracker.histogramUpdate.buffer, escapeValuesToTransfer.buffer]);
-        reset = false;
-    }
+    pixelStateTracker.width = msg.width;
 
     function message () {
         escapeValuesToTransfer = new Uint32Array(pixelStateTracker.escapeValues);
@@ -131,5 +124,6 @@ onmessage = function(e) {
     }
 
     setProcessor.processSet(extents, pixelStateTracker, msg.currentIteration, noOfIterations, msg.width, msg.height, undefined);
-    postStateBack();
+    postMessage(message(), [pixelStateTracker.imageData.buffer, pixelStateTracker.histogramUpdate.buffer, escapeValuesToTransfer.buffer]);
+    reset = false;
 };

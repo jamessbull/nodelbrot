@@ -9,6 +9,7 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
     var extents = null;
     var palette = null;
     var additionalMessagesInFlight = 0;
+    var escapeValues;
 
     function postMessage() {
         additionalMessagesInFlight +=1;
@@ -42,6 +43,7 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
             _events.fire(_events.escapeValuesPublished, new Uint32Array(msg.escapeValues));
             shouldPublishEscapeValues = false;
         }
+        escapeValues = new Uint32Array(msg.escapeValues);
         currentIteration += stepSize;
         _events.fire(_events.renderImage, new Uint8ClampedArray(msg.imageDataBuffer));
         _events.fire(_events.frameComplete);
@@ -68,6 +70,8 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
         extents = extentsTransfer(_extents.topLeft().x, _extents.topLeft().y, _extents.width(), _extents.height());
         console.log("Calling post from extents update");
         postMessage();
+        palette = undefined;
+        extents = undefined;
     });
 
     on(_events.histogramUpdated, function (updatedHistogram) {
@@ -81,6 +85,9 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
         start: function () {
             running = true;
             postMessage();
-        }
+        },
+        destroy: function () {
+            worker.terminate();
+        }, escapeValues: function () {return escapeValues;}
     };
 };
