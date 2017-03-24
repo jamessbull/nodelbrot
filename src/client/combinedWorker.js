@@ -49,8 +49,8 @@ var pixelStateTracker = (function () {
     };
 
     pixelStateTracker.updateHistogramData = function (_p, _startIteration, _noOfIterations, i, j) {
-        if (_p.histogramEscapedAt !== 0 && _p.histogramEscapedAt > _startIteration && _p.histogramEscapedAt <= (_startIteration + _noOfIterations)) {
-            this.histogramUpdate[(_p.histogramEscapedAt - _startIteration) -1] +=1;  // things end up odd when I do this without -1 why?
+        if (_p.histogramEscapedAt !== 0 && _p.histogramEscapedAt >= _startIteration && _p.histogramEscapedAt < (_startIteration + _noOfIterations)) {
+            this.histogramUpdate[(_p.histogramEscapedAt - _startIteration) ] +=1;
         }
     };
     pixelStateTracker.getPixel= function (i, j) {

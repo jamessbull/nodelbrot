@@ -78,7 +78,7 @@ describe("The combined worker", function () {
     "use strict";
 
     var expectedHistogramValuesForTwentyIterations =
-        [0, 47152, 64849, 123537, 152463, 170141, 180458, 187793, 192719,
+        [0, 0, 47152, 64849, 123537, 152463, 170141, 180458, 187793, 192719,
             196514, 199337, 201628, 203402, 204944, 206130, 207202, 208118,
             208860, 209563, 210162, 210162];
 
@@ -131,7 +131,12 @@ describe("The combined worker", function () {
     }
 
     function getPixel(i,j){
-        return point.input[index(i,j)];
+        var idx = index(i,j);
+        var x = xState[idx];
+        var y = yState[idx];
+        var he = escapeValues[idx];
+        var ye = imageEscapeValues[idx];
+        return point.input(0,0,x,y,he,ye);
     }
 
     function putPixel(p,i,j) {
@@ -142,7 +147,12 @@ describe("The combined worker", function () {
     it("should be able to process the set and get and put pixels appropriately", function () {
         var msg = {mx:-2.5, my: -1, mw: 2, mh: 1};
         var processor = jim.worker.msetProcessor.create();
-        //processor.processSet(msg, pixelStateTracker, 0, 10, 2, 5, []);
+        processor.processSet(msg, pixelStateTracker, 0, 3, 2, 5, []);
+        processor.processSet(msg, pixelStateTracker, 3, 3, 2, 5, []);
+        var expected = [2,3,2,4,2,4,2,5,2,6];
+        expected.forEach(function (val, i) {
+            expect(escapeValues[i]).toBe(val);
+        });
 
     });
 

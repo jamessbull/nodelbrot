@@ -9,8 +9,8 @@ jim.newMandelbrotPoint.create = function () {
         return {mx: _mx, my:_my, x:_x, y: _y, iterations:_iterations, histogramEscapedAt: _histogramEscapedAt, imageEscapedAt:_imageEscapedAt};
     }
 
-    function input(_mx, _my, _x, _y, _histogramEscapedAt) {
-        return output(_mx, _my, _x, _y, 0, _histogramEscapedAt, 0);
+    function input(_mx, _my, _x, _y, _histogramEscapedAt, imageEscapedAt) {
+        return output(_mx, _my, _x, _y, 0, _histogramEscapedAt, imageEscapedAt || 0);
     }
 
     function calcObject(p, startAt, times) {
