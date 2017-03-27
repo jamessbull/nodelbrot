@@ -108,7 +108,7 @@ onmessage = function(e) {
     pixelStateTracker.palette = palette;
 
     histogramForColour.setData(new Uint32Array(histogramData), histogramTotal);
-    histogramForColour.process();
+    //histogramForColour.process();
     pixelStateTracker.histogramForColour = histogramForColour;
     pixelStateTracker.width = msg.width;
 

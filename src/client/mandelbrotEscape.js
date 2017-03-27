@@ -107,9 +107,16 @@ jim.mandelbrot.escapeDistributionHistogram.create = function (_events) {
     function processHistogramUpdates(updateInfo) {
         var updates = updateInfo.update;
         var lastIterationCalculated = updateInfo.currentIteration;
-
+        var currentTotal;
+        if (lastIterationCalculated === 0) {
+            currentTotal = 0;
+        } else {
+            currentTotal = histoData[lastIterationCalculated - 1];
+        }
         for (var i = 0; i < updates.length; i+=1) {
-            histoData[lastIterationCalculated + i] += updates[i];
+            var newTotal = (updates[i] + currentTotal);
+            histoData[lastIterationCalculated + i] += newTotal;
+            currentTotal = newTotal;
         }
         return new Uint32Array(histoData);
     }

@@ -139,9 +139,31 @@ jim.init.run = function () {
 // Likely a histogram issue
 // Export broken if dead regions have not been calculated
 
+
+
+
 // split main display into separate threads.
 // I think breaking it up into three regions would be best
-//
+// so histogram is key to this
+// it needs to be shared between all three workers each worker needs to update same histogram
+// simplest option is for every worker to send back histogram update.
+// main thread takes each update and ripples it through a totalled histogram.
+// totalled histo can now be transferred and used without processing.
+// what info do I need to ripple update?
+// need array of updates
+// need to know where to apply the updates from last iteration calculated?
+// so if doing 50 at a time then num of ops is 50 factorial otherwise it is n + 50
+// results step 50 1225 step 100 4950 so quickly becomes worth rippling.
+// can i ripple faster?
+// maybe - add x at first portion of update x needs to be added to all rest
+// next one needs x added as well as2nd one so have a total?
+// var increase = add  update and current total
+// add increase to current update position
+// update total by update amount total ops is 3*step - much much better
+// each worker sends back an update
+// i total ripple it into totalled histo and update main histo
+// histo update publishes original which must be copied
+// whole original copy is transferred
 
 // To optimise
 // Alter step value automatically to balance frame rate with progress

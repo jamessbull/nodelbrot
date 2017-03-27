@@ -175,7 +175,7 @@ describe("The combined worker", function () {
     });
 
     // What do I expect when I access histogram? Shouldn't I expect to get the iteration number? ie get(1) returns 1? etc at the moment it's getting put at 0
-    it("should update the histogram correctly for single update", function (done) {
+    it("should update the histogram correctly for single update and total it", function (done) {
         events.clear();
         var histoUpdater = jim.mandelbrot.escapeDistributionHistogram.create(events);
 
@@ -184,9 +184,9 @@ describe("The combined worker", function () {
         on(events.histogramUpdated, function (histo) {
             expect(histo[0]).toBe(0);
             expect(histo[1]).toBe(1);
-            expect(histo[2]).toBe(2);
-            expect(histo[3]).toBe(3);
-            expect(histo[4]).toBe(4);
+            expect(histo[2]).toBe(3);
+            expect(histo[3]).toBe(6);
+            expect(histo[4]).toBe(10);
             done();
         });
 
@@ -194,7 +194,7 @@ describe("The combined worker", function () {
 
     });
 
-    it("should update the histogram correctly for two updates", function (done) {
+    it("should update the histogram correctly for two updates and update totals", function (done) {
         events.clear();
         var histoUpdater = jim.mandelbrot.escapeDistributionHistogram.create(events);
         var called = 0;
@@ -206,14 +206,14 @@ describe("The combined worker", function () {
             if(called === 2) {
                 expect(histo[0]).toBe(0);
                 expect(histo[1]).toBe(1);
-                expect(histo[2]).toBe(2);
-                expect(histo[3]).toBe(3);
-                expect(histo[4]).toBe(4);
-                expect(histo[5]).toBe(0);
-                expect(histo[6]).toBe(1);
-                expect(histo[7]).toBe(2);
-                expect(histo[8]).toBe(3);
-                expect(histo[9]).toBe(4);
+                expect(histo[2]).toBe(3);
+                expect(histo[3]).toBe(6);
+                expect(histo[4]).toBe(10);
+                expect(histo[5]).toBe(10);
+                expect(histo[6]).toBe(11);
+                expect(histo[7]).toBe(13);
+                expect(histo[8]).toBe(16);
+                expect(histo[9]).toBe(20);
                 done();
             }
 
@@ -282,10 +282,10 @@ describe("The combined worker", function () {
             histoUpdates +=1;
             console.log("update.length is" + update.length);
             if(histoUpdates === 2) {
-                var histo = total(update);
+                //var histo = total(update);
                 for (var i = 0 ; i < 20 ; i +=1) {
-                    console.log(histo[i]);
-                    expect(histo[i]).toBe(expectedHistogramValuesForTwentyIterations[i]);
+                    console.log(update[i]);
+                    expect(update[i]).toBe(expectedHistogramValuesForTwentyIterations[i]);
                 }
                 done();
                 console.log("Done got CALLED");
