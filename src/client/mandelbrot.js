@@ -139,6 +139,14 @@ jim.init.run = function () {
 // Likely a histogram issue
 // Export broken if dead regions have not been calculated
 
+// Next thing to do is to show useful speed indication on main screen otherwise I won't know if I made it any quicker
+// What would be useful info?
+// How many frames per second I'm doing.
+// How many iterations per second I'm doing.
+// Each call to webworkerbased set is a frame.
+// Construct something that has access to the elements I want to update on the screen.
+// Have it listen to frame completed events. Fire frame completed from webwroker based set
+// It measures time between frames. Keeps three frame times sets display to be average
 
 // split main display into separate threads.
 // I think breaking it up into three regions would be best
