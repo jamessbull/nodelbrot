@@ -181,7 +181,9 @@ describe("The combined worker", function () {
 
         var update = {update: [0,1,2,3,4], currentIteration: 0};
 
-        on(events.histogramUpdated, function (histo) {
+        on(events.histogramUpdated, function (histoinfo) {
+            var histo = histoinfo.array;
+
             expect(histo[0]).toBe(0);
             expect(histo[1]).toBe(1);
             expect(histo[2]).toBe(3);
@@ -201,7 +203,8 @@ describe("The combined worker", function () {
         var update = {update: [0,1,2,3,4], currentIteration: 0};
         var update2 = {update: [0,1,2,3,4], currentIteration: 5};
 
-        on(events.histogramUpdated, function (histo) {
+        on(events.histogramUpdated, function (histoinfo) {
+            var histo = histoinfo.array;
             called +=1;
             if(called === 2) {
                 expect(histo[0]).toBe(0);
@@ -277,18 +280,15 @@ describe("The combined worker", function () {
             console.log("updates " + updates);
         });
 
-        on(events.histogramUpdated, function (update) {
-            console.log("Histo updated listener in test got triggered");
+        on(events.histogramUpdated, function (info) {
+            var update = info.array;
             histoUpdates +=1;
-            console.log("update.length is" + update.length);
             if(histoUpdates === 2) {
-                //var histo = total(update);
                 for (var i = 0 ; i < 20 ; i +=1) {
                     console.log(update[i]);
                     expect(update[i]).toBe(expectedHistogramValuesForTwentyIterations[i]);
                 }
                 done();
-                console.log("Done got CALLED");
             }
         });
 

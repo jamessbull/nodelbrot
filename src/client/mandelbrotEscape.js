@@ -103,11 +103,11 @@ namespace("jim.mandelbrot.escapeDistributionHistogram");
 jim.mandelbrot.escapeDistributionHistogram.create = function (_events) {
     "use strict";
     var histoData = new Uint32Array(250000);
-
+    var currentTotal;
     function processHistogramUpdates(updateInfo) {
         var updates = updateInfo.update;
         var lastIterationCalculated = updateInfo.currentIteration;
-        var currentTotal;
+        //var currentTotal;
         if (lastIterationCalculated === 0) {
             currentTotal = 0;
         } else {
@@ -123,7 +123,8 @@ jim.mandelbrot.escapeDistributionHistogram.create = function (_events) {
 
     on(_events.histogramUpdateReceivedFromWorker, function (updateInfo) {
         var updated = processHistogramUpdates(updateInfo);
-        _events.fire(_events.histogramUpdated, updated);
+        var histoData = {array: updated, total: currentTotal};
+        _events.fire(_events.histogramUpdated, histoData);
     });
 
     on(_events.extentsUpdate, function () {

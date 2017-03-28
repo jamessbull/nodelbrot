@@ -4,6 +4,7 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
     var worker = new Worker("/js/combinedWorker.js");
     var shouldPublishEscapeValues = false;
     var copyOfHisto = new Uint32Array(250000);
+    var histogramTotal = 0;
     var stepSize = _stepSize;
     var currentIteration = 0;
     var extents = null;
@@ -20,7 +21,8 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
             width :_width,
             height :_height,
             extents: extents,
-            paletteNodes: palette
+            paletteNodes: palette,
+            histogramTotal : histogramTotal
         };
 
         worker.postMessage(msg, [copyOfHisto.buffer]);
@@ -74,8 +76,9 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
         extents = undefined;
     });
 
-    on(_events.histogramUpdated, function (updatedHistogram) {
-        copyOfHisto = updatedHistogram;
+    on(_events.histogramUpdated, function (info) {
+        copyOfHisto = info.array;
+        histogramTotal = info.total;
     });
 
     return {
