@@ -14,7 +14,7 @@ function pixelTracker(_msg) {
     "use strict";
 
     var pixelResultHandler = function (p, i, j, _startIteration, _noOfIterations, _currentNoOfEscapees) {
-        return (p.histogramEscapedAt !== 0 && p.histogramEscapedAt >= _startIteration && p.histogramEscapedAt <= (_startIteration + _noOfIterations)) ?
+        return (p.histogramEscapedAt !== 0 && p.histogramEscapedAt >= _startIteration && p.histogramEscapedAt < (_startIteration + _noOfIterations)) ?
             (_currentNoOfEscapees + 1 || 1) : 0;
     };
 
@@ -36,7 +36,7 @@ function pixelTracker(_msg) {
             return pixelResult(0,0,0,0,0);
         },
         putPixel: function (p, i, j, mx, my) {
-            var escapeOffset = (p.histogramEscapedAt - startIteration - 1);
+            var escapeOffset = (p.histogramEscapedAt - startIteration);
             if (p.histogramEscapedAt !== 0) {
                 this.histogramTotal +=1;
             }
