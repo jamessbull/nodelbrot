@@ -74,12 +74,15 @@ jim.init.run = function () {
     var largeExport             = dom.element("largeExport");
     var veryLargeExport         = dom.element("veryLargeExport");
     var exportSizeSelect        = dom.element("exportSizeSelect");
+    var fps                     = dom.element("framesPerSecond");
     var deadRegionCanvas        = document.createElement('canvas');
     deadRegionCanvas.width = mandelbrot.width();
     deadRegionCanvas.height = mandelbrot.height();
     deadRegionCanvas.oncontextmenu = function (e) {
         e.preventDefault();
     };
+    jim.metrics.create(jim.metrics.clock.create(), events);
+    jim.fpsdisplay.create(fps, events, dom);
     var processor = jim.mandelbrot.escapeDistributionHistogram.create(events);
     var deadRegions = jim.mandelbrot.deadRegions.create(events, deadRegionCanvas, mandelbrot.canvas());
     jim.mandelbrot.imageRenderer.create(events, mandelbrot.canvas(), mandelbrot.width(), mandelbrot.height());
@@ -138,6 +141,11 @@ jim.init.run = function () {
 // observed difference between interactive and full export colouration
 // Likely a histogram issue
 // Export broken if dead regions have not been calculated
+
+// Can now calculate fps
+// want to repurpose the no of pixels escaped field to show this
+// Change text
+// Listen to fps event and set inner text as appropriate
 
 // Next thing to do is to show useful speed indication on main screen otherwise I won't know if I made it any quicker
 // What would be useful info?

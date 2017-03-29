@@ -334,8 +334,10 @@ var  handleClickfunction
             <div class="bodyText">
                 Current Iteration
                 <span id="maxIteration"></span>
-                Points escaped
-                <span id="totalHistogramPerc"></span>%
+                <div>
+                    Fps
+                    <span id="framesPerSecond"></span>
+                </div>
                 Last escaped on
                 <span id="lastPointEscapedAt"></span>
             </div>

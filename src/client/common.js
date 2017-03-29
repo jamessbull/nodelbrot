@@ -316,6 +316,10 @@ jim.dom.functions.create = function () {
         return document.getElementById(id);
     };
 
+    function setHtml (_e,_html) {
+        _e.innerHTML = _html;
+    }
+
     return {
         addClass: addClass,
         removeClass: removeClass,
@@ -323,6 +327,7 @@ jim.dom.functions.create = function () {
         deselectButton: deselectButton,
         hide: hide,
         show: show,
+        setHtml: setHtml,
         element: getElement
     };
 };

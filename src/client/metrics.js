@@ -1,6 +1,7 @@
 namespace("jim.metrics");
 jim.metrics.create = function (_clock, _events) {
     "use strict";
+    var round = jim.common.round;
     var times = new Uint32Array(3);
     var currentIndex = -1;
     function nextIndex(i) { return currentIndex > 1 ? 0 : i + 1; }
@@ -11,7 +12,7 @@ jim.metrics.create = function (_clock, _events) {
         var frame2 = frameTime(previousIndex(currentIndex));
         if (frame1 === 0 || frame2 === 0) return 0;
         var avgFrameTime = (frame1 + frame2) / 2;
-        return 1000 / avgFrameTime;
+        return (1000 / avgFrameTime).toFixed(2);
     }
 
     _events.listenTo(_events.frameComplete, function () {
@@ -30,4 +31,12 @@ jim.metrics.clock.create = function () {
             return new Date().getTime();
         }
     };
+};
+
+namespace("jim.fpsdisplay");
+jim.fpsdisplay.create = function (_displayElement, _events, _dom) {
+    "use strict";
+    _events.listenTo(_events.currentFramesPerSecond, function (fps) {
+        _dom.setHtml(_displayElement, fps);
+    });
 };
