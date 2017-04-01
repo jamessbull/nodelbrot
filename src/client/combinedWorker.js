@@ -78,12 +78,13 @@ var pixelStateTracker = (function () {
 onmessage = function(e) {
     "use strict";
     var msg = e.data;
-    var noOfPixels = msg.width * msg.height;
+    var noOfPixels = msg.exportWidth * msg.exportHeight;
     var noOfIterations = msg.iterations;
     var histogramUpdate = new Uint32Array(noOfIterations);
     var histogramData = new Uint32Array(msg.histogramDataBuffer);
     var histogramTotal = msg.histogramTotal;
     var escapeValuesToTransfer;
+    var offset = msg.offset;
 
     pixelStateTracker.imageData = new Uint8ClampedArray(4 * noOfPixels);
     pixelStateTracker.iterations = noOfIterations;
@@ -100,7 +101,7 @@ onmessage = function(e) {
     }
     if (msg.extents) {
         extents = msg.extents;
-        pixelStateTracker.width = msg.width;
+        pixelStateTracker.width = msg.exportWidth;
     }
     if (msg.paletteNodes) {
         palette.fromNodeList(msg.paletteNodes);
@@ -109,11 +110,12 @@ onmessage = function(e) {
 
     histogramForColour.setData(new Uint32Array(histogramData), histogramTotal);
     pixelStateTracker.histogramForColour = histogramForColour;
-    pixelStateTracker.width = msg.width;
+    pixelStateTracker.width = msg.exportWidth;
 
     function message () {
         escapeValuesToTransfer = new Uint32Array(pixelStateTracker.escapeValues);
         return {
+            offset: offset,
             histogramUpdate: pixelStateTracker.histogramUpdate.buffer,
             imageDataBuffer: pixelStateTracker.imageData.buffer,
             escapeValues: escapeValuesToTransfer.buffer,
@@ -122,7 +124,7 @@ onmessage = function(e) {
         };
     }
 
-    setProcessor.processSet(extents, pixelStateTracker, msg.currentIteration, noOfIterations, msg.width, msg.height, undefined);
+    setProcessor.processSet(extents, pixelStateTracker, msg.currentIteration, noOfIterations, msg.exportWidth, msg.exportHeight, undefined);
     postMessage(message(), [pixelStateTracker.imageData.buffer, pixelStateTracker.histogramUpdate.buffer, escapeValuesToTransfer.buffer]);
     reset = false;
 };

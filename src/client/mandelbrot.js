@@ -138,23 +138,30 @@ jim.init.run = function () {
 };
 
 // examine is broken
-// observed difference between interactive and full export colouration
-// Likely a histogram issue
 // Export broken if dead regions have not been calculated
 
-// Can now calculate fps
-// want to repurpose the no of pixels escaped field to show this
-// Change text
-// Listen to fps event and set inner text as appropriate
-
-// Next thing to do is to show useful speed indication on main screen otherwise I won't know if I made it any quicker
-// What would be useful info?
-// How many frames per second I'm doing.
 // How many iterations per second I'm doing.
-// Each call to webworkerbased set is a frame.
-// Construct something that has access to the elements I want to update on the screen.
-// Have it listen to frame completed events. Fire frame completed from webwroker based set
-// It measures time between frames. Keeps three frame times sets display to be average
+// Experiments - Ho many fps do I get if I skip the loop to actually calc pixels? For later
+//I want code to take list of jobs and spit them out at a canvas in the right place.
+// sounds a lot like the export functionality.
+// current export code essentially does this
+// Create a new image data array
+// create initial jobs to prime the worker with palette etc
+// create a canvas
+// uses job splitter
+// uses workerpool to execute jobs. pass in function on each job and on all jobs
+// result gives me imgData and an offset which is what I want.
+// generation of jobs will be different though. Some refactoring needed there to distinguish between job types
+// I guess certain things are in common ie I need to split up the mandelbrot set.
+//so job creation needs to be split in two split set and create job
+// uses a newJob function directly. I could pass that in and have two functions with the same parameters one to create the job for export and one to create the job for display
+// to do this I need to have two messages to compare.
+// create a new file called messages and put an example of each sort of message in there.
+// look at the difference between the image message and the combined message and see if I can create a message
+// have a job provider that takes mandelbrot info and spits out a job then I can have common interface
+// jobProvider.getJob(common things)
+// as each job completes need to update current Iteration
+// I probably don't need a separate image one any more. I can use the combined for both
 
 // split main display into separate threads.
 // I think breaking it up into three regions would be best

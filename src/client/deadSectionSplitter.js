@@ -3,7 +3,6 @@ jim.common.arraySplitter.create = function () {
     "use strict";
     return {
         split: function (arr, numberOfParts, rowLength) {
-
             var parts = [];
             var totalNumberOfRows = Math.floor(arr.length / rowLength);
             if (totalNumberOfRows < numberOfParts) {
@@ -18,7 +17,7 @@ jim.common.arraySplitter.create = function () {
             for (var i = 0; i < numberOfParts; i +=1) {
                 var startIndex = (regularChunkSize * i);
                 var endIndex = startIndex + (lastOne(i) ? finalChunkSize : regularChunkSize);
-                parts[i] = arr.slice(startIndex, endIndex);
+                parts[i] = arr ? arr.slice(startIndex, endIndex) : [];
             }
             return parts;
         }

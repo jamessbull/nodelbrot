@@ -49,7 +49,22 @@ jim.mandelbrot.image.exporter.create = function (_exportDimensions, _mandelbrotS
 
         var timer = jim.stopwatch.create();
         timer.start();
-        var jobs = imageGenerator.run(_mandelbrotSet.state().getExtents(), exportDepth.value,  exportDimensions.width, exportDimensions.height, deadRegions, 100);
+        var extents = _mandelbrotSet.state().getExtents();
+
+        var mx = extents.topLeft().x;
+        var my = extents.topLeft().y;
+        var mw = extents.width();
+        var mh = extents.height();
+
+        //var jobs = imageGenerator.run(_mandelbrotSet.state().getExtents(), exportDepth.value,  exportDimensions.width, exportDimensions.height, deadRegions, 100);
+        var initialRenderDefinition = jim.messages.renderFragment.create(0, mx, my, mw, mh, exportDimensions.width, exportDimensions.height);
+        var fragments = initialRenderDefinition.split(100);
+        var splitter = jim.common.arraySplitter.create();
+        var deadSections = splitter.split(deadRegions, 100, 700);
+        var jobs = [];
+        fragments.forEach(function (fragment,i) {
+             jobs[i] = jim.messages.export.create(fragment, exportDepth.value, deadSections[i]);
+        });
 
         timer.stop();
         console.log("Time taken to build 100 jobs " + timer.elapsed());

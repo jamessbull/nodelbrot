@@ -15,11 +15,12 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
     function postMessage() {
         additionalMessagesInFlight +=1;
         var msg = {
+            offset: 0,
+            exportWidth :_width,
+            exportHeight :_height,
             histogramDataBuffer: copyOfHisto.buffer,
             currentIteration : currentIteration,
             iterations : stepSize,
-            width :_width,
-            height :_height,
             extents: extents,
             paletteNodes: palette,
             histogramTotal : histogramTotal

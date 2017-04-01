@@ -45,19 +45,16 @@ jim.parallelHistogramGenerator.create = function () {
 };
 
 namespace("jim.parallelImageGenerator.message");
-jim.parallelImageGenerator.message.create = function (_iter, _width, _height, _extents, _deadRegions, _currentPosition) {
+jim.parallelImageGenerator.message.create = function (_iter, _width, _height, _extents, _deadRegions, _offset) {
     "use strict";
 
     return {
-        currentPosition: _currentPosition,
+        offset: _offset,
         deadRegions: _deadRegions,
         maxIterations: _iter,
         exportWidth: _width,
         exportHeight: _height,
-        mx: _extents.topLeft().x,
-        my: _extents.topLeft().y,
-        mw: _extents.width(),
-        mh: _extents.height()
+        extents : {mx: _extents.topLeft().x, my: _extents.topLeft().y, mw: _extents.width(), mh: _extents.height()}
     };
 };
 
@@ -89,8 +86,7 @@ jim.parallelImageGenerator.create = function () {
             for (var i = 0 ; i < _numberOfParts; i +=1) {
                 var chunk = jim.rectangle.create(currentChunkX, currentChunkY, regularChunkWidth, isLast(i) ? finalChunkHeight : regularChunkHeight);
                 var height = isLast(i) ? numberOfLinesInFinalChunk : regularLinesPerChunk;
-                var job = newJob(_iter, _width,  height, chunk, deadSections[i], 0);
-                job.offset = (i * regularLinesPerChunk) * _width * 4;
+                var job = newJob(_iter, _width,  height, chunk, deadSections[i], (i * regularLinesPerChunk) * _width * 4);
                 jobs[i] = job;
                 currentChunkY = currentChunkY + (regularChunkOffset);
             }
