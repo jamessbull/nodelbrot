@@ -1,7 +1,17 @@
 namespace("jim.mandelbrot.webworkerInteractive");
-jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events, _stepSize) {
+jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events, _stepSize, _parallelism) {
     "use strict";
-    var worker = new Worker("/js/combinedWorker.js");
+
+    var pool = jim.worker.pool.create(_parallelism, "/js/combinedWorker.js", [], "none", "histogramDataBuffer");
+
+    function onEachJob(_msg) {
+        jobDone(_msg);
+    }
+    function onAllJobsComplete() {
+
+    }
+
+    //var worker = new Worker("/js/combinedWorker.js");
     var shouldPublishEscapeValues = false;
     var copyOfHisto = new Uint32Array(250000);
     var histogramTotal = 0;
@@ -26,7 +36,8 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
             histogramTotal : histogramTotal
         };
 
-        worker.postMessage(msg, [copyOfHisto.buffer]);
+        pool.consume([msg], onEachJob, onAllJobsComplete);
+        //worker.postMessage(msg, [copyOfHisto.buffer]);
     }
 
     var running = true;
@@ -35,8 +46,8 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
         return {mx: x, my: y, mw: w, mh: h};
     }
 
-    worker.onmessage = function (m) {
-        var msg = m.data;
+    function jobDone (m) {
+        var msg = m;
         additionalMessagesInFlight-=1;
         if(additionalMessagesInFlight >0) return;
 
@@ -51,13 +62,11 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
         _events.fire(_events.renderImage, new Uint8ClampedArray(msg.imageDataBuffer));
         _events.fire(_events.frameComplete);
 
-        if(running) {
-            postMessage();
-        }
+        if(running) postMessage();
 
         palette = undefined;
         extents = undefined;
-    };
+    }
 
     on(_events.requestEscapeValues, function () {
         shouldPublishEscapeValues = true;

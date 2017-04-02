@@ -16,7 +16,7 @@ jim.mandelbrotImage.create = function (_events, _width, _height) {
         e.preventDefault();
     };
 
-    var mandelbrotCalculator = jim.mandelbrot.webworkerInteractive.create(_width, _height, _events, 50);
+    var mandelbrotCalculator = jim.mandelbrot.webworkerInteractive.create(_width, _height, _events, 50, 1);
     //mandelbrotCalculator.start();
     return {
         canvas: function () {
@@ -152,23 +152,11 @@ jim.init.run = function () {
 // uses workerpool to execute jobs. pass in function on each job and on all jobs
 // result gives me imgData and an offset which is what I want.
 // generation of jobs will be different though. Some refactoring needed there to distinguish between job types
-// I guess certain things are in common ie I need to split up the mandelbrot set.
-//so job creation needs to be split in two split set and create job
-// uses a newJob function directly. I could pass that in and have two functions with the same parameters one to create the job for export and one to create the job for display
-// to do this I need to have two messages to compare.
-// create a new file called messages and put an example of each sort of message in there.
-// look at the difference between the image message and the combined message and see if I can create a message
-// have a job provider that takes mandelbrot info and spits out a job then I can have common interface
-// jobProvider.getJob(common things)
-// as each job completes need to update current Iteration
-// I probably don't need a separate image one any more. I can use the combined for both
 
 // split main display into separate threads.
 // I think breaking it up into three regions would be best
-// so histogram is key to this
-// it needs to be shared between all three workers each worker needs to update same histogram
-// simplest option is for every worker to send back histogram update.
-// main thread takes each update and ripples it through a totalled histogram.
+
+// Now I need to use the splitter and new message for existing single threaded mode.
 
 // To optimise
 // Alter step value automatically to balance frame rate with progress

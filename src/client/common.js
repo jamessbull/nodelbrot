@@ -23,15 +23,26 @@ var namespace = function (name) {
 };
 
 namespace("jim.worker.pool");
-jim.worker.pool.create = function (noOfWorkers, workerUrl, initialJobs, toTransfer) {
-    var workers = [];
-    for (var i = 0; i < noOfWorkers; i+=1) {
-        var worker = new Worker(workerUrl);
-        workers.push(worker);
-        if (initialJobs.length === noOfWorkers) {
-            worker.postMessage(initialJobs[i], [initialJobs[i][toTransfer]]);
+jim.worker.pool.create = function (noOfWorkers, workerUrl, initialJobs, toTransfer, _nameOfStandardTransferList) {
+    "use strict";
+    function array(x, f) {
+        var a = [];
+        for (var i = 0 ; i < x; i += 1) {
+            a[i] = f(i);
         }
+        return a;
     }
+
+    function initWorkers(parallelism, workerName) {
+        return array(parallelism, function (i) {
+            var worker = new Worker(workerName);
+            if (initialJobs.length === parallelism)
+                worker.postMessage(initialJobs[i], [initialJobs[i][toTransfer]]);
+            return worker;
+        });
+    }
+
+    var workers = initWorkers(noOfWorkers, workerUrl);
 
     return {
         consume: function (_jobs, _onEachJob, _onAllJobsComplete) {
@@ -45,7 +56,14 @@ jim.worker.pool.create = function (noOfWorkers, workerUrl, initialJobs, toTransf
                     _onEachJob(msg);
                     if (jobsComplete === jobsToComplete) _onAllJobsComplete(msg);
                 };
-                worker.postMessage(_jobs.pop());
+                var job = _jobs.pop();
+                var transferList = job[_nameOfStandardTransferList];
+
+                if(transferList) {
+                    worker.postMessage(job, [transferList]);
+                } else {
+                    worker.postMessage(job);
+                }
             });
         }
     };

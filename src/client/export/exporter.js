@@ -48,7 +48,6 @@ jim.mandelbrot.image.exporter.create = function (_exportDimensions, _mandelbrotS
         }
 
         var timer = jim.stopwatch.create();
-        timer.start();
         var extents = _mandelbrotSet.state().getExtents();
 
         var mx = extents.topLeft().x;
@@ -56,23 +55,19 @@ jim.mandelbrot.image.exporter.create = function (_exportDimensions, _mandelbrotS
         var mw = extents.width();
         var mh = extents.height();
 
-        //var jobs = imageGenerator.run(_mandelbrotSet.state().getExtents(), exportDepth.value,  exportDimensions.width, exportDimensions.height, deadRegions, 100);
         var initialRenderDefinition = jim.messages.renderFragment.create(0, mx, my, mw, mh, exportDimensions.width, exportDimensions.height);
         var fragments = initialRenderDefinition.split(100);
         var splitter = jim.common.arraySplitter.create();
         var deadSections = splitter.split(deadRegions, 100, 700);
+
         var jobs = [];
         fragments.forEach(function (fragment,i) {
              jobs[i] = jim.messages.export.create(fragment, exportDepth.value, deadSections[i]);
         });
 
-        timer.stop();
-        console.log("Time taken to build 100 jobs " + timer.elapsed());
-        timer.start();
         var initialJobs = createInitialJobs(8, histogramData,  histogramTotal, palette.toNodeList());
-        var workerPool =  jim.worker.pool.create(8, "/js/mandelbrotImageCalculatingWorker.js", initialJobs, "histogramData");
-        timer.stop();
-        timer.elapsed("Create workers and send histogram to them");
+        var workerPool =  jim.worker.pool.create(8, "/js/mandelbrotImageCalculatingWorker.js", initialJobs, "histogramData", "none");
+
         var exportCanvas = makeExportCanvas(exportDimensions);
         var context = exportCanvas.getContext('2d');
         var imageData = new Uint8ClampedArray(exportCanvas.width * exportCanvas.height * 4);

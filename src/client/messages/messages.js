@@ -54,25 +54,14 @@ jim.messages.export.create = function exportJob (_renderFragment, _iter, _deadRe
     };
 };
 
-// Define mandelbrot render fragment definition
-// offset - position within the whole image of this portion
-// extents - mx my mw mh
-// export width
-// export height
-// provide functions to get jobs for each worker which take a renderFragment
-// change exporter to use renderFragments and check it still works
-// 1) split dead regions outside job splitter.
-// 2) call fragmenrts.split
-// 3) get final job by calling message function and passing in the fragment.
-
-
-function interactiveDisplayJob (copyOfHisto, currentIteration, stepSize, _width, _height, extents, palette, histogramTotal, _offset, _deadRegions) {
+namespace(("jim.messages.interactive"));
+jim.messages.interactive.create = function (_fragment, copyOfHisto, currentIteration, stepSize, palette, histogramTotal, _offset, _deadRegions) {
     "use strict";
     return {
         offset: _offset,
-        exportWidth : _width,
-        exportHeight : _height,
-        extents: extents,
+        exportWidth : _fragment.exportWidth,
+        exportHeight : _fragment.exportHeight,
+        extents: _fragment.extents,
         deadRegions: _deadRegions,
         histogramDataBuffer: copyOfHisto.buffer,
         currentIteration : currentIteration,
