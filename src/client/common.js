@@ -52,6 +52,20 @@ jim.worker.pool.create = function (noOfWorkers, workerUrl, initialJobs, toTransf
         });
     }
 
+    function postNextJob(_jobs, _worker, _currentBatchId) {
+        var job = _jobs.pop();
+        if (job) {
+            job.batchid = _currentBatchId;
+
+            var transferList = job[_nameOfStandardTransferList];
+            if(transferList) {
+                _worker.postMessage(job, [transferList]);
+            } else {
+                _worker.postMessage(job);
+            }
+        }
+    }
+
     var workers = initWorkers(noOfWorkers, workerUrl);
     var batchid = 0;
     return {
@@ -64,30 +78,11 @@ jim.worker.pool.create = function (noOfWorkers, workerUrl, initialJobs, toTransf
                         return;
                     }
                     jobsComplete +=1;
-                    var job = _jobs.pop();
-                    if (job) {
-                        job.batchid = currentBatchId;
-
-                        var transferList = job[_nameOfStandardTransferList];
-                        if(transferList) {
-                            this.postMessage(job, [transferList]);
-                        } else {
-                            this.postMessage(job);
-                        }
-                    }
+                    postNextJob(_jobs, this, currentBatchId);
                     _onEachJob(msg);
                     if (jobsComplete === jobsToComplete) _onAllJobsComplete(msg);
                 };
-                var job = _jobs.pop();
-                if(job) {
-                    var transferList = job[_nameOfStandardTransferList];
-                    job.batchid = currentBatchId;
-                    if(transferList) {
-                        worker.postMessage(job, [transferList]);
-                    } else {
-                        worker.postMessage(job);
-                    }
-                }
+                postNextJob(_jobs, worker, currentBatchId);
             });
         }
     };

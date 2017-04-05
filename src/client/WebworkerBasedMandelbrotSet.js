@@ -12,8 +12,6 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
         palette = undefined;
         extents = undefined;
     }
-
-    //var worker = new Worker("/js/combinedWorker.js");
     var shouldPublishEscapeValues = false;
     var copyOfHisto = new Uint32Array(250000);
     var histogramTotal = 0;
@@ -21,15 +19,10 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
     var currentIteration = 0;
     var extents = null;
     var palette = null;
-    var additionalMessagesInFlight = 0;
     var escapeValues;
     var running = true;
 
     function postMessage() {
-        console.log("Firing message");
-
-        //additionalMessagesInFlight +=_parallelism;
-        console.log(additionalMessagesInFlight + " messages in flight");
         var msg = {
             offset: 0,
             exportWidth :_width,
@@ -55,9 +48,7 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
             return jim.messages.interactive.create(fragments[i].asMessage(), copyOfHisto, currentIteration, stepSize, palette, histogramTotal);
         });
 
-
         pool.consume(jobs, onEachJob, onAllJobsComplete);
-        //worker.postMessage(msg, [copyOfHisto.buffer]);
     }
 
 
@@ -67,13 +58,6 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
 
     function jobDone (m) {
         var msg = m;
-//        additionalMessagesInFlight-=1;
-//
-//        if(additionalMessagesInFlight >_parallelism){
-//            console.log("Finishing in job done as additional messages are in flight");
-//            return;
-//        }
-
         _events.fire(_events.histogramUpdateReceivedFromWorker, {update: new Uint32Array(msg.histogramUpdate), currentIteration: currentIteration});
         _events.fire(_events.maxIterationsUpdated, currentIteration);
         if (shouldPublishEscapeValues) {
