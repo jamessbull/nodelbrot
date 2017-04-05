@@ -136,9 +136,12 @@ jim.mandelbrot.escapeDistributionHistogram.create = function (_events) {
 namespace("jim.mandelbrot.imageRenderer");
 jim.mandelbrot.imageRenderer.create = function (_events, _canvas, _width, _height) {
     "use strict";
-    on(_events.renderImage, function (_imgData) {
-        var context = _canvas.getContext('2d');
-        var imageData = new ImageData(_imgData, _width, _height);
+    var context = _canvas.getContext('2d');
+    var imageData = context.getImageData(0,0,_width, _height);
+    var screenData = imageData.data;
+
+    on(_events.renderImage, function (args) {
+        screenData.set(args.imgData, args.offset);
         context.putImageData(imageData, 0, 0);
     });
 

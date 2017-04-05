@@ -4,7 +4,7 @@ jim.messages.renderFragment.create = function (_offset, _mx, _my, _mw, _mh, _exp
     function asMessage () {
         return {
             offset: _offset,
-            extents: {mx: _mx, my: _my, mw: _mw, mh: _mh},
+            extents: _mx ? {mx: _mx, my: _my, mw: _mw, mh: _mh} : undefined,
             exportHeight: _exportHeight,
             exportWidth: _exportWidth
         };
@@ -55,15 +55,15 @@ jim.messages.export.create = function exportJob (_renderFragment, _iter, _deadRe
 };
 
 namespace(("jim.messages.interactive"));
-jim.messages.interactive.create = function (_fragment, copyOfHisto, currentIteration, stepSize, palette, histogramTotal, _offset, _deadRegions) {
+jim.messages.interactive.create = function (_fragment, copyOfHisto, currentIteration, stepSize, palette, histogramTotal) {
     "use strict";
     return {
-        offset: _offset,
+        offset: _fragment.offset,
         exportWidth : _fragment.exportWidth,
         exportHeight : _fragment.exportHeight,
         extents: _fragment.extents,
-        deadRegions: _deadRegions,
-        histogramDataBuffer: copyOfHisto.buffer,
+        deadRegions: [],
+        histogramDataBuffer: new Uint32Array(copyOfHisto).buffer,
         currentIteration : currentIteration,
         iterations : stepSize,
         paletteNodes: palette,

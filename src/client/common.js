@@ -22,6 +22,16 @@ var namespace = function (name) {
     });
 };
 
+namespace("jim.common.array");
+jim.common.array = function (x, f) {
+    "use strict";
+    var a = [];
+    for (var i = 0 ; i < x; i += 1) {
+        a[i] = f(i);
+    }
+    return a;
+};
+
 namespace("jim.worker.pool");
 jim.worker.pool.create = function (noOfWorkers, workerUrl, initialJobs, toTransfer, _nameOfStandardTransferList) {
     "use strict";
@@ -43,26 +53,40 @@ jim.worker.pool.create = function (noOfWorkers, workerUrl, initialJobs, toTransf
     }
 
     var workers = initWorkers(noOfWorkers, workerUrl);
-
+    var batchid = 0;
     return {
         consume: function (_jobs, _onEachJob, _onAllJobsComplete) {
-            var jobsComplete = 0, jobsToComplete = _jobs.length;
+            var jobsComplete = 0, jobsToComplete = _jobs.length, currentBatchId = batchid +=1;
             workers.forEach(function (worker) {
                 worker.onmessage = function (e) {
                     var msg = e.data;
+                    if(msg.batchid !== currentBatchId) {
+                        return;
+                    }
                     jobsComplete +=1;
                     var job = _jobs.pop();
-                    if (job) this.postMessage(job);
+                    if (job) {
+                        job.batchid = currentBatchId;
+
+                        var transferList = job[_nameOfStandardTransferList];
+                        if(transferList) {
+                            this.postMessage(job, [transferList]);
+                        } else {
+                            this.postMessage(job);
+                        }
+                    }
                     _onEachJob(msg);
                     if (jobsComplete === jobsToComplete) _onAllJobsComplete(msg);
                 };
                 var job = _jobs.pop();
-                var transferList = job[_nameOfStandardTransferList];
-
-                if(transferList) {
-                    worker.postMessage(job, [transferList]);
-                } else {
-                    worker.postMessage(job);
+                if(job) {
+                    var transferList = job[_nameOfStandardTransferList];
+                    job.batchid = currentBatchId;
+                    if(transferList) {
+                        worker.postMessage(job, [transferList]);
+                    } else {
+                        worker.postMessage(job);
+                    }
                 }
             });
         }

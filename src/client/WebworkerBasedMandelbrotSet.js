@@ -3,12 +3,14 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
     "use strict";
 
     var pool = jim.worker.pool.create(_parallelism, "/js/combinedWorker.js", [], "none", "histogramDataBuffer");
-
+    var array = jim.common.array;
     function onEachJob(_msg) {
         jobDone(_msg);
     }
     function onAllJobsComplete() {
-
+        if(running) postMessage();
+        palette = undefined;
+        extents = undefined;
     }
 
     //var worker = new Worker("/js/combinedWorker.js");
@@ -21,9 +23,13 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
     var palette = null;
     var additionalMessagesInFlight = 0;
     var escapeValues;
+    var running = true;
 
     function postMessage() {
-        additionalMessagesInFlight +=1;
+        console.log("Firing message");
+
+        //additionalMessagesInFlight +=_parallelism;
+        console.log(additionalMessagesInFlight + " messages in flight");
         var msg = {
             offset: 0,
             exportWidth :_width,
@@ -35,12 +41,25 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
             paletteNodes: palette,
             histogramTotal : histogramTotal
         };
+        var mx = extents ? extents.mx : undefined;
+        var my = extents ? extents.my : undefined;
+        var mw = extents ? extents.mw : undefined;
+        var mh = extents ? extents.mh : undefined;
+        var initialRenderDefinition = jim.messages.renderFragment.create(0, mx, my, mw, mh, _width, _height);
 
-        pool.consume([msg], onEachJob, onAllJobsComplete);
+        var fragments = initialRenderDefinition.split(1);
+        if(palette !== undefined) {
+            console.log("palette does not equal null");
+        }
+        var jobs = array(fragments.length, function (i) {
+            return jim.messages.interactive.create(fragments[i].asMessage(), copyOfHisto, currentIteration, stepSize, palette, histogramTotal);
+        });
+
+
+        pool.consume(jobs, onEachJob, onAllJobsComplete);
         //worker.postMessage(msg, [copyOfHisto.buffer]);
     }
 
-    var running = true;
 
     function extentsTransfer(x, y, w, h) {
         return {mx: x, my: y, mw: w, mh: h};
@@ -48,8 +67,12 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
 
     function jobDone (m) {
         var msg = m;
-        additionalMessagesInFlight-=1;
-        if(additionalMessagesInFlight >0) return;
+//        additionalMessagesInFlight-=1;
+//
+//        if(additionalMessagesInFlight >_parallelism){
+//            console.log("Finishing in job done as additional messages are in flight");
+//            return;
+//        }
 
         _events.fire(_events.histogramUpdateReceivedFromWorker, {update: new Uint32Array(msg.histogramUpdate), currentIteration: currentIteration});
         _events.fire(_events.maxIterationsUpdated, currentIteration);
@@ -59,13 +82,8 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
         }
         escapeValues = new Uint32Array(msg.escapeValues);
         currentIteration += stepSize;
-        _events.fire(_events.renderImage, new Uint8ClampedArray(msg.imageDataBuffer));
+        _events.fire(_events.renderImage, {imgData: new Uint8ClampedArray(msg.imageDataBuffer), offset: msg.offset});
         _events.fire(_events.frameComplete);
-
-        if(running) postMessage();
-
-        palette = undefined;
-        extents = undefined;
     }
 
     on(_events.requestEscapeValues, function () {
@@ -73,6 +91,10 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
     });
 
     on(_events.paletteChanged, function (_palette) {
+        console.log("palette updated");
+        if (_palette === null || _palette === undefined) {
+            console.log("Palette being set with an undefined value");
+        }
         palette = _palette.toNodeList();
     });
 
@@ -81,7 +103,7 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
         currentIteration = 0;
         extents = extentsTransfer(_extents.topLeft().x, _extents.topLeft().y, _extents.width(), _extents.height());
         console.log("Calling post from extents update");
-        postMessage();
+        postMessage(); // why?
         palette = undefined;
         extents = undefined;
     });
@@ -104,3 +126,5 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
         }, escapeValues: function () {return escapeValues;}
     };
 };
+
+// So on extents transfer set a flag to say dont do anything with next message

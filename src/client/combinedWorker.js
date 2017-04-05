@@ -116,6 +116,7 @@ onmessage = function(e) {
         escapeValuesToTransfer = new Uint32Array(pixelStateTracker.escapeValues);
         return {
             offset: offset,
+            batchid: msg.batchid,
             histogramUpdate: pixelStateTracker.histogramUpdate.buffer,
             imageDataBuffer: pixelStateTracker.imageData.buffer,
             escapeValues: escapeValuesToTransfer.buffer,

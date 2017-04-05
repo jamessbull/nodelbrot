@@ -152,6 +152,14 @@ jim.init.run = function () {
 // uses workerpool to execute jobs. pass in function on each job and on all jobs
 // result gives me imgData and an offset which is what I want.
 // generation of jobs will be different though. Some refactoring needed there to distinguish between job types
+// started to use the job splitter. Hooray.
+
+// To actually multithread it. I need to split the extents into fragments. Then build the right job from each fragment
+// Then when the response comes back I need to paint it on to the offset.
+
+// 1) Build jobs.
+//  i)  split extents into fragments
+//  ii) How do I deal with the stuff that gets sent? I only send histogram data buffer so no problem
 
 // split main display into separate threads.
 // I think breaking it up into three regions would be best
@@ -173,7 +181,8 @@ jim.init.run = function () {
 // minify js
 // remove all dead code
 // estimate long tail cap histo size at 300k use last 100k to  estimate next 500k
-
+// Why wouldn't the palette update? only changed how I create the jobs so it must be that?
+// Double check.
 // fire event 1
 // fire event 2 extents are updated
 // event
