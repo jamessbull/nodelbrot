@@ -103,21 +103,21 @@ namespace("jim.mandelbrot.escapeDistributionHistogram");
 jim.mandelbrot.escapeDistributionHistogram.create = function (_events) {
     "use strict";
     var histoData = new Uint32Array(250000);
-    var currentTotal;
+    var currentTotal = 0;
+    var called = 0;
+    var lastTimeRound = 0;
     function processHistogramUpdates(updateInfo) {
         var updates = updateInfo.update;
         var lastIterationCalculated = updateInfo.currentIteration;
-        //var currentTotal;
-        if (lastIterationCalculated === 0) {
-            currentTotal = 0;
-        } else {
-            currentTotal = histoData[lastIterationCalculated - 1];
+        called +=1;
+        var runningTotal = 0;
+        for (var i = 0; i < updates.length; i += 1) {
+            runningTotal += updates[i];
+            var initialValue = lastIterationCalculated > lastTimeRound ? currentTotal : histoData[lastIterationCalculated + i];
+            histoData[lastIterationCalculated + i] = runningTotal + initialValue;
         }
-        for (var i = 0; i < updates.length; i+=1) {
-            var newTotal = (updates[i] + currentTotal);
-            histoData[lastIterationCalculated + i] += newTotal;
-            currentTotal = newTotal;
-        }
+        currentTotal += runningTotal;
+        lastTimeRound = lastIterationCalculated;
         return new Uint32Array(histoData);
     }
 
@@ -128,7 +128,10 @@ jim.mandelbrot.escapeDistributionHistogram.create = function (_events) {
     });
 
     on(_events.extentsUpdate, function () {
+        console.log("Blatting things mightily");
         histoData = new Uint32Array(250000);
+        currentTotal = 0;
+        lastTimeRound = 0;
     });
     return {};
 };

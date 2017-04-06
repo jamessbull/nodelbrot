@@ -15,9 +15,7 @@ jim.mandelbrotImage.create = function (_events, _width, _height) {
     canvas.oncontextmenu = function (e) {
         e.preventDefault();
     };
-
-    var mandelbrotCalculator = jim.mandelbrot.webworkerInteractive.create(_width, _height, _events, 50, 1);
-    //mandelbrotCalculator.start();
+    var mandelbrotCalculator = jim.mandelbrot.webworkerInteractive.create(_width, _height, _events, 70, 4);
     return {
         canvas: function () {
             return canvas;
@@ -165,6 +163,29 @@ jim.init.run = function () {
 // I think breaking it up into three regions would be best
 
 // Now I need to use the splitter and new message for existing single threaded mode.
+// Now running multithreaded but too dark.
+// Colour algorithm uses the histogram.
+// if palette goes from black to white then the fewer things that have escaped by a given iteration the darker the colour.
+
+// Both halves equally dark so I must be sending same histo to both.
+// ok with a single thread though
+// so if histo is getting updated ok with one but not with two what is happening?
+// I think that in 1 thread mode this happens
+// 0,1,2,3,4
+//[0,0,0,0,0] -< original array
+//[1,2] -< update 1 , it = 0
+//[1,3,0,0,0] -< array after update
+//[3,2] <-< update 2, it = 2
+//[1,3,6,8]
+
+//2 threads
+//[0,0,0,0,0]
+//t1 update [1,2]
+//t2 update [2,3] it = 0
+//[1,3,0,0,0] - u1 applied
+//[3,8,0,0,0]
+
+
 
 // To optimise
 // Alter step value automatically to balance frame rate with progress
