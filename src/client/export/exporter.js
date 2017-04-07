@@ -10,7 +10,6 @@ jim.mandelbrot.image.exporter.create = function (_exportDimensions, _mandelbrotS
     var timeProgress = document.getElementById("elapsedTime");
     var downloadButton = document.getElementById("export1");
     var exportDimensions;
-    var imageGenerator = jim.parallelImageGenerator.create();
     var palette;
     var deadRegions;
 

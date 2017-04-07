@@ -138,55 +138,7 @@ jim.init.run = function () {
 // examine is broken
 // Export broken if dead regions have not been calculated
 
-// How many iterations per second I'm doing.
 // Experiments - Ho many fps do I get if I skip the loop to actually calc pixels? For later
-//I want code to take list of jobs and spit them out at a canvas in the right place.
-// sounds a lot like the export functionality.
-// current export code essentially does this
-// Create a new image data array
-// create initial jobs to prime the worker with palette etc
-// create a canvas
-// uses job splitter
-// uses workerpool to execute jobs. pass in function on each job and on all jobs
-// result gives me imgData and an offset which is what I want.
-// generation of jobs will be different though. Some refactoring needed there to distinguish between job types
-// started to use the job splitter. Hooray.
-
-// To actually multithread it. I need to split the extents into fragments. Then build the right job from each fragment
-// Then when the response comes back I need to paint it on to the offset.
-
-// 1) Build jobs.
-//  i)  split extents into fragments
-//  ii) How do I deal with the stuff that gets sent? I only send histogram data buffer so no problem
-
-// split main display into separate threads.
-// I think breaking it up into three regions would be best
-
-// Now I need to use the splitter and new message for existing single threaded mode.
-// Now running multithreaded but too dark.
-// Colour algorithm uses the histogram.
-// if palette goes from black to white then the fewer things that have escaped by a given iteration the darker the colour.
-
-// Both halves equally dark so I must be sending same histo to both.
-// ok with a single thread though
-// so if histo is getting updated ok with one but not with two what is happening?
-// I think that in 1 thread mode this happens
-// 0,1,2,3,4
-//[0,0,0,0,0] -< original array
-//[1,2] -< update 1 , it = 0
-//[1,3,0,0,0] -< array after update
-//[3,2] <-< update 2, it = 2
-//[1,3,6,8]
-
-//2 threads
-//[0,0,0,0,0]
-//t1 update [1,2]
-//t2 update [2,3] it = 0
-//[1,3,0,0,0] - u1 applied
-//[3,8,0,0,0]
-
-
-
 // To optimise
 // Alter step value automatically to balance frame rate with progress
 // Have multiple interactive webworkers
