@@ -46,6 +46,7 @@ function response (msg, imgData) {
     retVal.result = {};
     retVal.result.imgData = imgData.buffer;
     retVal.result.offset = msg.offset;
+    retVal.batchid = msg.batchid;
     return retVal;
 }
 

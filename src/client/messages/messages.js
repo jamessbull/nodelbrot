@@ -43,12 +43,11 @@ jim.messages.renderFragment.create = function (_offset, _mx, _my, _mw, _mh, _exp
 namespace(("jim.messages.export"));
 jim.messages.export.create = function exportJob (_renderFragment, _iter, _deadRegions) {
     "use strict";
-    var fragment = _renderFragment.asMessage();
     return {
-        offset: fragment.offset,
-        exportWidth: fragment.exportWidth,
-        exportHeight: fragment.exportHeight,
-        extents: fragment.extents,
+        offset: _renderFragment.offset,
+        exportWidth: _renderFragment.exportWidth,
+        exportHeight: _renderFragment.exportHeight,
+        extents: _renderFragment.extents,
         deadRegions: _deadRegions,
         maxIterations: _iter
     };

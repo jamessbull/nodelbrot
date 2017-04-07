@@ -62,7 +62,7 @@ jim.mandelbrot.image.exporter.create = function (_exportDimensions, _mandelbrotS
 
         var jobs = [];
         fragments.forEach(function (fragment,i) {
-             jobs[i] = jim.messages.export.create(fragment, exportDepth.value, deadSections[i]);
+             jobs[i] = jim.messages.export.create(fragment.asMessage(), exportDepth.value, deadSections[i]);
         });
 
         var initialJobs = createInitialJobs(8, histogramData,  histogramTotal, palette.toNodeList());
