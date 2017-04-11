@@ -19,7 +19,7 @@ describe("Performance metrics", function () {
                 expect(fps).toBeLessThan(11);
             }
             if (fired === 1) {
-                expect(fps).toBe(0);
+                expect(fps).toBeCloseTo(0);
             }
             if (fired === 4){
                 done();

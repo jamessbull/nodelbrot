@@ -105,7 +105,7 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
             postMessage();
         },
         destroy: function () {
-            worker.terminate();
+            pool.terminate();
         }, escapeValues: function () {return escapeValues;}
     };
 };

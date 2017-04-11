@@ -1,5 +1,5 @@
 describe("the multiworker histogram", function () {
-    jasmine.DEFAULT_TIMEOUT_INTERVAL = 300000;
+    jasmine.DEFAULT_TIMEOUT_INTERVAL = 5000;
     "use strict";
     it("should be the same as the combined worker histogram", function (done) {
         var calculation = jim.mandelbrot.export.escapeHistogramCalculator.create();
@@ -227,6 +227,37 @@ describe("The combined worker", function () {
 
     });
 
+    it("should update the histogram correctly for two updates at th same point in the array", function (done) {
+        events.clear();
+        var histoUpdater = jim.mandelbrot.escapeDistributionHistogram.create(events);
+        var called = 0;
+        var update = {update: [0,1,2,3,4], currentIteration: 0};
+        var update2 = {update: [0,1,2,3,4], currentIteration: 0};
+
+        on(events.histogramUpdated, function (histoinfo) {
+            var histo = histoinfo.array;
+            called +=1;
+            if(called === 2) {
+                expect(histo[0]).toBe(0);
+                expect(histo[1]).toBe(2);
+                expect(histo[2]).toBe(6);
+                expect(histo[3]).toBe(12);
+                expect(histo[4]).toBe(20);
+                expect(histo[5]).toBe(0);
+                expect(histo[6]).toBe(0);
+                expect(histo[7]).toBe(0);
+                expect(histo[8]).toBe(0);
+                expect(histo[9]).toBe(0);
+                done();
+            }
+
+        });
+
+        events.fire(events.histogramUpdateReceivedFromWorker, update);
+        events.fire(events.histogramUpdateReceivedFromWorker, update2);
+
+    });
+
     it("should be able to calculate various mandelbrot points from 0 to 10 and 10 to 20", function () {
         var point = jim.newMandelbrotPoint.create();
 
@@ -243,7 +274,7 @@ describe("The combined worker", function () {
        var currentExtents = jim.rectangle.create(-2.5, -1, 3.5, 2);
        events.clear();
 
-       var mset = jim.mandelbrot.webworkerInteractive.create (700, 400, events, 20);
+       var mset = jim.mandelbrot.webworkerInteractive.create (700, 400, events, 20,1);
 
        on(events.histogramUpdateReceivedFromWorker, function (update) {
            var histoData = total(update.update);
@@ -258,42 +289,89 @@ describe("The combined worker", function () {
 
        events.fire(events.paletteChanged, palette);
        events.fire(events.extentsUpdate, currentExtents);
-   });
+    });
+     it("should calculate the same histogram whether or not it is 0 to 20 or 0 to 10 and then 10 to 20", function (done) {
+         var newJob = jim.messages.interactive.create;
+         var renderDefinition =  jim.messages.renderFragment.create;
+         var palette = jim.palette.create();
+         events.clear();
+         var noughtToTwentyHistogram = new Uint32Array(20);
+         var noughtToTenHistogram = new Uint32Array(20);
 
-    it("several passes", function (done) {
-        events.clear();
+         function combine(arr1, arr2, from) {
+             for (var i = 0 ; i < arr1.length; i +=1) {
+                 arr2[from + i] += arr1[i];
+             }
+         }
+         var job = 0;
+         function updateHistogram(_msg, currentIteration, arr2) {
+             var update = new Uint32Array(_msg.histogramUpdate);
+             console.log("called with current Iteration " + currentIteration);
+             if (currentIteration ===10 ){
+                 console.log("Contents of update for final job");
+                 for (var i = 0 ; i < 10 ; i +=1) {
+                     console.log("update[ " + update[i] + " ]");
+                 }
+             }
+             combine(update, arr2, currentIteration);
+         }
 
-        var palette = jim.palette.create();
-        var currentExtents = jim.rectangle.create(-2.5, -1, 3.5, 2);
+         var pool = jim.worker.pool.create(1, "/js/combinedWorker.js", [], "none", "histogramDataBuffer");
+         var mainRender = renderDefinition(0, -2.5, -1, 3.5, 2, 700, 400);
+         var secondaryRender = renderDefinition(0, 0, 0, 0, 0, 700, 400);
+         var noughtToTwentyJob =  newJob(mainRender.asMessage(), noughtToTwentyHistogram, 0, 20, palette.toNodeList(), 0);
+         var noughtToTenJob =  newJob(mainRender.asMessage(), noughtToTenHistogram, 0, 10, palette.toNodeList(), 0);
+         var tenToTwentyJob =  newJob(secondaryRender.asMessage(), noughtToTenHistogram, 10, 20, palette.toNodeList(), 0);
 
-        var histoProcessor = jim.mandelbrot.escapeDistributionHistogram.create(events);
-        var mset = jim.mandelbrot.webworkerInteractive.create (700, 400, events, 10);
-        var updates = 0;
-        var histoUpdates = 0;
+         pool.consume([noughtToTwentyJob], function (_msg) {updateHistogram(_msg, 0, noughtToTwentyHistogram);}, function () {
+             //pool.terminate();
+             var currentIteration = 0;
+             pool.consume([noughtToTenJob, tenToTwentyJob], function (_msg) {
+                 updateHistogram(_msg, currentIteration, noughtToTenHistogram);
+                 currentIteration +=10;
+             }, function () {
+                 for(var i = 0 ; i< 20 ; i+=1) {
+                     expect(noughtToTenHistogram[i]).toBe(noughtToTwentyHistogram[i]);
+                 }
+                 pool.terminate();
 
-        on(events.histogramUpdateReceivedFromWorker, function (update) {
-            if(updates === 1) {
-                mset.stop();
-                mset.destroy();
+                 done();
+             });
+         });
+
+
+
+     });
+    function doAThing(i) {
+        return function (done) {
+            console.log(i);
+            done();
+        };
+    }
+
+    function first(f) {
+
+        var chain = [];
+        chain.push(f);
+        function done() {
+            chain.shift()(done);
+        }
+        return {
+            then: function (f2) {
+                chain.push(f2);
+                return this;
+            },
+            resolve: function () {
+                chain.shift()(done);
             }
-            updates +=1;
-            console.log("updates " + updates);
-        });
+        };
+    }
 
-        on(events.histogramUpdated, function (info) {
-            var update = info.array;
-            histoUpdates +=1;
-            if(histoUpdates === 2) {
-                for (var i = 0 ; i < 20 ; i +=1) {
-                    console.log(update[i]);
-                    expect(update[i]).toBe(expectedHistogramValuesForTwentyIterations[i]);
-                }
-                done();
-            }
-        });
-
-        events.fire(events.paletteChanged, palette);
-        events.fire(events.extentsUpdate, currentExtents);
+    it("should make callback hell less of an issue", function () {
+       first(doAThing(1))
+           .then(doAThing(2))
+           .then(doAThing(3))
+           .resolve();
     });
 
 });

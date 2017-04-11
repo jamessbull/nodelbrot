@@ -53,7 +53,7 @@ jim.worker.pool.create = function (noOfWorkers, workerUrl, initialJobs, toTransf
     }
 
     function postNextJob(_jobs, _worker, _currentBatchId) {
-        var job = _jobs.pop();
+        var job = _jobs.shift();
         if (job) {
             job.batchid = _currentBatchId;
 
@@ -84,6 +84,13 @@ jim.worker.pool.create = function (noOfWorkers, workerUrl, initialJobs, toTransf
                 };
                 postNextJob(_jobs, worker, currentBatchId);
             });
+        },
+        terminate: function () {
+
+            workers.forEach(function (worker) {
+               worker.terminate();
+            });
+            workers = initWorkers(noOfWorkers, workerUrl);
         }
     };
 };
