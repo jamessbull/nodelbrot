@@ -36,17 +36,6 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
     }
 
     function postMessage() {
-        var msg = {
-            offset: 0,
-            exportWidth :_width,
-            exportHeight :_height,
-            histogramDataBuffer: copyOfHisto.buffer,
-            currentIteration : currentIteration,
-            iterations : stepSize,
-            extents: extents,
-            paletteNodes: palette,
-            histogramTotal : histogramTotal
-        };
         var mx = extents ? extents.mx : undefined;
         var my = extents ? extents.my : undefined;
         var mw = extents ? extents.mw : undefined;

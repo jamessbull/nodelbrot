@@ -137,6 +137,7 @@ jim.init.run = function () {
 
 // examine is broken
 // Export broken if dead regions have not been calculated
+// work on fixing export
 
 // Experiments - Ho many fps do I get if I skip the loop to actually calc pixels? For later
 // To optimise

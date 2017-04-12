@@ -349,26 +349,25 @@ describe("The combined worker", function () {
         };
     }
 
-    function first(f) {
+    function promise() {
 
         var chain = [];
-        chain.push(f);
         function done() {
-            chain.shift()(done);
+            var f = chain.shift();
+            if(f) f(done);
         }
         return {
             then: function (f2) {
                 chain.push(f2);
                 return this;
             },
-            resolve: function () {
-                chain.shift()(done);
-            }
+            resolve: done
         };
     }
 
     it("should make callback hell less of an issue", function () {
-       first(doAThing(1))
+       promise()
+           .then(doAThing(1))
            .then(doAThing(2))
            .then(doAThing(3))
            .resolve();
