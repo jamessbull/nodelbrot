@@ -23,6 +23,7 @@ jim.events.create = function () {
         escapeValuesPublished: "escapeValuesPublished",
         requestEscapeValues: "requestEscapeValues",
         frameComplete: "frameComplete",
+        andFinally: "andFinally",
         histogramUpdateReceivedFromWorker: "histogramUpdateReceivedFromWorker",
         histogramUpdated: "histogramUpdated",
         renderImage:"renderImage",

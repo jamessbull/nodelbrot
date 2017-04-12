@@ -106,6 +106,7 @@ jim.mandelbrot.escapeDistributionHistogram.create = function (_events) {
     var currentTotal = 0;
     var called = 0;
     var lastTimeRound = 0;
+
     function processHistogramUpdates(updateInfo) {
         var updates = updateInfo.update;
         var lastIterationCalculated = updateInfo.currentIteration;
@@ -145,6 +146,9 @@ jim.mandelbrot.imageRenderer.create = function (_events, _canvas, _width, _heigh
 
     on(_events.renderImage, function (args) {
         screenData.set(args.imgData, args.offset);
+    });
+
+    on(_events.andFinally, function () {
         context.putImageData(imageData, 0, 0);
     });
 

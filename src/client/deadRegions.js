@@ -14,6 +14,8 @@ jim.mandelbrot.deadRegions.create = function (_events, _canvas, _mandelbrotCanva
     var radius ;
     var showDeadRegions;
     var calc;
+    var escapeValues = new Uint32Array(_canvas.width * _canvas.height);
+    var calcDeadRegions = false;
 
     function calculateDeadRegions(_calc, deadPixelRadius, _width, _height) {
         var context = deadRegionsCanvas.getContext('2d');
@@ -30,20 +32,29 @@ jim.mandelbrot.deadRegions.create = function (_events, _canvas, _mandelbrotCanva
                 setPixel(i, deadRegionData, {r:1,g:1,b:1,a:0});
             }
         });
-        _events.fire(_events.deadRegionsPublished, deadRegionsArray);
         context.putImageData(new ImageData(deadRegionData, _width, _height), 0, 0);
-
         return deadRegionsArray;
     }
 
     on(_events.escapeValuesPublished, function (_escapeValues) {
+        var values = new Uint32Array(_escapeValues.escapeValues);
+        var offset = _escapeValues.offset;
+        for (var i = 0 ; i < values.length; i +=1) {
+            escapeValues[offset+i] = values[i];
+        }
+        calcDeadRegions = true;
         console.log("escape values published");
-        calc = calculator(_escapeValues, _canvas.width);
-        calculateDeadRegions(calc, radius, _canvas.width, _canvas.height);
     });
 
     on(_events.frameComplete, function () {
+        if (calcDeadRegions) {
+            calc = calculator(escapeValues, _canvas.width);
+            var deadRegions = calculateDeadRegions(calc, radius, _canvas.width, _canvas.height);
+            calcDeadRegions = false;
+            _events.fire(_events.deadRegionsPublished, deadRegions);
+        }
         if(showDeadRegions) {
+
             var context = _mandelbrotCanvas.getContext('2d');
             context.drawImage(deadRegionsCanvas, 0, 0);
             //calculateDeadRegions(calc, radius, _canvas.width, _canvas.height);

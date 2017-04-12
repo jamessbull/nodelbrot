@@ -81,13 +81,11 @@ jim.init.run = function () {
     };
     jim.metrics.create(jim.metrics.clock.create(), events);
     jim.fpsdisplay.create(fps, events, dom);
-    var processor = jim.mandelbrot.escapeDistributionHistogram.create(events);
-    var deadRegions = jim.mandelbrot.deadRegions.create(events, deadRegionCanvas, mandelbrot.canvas());
+    jim.mandelbrot.escapeDistributionHistogram.create(events);
+    jim.mandelbrot.deadRegions.create(events, deadRegionCanvas, mandelbrot.canvas());
     jim.mandelbrot.imageRenderer.create(events, mandelbrot.canvas(), mandelbrot.width(), mandelbrot.height());
     var palette = jim.palette.create();
     var colourGradientui = newColourGradientUI(colourGradientCanvas, addButton, removeButton, palette, events);
-
-//    events.fire(events.extentsUpdate, mandelbrot.state().getExtents());
 
     var bookmarker = newBookmarker(bookmarkButton, mandelbrot, colourGradientui, events);
     var mainDisplayUI = newMainUI(mandelbrot, canvasDiv, mandelCanvas.width, mandelCanvas.height, pixelInfoCanvas);

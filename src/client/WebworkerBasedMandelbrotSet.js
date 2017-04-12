@@ -6,6 +6,7 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
     var array = jim.common.array;
 
     var shouldPublishEscapeValues = false;
+    var escapeValuesRequested = false;
     var copyOfHisto = new Uint32Array(250000);
     var histogramTotal = 0;
     var stepSize = _stepSize;
@@ -18,8 +19,7 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
     function onEachJob(_msg) {
         _events.fire(_events.histogramUpdateReceivedFromWorker, {update: new Uint32Array(_msg.histogramUpdate), currentIteration: currentIteration});
         if (shouldPublishEscapeValues) {
-            _events.fire(_events.escapeValuesPublished, new Uint32Array(_msg.escapeValues));
-            shouldPublishEscapeValues = false;
+            _events.fire(_events.escapeValuesPublished, {escapeValues: _msg.escapeValues, offset: _msg.offset / 4});
         }
         escapeValues = new Uint32Array(_msg.escapeValues);
         _events.fire(_events.renderImage, {imgData: new Uint8ClampedArray(_msg.imageDataBuffer), offset: _msg.offset});
@@ -28,6 +28,13 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
     function onAllJobsComplete() {
         _events.fire(_events.maxIterationsUpdated, currentIteration);
         currentIteration += stepSize;
+        shouldPublishEscapeValues = false;
+
+        if (escapeValuesRequested) {
+            escapeValuesRequested = false;
+            shouldPublishEscapeValues = true;
+        }
+        _events.fire(_events.andFinally);
         _events.fire(_events.frameComplete);
 
         if(running) postMessage();
@@ -59,7 +66,7 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
     }
 
     on(_events.requestEscapeValues, function () {
-        shouldPublishEscapeValues = true;
+        escapeValuesRequested = true;
     });
 
     on(_events.paletteChanged, function (_palette) {
@@ -98,5 +105,3 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
         }, escapeValues: function () {return escapeValues;}
     };
 };
-
-// So on extents transfer set a flag to say dont do anything with next message
