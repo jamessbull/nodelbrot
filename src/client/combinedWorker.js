@@ -85,33 +85,6 @@ onmessage = function(e) {
     var histogramTotal = msg.histogramTotal;
     var escapeValuesToTransfer;
     var offset = msg.offset;
-
-    pixelStateTracker.imageData = new Uint8ClampedArray(4 * noOfPixels);
-    pixelStateTracker.iterations = noOfIterations;
-    pixelStateTracker.currentIteration  = msg.currentIteration;
-    pixelStateTracker.colour = colour;
-    pixelStateTracker.histogramUpdate = histogramUpdate;
-
-    if (!xState || msg.extents) {
-        initState(noOfPixels);
-        pixelStateTracker.xState = xState;
-        pixelStateTracker.yState = yState;
-        pixelStateTracker.escapeValues = escapeValues;
-        pixelStateTracker.imageEscapeValues = imageEscapeValues;
-    }
-    if (msg.extents) {
-        extents = msg.extents;
-        pixelStateTracker.width = msg.exportWidth;
-    }
-    if (msg.paletteNodes) {
-        palette.fromNodeList(msg.paletteNodes);
-    }
-    pixelStateTracker.palette = palette;
-
-    histogramForColour.setData(new Uint32Array(histogramData), histogramTotal);
-    pixelStateTracker.histogramForColour = histogramForColour;
-    pixelStateTracker.width = msg.exportWidth;
-
     function message () {
         escapeValuesToTransfer = new Uint32Array(pixelStateTracker.escapeValues);
         return {
@@ -124,8 +97,38 @@ onmessage = function(e) {
             reset: reset
         };
     }
+    if(msg.sendData) {
+        postMessage({imgData: pixelStateTracker.imageData, xState: pixelStateTracker.xState, yState: pixelStateTracker.yState, imageEscapeValues: pixelStateTracker.imageEscapeValues, escapeValues: pixelStateTracker.escapeValues, offset:msg.offset});
+    } else {
+        pixelStateTracker.imageData = new Uint8ClampedArray(4 * noOfPixels);
+        pixelStateTracker.iterations = noOfIterations;
+        pixelStateTracker.currentIteration  = msg.currentIteration;
+        pixelStateTracker.colour = colour;
+        pixelStateTracker.histogramUpdate = histogramUpdate;
 
-    setProcessor.processSet(extents, pixelStateTracker, msg.currentIteration, noOfIterations, msg.exportWidth, msg.exportHeight, undefined);
-    postMessage(message(), [pixelStateTracker.imageData.buffer, pixelStateTracker.histogramUpdate.buffer, escapeValuesToTransfer.buffer]);
-    reset = false;
+        if (!xState || msg.extents) {
+            initState(noOfPixels);
+            pixelStateTracker.xState = xState;
+            pixelStateTracker.yState = yState;
+            pixelStateTracker.escapeValues = escapeValues;
+            pixelStateTracker.imageEscapeValues = imageEscapeValues;
+        }
+
+        if (msg.extents) {
+            extents = msg.extents;
+            pixelStateTracker.width = msg.exportWidth;
+        }
+        if (msg.paletteNodes) {
+            palette.fromNodeList(msg.paletteNodes);
+        }
+        pixelStateTracker.palette = palette;
+
+        histogramForColour.setData(new Uint32Array(histogramData), histogramTotal);
+        pixelStateTracker.histogramForColour = histogramForColour;
+        pixelStateTracker.width = msg.exportWidth;
+
+        setProcessor.processSet(extents, pixelStateTracker, msg.currentIteration, noOfIterations, msg.exportWidth, msg.exportHeight, undefined);
+        postMessage(message(), [pixelStateTracker.imageData.buffer, pixelStateTracker.histogramUpdate.buffer, escapeValuesToTransfer.buffer]);
+        reset = false;
+    }
 };

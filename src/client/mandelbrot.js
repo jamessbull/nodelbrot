@@ -15,10 +15,14 @@ jim.mandelbrotImage.create = function (_events, _width, _height) {
     canvas.oncontextmenu = function (e) {
         e.preventDefault();
     };
-    var mandelbrotCalculator = jim.mandelbrot.webworkerInteractive.create(_width, _height, _events, 70, 4);
+    var imgData = new Uint8ClampedArray(_width * _height * 4 );
+    var mandelbrotCalculator = jim.mandelbrot.webworkerInteractive.create(_width, _height, _events, 70, 4, imgData);
     return {
         canvas: function () {
             return canvas;
+        },
+        imgData: function () {
+            return imgData;
         },
         move: function (x, y) {
             state.move(x, y);
@@ -83,7 +87,11 @@ jim.init.run = function () {
     jim.fpsdisplay.create(fps, events, dom);
     jim.mandelbrot.escapeDistributionHistogram.create(events);
     jim.mandelbrot.deadRegions.create(events, deadRegionCanvas, mandelbrot.canvas());
+
+
     jim.mandelbrot.imageRenderer.create(events, mandelbrot.canvas(), mandelbrot.width(), mandelbrot.height());
+    jim.mandelbrot.examinePixelStateDisplay.create(events, mandelbrot.imgData());
+
     var palette = jim.palette.create();
     var colourGradientui = newColourGradientUI(colourGradientCanvas, addButton, removeButton, palette, events);
 
@@ -133,14 +141,101 @@ jim.init.run = function () {
 
 };
 
-// examine is broken
-// Export broken if dead regions have not been calculated
-// work on fixing export
+// examine is broken - fix it
+// ok so examine will work like this
+//  As soon as you hit examine the main display stops updating.
+// Send a message to all three workers to get copy of state.
+// combine all xState yState into one main state. use this data to drive display.
+
+// How does ui work? Click eyeball. Eye opens. I am now in select mode.
+// cursor disappears when you move it over the image and a magnifying glass appears over main image.
+// When the mouse is clicked magnifying glass disappears and is replaces with cursor in midle of expanded pixel display
+// Mouse over on the pixel to see info. move mouse out of that magnified view to bring magnifying glass back again.
+// Click open eye to restart main display and close eye again.
+
+// How would I like to ask for state of worker?
+// just create three ask for state jobs and throw them at the pool.
+// They collect data on each job as it completes and finally fires an event with the whole set of data.
+// The examiner listens to this event operates until it is dismissed and fires a start event when it is done.
+
+// So to do
+// Make a magnifying glass!
+// Make cursor a magnifying glass when I click it highlight it
+// stop the mandelbrot set.
+// What data do I want? Img data / should have it
+// I want to know the following
+
+
+//var xState;
+//var yState;
+//var escapeValues;
+//var imageEscapeValues;
+// imgData
+
+
+// So Have a ui control that is shown / hidden when I click magnifying glass
+// The ui control listens to events.
+// listens for showMagnified event which is fired with an int which tells me which pixel to show
+// request data from worker
+// listen for event that will provide the data
+// The events are only generated while magnifying glass selected
+
+// Init
+// Create arrays
+// Init all to 0
+// create canvas nothing on it
+//
+
+// Request all data process
+// send the can i have all data please event
+// listen to the here is all the data event
+// set all the arrays to values from message
+// assume center pixel is selected
+
+// In webworker mandelbrot set
+// when asked for all data
+// send message asking for data to each worker
+// response should include offset
+// when all are complete send i have all data message
+
+// has it escaped
+// How may iterations have run
+// When did it escape
+// what iteration did colour finish calculating on.
+// What is the x value
+// what is the y value
+
+// send ask for data jobs.
+// when all data collected send examine event
+//
+// create examiner to consume event
+//
+
+// Create appropriate job. Check to see
+// So examine button is clicked. Send an examine event. Main loops responds and stops.
+// Webworker listens to examine event and sends a special message to the worker to retrieve it's state.
+// webworker sends message for region it wants to examine
+
+// look at palette
+// try using dead  regions on main display. Just calc occasionally. Send a job to a worker perhaps.
+// Display number of pixels escaping per second
+// Show iteration number of pixels escaping per second went below threshold.
+// Make histogram use combined worker on export
+// Can export use combined worker? Or at least refactor so messages are all the same and pull out pixel trackers into separate files.
+// Profile again and try to improve speed.
+//reset dead regions on zoom and move. Lost that again.
+
+// New thought. Just pass array in and use set method.
+// So create imgData array in mand.js and pass it in to the renderer.
+// Then also pass it into pixel examiner so it can use it. Simple
+// Next step is to collect data on each job for dead regions ie escape Values then publish all at once for dead regions
+// Pass in escapeValues array into producer / webworkerbasedmand and consumer examinePixelDisplay
+// 1) Change dead regions to expect single event with all data in array
 
 // Experiments - Ho many fps do I get if I skip the loop to actually calc pixels? For later
 // To optimise
 // Alter step value automatically to balance frame rate with progress
-// Have multiple interactive webworkers
+
 // Do SIMD - But not until chrome supports it.
 
 // Show export progress better dim lines as they finish

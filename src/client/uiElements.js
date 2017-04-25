@@ -75,17 +75,31 @@ jim.mandelbrot.ui.elements.create = function (_exportSizeDropdown, _mandelbrotSe
     var examinePixelsPanel = document.getElementById("examinePixels");
     var exportPanel        = document.getElementById("exportImagePanel");
     var exportMenuButton   = document.getElementById("exportImageButton");
+    var mandelCanvas   = document.getElementById("mandelbrotCanvas");
+
 
     examineMenuButton.onclick = function () {
-        dom.selectButton(examineMenuButton);
-        dom.deselectButton(exportMenuButton);
-        dom.show(examinePixelsPanel);
-        dom.hide(exportPanel);
+        if (examineMenuButton.classList.contains("iconSelected")) {
+            dom.deselectIcon(examineMenuButton);
+            dom.hide(examinePixelsPanel);
+            dom.removeClass(mandelCanvas, "magnifyCursor");
+            _mandelbrotSet.go();
+
+        } else{
+            dom.selectIcon(examineMenuButton);
+            dom.deselectButton(exportMenuButton);
+            dom.show(examinePixelsPanel);
+            dom.addClass(mandelCanvas, "magnifyCursor");
+            dom.hide(exportPanel); //element.style.cursor
+            _mandelbrotSet.stop();
+            _events.fire(_events.examinePixelState);
+        }
     };
 
     exportMenuButton.onclick = function () {
         dom.selectButton(exportMenuButton);
-        dom.deselectButton(examineMenuButton);
+        dom.removeClass(_mandelbrotSet.canvas(), "magnifyCursor");
+        dom.deselectIcon(examineMenuButton);
         dom.show(exportPanel);
         dom.hide(examinePixelsPanel);
     };

@@ -13,13 +13,13 @@ var  handleClickfunction
         background-color: white;
     }
     .exportImage {
-        position: absolute; top: 220px; left: 716px; width: 193px; height:391px;
+        position: absolute; top: 245px; left: 716px; width: 193px; height:391px;
         background-color: black;
     }
     .canvas { position: absolute; top: 0; left: 0; }
     #mandelbrotCanvas { position: absolute; top:52px; display: inline-block; margin-bottom:22px}
     .examinePixels {
-        position: absolute; top:220px; left: 716px; width:193px; height:391px;
+        position: absolute; top:245px; left: 716px; width:193px; height:391px;
         background-color: black;
     }
     .pixelInfoCanvas {
@@ -115,9 +115,32 @@ var  handleClickfunction
     }
     .buttonSelected {
         border-style :solid;
-        border-width: 2px;
+        border-radius:3px;
+        border-width: 1px;
         padding-top:1px;
+        padding-bottom:1px;
+        padding-left:1px;
+        padding-right:1px;
         cursor:default;
+    }
+    .iconSelected {
+        border-style :solid;
+        border-width: 1px;
+        border-radius:3px;
+
+        cursor:default;
+    }
+    .icon {
+        position: relative;
+        padding-top:1px;
+        padding-bottom:1px;
+        padding-left:1px;
+        padding-right:1px;
+        top: 4px;
+        width: 25px;
+    }
+    .magnifyCursor {
+        cursor : url(js/magnifyingglass.png), auto;
     }
     .pickerButtons {
         background-color:black;
@@ -177,7 +200,7 @@ var  handleClickfunction
     .panelSwitcher {
         background-color:black;
         position:absolute;
-        top:184px;
+        top:190px;
         width: 182px;
         left:716px;
         padding-left:11px;
@@ -231,7 +254,7 @@ var  handleClickfunction
     <div id="mandelbrotCanvas"></div>
 
     <div class="panelSwitcher">
-        <span id="pixelInfoButton" class = "toolbarButton">Examine</span>
+       <img id="pixelInfoButton" class="icon" src="/js/magnifyingglass.png">
         <span id="exportImageButton" class = "toolbarButton">Export</span>
     </div>
 

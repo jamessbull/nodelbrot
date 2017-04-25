@@ -28,7 +28,9 @@ jim.events.create = function () {
         histogramUpdated: "histogramUpdated",
         renderImage:"renderImage",
         deadRegionsPublished: "deadRegionsPublished",
-        currentFramesPerSecond: "currentFramesPerSecond"
+        currentFramesPerSecond: "currentFramesPerSecond",
+        examinePixelState: "examinePixelState",
+        publishPixelState: "publishPixelState"
     };
 };
 

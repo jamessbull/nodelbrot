@@ -25,4 +25,5 @@
 <script src="/js/bookMark.js"></script>
 <script src="/js/exportDropdown.js"></script>
 <script src="/js/metrics.js"></script>
+<script src="/js/magnifiedDisplay.js"></script>
 <script src="/js/export/exportHistogramCreator.js"></script>

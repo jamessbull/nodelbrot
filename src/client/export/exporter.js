@@ -11,7 +11,7 @@ jim.mandelbrot.image.exporter.create = function (_exportDimensions, _mandelbrotS
     var downloadButton = document.getElementById("export1");
     var exportDimensions;
     var palette;
-    var deadRegions;
+    var deadRegions = [];
 
     var timeReporter = jim.common.timeReporter.create(timeProgress);
     var histogramReporter = jim.common.imageExportProgressReporter.create(events, "histogramExportProgress", histogramProgress);

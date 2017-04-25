@@ -37,13 +37,8 @@ jim.mandelbrot.deadRegions.create = function (_events, _canvas, _mandelbrotCanva
     }
 
     on(_events.escapeValuesPublished, function (_escapeValues) {
-        var values = new Uint32Array(_escapeValues.escapeValues);
-        var offset = _escapeValues.offset;
-        for (var i = 0 ; i < values.length; i +=1) {
-            escapeValues[offset+i] = values[i];
-        }
+        escapeValues = _escapeValues;
         calcDeadRegions = true;
-        console.log("escape values published");
     });
 
     on(_events.frameComplete, function () {

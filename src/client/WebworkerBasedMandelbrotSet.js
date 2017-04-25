@@ -1,11 +1,10 @@
 namespace("jim.mandelbrot.webworkerInteractive");
-jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events, _stepSize, _parallelism) {
+jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events, _stepSize, _parallelism, imgData) {
     "use strict";
 
     var pool = jim.worker.pool.create(_parallelism, "/js/combinedWorker.js", [], "none", "histogramDataBuffer");
     var array = jim.common.array;
 
-    var shouldPublishEscapeValues = false;
     var escapeValuesRequested = false;
     var copyOfHisto = new Uint32Array(250000);
     var histogramTotal = 0;
@@ -13,29 +12,28 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
     var currentIteration = 0;
     var extents = null;
     var palette = null;
-    var escapeValues;
+    var escapeValues = new Uint32Array(_width * _height);
     var running = true;
 
     function onEachJob(_msg) {
         _events.fire(_events.histogramUpdateReceivedFromWorker, {update: new Uint32Array(_msg.histogramUpdate), currentIteration: currentIteration});
-        if (shouldPublishEscapeValues) {
-            _events.fire(_events.escapeValuesPublished, {escapeValues: _msg.escapeValues, offset: _msg.offset / 4});
-        }
-        escapeValues = new Uint32Array(_msg.escapeValues);
-        _events.fire(_events.renderImage, {imgData: new Uint8ClampedArray(_msg.imageDataBuffer), offset: _msg.offset});
+        escapeValues.set(new Uint32Array(_msg.escapeValues), (_msg.offset / 4));
+        imgData.set(new Uint8ClampedArray(_msg.imageDataBuffer), _msg.offset);
     }
 
     function onAllJobsComplete() {
         _events.fire(_events.maxIterationsUpdated, currentIteration);
         currentIteration += stepSize;
-        shouldPublishEscapeValues = false;
 
         if (escapeValuesRequested) {
             escapeValuesRequested = false;
-            shouldPublishEscapeValues = true;
+            _events.fire(_events.escapeValuesPublished, escapeValues);
         }
+
+        _events.fire(_events.renderImage, {imgData: imgData, offset: 0});
         _events.fire(_events.andFinally);
         _events.fire(_events.frameComplete);
+
 
         if(running) postMessage();
         palette = undefined;
@@ -60,7 +58,6 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
         pool.consume(jobs, onEachJob, onAllJobsComplete);
     }
 
-
     function extentsTransfer(x, y, w, h) {
         return {mx: x, my: y, mw: w, mh: h};
     }
@@ -82,7 +79,7 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
         currentIteration = 0;
         extents = extentsTransfer(_extents.topLeft().x, _extents.topLeft().y, _extents.width(), _extents.height());
         console.log("Calling post from extents update");
-        postMessage(); // why?
+        postMessage();
         palette = undefined;
         extents = undefined;
     });
@@ -90,6 +87,38 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
     on(_events.histogramUpdated, function (info) {
         copyOfHisto = info.array;
         histogramTotal = info.total;
+    });
+
+    on(_events.examinePixelState, function () {
+        //create jobs
+        var noOfPixels = _width * _height;
+
+        var jobs = [];
+        for (var i = 0 ; i < _parallelism; i+=1) {
+            jobs[i] = {sendData: true, offset: noOfPixels / _parallelism};
+        }
+        // data in msg will be copies
+        var imgData = new Uint8ClampedArray(noOfPixels * 4);
+        var xState = new Float64Array(noOfPixels);
+        var yState = new Float64Array(noOfPixels);
+        var imageEscapeValues = new Uint32Array(noOfPixels);
+
+        function collectData (_msg) {
+            for (var j = 0 ; j < _msg.xState.length ; j +=1) {
+                xState[_msg.offset + j] = _msg.xState[j];
+                yState[_msg.offset + j] = _msg.yState[j];
+                escapeValues[_msg.offset + j] = _msg.escapeValues[j];
+                imageEscapeValues[_msg.offset + j] = _msg.imageEscapeValues[j];
+                for (var z = 0 ; z < 4 ; z +=1) {
+                    imgData[((_msg.offset + j) * 4) + z] = _msg.imgData[(j * 4) + z];
+                }
+            }
+        }
+
+        function publishData () {
+            _events.fire(_events.publishPixelState, {imgData: imgData, xState: xState, yState: yState, escapeValues: escapeValues, imageEscapeValues: imageEscapeValues});
+        }
+        pool.consume(jobs, collectData, publishData);
     });
 
     return {

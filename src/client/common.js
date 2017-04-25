@@ -331,6 +331,7 @@ namespace("jim.dom.functions");
 jim.dom.functions.create = function () {
     "use strict";
     var buttonSelectedClass = "buttonSelected";
+    var iconSelectedClass = "iconSelected";
 
     var addClass = function (_element, _className) {
         _element.className = _element.className + " " + _className;
@@ -346,6 +347,16 @@ jim.dom.functions.create = function () {
 
     var deselectButton = function (button) {
         removeClass(button, buttonSelectedClass);
+    };
+
+    var selectIcon = function (_button) {
+        if(!_button.classList.contains(iconSelectedClass)) {
+            addClass(_button, iconSelectedClass);
+        }
+    };
+
+    var deselectIcon = function (button) {
+        removeClass(button, iconSelectedClass);
     };
 
     var hide = function (e) {
@@ -369,6 +380,8 @@ jim.dom.functions.create = function () {
         removeClass: removeClass,
         selectButton: selectButton,
         deselectButton: deselectButton,
+        selectIcon: selectIcon,
+        deselectIcon: deselectIcon,
         hide: hide,
         show: show,
         setHtml: setHtml,
