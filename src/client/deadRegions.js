@@ -1,5 +1,5 @@
 namespace("jim.mandelbrot.deadRegions");
-jim.mandelbrot.deadRegions.create = function (_events, _canvas, _mandelbrotCanvas) {
+jim.mandelbrot.deadRegions.create = function (_events, _canvas, _mandelbrotCanvas, _escapeValues) {
     "use strict";
     var deadRegionsCanvas = _canvas;
 
@@ -14,7 +14,6 @@ jim.mandelbrot.deadRegions.create = function (_events, _canvas, _mandelbrotCanva
     var radius ;
     var showDeadRegions;
     var calc;
-    var escapeValues = new Uint32Array(_canvas.width * _canvas.height);
     var calcDeadRegions = false;
 
     function calculateDeadRegions(_calc, deadPixelRadius, _width, _height) {
@@ -36,14 +35,9 @@ jim.mandelbrot.deadRegions.create = function (_events, _canvas, _mandelbrotCanva
         return deadRegionsArray;
     }
 
-    on(_events.escapeValuesPublished, function (_escapeValues) {
-        escapeValues = _escapeValues;
-        calcDeadRegions = true;
-    });
-
     on(_events.frameComplete, function () {
         if (calcDeadRegions) {
-            calc = calculator(escapeValues, _canvas.width);
+            calc = calculator(_escapeValues, _canvas.width);
             var deadRegions = calculateDeadRegions(calc, radius, _canvas.width, _canvas.height);
             calcDeadRegions = false;
             _events.fire(_events.deadRegionsPublished, deadRegions);
@@ -52,20 +46,16 @@ jim.mandelbrot.deadRegions.create = function (_events, _canvas, _mandelbrotCanva
 
             var context = _mandelbrotCanvas.getContext('2d');
             context.drawImage(deadRegionsCanvas, 0, 0);
-            //calculateDeadRegions(calc, radius, _canvas.width, _canvas.height);
         }
     });
 
     on("showDeadRegions", function (_radius) {
         showDeadRegions = true;
-        console.log("fired show dead regions");
-        _events.fire(_events.requestEscapeValues);
-        console.log("fired request escape values");
+        calcDeadRegions = true;
         radius = _radius;
     });
 
     on("hideDeadRegions", function (_radius) {
-        //shouldCalculateDeadRegions = false;
         showDeadRegions = false;
         radius = _radius;
     });

@@ -6,6 +6,7 @@ jim.mandelbrotImage.create = function (_events, _width, _height) {
     "use strict";
 
     var startingExtent = jim.rectangle.create(-2.5, -1, 3.5, 2);
+
     var state = jim.mandelbrot.state.create(_width, _height, startingExtent, _events);
 
     var canvas = document.createElement('canvas');
@@ -16,13 +17,18 @@ jim.mandelbrotImage.create = function (_events, _width, _height) {
         e.preventDefault();
     };
     var imgData = new Uint8ClampedArray(_width * _height * 4 );
-    var mandelbrotCalculator = jim.mandelbrot.webworkerInteractive.create(_width, _height, _events, 70, 4, imgData);
+    var escapeValues = new Uint32Array(_width * _height);
+
+    var mandelbrotCalculator = jim.mandelbrot.webworkerInteractive.create(_width, _height, _events, 70, 4, imgData, escapeValues);
     return {
         canvas: function () {
             return canvas;
         },
         imgData: function () {
             return imgData;
+        },
+        escapeValues: function () {
+            return escapeValues;
         },
         move: function (x, y) {
             state.move(x, y);
@@ -86,9 +92,7 @@ jim.init.run = function () {
     jim.metrics.create(jim.metrics.clock.create(), events);
     jim.fpsdisplay.create(fps, events, dom);
     jim.mandelbrot.escapeDistributionHistogram.create(events);
-    jim.mandelbrot.deadRegions.create(events, deadRegionCanvas, mandelbrot.canvas());
-
-
+    jim.mandelbrot.deadRegions.create(events, deadRegionCanvas, mandelbrot.canvas(), mandelbrot.escapeValues());
     jim.mandelbrot.imageRenderer.create(events, mandelbrot.canvas(), mandelbrot.width(), mandelbrot.height());
     jim.mandelbrot.examinePixelStateDisplay.create(events, mandelbrot.imgData());
 

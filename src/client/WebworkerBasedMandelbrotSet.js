@@ -1,39 +1,31 @@
 namespace("jim.mandelbrot.webworkerInteractive");
-jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events, _stepSize, _parallelism, imgData) {
+jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events, _stepSize, _parallelism, _imgData, _escapeValues) {
     "use strict";
 
     var pool = jim.worker.pool.create(_parallelism, "/js/combinedWorker.js", [], "none", "histogramDataBuffer");
     var array = jim.common.array;
 
-    var escapeValuesRequested = false;
     var copyOfHisto = new Uint32Array(250000);
     var histogramTotal = 0;
     var stepSize = _stepSize;
     var currentIteration = 0;
     var extents = null;
     var palette = null;
-    var escapeValues = new Uint32Array(_width * _height);
+    var escapeValues = _escapeValues;
     var running = true;
 
     function onEachJob(_msg) {
         _events.fire(_events.histogramUpdateReceivedFromWorker, {update: new Uint32Array(_msg.histogramUpdate), currentIteration: currentIteration});
         escapeValues.set(new Uint32Array(_msg.escapeValues), (_msg.offset / 4));
-        imgData.set(new Uint8ClampedArray(_msg.imageDataBuffer), _msg.offset);
+        _imgData.set(new Uint8ClampedArray(_msg.imageDataBuffer), _msg.offset);
     }
 
     function onAllJobsComplete() {
         _events.fire(_events.maxIterationsUpdated, currentIteration);
         currentIteration += stepSize;
-
-        if (escapeValuesRequested) {
-            escapeValuesRequested = false;
-            _events.fire(_events.escapeValuesPublished, escapeValues);
-        }
-
-        _events.fire(_events.renderImage, {imgData: imgData, offset: 0});
+        _events.fire(_events.renderImage, {imgData: _imgData, offset: 0});
         _events.fire(_events.andFinally);
         _events.fire(_events.frameComplete);
-
 
         if(running) postMessage();
         palette = undefined;
@@ -61,10 +53,6 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
     function extentsTransfer(x, y, w, h) {
         return {mx: x, my: y, mw: w, mh: h};
     }
-
-    on(_events.requestEscapeValues, function () {
-        escapeValuesRequested = true;
-    });
 
     on(_events.paletteChanged, function (_palette) {
         console.log("palette updated");
