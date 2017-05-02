@@ -30,7 +30,9 @@ jim.events.create = function () {
         deadRegionsPublished: "deadRegionsPublished",
         currentFramesPerSecond: "currentFramesPerSecond",
         examinePixelState: "examinePixelState",
-        publishPixelState: "publishPixelState"
+        publishPixelState: "publishPixelState",
+        stopExaminingPixelState: "stopExaminingPixelState",
+        mouseMoved: "mouseMoved"
     };
 };
 

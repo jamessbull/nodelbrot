@@ -84,6 +84,7 @@ jim.mandelbrot.ui.elements.create = function (_exportSizeDropdown, _mandelbrotSe
             dom.hide(examinePixelsPanel);
             dom.removeClass(mandelCanvas, "magnifyCursor");
             _mandelbrotSet.go();
+            _events.fire(_events.stopExaminingPixelState);
 
         } else{
             dom.selectIcon(examineMenuButton);
@@ -102,6 +103,7 @@ jim.mandelbrot.ui.elements.create = function (_exportSizeDropdown, _mandelbrotSe
         dom.deselectIcon(examineMenuButton);
         dom.show(exportPanel);
         dom.hide(examinePixelsPanel);
+        _events.fire(_events.stopExaminingPixelState);
     };
 
     dom.selectButton(exportMenuButton);

@@ -1,10 +1,10 @@
 namespace("jim.mandelbrot.webworkerInteractive");
-jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events, _stepSize, _parallelism, _imgData, _escapeValues) {
+jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events, _stepSize, _parallelism, _imgData, _escapeValues, _xState, _yState, _imageEscapeValues) {
     "use strict";
 
     var pool = jim.worker.pool.create(_parallelism, "/js/combinedWorker.js", [], "none", "histogramDataBuffer");
     var array = jim.common.array;
-
+    var requestExaminePixelData = false;
     var copyOfHisto = new Uint32Array(250000);
     var histogramTotal = 0;
     var stepSize = _stepSize;
@@ -18,15 +18,23 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
         _events.fire(_events.histogramUpdateReceivedFromWorker, {update: new Uint32Array(_msg.histogramUpdate), currentIteration: currentIteration});
         escapeValues.set(new Uint32Array(_msg.escapeValues), (_msg.offset / 4));
         _imgData.set(new Uint8ClampedArray(_msg.imageDataBuffer), _msg.offset);
+        if (_msg.extraDataSent) {
+            _xState.set(new Uint32Array(_msg.xState), (_msg.offset / 4));
+            _yState.set(new Uint32Array(_msg.yState), (_msg.offset / 4));
+            _imageEscapeValues.set(new Uint32Array(_msg.imageEscapeValues), (_msg.offset / 4));
+        }
     }
 
     function onAllJobsComplete() {
         _events.fire(_events.maxIterationsUpdated, currentIteration);
         currentIteration += stepSize;
+        if(requestExaminePixelData) {
+            _events.fire(_events.publishPixelState);
+        }
+        requestExaminePixelData = false;
         _events.fire(_events.renderImage, {imgData: _imgData, offset: 0});
         _events.fire(_events.andFinally);
         _events.fire(_events.frameComplete);
-
         if(running) postMessage();
         palette = undefined;
         extents = undefined;
@@ -44,7 +52,12 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
             console.log("palette does not equal null");
         }
         var jobs = array(fragments.length, function (i) {
-            return jim.messages.interactive.create(fragments[i].asMessage(), copyOfHisto, currentIteration, stepSize, palette, histogramTotal);
+            var job = jim.messages.interactive.create(fragments[i].asMessage(), copyOfHisto, currentIteration, stepSize, palette, histogramTotal);
+
+            if (requestExaminePixelData) {
+                job.sendData = true;
+            }
+            return job;
         });
 
         pool.consume(jobs, onEachJob, onAllJobsComplete);
@@ -78,35 +91,8 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
     });
 
     on(_events.examinePixelState, function () {
-        //create jobs
-        var noOfPixels = _width * _height;
-
-        var jobs = [];
-        for (var i = 0 ; i < _parallelism; i+=1) {
-            jobs[i] = {sendData: true, offset: noOfPixels / _parallelism};
-        }
-        // data in msg will be copies
-        var imgData = new Uint8ClampedArray(noOfPixels * 4);
-        var xState = new Float64Array(noOfPixels);
-        var yState = new Float64Array(noOfPixels);
-        var imageEscapeValues = new Uint32Array(noOfPixels);
-
-        function collectData (_msg) {
-            for (var j = 0 ; j < _msg.xState.length ; j +=1) {
-                xState[_msg.offset + j] = _msg.xState[j];
-                yState[_msg.offset + j] = _msg.yState[j];
-                escapeValues[_msg.offset + j] = _msg.escapeValues[j];
-                imageEscapeValues[_msg.offset + j] = _msg.imageEscapeValues[j];
-                for (var z = 0 ; z < 4 ; z +=1) {
-                    imgData[((_msg.offset + j) * 4) + z] = _msg.imgData[(j * 4) + z];
-                }
-            }
-        }
-
-        function publishData () {
-            _events.fire(_events.publishPixelState, {imgData: imgData, xState: xState, yState: yState, escapeValues: escapeValues, imageEscapeValues: imageEscapeValues});
-        }
-        pool.consume(jobs, collectData, publishData);
+        requestExaminePixelData = true;
+        postMessage();
     });
 
     return {

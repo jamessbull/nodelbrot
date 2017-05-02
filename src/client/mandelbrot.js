@@ -18,8 +18,11 @@ jim.mandelbrotImage.create = function (_events, _width, _height) {
     };
     var imgData = new Uint8ClampedArray(_width * _height * 4 );
     var escapeValues = new Uint32Array(_width * _height);
+    var imageEscapeValues = new Uint32Array(_width * _height);
+    var xState = new Uint32Array(_width * _height);
+    var yState = new Uint32Array(_width * _height);
 
-    var mandelbrotCalculator = jim.mandelbrot.webworkerInteractive.create(_width, _height, _events, 70, 4, imgData, escapeValues);
+    var mandelbrotCalculator = jim.mandelbrot.webworkerInteractive.create(_width, _height, _events, 70, 4, imgData, escapeValues, xState, yState, imageEscapeValues);
     return {
         canvas: function () {
             return canvas;
@@ -29,6 +32,15 @@ jim.mandelbrotImage.create = function (_events, _width, _height) {
         },
         escapeValues: function () {
             return escapeValues;
+        },
+        imageEscapeValues: function () {
+          return imageEscapeValues;
+        },
+        xState: function () {
+            return xState;
+        },
+        yState: function () {
+            return yState;
         },
         move: function (x, y) {
             state.move(x, y);
@@ -94,13 +106,13 @@ jim.init.run = function () {
     jim.mandelbrot.escapeDistributionHistogram.create(events);
     jim.mandelbrot.deadRegions.create(events, deadRegionCanvas, mandelbrot.canvas(), mandelbrot.escapeValues());
     jim.mandelbrot.imageRenderer.create(events, mandelbrot.canvas(), mandelbrot.width(), mandelbrot.height());
-    jim.mandelbrot.examinePixelStateDisplay.create(events, mandelbrot.imgData());
+    jim.mandelbrot.examinePixelStateDisplay.create(events, pixelInfoCanvas, mandelbrot.imgData(), mandelbrot.xState(), mandelbrot.yState(), mandelbrot.escapeValues(), mandelbrot.imageEscapeValues(), mandelbrot.width());
 
     var palette = jim.palette.create();
     var colourGradientui = newColourGradientUI(colourGradientCanvas, addButton, removeButton, palette, events);
 
     var bookmarker = newBookmarker(bookmarkButton, mandelbrot, colourGradientui, events);
-    var mainDisplayUI = newMainUI(mandelbrot, canvasDiv, mandelCanvas.width, mandelCanvas.height, pixelInfoCanvas);
+    var mainDisplayUI = newMainUI(mandelbrot, canvasDiv, mandelCanvas.width, mandelCanvas.height, pixelInfoCanvas, events);
     window.ui = mainDisplayUI;
     var colourPicker = newColourPicker(colourPickerCanvas, colourGradientui);
     var exportSizeDropdown = newExportSizeDropdown(exportSizeSelect, [smallExport, mediumExport, largeExport, veryLargeExport]);

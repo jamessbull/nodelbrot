@@ -35,8 +35,8 @@ jim.mandelbrot.ui.magnifiedDisplay.create = function (mset, pixelInfo, _state) {
 
     var currentX = 0;
     var currentY = 0;
-    myContext = pixelInfo.getContext('2d');
 
+    myContext = pixelInfo.getContext('2d');
     myContext.strokeStyle = ("rgba(0,255,0,255)");
     myContext.strokeRect(0,0, pixelInfo.width, pixelInfo.height);
 
@@ -113,7 +113,7 @@ jim.mandelbrot.ui.magnifiedDisplay.create = function (mset, pixelInfo, _state) {
     };
 };
 
-jim.mandelbrot.ui.create = function (mandelbrotSet, canvas, w, h, pixelInfo) {
+jim.mandelbrot.ui.create = function (mandelbrotSet, canvas, w, h, pixelInfo, events) {
     "use strict";
     var state = jim.mandelbrot.ui.state.create(),
         magnifiedDisplay = jim.mandelbrot.ui.magnifiedDisplay.create(mandelbrotSet, pixelInfo, state),
@@ -147,6 +147,7 @@ jim.mandelbrot.ui.create = function (mandelbrotSet, canvas, w, h, pixelInfo) {
 
     canvas.onmousemove = function (e) {
         actions.forEach(function (action) {action.moveMouse(e);});
+        events.fire(events.mouseMoved, {x: e.layerX, y: e.layerY});
     };
 
     return {
