@@ -139,33 +139,3 @@ jim.actions.move.create = function (mset, state) {
     };
     return action;
 };
-
-namespace("jim.actions.show");
-jim.actions.show.create = function (magnifiedDisplay, state) {
-    "use strict";
-    var displayed = false;
-    var start = jim.coord.create();
-    var action = jim.actions.createAction();
-
-    action.leftMouseDown = function (e) {
-        if (state.isSelectPixelMode()) {
-            start.x = e.layerX;
-            start.y = e.layerY;
-        }
-    };
-
-    action.leftMouseUp = function (e) {
-        if (state.isSelectPixelMode()) {
-            var searchingCheckbox = document.getElementById("searchImageCheckbox");
-            searchingCheckbox.checked = false;
-            state.setNormalMode();
-        }
-    };
-
-    action.moveMouse = function (e) {
-        if (state.isSelectPixelMode()) {
-            magnifiedDisplay.update(e.layerX, e.layerY);
-        }
-    };
-    return action;
-};

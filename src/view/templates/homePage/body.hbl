@@ -260,15 +260,14 @@ var  handleClickfunction
 
     <div id = examinePixels class = "examinePixels">
         <div class="pixelInfoCanvas">
-            <input id="searchImageCheckbox" type="checkbox" onClick="ui.handlePixelInfo()" name="selectPixelInfo" value="true">Searching image info<br>
             <canvas id="pixelInfoCanvas"></canvas>
         </div>
         <div class="pixelInfo" id=pixelInfo>
             <table class = pixelDetail>
-                <tr> <td>Iterations</td> <td id="iterations"></td> </tr>
                 <tr> <td>Point Escaped</td><td id="alreadyEscaped"></td> </tr>
                 <tr> <td>Escape iteration</td><td id="escapedAt"></td> </tr>
                 <tr> <td>Colour complete</td><td id="pixelComplete"></td> </tr>
+                <tr> <td>Colour complete at </td><td id="imageEscapedAt"></td> </tr>
                 <tr> <td>Mandelbrot x</td><td id="mx"></td> </tr>
                 <tr> <td>Mandelbrot y</td><td id="my"></td> </tr>
                 <tr> <td> %age</td><td id="histogramPerc"></td> </tr>

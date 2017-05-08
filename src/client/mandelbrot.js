@@ -16,6 +16,7 @@ jim.mandelbrotImage.create = function (_events, _width, _height) {
     canvas.oncontextmenu = function (e) {
         e.preventDefault();
     };
+    var histoData = new Uint32Array(250000);
     var imgData = new Uint8ClampedArray(_width * _height * 4 );
     var escapeValues = new Uint32Array(_width * _height);
     var imageEscapeValues = new Uint32Array(_width * _height);
@@ -24,6 +25,9 @@ jim.mandelbrotImage.create = function (_events, _width, _height) {
 
     var mandelbrotCalculator = jim.mandelbrot.webworkerInteractive.create(_width, _height, _events, 70, 4, imgData, escapeValues, xState, yState, imageEscapeValues);
     return {
+        histoData: function () {
+          return histoData;
+        },
         canvas: function () {
             return canvas;
         },
@@ -103,7 +107,7 @@ jim.init.run = function () {
     };
     jim.metrics.create(jim.metrics.clock.create(), events);
     jim.fpsdisplay.create(fps, events, dom);
-    jim.mandelbrot.escapeDistributionHistogram.create(events);
+    jim.mandelbrot.escapeDistributionHistogram.create(events, mandelbrot.histoData());
     jim.mandelbrot.deadRegions.create(events, deadRegionCanvas, mandelbrot.canvas(), mandelbrot.escapeValues());
     jim.mandelbrot.imageRenderer.create(events, mandelbrot.canvas(), mandelbrot.width(), mandelbrot.height());
     jim.mandelbrot.examinePixelStateDisplay.create(events, pixelInfoCanvas, mandelbrot.imgData(), mandelbrot.xState(), mandelbrot.yState(), mandelbrot.escapeValues(), mandelbrot.imageEscapeValues(), mandelbrot.width());

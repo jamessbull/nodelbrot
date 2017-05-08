@@ -7,6 +7,7 @@ jim.metrics.create = function (_clock, _events) {
     function nextIndex(i) { return currentIndex > 1 ? 0 : i + 1; }
     function previousIndex(i) { return i < 1 ? 2 : i - 1; }
     function frameTime(i) { return times[i] - times[previousIndex(i)]; }
+
     function fps() {
         var frame1 = frameTime(currentIndex);
         var frame2 = frameTime(previousIndex(currentIndex));

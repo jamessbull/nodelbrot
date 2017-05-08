@@ -174,6 +174,8 @@ jim.rectangle.create = function (one, two, width, height) {
     bottomRight = coord(x + w, y + h);
 
     return {
+        x: topLeft.x,
+        y: topLeft.y,
         topLeft: function () {
             return topLeft;
         },
@@ -215,6 +217,18 @@ jim.rectangle.create = function (one, two, width, height) {
         },
         copy: function () {
             return jim.rectangle.create(x, y, w, h);
+        },
+        place: function (_x, _y) {
+            x = _x;
+            y = _y;
+            topLeft.x = _x;
+            topLeft.y = _y;
+            topRight.x = w + _x;
+            topRight.y = _y;
+            bottomRight.x = _x + w;
+            bottomRight.y = _y + h;
+            bottomLeft.x = _x;
+            bottomLeft.y = _y + h;
         },
         move: function (ex, wy) {
             x += ex;

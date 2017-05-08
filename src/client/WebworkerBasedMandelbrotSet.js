@@ -48,9 +48,7 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
         var initialRenderDefinition = jim.messages.renderFragment.create(0, mx, my, mw, mh, _width, _height);
 
         var fragments = initialRenderDefinition.split(_parallelism);
-        if(palette !== undefined) {
-            console.log("palette does not equal null");
-        }
+
         var jobs = array(fragments.length, function (i) {
             var job = jim.messages.interactive.create(fragments[i].asMessage(), copyOfHisto, currentIteration, stepSize, palette, histogramTotal);
 

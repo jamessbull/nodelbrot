@@ -100,9 +100,9 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
 };
 
 namespace("jim.mandelbrot.escapeDistributionHistogram");
-jim.mandelbrot.escapeDistributionHistogram.create = function (_events) {
+jim.mandelbrot.escapeDistributionHistogram.create = function (_events, _histoData) {
     "use strict";
-    var histoData = new Uint32Array(250000);
+    //var histoData = new Uint32Array(250000);
     var currentTotal = 0;
     var called = 0;
     var lastTimeRound = 0;
@@ -114,12 +114,12 @@ jim.mandelbrot.escapeDistributionHistogram.create = function (_events) {
         var runningTotal = 0;
         for (var i = 0; i < updates.length; i += 1) {
             runningTotal += updates[i];
-            var initialValue = lastIterationCalculated > lastTimeRound ? currentTotal : histoData[lastIterationCalculated + i];
-            histoData[lastIterationCalculated + i] = runningTotal + initialValue;
+            var initialValue = lastIterationCalculated > lastTimeRound ? currentTotal : _histoData[lastIterationCalculated + i];
+            _histoData[lastIterationCalculated + i] = runningTotal + initialValue;
         }
         currentTotal += runningTotal;
         lastTimeRound = lastIterationCalculated;
-        return new Uint32Array(histoData);
+        return new Uint32Array(_histoData);
     }
 
     on(_events.histogramUpdateReceivedFromWorker, function (updateInfo) {
@@ -129,8 +129,7 @@ jim.mandelbrot.escapeDistributionHistogram.create = function (_events) {
     });
 
     on(_events.extentsUpdate, function () {
-        console.log("Blatting things mightily");
-        histoData = new Uint32Array(250000);
+        _histoData = new Uint32Array(250000);
         currentTotal = 0;
         lastTimeRound = 0;
     });

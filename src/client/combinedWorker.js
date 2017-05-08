@@ -85,6 +85,7 @@ onmessage = function(e) {
     var histogramTotal = msg.histogramTotal;
     var escapeValuesToTransfer;
     var offset = msg.offset;
+
     function message () {
         escapeValuesToTransfer = new Uint32Array(pixelStateTracker.escapeValues);
         var messageToPost = {
@@ -101,7 +102,7 @@ onmessage = function(e) {
             console.log("Send data is true");
             messageToPost.xState = xState;
             messageToPost.yState = yState;
-            messageToPost.imageEscaprValues = imageEscapeValues;
+            messageToPost.imageEscapeValues = pixelStateTracker.imageEscapeValues;
             messageToPost.extraDataSent = true;
         }
         return messageToPost;

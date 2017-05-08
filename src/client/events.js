@@ -32,7 +32,9 @@ jim.events.create = function () {
         examinePixelState: "examinePixelState",
         publishPixelState: "publishPixelState",
         stopExaminingPixelState: "stopExaminingPixelState",
-        mouseMoved: "mouseMoved"
+        mouseMoved: "mouseMoved",
+        leftMouseDown: "leftMouseDown",
+        rightMouseDown: "rightMouseDown"
     };
 };
 
