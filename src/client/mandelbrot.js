@@ -105,6 +105,12 @@ jim.init.run = function () {
     deadRegionCanvas.oncontextmenu = function (e) {
         e.preventDefault();
     };
+    jim.mandelbrot.mandelbrotViewUIPolicy.create(uiCanvas, events);
+    jim.mandelbrot.actions.zoomOut.create(events, jim.stopwatch.create());
+    jim.mandelbrot.actions.zoomIn.create(uiCanvas, events, jim.selection.create(jim.rectangle.create(0, 0, mandelbrot.canvas().width, mandelbrot.canvas().height)));
+    jim.mandelbrot.actions.move.create(events, mandelbrot.canvas(), uiCanvas);
+
+
     jim.metrics.create(jim.metrics.clock.create(), events);
     jim.fpsdisplay.create(fps, events, dom);
     jim.mandelbrot.escapeDistributionHistogram.create(events, mandelbrot.histoData());
@@ -116,8 +122,6 @@ jim.init.run = function () {
     var colourGradientui = newColourGradientUI(colourGradientCanvas, addButton, removeButton, palette, events);
 
     var bookmarker = newBookmarker(bookmarkButton, mandelbrot, colourGradientui, events);
-    var mainDisplayUI = newMainUI(mandelbrot, canvasDiv, mandelCanvas.width, mandelCanvas.height, pixelInfoCanvas, events);
-    window.ui = mainDisplayUI;
     var colourPicker = newColourPicker(colourPickerCanvas, colourGradientui);
     var exportSizeDropdown = newExportSizeDropdown(exportSizeSelect, [smallExport, mediumExport, largeExport, veryLargeExport]);
     newMiscUiElements(exportSizeDropdown, mandelbrot, deadRegionsCanvas, events, palette);
@@ -135,7 +139,7 @@ jim.init.run = function () {
             percEscaped.innerText = round((100 - ((escaped / total) * 100)), 2);
             lastEscapedOn.innerText = iter;
         }
-        mainDisplayUI.draw(uiCanvas);
+        //mainDisplayUI.draw(uiCanvas);
         colourGradientui.draw();
     };
 
@@ -161,80 +165,33 @@ jim.init.run = function () {
 
 };
 
-// examine is broken - fix it
-// ok so examine will work like this
-//  As soon as you hit examine the main display stops updating.
-// Send a message to all three workers to get copy of state.
-// combine all xState yState into one main state. use this data to drive display.
+// Next improvements
+// How best to respond to mode change? I don't want to be able to trigger zoom in out move while examining pixels.
+// Don't have logic for generating zoom in zoom out etc actions directly attached to mouse clicks.
+// Mouse click events go to ui object ui object determines which app events to generate
+// each control generates input events eg mouse click
+// ui input policy listens to input and decides what actionEvents to fire.
 
-// How does ui work? Click eyeball. Eye opens. I am now in select mode.
-// cursor disappears when you move it over the image and a magnifying glass appears over main image.
-// When the mouse is clicked magnifying glass disappears and is replaces with cursor in midle of expanded pixel display
-// Mouse over on the pixel to see info. move mouse out of that magnified view to bring magnifying glass back again.
-// Click open eye to restart main display and close eye again.
+//So ui state owned by ui policy
+//main ui policy listens to all input events on main canvas
+// listens for mode change
+// fires events - do I filter out actions which shouldn't respond or does every action know what mode it responds to?
+// easiest for now to just keep ui state in ui and fire every input event with current mode
+// so for main canvas
 
-// How would I like to ask for state of worker?
-// just create three ask for state jobs and throw them at the pool.
-// They collect data on each job as it completes and finally fires an event with the whole set of data.
-// The examiner listens to this event operates until it is dismissed and fires a start event when it is done.
-
-// So to do
-// Make a magnifying glass!
-// Make cursor a magnifying glass when I click it highlight it
-// stop the mandelbrot set.
-// What data do I want? Img data / should have it
-// I want to know the following
+// mandelbrotViewUiPolicy.js
+//      - listens to events generated from main canvas fires my input events if mandelbrot view is active
+//      - listens for stopExaminingPixelState event and becomes active
+//      - listens for examiningPixelState event and becomes inactive
 
 
-//var xState;
-//var yState;
-//var escapeValues;
-//var imageEscapeValues;
-// imgData
-
-
-// So Have a ui control that is shown / hidden when I click magnifying glass
-// The ui control listens to events.
-// listens for showMagnified event which is fired with an int which tells me which pixel to show
-// request data from worker
-// listen for event that will provide the data
-// The events are only generated while magnifying glass selected
-
-// Init
-// Create arrays
-// Init all to 0
-// create canvas nothing on it
+// actions/zoomIn.js
+// listens for input event left mouse down
+// listens for input vent left mouse up
 //
+// actions/zoomOut.js
 
-// Request all data process
-// send the can i have all data please event
-// listen to the here is all the data event
-// set all the arrays to values from message
-// assume center pixel is selected
-
-// In webworker mandelbrot set
-// when asked for all data
-// send message asking for data to each worker
-// response should include offset
-// when all are complete send i have all data message
-
-// has it escaped
-// How may iterations have run
-// When did it escape
-// what iteration did colour finish calculating on.
-// What is the x value
-// what is the y value
-
-// send ask for data jobs.
-// when all data collected send examine event
 //
-// create examiner to consume event
-//
-
-// Create appropriate job. Check to see
-// So examine button is clicked. Send an examine event. Main loops responds and stops.
-// Webworker listens to examine event and sends a special message to the worker to retrieve it's state.
-// webworker sends message for region it wants to examine
 
 // look at palette
 // try using dead  regions on main display. Just calc occasionally. Send a job to a worker perhaps.

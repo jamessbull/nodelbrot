@@ -33,8 +33,20 @@ jim.events.create = function () {
         publishPixelState: "publishPixelState",
         stopExaminingPixelState: "stopExaminingPixelState",
         mouseMoved: "mouseMoved",
+        selectionChanged: "selectionChanged",
         leftMouseDown: "leftMouseDown",
-        rightMouseDown: "rightMouseDown"
+        rightMouseDown: "rightMouseDown",
+        leftMouseUp: "leftMouseUp",
+        rightMouseUp: "rightMouseUp",
+        zoomOutAction: "zoomOut",
+        beginSelectionAction: "beginSelectionAction",
+        beginMoveAction: "beginMoveAction",
+        endMoveAction: "endMoveAction",
+        changeSelectionAction: "changeSelectionAction",
+        endSelectionAction: "endSelectionAction",
+        zoomInAction: "zoomInAction",
+        viewMoveAction: "viewMoveAction",
+        moveSetAction: "moveSetAction"
     };
 };
 

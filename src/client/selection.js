@@ -10,15 +10,15 @@ jim.selection.create = function (rect) {
         area: function () {return area; },
         inProgress: false,
         begin: function (event) {
-            area = newRect(event.layerX, event.layerY, 0, 0);
+            area = newRect(event.x, event.y, 0, 0);
             this.inProgress = true;
         },
         change: function (event) {
-            var xWidth = event.layerX - area.topLeft().x;
+            var xWidth = event.x - area.topLeft().x;
             area.resize(xWidth, proportionateHeight(xWidth));
         },
         end: function (event) {
-            var xWidth = event.layerX - area.topLeft().x;
+            var xWidth = event.x - area.topLeft().x;
             area.resize(xWidth, proportionateHeight(xWidth));
             this.inProgress = false;
         },

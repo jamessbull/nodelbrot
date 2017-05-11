@@ -4,7 +4,6 @@
 <script src="/js/events.js"></script>
 <script src="/js/multiworkerHistogramGenerator.js"></script>
 <script src="/js/stopWatch.js"></script>
-<script src="/js/actions.js"></script>
 <script src="/js/tinycolor.js"></script>
 <script src="/js/palette.js"></script>
 <script src="/js/image.js"></script>
@@ -13,7 +12,10 @@
 <script src="/js/WebworkerBasedMandelbrotSet.js"></script>
 <script src="/js/anim.js"></script>
 <script src="/js/selection.js"></script>
-<script src="/js/mandelbrot-ui.js"></script>
+<script src="/js/ui/mandelbrotViewUIPolicy.js"></script>
+<script src="/js/actions/zoomIn.js"></script>
+<script src="/js/actions/zoomOut.js"></script>
+<script src="/js/actions/move.js"></script>
 <script src="/js/mandelbrot.js"></script>
 <script src="/js/colourPicker.js"></script>
 <script src="/js/colourGradient.js"></script>

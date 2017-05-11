@@ -29,6 +29,8 @@ exports.create = function () {
     addDirectory(nodelbrotRouter, "/js", "src/client/");
     addDirectory(nodelbrotRouter, "/js/export", "src/client/export/");
     addDirectory(nodelbrotRouter, "/js/messages", "src/client/messages/");
+    addDirectory(nodelbrotRouter, "/js/ui", "src/client/ui/");
+    addDirectory(nodelbrotRouter, "/js/actions", "src/client/ui/actions/");
     addDirectory(nodelbrotRouter, "/specs", "test/client/jasmine/spec/");
     addDirectory(nodelbrotRouter, "/lib/jasmine-2.4.1", "test/client/jasmine/lib/jasmine-2.4.1/");
     return nodelbrotRouter;
