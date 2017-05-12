@@ -46,7 +46,8 @@ jim.events.create = function () {
         endSelectionAction: "endSelectionAction",
         zoomInAction: "zoomInAction",
         viewMoveAction: "viewMoveAction",
-        moveSetAction: "moveSetAction"
+        moveSetAction: "moveSetAction",
+        examinePixelAction:    "examinePixelAction"
     };
 };
 

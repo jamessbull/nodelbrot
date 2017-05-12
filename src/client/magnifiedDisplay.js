@@ -126,7 +126,7 @@ jim.mandelbrot.examinePixelStateDisplay.create = function (_events, _examinePixe
         examiningPixels = true;
     });
 
-    on(_events.leftMouseDown, function (e) {
+    on(_events.examinePixelAction, function (e) {
        areaHasBeenSelected = !areaHasBeenSelected;
        selectedArea = jim.rectangle.create(e.x, e.y, magnifiedAreaWidth, magnifiedAreaWidth);
     });

@@ -23,6 +23,8 @@ jim.mandelbrot.mandelbrotViewUIPolicy.create = function (_mainCanvas, _events) {
             if (e.button === rightMouseButton) {
                 _events.fire(_events.beginMoveAction, {x: e.layerX, y: e.layerY});
             }
+        } else {
+            _events.fire(_events.examinePixelAction, {x: e.layerX, y: e.layerY})
         }
     }
 

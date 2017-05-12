@@ -122,7 +122,7 @@ jim.init.run = function () {
     var colourGradientui = newColourGradientUI(colourGradientCanvas, addButton, removeButton, palette, events);
 
     var bookmarker = newBookmarker(bookmarkButton, mandelbrot, colourGradientui, events);
-    var colourPicker = newColourPicker(colourPickerCanvas, colourGradientui);
+    var colourPicker  = newColourPicker(colourPickerCanvas, colourGradientui);
     var exportSizeDropdown = newExportSizeDropdown(exportSizeSelect, [smallExport, mediumExport, largeExport, veryLargeExport]);
     newMiscUiElements(exportSizeDropdown, mandelbrot, deadRegionsCanvas, events, palette);
     var iter = 0;
@@ -139,7 +139,6 @@ jim.init.run = function () {
             percEscaped.innerText = round((100 - ((escaped / total) * 100)), 2);
             lastEscapedOn.innerText = iter;
         }
-        //mainDisplayUI.draw(uiCanvas);
         colourGradientui.draw();
     };
 
@@ -157,7 +156,7 @@ jim.init.run = function () {
     canvasDiv.appendChild(deadRegionsCanvas);
     colourPicker.draw();
 
-    jim.anim.create(render).start();
+    //jim.anim.create(render).start();
 
     events.fire(events.paletteChanged, palette);
     bookmarker.changeLocation();
@@ -166,32 +165,7 @@ jim.init.run = function () {
 };
 
 // Next improvements
-// How best to respond to mode change? I don't want to be able to trigger zoom in out move while examining pixels.
-// Don't have logic for generating zoom in zoom out etc actions directly attached to mouse clicks.
-// Mouse click events go to ui object ui object determines which app events to generate
-// each control generates input events eg mouse click
-// ui input policy listens to input and decides what actionEvents to fire.
 
-//So ui state owned by ui policy
-//main ui policy listens to all input events on main canvas
-// listens for mode change
-// fires events - do I filter out actions which shouldn't respond or does every action know what mode it responds to?
-// easiest for now to just keep ui state in ui and fire every input event with current mode
-// so for main canvas
-
-// mandelbrotViewUiPolicy.js
-//      - listens to events generated from main canvas fires my input events if mandelbrot view is active
-//      - listens for stopExaminingPixelState event and becomes active
-//      - listens for examiningPixelState event and becomes inactive
-
-
-// actions/zoomIn.js
-// listens for input event left mouse down
-// listens for input vent left mouse up
-//
-// actions/zoomOut.js
-
-//
 
 // look at palette
 // try using dead  regions on main display. Just calc occasionally. Send a job to a worker perhaps.
@@ -202,12 +176,6 @@ jim.init.run = function () {
 // Profile again and try to improve speed.
 //reset dead regions on zoom and move. Lost that again.
 
-// New thought. Just pass array in and use set method.
-// So create imgData array in mand.js and pass it in to the renderer.
-// Then also pass it into pixel examiner so it can use it. Simple
-// Next step is to collect data on each job for dead regions ie escape Values then publish all at once for dead regions
-// Pass in escapeValues array into producer / webworkerbasedmand and consumer examinePixelDisplay
-// 1) Change dead regions to expect single event with all data in array
 
 // Experiments - Ho many fps do I get if I skip the loop to actually calc pixels? For later
 // To optimise
@@ -217,7 +185,7 @@ jim.init.run = function () {
 
 // Show export progress better dim lines as they finish
 // auto start stop when exporting / not exporting
-// make main display multicore and use webworker for extra speed
+// make main display multicore and use webworker for extra speed done.
 // progress messages during export
 // Help icons with hover
 // animated zoom
@@ -225,8 +193,3 @@ jim.init.run = function () {
 // minify js
 // remove all dead code
 // estimate long tail cap histo size at 300k use last 100k to  estimate next 500k
-// Why wouldn't the palette update? only changed how I create the jobs so it must be that?
-// Double check.
-// fire event 1
-// fire event 2 extents are updated
-// event
