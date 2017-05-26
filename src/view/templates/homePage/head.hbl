@@ -13,6 +13,7 @@
 <script src="/js/anim.js"></script>
 <script src="/js/selection.js"></script>
 <script src="/js/ui/mandelbrotViewUIPolicy.js"></script>
+<script src="/js/actions/zoomInAnimation.js"></script>
 <script src="/js/actions/zoomIn.js"></script>
 <script src="/js/actions/zoomOut.js"></script>
 <script src="/js/actions/move.js"></script>

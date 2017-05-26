@@ -105,11 +105,14 @@ jim.init.run = function () {
     deadRegionCanvas.oncontextmenu = function (e) {
         e.preventDefault();
     };
-    jim.mandelbrot.mandelbrotViewUIPolicy.create(uiCanvas, events);
-    jim.mandelbrot.actions.zoomOut.create(events, jim.stopwatch.create());
-    jim.mandelbrot.actions.zoomIn.create(uiCanvas, events, jim.selection.create(jim.rectangle.create(0, 0, mandelbrot.canvas().width, mandelbrot.canvas().height)));
-    jim.mandelbrot.actions.move.create(events, mandelbrot.canvas(), uiCanvas);
+    uiCanvas.width = mandelCanvas.width;
+    uiCanvas.height = mandelCanvas.height;
 
+    jim.mandelbrot.mandelbrotViewUIPolicy.create(uiCanvas, events);
+    var zoomInAnim = jim.mandelbrot.ui.actions.zoomInAnimation.create(uiCanvas, mandelbrot.canvas());
+    jim.mandelbrot.actions.zoomOut.create(events, jim.stopwatch.create());
+    jim.mandelbrot.actions.zoomIn.create(mandelbrot.canvas(), uiCanvas, events, jim.selection.create(jim.rectangle.create(0, 0, mandelbrot.canvas().width, mandelbrot.canvas().height)), zoomInAnim);
+    jim.mandelbrot.actions.move.create(events, mandelbrot.canvas(), uiCanvas);
 
     jim.metrics.create(jim.metrics.clock.create(), events);
     jim.fpsdisplay.create(fps, events, dom);
@@ -145,8 +148,7 @@ jim.init.run = function () {
     pixelInfoCanvas.width = 162;
     pixelInfoCanvas.height = 162;
 
-    uiCanvas.width = mandelCanvas.width;
-    uiCanvas.height = mandelCanvas.height;
+
     uiCanvas.className = "canvas";
     uiCanvas.oncontextmenu = function (e) {
         e.preventDefault();
@@ -156,7 +158,7 @@ jim.init.run = function () {
     canvasDiv.appendChild(deadRegionsCanvas);
     colourPicker.draw();
 
-    //jim.anim.create(render).start();
+    jim.anim.create(render).start();
 
     events.fire(events.paletteChanged, palette);
     bookmarker.changeLocation();
@@ -168,7 +170,6 @@ jim.init.run = function () {
 
 
 // look at palette
-// try using dead  regions on main display. Just calc occasionally. Send a job to a worker perhaps.
 // Display number of pixels escaping per second
 // Show iteration number of pixels escaping per second went below threshold.
 // Make histogram use combined worker on export
@@ -176,7 +177,26 @@ jim.init.run = function () {
 // Profile again and try to improve speed.
 //reset dead regions on zoom and move. Lost that again.
 
+//zoom in smoothly
+//selection snaps out in blocks
+//copy current render view to new canvas - old view
+//paint old view on to ui display
+//when selection snaps zoom set view
+//have a selection made anim that takes a bit of time
+// begin zoom
+// need anim
+// first draws the old view scaled up by x% What is starting position?
+// starting position is the new view scaled down until it is the same number of pixels across as the selection
+// so method arameter for the selection
+// then draws current render scaled down by 100 - same amount
+// does this until render view reaches 100 %
+// clears ui canvas
+// anim ends
 
+//
+
+
+//refactoring get rid of mandelbrot image
 // Experiments - Ho many fps do I get if I skip the loop to actually calc pixels? For later
 // To optimise
 // Alter step value automatically to balance frame rate with progress
@@ -184,11 +204,10 @@ jim.init.run = function () {
 // Do SIMD - But not until chrome supports it.
 
 // Show export progress better dim lines as they finish
+//
 // auto start stop when exporting / not exporting
-// make main display multicore and use webworker for extra speed done.
 // progress messages during export
 // Help icons with hover
-// animated zoom
 // make size switchable
 // minify js
 // remove all dead code

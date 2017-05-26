@@ -86,14 +86,6 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
             currentExtents = extents;
             maxIterations = 0;
             _events.fire(_events.extentsUpdate, currentExtents);
-        },
-        currentPointColour: function (x,y) {
-            var index = ((y * sizeX) +x) * 4;
-            var r = imgData[index];
-            var g = imgData[index] + 1;
-            var b = imgData[index] + 2;
-            var a = imgData[index] + 3;
-            return {r: r, g:g, b:b, a:a};
         }
     };
 

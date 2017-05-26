@@ -8,7 +8,6 @@ importScripts('/js/common.js',
     '/js/histogram.js',
     '/js/mandelbrotEscape.js',
     '/js/selection.js',
-    '/js/mandelbrot-ui.js',
     '/js/mandelbrot.js',
     '/js/colourPicker.js',
     '/js/setProcessor.js');

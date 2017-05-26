@@ -24,10 +24,8 @@ jim.selection.create = function (rect) {
         },
         show: function (context) {
             if (this.inProgress) {
-                context.strokeStyle = "rgba(0, 0, 0, 1.0)";
-                context.strokeRect(area.topLeft().x, area.topLeft().y, area.width(), area.height());
-                context.fillStyle = "rgba(255, 255, 255, 0.2)";
-                context.fillRect(area.topLeft().x, area.topLeft().y, area.width(), area.height());
+                //context.strokeStyle = "rgba(0, 0, 0, 0.0)";
+                context.clearRect(area.topLeft().x, area.topLeft().y, area.width(), area.height());
             }
         }
     };
