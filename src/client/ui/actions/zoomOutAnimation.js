@@ -6,13 +6,6 @@ jim.mandelbrot.ui.actions.zoomOutAnimation.create = function (_uiCanvas, _mandel
 
     var uiCtx = _uiCanvas.getContext('2d');
 
-    function newMatchingCanvas(_originalCanvas) {
-        var matchingCanvas = document.createElement('canvas');
-        matchingCanvas.width = _originalCanvas.width;
-        matchingCanvas.height = _originalCanvas.height;
-        return matchingCanvas;
-    }
-
     function currentPosition(x, _currentStep, _totalSteps) {
         return ((x / _totalSteps) * _currentStep);
     }
@@ -23,16 +16,6 @@ jim.mandelbrot.ui.actions.zoomOutAnimation.create = function (_uiCanvas, _mandel
         var w = _start.width() + currentPosition(_diff.width(), _currentStep, _totalSteps);
         var h = _start.height() + currentPosition(_diff.height(), _currentStep, _totalSteps);
         return jim.rectangle.create(x, y, w, h);
-    }
-
-    function zoomOut(i, _oldCanvas, _uiCanvas, _currentZoomLevel, _targetZoomLevel) {
-        var lastImageDimensions = jim.rectangle.create(0,0, _uiCanvas.width, _uiCanvas.height);
-        var firstImageDimensions = _targetZoomLevel.translateFrom(_currentZoomLevel).to(lastImageDimensions);
-        var diff = lastImageDimensions.difference(firstImageDimensions);
-
-        var target = targetDimensions(firstImageDimensions, diff, i, duration);
-
-        uiCtx.drawImage(_mandelbrotCanvas, target.x, target.y, target.width(), target.height());
     }
 
     function drawSelectionOutline(i, _uiCanvas, _selectionLength) {
@@ -50,20 +33,22 @@ jim.mandelbrot.ui.actions.zoomOutAnimation.create = function (_uiCanvas, _mandel
             if(i < selectionLength) {
                 window.requestAnimationFrame(animateSelectionFunction(i + 1, _oldCanvas, _from, _to));
             } else{
-                window.requestAnimationFrame(drawFrameFunction(0, _oldCanvas, _from, _to));
+                var lastImageDimensions = jim.rectangle.create(0, 0, _uiCanvas.width, _uiCanvas.height);
+                var firstImageDimensions = _to.translateFrom(_from).to(lastImageDimensions);
+                var diff = lastImageDimensions.difference(firstImageDimensions);
+                window.requestAnimationFrame(drawFrameFunction(0, _oldCanvas, diff, firstImageDimensions));
             }
         }
         return animateSelection;
     }
 
-
-
-    function drawFrameFunction(i, _oldCanvas, _from, _to) {
+    function drawFrameFunction(i, _oldCanvas, _diff, _firstImageDimensions) {
         function drawFrame() {
-            // draw stuff here
-            zoomOut(i, _oldCanvas, _uiCanvas, _from, _to);
+            var target = targetDimensions(_firstImageDimensions, _diff, i, duration);
+            uiCtx.drawImage(_mandelbrotCanvas, target.x, target.y, target.width(), target.height());
+
             if (i < duration){
-                window.requestAnimationFrame(drawFrameFunction(i + 1, _oldCanvas, _from, _to));
+                window.requestAnimationFrame(drawFrameFunction(i + 1, _oldCanvas, _diff, _firstImageDimensions));
             } else {
                 uiCtx.clearRect(0, 0, _uiCanvas.width, _uiCanvas.height);
             }
