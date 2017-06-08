@@ -204,6 +204,9 @@ jim.rectangle.create = function (one, two, width, height) {
             }
             return h;
         },
+        difference: function (_other) {
+            return jim.rectangle.create(x - _other.x, y - _other.y, w - _other.width(), h - _other.height());
+        },
         resize: function (w, h) {
             this.width(w);
             this.height(h);

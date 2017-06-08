@@ -82,6 +82,10 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
         getExtents: function () {
             return currentExtents;
         },
+        getLastExtents: function () {
+            if (previousExtents.length === 0) return undefined;
+            return previousExtents[previousExtents.length - 1];
+        },
         setExtents: function (extents) {
             currentExtents = extents;
             maxIterations = 0;

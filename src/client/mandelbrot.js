@@ -109,8 +109,10 @@ jim.init.run = function () {
     uiCanvas.height = mandelCanvas.height;
 
     jim.mandelbrot.mandelbrotViewUIPolicy.create(uiCanvas, events);
-    var zoomInAnim = jim.mandelbrot.ui.actions.zoomInAnimation.create(uiCanvas, mandelbrot.canvas());
-    jim.mandelbrot.actions.zoomOut.create(events, jim.stopwatch.create());
+    var drawSelection = jim.mandelbrot.ui.actions.drawSelection.create();
+    var zoomInAnim = jim.mandelbrot.ui.actions.zoomInAnimation.create(uiCanvas, mandelbrot.canvas(), drawSelection);
+    var zoomOutAnim = jim.mandelbrot.ui.actions.zoomOutAnimation.create(uiCanvas, mandelbrot.canvas(), drawSelection);
+    jim.mandelbrot.actions.zoomOut.create(events, jim.stopwatch.create(), zoomOutAnim, mandelbrot.canvas(),mandelbrot.state());
     jim.mandelbrot.actions.zoomIn.create(mandelbrot.canvas(), uiCanvas, events, jim.selection.create(jim.rectangle.create(0, 0, mandelbrot.canvas().width, mandelbrot.canvas().height)), zoomInAnim);
     jim.mandelbrot.actions.move.create(events, mandelbrot.canvas(), uiCanvas);
 
