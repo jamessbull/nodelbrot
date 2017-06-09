@@ -1,7 +1,7 @@
 namespace("jim.mandelbrot.ui.actions.zoomOutAnimation");
 jim.mandelbrot.ui.actions.zoomOutAnimation.create = function (_uiCanvas, _mandelbrotCanvas, _selectionBox ) {
     "use strict";
-    var duration = 40;
+    var duration = 60;
     var selectionLength = 30;
 
     var uiCtx = _uiCanvas.getContext('2d');
@@ -33,22 +33,27 @@ jim.mandelbrot.ui.actions.zoomOutAnimation.create = function (_uiCanvas, _mandel
             if(i < selectionLength) {
                 window.requestAnimationFrame(animateSelectionFunction(i + 1, _oldCanvas, _from, _to));
             } else{
-                var lastImageDimensions = jim.rectangle.create(0, 0, _uiCanvas.width, _uiCanvas.height);
-                var firstImageDimensions = _to.translateFrom(_from).to(lastImageDimensions);
-                var diff = lastImageDimensions.difference(firstImageDimensions);
-                window.requestAnimationFrame(drawFrameFunction(0, _oldCanvas, diff, firstImageDimensions));
+                var screenSize = jim.rectangle.create(0, 0, _uiCanvas.width, _uiCanvas.height);
+                var currentExpanded = _to.translateFrom(_from).to(screenSize);
+                var diff = screenSize.difference(currentExpanded);
+
+                var currentShrunk = screenSize.translateFrom(currentExpanded).to(screenSize);
+                var oldShrunkDiff = currentShrunk.difference(screenSize);
+                window.requestAnimationFrame(drawFrameFunction(0, _oldCanvas, diff, currentExpanded, oldShrunkDiff, screenSize));
             }
         }
         return animateSelection;
     }
 
-    function drawFrameFunction(i, _oldCanvas, _diff, _firstImageDimensions) {
+    function drawFrameFunction(i, _oldCanvas, _newDiff, _newFrom, _oldDiff, _oldFrom) {
         function drawFrame() {
-            var target = targetDimensions(_firstImageDimensions, _diff, i, duration);
-            uiCtx.drawImage(_mandelbrotCanvas, target.x, target.y, target.width(), target.height());
+            var target = targetDimensions(_newFrom, _newDiff, i, duration);
+            var oldTarget = targetDimensions(_oldFrom, _oldDiff, i, duration);
 
-            if (i < duration){
-                window.requestAnimationFrame(drawFrameFunction(i + 1, _oldCanvas, _diff, _firstImageDimensions));
+            uiCtx.drawImage(_mandelbrotCanvas, target.x, target.y, target.width(), target.height());
+            uiCtx.drawImage(_oldCanvas, oldTarget.x, oldTarget.y, oldTarget.width(), oldTarget.height());
+            if (i <= duration){
+                window.requestAnimationFrame(drawFrameFunction(i + 1, _oldCanvas, _newDiff, _newFrom, _oldDiff, _oldFrom));
             } else {
                 uiCtx.clearRect(0, 0, _uiCanvas.width, _uiCanvas.height);
             }
