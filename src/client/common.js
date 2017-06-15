@@ -406,4 +406,21 @@ jim.dom.functions.create = function () {
     };
 };
 
+namespace("jim.anim.fixedLength");
+jim.anim.fixedLength.create = function () {
+    "use strict";
+    return {
+        drawFrames:     function (total, f) {
+            var count = -1;
+            var innerF = function () {
+                count +=1;
+                if (count <= total) {
+                    f(count);
+                    window.requestAnimationFrame(innerF);
+                }
+            };
+            window.requestAnimationFrame(innerF);
+        }
+    };
+};
 

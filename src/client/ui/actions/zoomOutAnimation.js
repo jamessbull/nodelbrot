@@ -1,6 +1,8 @@
+
 namespace("jim.mandelbrot.ui.actions.zoomOutAnimation");
 jim.mandelbrot.ui.actions.zoomOutAnimation.create = function (_uiCanvas, _mandelbrotCanvas, _selectionBox ) {
     "use strict";
+    var anim = jim.anim.fixedLength.create();
     var duration = 60;
     var selectionLength = 30;
 
@@ -39,26 +41,14 @@ jim.mandelbrot.ui.actions.zoomOutAnimation.create = function (_uiCanvas, _mandel
 
                 var currentShrunk = screenSize.translateFrom(currentExpanded).to(screenSize);
                 var oldShrunkDiff = currentShrunk.difference(screenSize);
-                window.requestAnimationFrame(drawFrameFunction(0, _oldCanvas, diff, currentExpanded, oldShrunkDiff, screenSize));
+
+
+                var drawZoomOutFrameFunction = drawZoomOutFrame(_oldCanvas, diff, currentExpanded, oldShrunkDiff, screenSize);
+                anim.drawFrames(duration, drawZoomOutFrameFunction);
+                //window.requestAnimationFrame(drawFrameFunction(0, _oldCanvas, diff, currentExpanded, oldShrunkDiff, screenSize));
             }
         }
         return animateSelection;
-    }
-
-    function drawFrameFunction(i, _oldCanvas, _newDiff, _newFrom, _oldDiff, _oldFrom) {
-        function drawFrame() {
-            var target = targetDimensions(_newFrom, _newDiff, i, duration);
-            var oldTarget = targetDimensions(_oldFrom, _oldDiff, i, duration);
-
-            uiCtx.drawImage(_mandelbrotCanvas, target.x, target.y, target.width(), target.height());
-            uiCtx.drawImage(_oldCanvas, oldTarget.x, oldTarget.y, oldTarget.width(), oldTarget.height());
-            if (i <= duration){
-                window.requestAnimationFrame(drawFrameFunction(i + 1, _oldCanvas, _newDiff, _newFrom, _oldDiff, _oldFrom));
-            } else {
-                uiCtx.clearRect(0, 0, _uiCanvas.width, _uiCanvas.height);
-            }
-        }
-        return drawFrame;
     }
 
     return {
@@ -68,4 +58,27 @@ jim.mandelbrot.ui.actions.zoomOutAnimation.create = function (_uiCanvas, _mandel
         }
     };
 
+    function drawZoomOutFrame (_oldCanvas, _newDiff, _newFrom, _oldDiff, _oldFrom) {
+        return function (i) {
+            var target = targetDimensions(_newFrom, _newDiff, i, duration);
+            var oldTarget = targetDimensions(_oldFrom, _oldDiff, i, duration);
+
+            uiCtx.drawImage(_mandelbrotCanvas, target.x, target.y, target.width(), target.height());
+            uiCtx.drawImage(_oldCanvas, oldTarget.x, oldTarget.y, oldTarget.width(), oldTarget.height());
+            if(i>= duration) {
+                uiCtx.clearRect(0, 0, _uiCanvas.width, _uiCanvas.height);
+            }
+        };
+    }
+
 };
+
+
+// would be nice to have a way of splitting up the two different anims so I can say do this then this
+// like a promise?
+// so first(drawFrameOne).then(drawFrameTwo).then()   etc
+//var sequence
+// for () {
+//    sequence.add(drawFrame(i))
+// }
+// sequence.resolve()
