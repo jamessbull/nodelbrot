@@ -73,6 +73,9 @@ jim.mandelbrot.ui.actions.zoomInAnimation.create = function (_uiCanvas, _mandelb
             var selectedAreaCurrentPositionY = positionForStep(noOfSteps, i, sourceSelectedY, targetSelectedY - sourceSelectedY);
 
             uiCtx.drawImage(_mandelbrotCanvas, selectedAreaCurrentPositionX, selectedAreaCurrentPositionY, currentSelectedWidth, currentSelectedHeight);
+            if (i >= 50) {
+                uiCtx.clearRect(0, 0, _uiCanvas.width, _uiCanvas.height);
+            }
         };
     }
 
@@ -84,10 +87,12 @@ jim.mandelbrot.ui.actions.zoomInAnimation.create = function (_uiCanvas, _mandelb
             interctx.fillRect(0, 0, _uiCanvas.width, _uiCanvas.height);
             interctx.clearRect(_selection.area().topLeft().x, _selection.area().topLeft().y, _selection.area().width(), _selection.area().height());
 
-            _uiCanvas.getContext('2d').drawImage(_existingMandelbrot, 0, 0);
-            _uiCanvas.getContext('2d').drawImage(intermediate, 0, 0);
+            var uiContext = _uiCanvas.getContext('2d');
+            uiContext.drawImage(_existingMandelbrot, 0, 0);
+            uiContext.drawImage(intermediate, 0, 0);
 
             _drawSelection.draw(i, noOfSelectionFrames, _uiCanvas, _selection.area());
+            return uiContext;
         };
     }
 
@@ -97,13 +102,9 @@ jim.mandelbrot.ui.actions.zoomInAnimation.create = function (_uiCanvas, _mandelb
         oldCtx.drawImage(_mandelbrotCanvas, 0, 0);
         _drawSelection.draw(1, 1, oldView, _selection.area());
         anim.drawFrames(40, getDrawSelectionFunction(_selection, _existingMandelbrot))
-            .then(function (res) {
-                console.log(res);
+            .then(function (uiContext) {
                 anim.drawFrames(50, getMainDrawFunction(_selection, scaledCtx, scaledCanvas));
-            })
-            .then(function (res) {
-                console.log(res);
-                uiCtx.clearRect(0, 0, _uiCanvas.width, _uiCanvas.height);
+                return uiContext;
             });
     }
 
