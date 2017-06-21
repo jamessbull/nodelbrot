@@ -24,17 +24,11 @@ jim.mandelbrot.ui.actions.zoomOutAnimation.create = function (_uiCanvas, _mandel
         _selectionBox.draw(i, _selectionLength, _uiCanvas, jim.rectangle.create(6, 6, _uiCanvas.width - 12, _uiCanvas.height - 12));
     }
 
-    function drawSelection (i, _oldCanvas, _uiCanvas) {
-        uiCtx.drawImage(_oldCanvas, 0, 0);
-        drawSelectionOutline(i, _uiCanvas, selectionLength);
-    }
-
-    function animateSelectionFunction(i, _oldCanvas, _from, _to) {
-        function animateSelection() {
-            drawSelection(i, _oldCanvas, _uiCanvas);
-            if(i < selectionLength) {
-                window.requestAnimationFrame(animateSelectionFunction(i + 1, _oldCanvas, _from, _to));
-            } else{
+    return {
+        play: function (_oldMandelCanvas, _from, _to) {
+            var drawFunc = drawSelectionFun(_oldMandelCanvas, _uiCanvas);
+            anim.drawFrames(duration, drawFunc).then(function (result) {
+                console.log("Selection drawn " + result);
                 var screenSize = jim.rectangle.create(0, 0, _uiCanvas.width, _uiCanvas.height);
                 var currentExpanded = _to.translateFrom(_from).to(screenSize);
                 var diff = screenSize.difference(currentExpanded);
@@ -42,26 +36,25 @@ jim.mandelbrot.ui.actions.zoomOutAnimation.create = function (_uiCanvas, _mandel
                 var currentShrunk = screenSize.translateFrom(currentExpanded).to(screenSize);
                 var oldShrunkDiff = currentShrunk.difference(screenSize);
 
-
-                var drawZoomOutFrameFunction = drawZoomOutFrame(_oldCanvas, diff, currentExpanded, oldShrunkDiff, screenSize);
+                var drawZoomOutFrameFunction = drawZoomOutFrame(duration, _oldMandelCanvas, diff, currentExpanded, oldShrunkDiff, screenSize);
                 anim.drawFrames(duration, drawZoomOutFrameFunction);
-                //window.requestAnimationFrame(drawFrameFunction(0, _oldCanvas, diff, currentExpanded, oldShrunkDiff, screenSize));
-            }
-        }
-        return animateSelection;
-    }
-
-    return {
-        play: function (_oldMandelCanvas, _from, _to) {
-            // so to zoom out I take the current mset scale it up position it accordingly and then scale in the opposite direction
-            window.requestAnimationFrame(animateSelectionFunction(0, _oldMandelCanvas, _from, _to));
+            }).then(function (result2) {
+                console.log("Zoom out drawn " + result2);
+            });
         }
     };
 
-    function drawZoomOutFrame (_oldCanvas, _newDiff, _newFrom, _oldDiff, _oldFrom) {
+    function drawSelectionFun (_oldCanvas, _uiCanvas) {
         return function (i) {
-            var target = targetDimensions(_newFrom, _newDiff, i, duration);
-            var oldTarget = targetDimensions(_oldFrom, _oldDiff, i, duration);
+            uiCtx.drawImage(_oldCanvas, 0, 0);
+            drawSelectionOutline(i, _uiCanvas, selectionLength);
+        };
+    }
+
+    function drawZoomOutFrame (_duration, _oldCanvas, _newDiff, _newFrom, _oldDiff, _oldFrom) {
+        return function (i) {
+            var target = targetDimensions(_newFrom, _newDiff, i, _duration);
+            var oldTarget = targetDimensions(_oldFrom, _oldDiff, i, _duration);
 
             uiCtx.drawImage(_mandelbrotCanvas, target.x, target.y, target.width(), target.height());
             uiCtx.drawImage(_oldCanvas, oldTarget.x, oldTarget.y, oldTarget.width(), oldTarget.height());
@@ -70,15 +63,4 @@ jim.mandelbrot.ui.actions.zoomOutAnimation.create = function (_uiCanvas, _mandel
             }
         };
     }
-
 };
-
-
-// would be nice to have a way of splitting up the two different anims so I can say do this then this
-// like a promise?
-// so first(drawFrameOne).then(drawFrameTwo).then()   etc
-//var sequence
-// for () {
-//    sequence.add(drawFrame(i))
-// }
-// sequence.resolve()

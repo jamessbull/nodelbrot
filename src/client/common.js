@@ -406,21 +406,79 @@ jim.dom.functions.create = function () {
     };
 };
 
+function asyncCallerThing(arg) {
+    promise = jim.promise.create(function (resolve) {
+        //do async anim here and then
+        console.log(arg);
+        resolve(arg);
+    });
+}
+
+namespace("jim.promise");
+jim.promise.create = function (initial) {
+    "use strict";
+    var deferred;
+    var value;
+    var state = 'pending';
+    var p = {};
+    p.promise = true;
+
+    p.resolve = function (result) {
+        if (result && result.promise) {
+            result.then(p.resolve);
+        } else {
+            state = 'resolved';
+            value = result;
+            if (deferred) p.handle(deferred);
+        }
+    };
+
+    p.handle = function (thing) {
+        if(state === 'pending') {
+            deferred = thing;
+        } else {
+            if (thing.chainedFunction) {
+                var chainedResult = thing.chainedFunction(value);
+                thing.resolve(chainedResult);
+            } else {
+                thing.resolve(value);
+            }
+        }
+    };
+
+    p.then = function (subsequentAction) {
+        return jim.promise.create(function (resolve) {
+            p.handle({
+                chainedFunction: subsequentAction,
+                resolve: resolve
+            });
+        });
+    };
+
+
+    initial(p.resolve);
+    return p;
+};
+
 namespace("jim.anim.fixedLength");
 jim.anim.fixedLength.create = function () {
     "use strict";
     return {
-        drawFrames:     function (total, f) {
-            var count = -1;
-            var innerF = function () {
-                count +=1;
-                if (count <= total) {
-                    f(count);
-                    window.requestAnimationFrame(innerF);
-                }
-            };
-            window.requestAnimationFrame(innerF);
+        drawFrames:     function (noOfFrames, f) {
+            var n = -1;
+
+            return jim.promise.create(function (resolve) {
+                var innerF = function () {
+                    n +=1;
+                    if (n <= noOfFrames) {
+                        f(n);
+                        window.requestAnimationFrame(innerF);
+                    } else {
+                        resolve("Anim Complete");
+                    }
+                };
+                window.requestAnimationFrame(innerF);
+            });
         }
     };
 };
-
