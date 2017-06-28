@@ -94,11 +94,11 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
     };
 
     on(_events.zoomOutAction, function () {
-       theState.zoomOut();
+        theState.zoomOut();
     });
 
     on(_events.zoomInAction, function (_selection) {
-       theState.zoomTo(_selection);
+        theState.zoomTo(_selection);
     });
 
     on(_events.moveSetAction, function (_location) {

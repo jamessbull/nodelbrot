@@ -25,6 +25,7 @@ jim.mandelbrot.actions.zoomIn.create = function (_mandelbrotCanvas, _uiCanvas, _
 
     on(_events.beginSelectionAction, function (e) {
         selecting = true;
+        _events.fire(_events.hideDeadRegions);
         _selection.begin(e);
         ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
         ctx.fillRect(0,0, _uiCanvas.width,_uiCanvas.height);

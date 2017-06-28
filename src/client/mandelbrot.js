@@ -4,12 +4,13 @@ jim.defaults.mandelbrotExtents = jim.rectangle.create(-2.5, -1, 3.5, 2);
 namespace("jim.mandelbrotImage");
 jim.mandelbrotImage.create = function (_events, _width, _height) {
     "use strict";
+    var dom                     = jim.dom.functions.create();
 
     var startingExtent = jim.rectangle.create(-2.5, -1, 3.5, 2);
 
     var state = jim.mandelbrot.state.create(_width, _height, startingExtent, _events);
 
-    var canvas = document.createElement('canvas');
+    var canvas = dom.element("mandelbrotCanvas");
     canvas.width = _width;
     canvas.height = _height;
     canvas.className = "canvas";
@@ -80,10 +81,7 @@ jim.init.run = function () {
     var newBookmarker           = jim.mandelbrot.bookmark.create;
     var mandelCanvas            = mandelbrot.canvas();
 
-    var uiCanvas                = document.createElement('canvas');
-    var deadRegionsCanvas       = document.createElement('canvas');
-
-    var canvasDiv               = dom.element("mandelbrotCanvas");
+    var uiCanvas                = dom.element('uiCanvas');
     var pixelInfoCanvas         = dom.element("pixelInfoCanvas");
     var colourPickerCanvas      = dom.element("colourPickerCanvas");
     var colourGradientCanvas    = dom.element("colourGradientCanvas");
@@ -99,7 +97,7 @@ jim.init.run = function () {
     var veryLargeExport         = dom.element("veryLargeExport");
     var exportSizeSelect        = dom.element("exportSizeSelect");
     var fps                     = dom.element("framesPerSecond");
-    var deadRegionCanvas        = document.createElement('canvas');
+    var deadRegionCanvas        = dom.element("deadRegionCanvas");
     deadRegionCanvas.width = mandelbrot.width();
     deadRegionCanvas.height = mandelbrot.height();
     deadRegionCanvas.oncontextmenu = function (e) {
@@ -129,7 +127,7 @@ jim.init.run = function () {
     var bookmarker = newBookmarker(bookmarkButton, mandelbrot, colourGradientui, events);
     var colourPicker  = newColourPicker(colourPickerCanvas, colourGradientui);
     var exportSizeDropdown = newExportSizeDropdown(exportSizeSelect, [smallExport, mediumExport, largeExport, veryLargeExport]);
-    newMiscUiElements(exportSizeDropdown, mandelbrot, deadRegionsCanvas, events, palette);
+    newMiscUiElements(exportSizeDropdown, mandelbrot, events);
     var iter = 0;
     var render = function () {
         events.listenTo(events.maxIterationsUpdated, function (_iter) {
@@ -155,9 +153,9 @@ jim.init.run = function () {
     uiCanvas.oncontextmenu = function (e) {
         e.preventDefault();
     };
-    canvasDiv.appendChild(mandelbrot.canvas());
-    canvasDiv.appendChild(uiCanvas);
-    canvasDiv.appendChild(deadRegionsCanvas);
+    //canvasDiv.appendChild(mandelbrot.canvas());
+    //canvasDiv.appendChild(uiCanvas);
+    //canvasDiv.appendChild(deadRegionsCanvas);
     colourPicker.draw();
 
     jim.anim.create(render).start();
@@ -169,48 +167,23 @@ jim.init.run = function () {
 };
 
 // Next improvements
+//How do I know how many iterations to export to?
+//Show when average pixels per second escaping drops below x
+
+//Make render size / resolution slightly configurable
 
 
-// look at palette
-// Display number of pixels escaping per second
-// Show iteration number of pixels escaping per second went below threshold.
-// Make histogram use combined worker on export
-// Can export use combined worker? Or at least refactor so messages are all the same and pull out pixel trackers into separate files.
-// Profile again and try to improve speed.
-//reset dead regions on zoom and move. Lost that again.
+// look at palette - can it be optimsed can I have hsl values back?
+// Maybe - maintain two sets of colours - one hsl one rgb update both as palette changes
+// problem with hsl values is interpolated values still need to be changed back to rgb for rendering
+// have a think
 
-//zoom in smoothly
-//selection snaps out in blocks
-//copy current render view to new canvas - old view
-//paint old view on to ui display
-//when selection snaps zoom set view
-//have a selection made anim that takes a bit of time
-// begin zoom
-// need anim
-// first draws the old view scaled up by x% What is starting position?
-// starting position is the new view scaled down until it is the same number of pixels across as the selection
-// so method arameter for the selection
-// then draws current render scaled down by 100 - same amount
-// does this until render view reaches 100 %
-// clears ui canvas
-// anim ends
-
-//
-
-
-//refactoring get rid of mandelbrot image
-// Experiments - Ho many fps do I get if I skip the loop to actually calc pixels? For later
-// To optimise
-// Alter step value automatically to balance frame rate with progress
-
-// Do SIMD - But not until chrome supports it.
-
+// Adjust number of blocks I split the screen into according to performance;
+// Then adjust block size to maintain 24 fps
 // Show export progress better dim lines as they finish
 //
 // auto start stop when exporting / not exporting
 // progress messages during export
 // Help icons with hover
-// make size switchable
 // minify js
-// remove all dead code
 // estimate long tail cap histo size at 300k use last 100k to  estimate next 500k

@@ -49,7 +49,7 @@ jim.mandelbrot.ui.histogram.create = function (_parallelHistogram, _mandelbrotSe
 };
 
 namespace("jim.mandelbrot.ui.elements");
-jim.mandelbrot.ui.elements.create = function (_exportSizeDropdown, _mandelbrotSet, _deadRegionsCanvas, _events) {
+jim.mandelbrot.ui.elements.create = function (_exportSizeDropdown, _mandelbrotSet, _events) {
     "use strict";
     var dom = jim.dom.functions.create();
     var on = _events.listenTo;

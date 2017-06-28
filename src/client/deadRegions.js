@@ -49,13 +49,13 @@ jim.mandelbrot.deadRegions.create = function (_events, _canvas, _mandelbrotCanva
         }
     });
 
-    on("showDeadRegions", function (_radius) {
+    on(_events.showDeadRegions, function (_radius) {
         showDeadRegions = true;
         calcDeadRegions = true;
         radius = _radius;
     });
 
-    on("hideDeadRegions", function (_radius) {
+    on(events.hideDeadRegions, function (_radius) {
         showDeadRegions = false;
         radius = _radius;
     });
