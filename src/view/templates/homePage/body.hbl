@@ -7,197 +7,326 @@
 
 <style>
     .titleBar {
-        margin-left: 200px;
+        margin: 0px 0px 8px 200px;
     }
+
     .standard {
         font-family: sans-serif;
         color: antiquewhite;
-        background-color: black;"
+        background-color: black;
     }
+
     .bodyText {
-        font-size:smaller
+        font-size: smaller
     }
+
     .valueText {
-        font-size:smaller;
-        color:goldenrod;
+        font-size: smaller;
+        color: goldenrod;
     }
+
     .panel {
         margin-bottom: 10px;
-        margin-left:10px;
+        margin-left: 10px;
+        margin-top: -3px;
+        padding-top: 10px;
+        border-style: solid;
+        border-radius: 10px;
     }
+
     .button {
-        margin-right:5px;
-        outline-style: outset;
-        outline-width: thin;
-        cursor:default;
+        padding: 2px 2px 2px 4px;
+        margin-right: 4px;
+        margin-left: 4px;
+        outline: outset 2px;
+        cursor: default;
     }
+
     .buttonSelected {
-        margin-right:5px;
-        outline-style: inset;
-        outline-width: thin;
+        font-size: 0.9em;
+        padding: 2px 2px 2px 4px;
+        margin-right: 7px;
+        margin-left: 5px;
+        outline: inset 2px;
     }
+
+    .canvas {
+        width: 700px;
+        height: 400px;
+    }
+
+    .canvasBorder {
+        position: absolute;
+        border-style: solid;
+        left: -3px;
+        top: -3px;
+    }
+
+    .border{
+        border-style: solid;
+    }
+
+    .canvasRadius {
+        border-radius: 10px;
+    }
+
+    .overlay {
+        position: absolute;
+        left: 0;
+        top: 0;
+    }
+
+    .bottomMargin {
+        margin-bottom: 15px;
+    }
+
+    .mediumBottomMargin {
+        margin-bottom: 10px;;
+    }
+
+    .leftMargin {
+        margin-left: 15px;
+    }
+
+    .mediumLeftMargin {
+        margin-left: 10px;
+    }
+
+    .padBottom {
+        padding-bottom: 10px;
+    }
+
+    .shimmyLeft {
+        margin-left: -3px;
+    }
+
+    .panelContent {
+        padding-left: 10px;
+        padding-right: 10px;
+        margin-bottom: 7px;
+    }
+
+    .exportButton {
+        margin-left: 40px;
+        margin-right: 50px;
+        margin-bottom: 10px;
+    }
+
+    .mediumRadius {
+        border-radius: 5px;
+    }
+
+    .pixelInfoCanvas {
+        border-radius: 5px;
+        border: 1px solid;
+        display: inline-block;
+    }
+    .smallMargin {
+        margin:5px;
+    }
+    .detailText {
+        font-size: x-small;
+    }
+
+    .progressPopUp {
+        position:absolute;
+        left:40%;
+        top:25%;
+        z-index: 1000;
+        background-color: black;
+    }
+
+    .inline {
+        display: inline-block;
+    }
+    .centered {
+        text-align: center;
+        width:100%;
+    }
+    .floatright {
+        float: right;
+    }
+    .topMargin {
+        margin-top: 10px;
+    }
+    .rightMargin {
+        margin-right: 10px;
+    }
+    .padSides {
+        padding-left: 6px;
+        padding-right: 6px;
+    }
+    .padRight {
+        padding-right: 5px;
+    }
+
+    .pixelInfo {
+        margin-top: 15px;
+    }
+
+    .messageBox {
+        width: 897px;
+    }
+
+
 </style>
 
 <div class="standard">
-    <div class=titleBar>
-        <h2>Mandelbrot fractal explorer</h2>
+    <div class="border mediumRadius mediumLeftMargin messageBox mediumBottomMargin">
+        Mandelbrot fractal explorer
     </div>
-    <div id="bothColumns" style="position:relative; height:550px;">
+    <div id="bothColumns" style="position:relative; height:575px;">
         <div id="left" style="position: absolute;">
-            <div id="mainControl" class="mainPanel">
-                <div class=mainPanelContent>
-                    <div class="bodyText panel">
-                        <div class="mainButtonBar">
-                            <span id="stop" class="button">Stop </span>
-                            <span id="start" class="button">Start </span>
-                            <span id="bookmarkButton" class="button">Bookmark </span>
-                        </div>
-                        Current Iteration
-                        <span class="valueText" id="maxIteration"></span>
-
-                        <div> Fps <span class="valueText" id="framesPerSecond"></span></div>
-                        Last escaped on
-                        <span class="valueText" id="lastPointEscapedAt"></span>
+            <div class="bodyText panel">
+                <div class="panelContent">
+                    <div class="bottomMargin centered">
+                        <span id="stop" class="button">Stop </span>
+                        <span id="start" class="button">Start </span>
+                        <span id="bookmarkButton" class="button">Link </span>
                     </div>
-                    <div class="panelSwitcher">
-                        <span id="pixelInfoButton" class="" >Examine</span>
-                        <span id="exportImageButton" class="toolbarButton">Export</span>
+                    <table>
+                        <tbody>
+                        <tr>
+                            <td>Iteration</td>
+                            <td><span class="valueText" id="maxIteration"></span></td>
+                        </tr>
+                        <tr>
+                            <td>Fps</td>
+                            <td><span class="valueText" id="framesPerSecond"></span></td>
+                        </tr>
+                        <tr>
+                            <td>Last escape</td>
+                            <td><span class="valueText" id="lastPointEscapedAt"></span></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="panel bodyText">
+                <div id="exportImagePanel">
+                    <div class="panelContent">
+                        <div id="export" class="button exportButton">Export Png</div>
+
+                        <table>
+                            <tbody>
+                            <tr>
+                                <td class="bodyText">Iterations</td>
+                                <td class="bodyText"><input size="8" id="exportDepth" type="text" class="export"
+                                                            value="1000"/></td>
+                            </tr>
+                            <tr>
+                                <td class="bodyText">Size</td>
+
+                                <td>
+                                    <select id=exportSizeSelect>
+                                        <option id="smallExport">Small</option>
+                                        <option id="mediumExport">Medium</option>
+                                        <option id="largeExport">Large</option>
+                                        <option id="veryLargeExport">Huge</option>
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="bodyText">Ignore dead</td>
+                                <td><input id="ignoreDeadPixels" type="checkbox"/></td>
+                            </tr>
+
+                            <tr>
+                                <td class="bodyText">Dead radius</td>
+                                <td><input size="8" id="ignoreDeadPixelsRadius" type="text" class="export" value="1"/>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="panel bodyText">
+                <div id=examinePixels class="examinePixels">
+                    <div class="centered bottomMargin">
+                        <span id="pixelInfoButton" class="button">Examine</span>
                     </div>
 
-                    <div id=examinePixels class="examinePixels">
-                        <div class="pixelInfoCanvas">
-                            <canvas id="pixelInfoCanvas"></canvas>
-                        </div>
-                        <div class="pixelInfo" id=pixelInfo>
-                            <table class=pixelDetail>
-                                <tr>
-                                    <td>Point Escaped</td>
-                                    <td id="alreadyEscaped"></td>
-                                </tr>
-                                <tr>
-                                    <td>Escape iteration</td>
-                                    <td id="escapedAt"></td>
-                                </tr>
-                                <tr>
-                                    <td>Colour complete</td>
-                                    <td id="pixelComplete"></td>
-                                </tr>
-                                <tr>
-                                    <td>Colour complete at</td>
-                                    <td id="imageEscapedAt"></td>
-                                </tr>
-                                <tr>
-                                    <td>Mandelbrot x</td>
-                                    <td id="mx"></td>
-                                </tr>
-                                <tr>
-                                    <td>Mandelbrot y</td>
-                                    <td id="my"></td>
-                                </tr>
-                                <tr>
-                                    <td> %age</td>
-                                    <td id="histogramPerc"></td>
-                                </tr>
-                                <tr>
-                                    <td>Colour</td>
-                                    <td id="colourInfor"></td>
-                                </tr>
-                                <tr>
-                                    <td></td>
-                                    <td id="colourInfog"></td>
-                                </tr>
-                                <tr>
-                                    <td></td>
-                                    <td id="colourInfob"></td>
-                                </tr>
-                            </table>
-                        </div>
+                    <div class="centered">
+                        <canvas id="pixelInfoCanvas" class="pixelInfoCanvas smallMargin"></canvas>
                     </div>
-                    <div id="exportImagePanel" class="exportImage">
-                        <div class="panelContent">
-                            <table class="tableInfo">
-                                <thead>
-                                <tr>
-                                    <th colspan=2 class="heading">Export Image</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                <tr>
-                                    <td class="bodyText">Iterations</td>
-                                    <td class="bodyText"><input size="8" id="exportDepth" type="text" class="export"
-                                                                value="1000"/></td>
-                                </tr>
-                                <tr>
-                                    <td class="bodyText">
-                                        Size
-                                    </td>
-
-                                    <td>
-                                        <select id=exportSizeSelect>
-                                            <option id="smallExport">Small</option>
-                                            <option id="mediumExport">Medium</option>
-                                            <option id="largeExport">Large</option>
-                                            <option id="veryLargeExport">Huge</option>
-                                        </select>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="bodyText">Ignore dead</td>
-                                    <td><input id="ignoreDeadPixels" type="checkbox"/></td>
-                                </tr>
-
-                                <tr>
-                                    <td class="bodyText">Dead radius</td>
-                                    <td><input size="8" id="ignoreDeadPixelsRadius" type="text" class="export" value="1"/></td>
-                                </tr>
-                                </tbody>
-                            </table>
-                            <div id="export" class="exportButton button">Go</div>
-                            <table class="progressTable">
-                                <thead>
-                                <tr>
-                                    <th colspan=2 class=heading>Progress</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                <tr>
-                                    <td class="bodyText">Histogram:</td>
-                                    <td class="bodyText" id="histogramProgress">0.00%</td>
-                                </tr>
-                                <tr>
-                                    <td class="bodyText">Image:</td>
-                                    <td class="bodyText" id="imageProgress">0.00%</td>
-                                </tr>
-                                <tr>
-                                    <td class="bodyText">Elapsed:</td>
-                                    <td class="bodyText"><span class="bodyText" id="elapsedTime">0</span> s</td>
-                                </tr>
-                                </tbody>
-                            </table>
-
-                            <div class="downloadButtonPosition">
-                                <a class="toolbarButton linkButton downloadButton" target="_blank" id="export1"
-                                   href="">Download</a>
-                            </div>
-                        </div>
+                    <div class="pixelInfo" id=pixelInfo>
+                        <table class="pixelDetail detailText">
+                            <tr>
+                                <td>Escaped at</td>
+                                <td id="escapedAt"></td>
+                            </tr>
+                            <tr>
+                                <td>Coloured at</td>
+                                <td id="imageEscapedAt"></td>
+                            </tr>
+                            <tr>
+                                <td rowspan="2">Point</td>
+                                <td>x: <span class="valueText" id="mx"></span></td>
+                            </tr>
+                            <tr>
+                                <td>y: <span id="my"></span></td>
+                            </tr>
+                            <tr>
+                                <td>Colour</td>
+                                <td>
+                                    <span id="colourInfor"></span>
+                                    <span id="colourInfog"></span>
+                                    <span id="colourInfob"></span>
+                                </td>
+                            </tr>
+                        </table>
                     </div>
                 </div>
             </div>
         </div>
-        <div id="right" style="position: absolute; left:165px;">
-            <canvas id="mandelbrotCanvas"></canvas>
-            <canvas id="deadRegionCanvas" style="position: absolute; left:0; top:0;"></canvas>
-            <canvas id="uiCanvas" style="position: absolute; left:0; top:0; outline-style: double;"></canvas>
-            <div class="colourPicker">
-                <span id="addButton" class="button pickerButtons">Add</span>
-                <span id="removeButton" class="button pickerButtons">Remove</span>
-                <canvas class="colourGradient" id="colourGradientCanvas" width=528 height=40></canvas>
+        <div id="right" style="position: absolute; left:210px;">
+            <div class="panel progressPopUp bodyText" id="exportProgress">
+                <div class="centered">
+                    <span>Progress</span>
+                </div>
+                <table class="progressTable panelContent">
+                    <tbody>
+                    <tr>
+                        <td class="bodyText">Histogram:</td>
+                        <td class="bodyText" id="histogramProgress">0.00%</td>
+                    </tr>
+                    <tr>
+                        <td class="bodyText">Image:</td>
+                        <td class="bodyText" id="imageProgress">0.00%</td>
+                    </tr>
+                    <tr>
+                        <td class="bodyText">Elapsed:</td>
+                        <td class="bodyText"><span class="bodyText" id="elapsedTime">0</span> s</td>
+                    </tr>
+                    </tbody>
+                </table>
+                <div class="centered bottomMargin">
+                    <span class="button bodyText" id="export1">Open Image</span>
+                </div>
+
+            </div>
+            <div class="">
+                <canvas id="mandelbrotCanvas" class="canvasRadius"></canvas>
+                <canvas id="deadRegionCanvas" class="overlay canvasRadius"></canvas>
+                <canvas id="uiCanvas" class=" canvasBorder canvasRadius"></canvas>
+            </div>
+            <div class="border canvasRadius topMargin shimmyLeft">
+                <div class="colourPicker">
+                    <div class="topMargin rightMargin floatright">
+                        <span id="addButton" class="button padRight">+</span>
+                        <span id="removeButton" class="button padSides">-</span>
+                    </div>
+
+                    <canvas class="mediumRadius topMargin leftMargin" id="colourGradientCanvas" width=600 height=40></canvas>
+                </div>
+
+                <div>
+                    <canvas id="colourPickerCanvas" class="mediumRadius" width=700, height=100></canvas>
+                </div>
             </div>
 
-            <div>
-                <canvas id="colourPickerCanvas" class="huePicker" width=700, height=100></canvas>
-            </div>
         </div>
     </div>
-    <div style="outline-style:solid;">Hello</div>
+    <div class="border mediumRadius mediumLeftMargin messageBox">Hello</div>
 </div>
