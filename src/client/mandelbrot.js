@@ -13,7 +13,6 @@ jim.mandelbrotImage.create = function (_events, _width, _height) {
     var canvas = dom.element("mandelbrotCanvas");
     canvas.width = _width;
     canvas.height = _height;
-    canvas.className = "canvas";
     canvas.oncontextmenu = function (e) {
         e.preventDefault();
     };
@@ -145,17 +144,15 @@ jim.init.run = function () {
         colourGradientui.draw();
     };
 
-    pixelInfoCanvas.width = 162;
-    pixelInfoCanvas.height = 162;
+    pixelInfoCanvas.width = 144;
+    pixelInfoCanvas.height = 144;
 
 
-    uiCanvas.className = "canvas";
+    //uiCanvas.className = "canvas";
     uiCanvas.oncontextmenu = function (e) {
         e.preventDefault();
     };
-    //canvasDiv.appendChild(mandelbrot.canvas());
-    //canvasDiv.appendChild(uiCanvas);
-    //canvasDiv.appendChild(deadRegionsCanvas);
+
     colourPicker.draw();
 
     jim.anim.create(render).start();
@@ -171,7 +168,7 @@ jim.init.run = function () {
 //Show when average pixels per second escaping drops below x
 
 //Make render size / resolution slightly configurable
-
+// can I pop up export progress when I start export and hide it afterwards?
 
 // look at palette - can it be optimsed can I have hsl values back?
 // Maybe - maintain two sets of colours - one hsl one rgb update both as palette changes

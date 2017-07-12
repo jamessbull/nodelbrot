@@ -9,8 +9,8 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
         context.beginPath();
         context.moveTo(fromX, fromY);
         context.lineTo(toX, toY);
-        context.lineWidth = 1;
-        context.strokeStyle = 'rgba(30,255,30,255)';
+        context.strokeStyle='antiquewhite';
+        context.lineWidth = 2;
         context.stroke();
     };
     var drawCircle = function (x, y, r, c, selected) {
@@ -37,12 +37,14 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
         drawTriangle(x - 5, y - 8, 5, 10, selected);
     };
     var drawTicks = function () {
-        drawLine(10, 0, 10, 3);
-        drawLine(110, 0, 110, 3);
-        drawLine(210, 0, 210, 3);
-        drawLine(310, 0, 310, 3);
-        drawLine(410, 0, 410, 3);
-        drawLine(510, 0, 510, 3);
+        var length = 590;
+        var increment = length / 10;
+        var start = 6;
+        var total = length + start;
+
+        for (start; start <= total; start += increment) {
+            drawLine(start, 4, start, 10);
+        }
     };
 
     var interpolate = jim.interpolator.create().interpolate;
@@ -142,7 +144,7 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
         draw: function () {
             clearDisplay();
             drawTicks();
-            drawLine(5, 3, 515, 3);
+            drawLine(5, 3, 597, 3);
             markers.drawMarkers();
         },
         setSelectedNodeColour: function(tc) {

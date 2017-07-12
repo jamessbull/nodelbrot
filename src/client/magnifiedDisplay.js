@@ -4,7 +4,7 @@ jim.mandelbrot.examinePixelStateDisplay.create = function (_events, _examinePixe
     var examiningPixels = false;
     var myContext = _examinePixelCanvas.getContext('2d');
     var round = jim.common.round;
-    var magnifiedAreaWidth  = 19;
+    var magnifiedAreaWidth  = 18;
     var areaHasBeenSelected = false;
     var selectedArea;
     var histogramForColour = jim.twoPhaseHistogram.create(0);
@@ -87,12 +87,9 @@ jim.mandelbrot.examinePixelStateDisplay.create = function (_events, _examinePixe
         var point = points[pointsIndex];
 
         setText("escapedAt", point.escapedAt);
-        setText("alreadyEscaped", point.escapedAt !== 0);
-        setText("pixelComplete", point.imageEscapedAt !== 0);
         setText("imageEscapedAt", point.imageEscapedAt);
         setText("mx", round(point.xState, 9));
         setText("my", round(point.yState, 9));
-        setText("histogramPerc", round(histogramForColour.percentEscapedBy(point.imageEscapedAt) * 100, 3));
         setText("colourInfor", "r:" + round(point.colour.r,3));
         setText("colourInfog", "g:" + round(point.colour.g, 3));
         setText("colourInfob", "b:" + round(point.colour.b,3));

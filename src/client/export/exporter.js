@@ -9,13 +9,23 @@ jim.mandelbrot.image.exporter.create = function (_exportDimensions, _mandelbrotS
     var imageProgress = document.getElementById("imageProgress");
     var timeProgress = document.getElementById("elapsedTime");
     var downloadButton = document.getElementById("export1");
+    var exportProgress = document.getElementById("exportProgress");
     var exportDimensions;
     var palette;
     var deadRegions = [];
+    var exportCanvas;
 
     var timeReporter = jim.common.timeReporter.create(timeProgress);
     var histogramReporter = jim.common.imageExportProgressReporter.create(events, "histogramExportProgress", histogramProgress);
     var imageReporter = jim.common.imageExportProgressReporter.create(events, "imageExportProgress", imageProgress);
+
+    downloadButton.onclick = function () {
+        _dom.hide(exportProgress);
+        window.open(exportCanvas.toDataURL("image/png"));
+    };
+
+    _dom.hide(exportProgress);
+
     function log(thing) {
         console.log(thing);
     }
@@ -67,16 +77,17 @@ jim.mandelbrot.image.exporter.create = function (_exportDimensions, _mandelbrotS
         var initialJobs = createInitialJobs(8, histogramData,  histogramTotal, palette.toNodeList());
         var workerPool =  jim.worker.pool.create(8, "/js/mandelbrotImageCalculatingWorker.js", initialJobs, "histogramData", "none");
 
-        var exportCanvas = makeExportCanvas(exportDimensions);
+        exportCanvas = makeExportCanvas(exportDimensions);
         var context = exportCanvas.getContext('2d');
         var imageData = new Uint8ClampedArray(exportCanvas.width * exportCanvas.height * 4);
         var pixelsPerChunk = (exportDimensions.width * exportDimensions.height) / 100;
 
         function onAllJobsComplete() {
             _dom.deselectButton(exportButton);
-            _dom.selectButton(downloadButton);
+            //_dom.selectButton(downloadButton);
+            //_dom.hide(exportProgress);
             context.putImageData(new ImageData(imageData, exportCanvas.width, exportCanvas.height), 0,0);
-            downloadButton.href = exportCanvas.toDataURL("image/png");
+            //downloadButton.href = exportCanvas.toDataURL("image/png");
             exporting = false;
             timeReporter.stop();
         }
@@ -93,6 +104,7 @@ jim.mandelbrot.image.exporter.create = function (_exportDimensions, _mandelbrotS
     exportButton.onclick = function () {
         exportDimensions = _exportDimensions.dimensions();
         _dom.selectButton(exportButton);
+        _dom.show(exportProgress);
         imageReporter.reportOn(exportDimensions.width, exportDimensions.height);
         var roundedWidth = Math.floor(exportDimensions.width / 10);
         var roundedHeight = Math.floor(exportDimensions.height / 10);

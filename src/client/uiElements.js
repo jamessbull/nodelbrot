@@ -77,39 +77,28 @@ jim.mandelbrot.ui.elements.create = function (_exportSizeDropdown, _mandelbrotSe
     var exportMenuButton   = document.getElementById("exportImageButton");
     var mandelCanvas   = document.getElementById("mandelbrotCanvas");
 
-
     examineMenuButton.onclick = function () {
         if (examineMenuButton.classList.contains("iconSelected")) {
             dom.deselectIcon(examineMenuButton);
-            dom.hide(examinePixelsPanel);
+            //dom.hide(examinePixelsPanel);
             dom.removeClass(mandelCanvas, "magnifyCursor");
-            _mandelbrotSet.go();
+            //_mandelbrotSet.go();
             _events.fire(_events.stopExaminingPixelState);
 
         } else{
             dom.selectIcon(examineMenuButton);
-            dom.deselectButton(exportMenuButton);
-            dom.show(examinePixelsPanel);
+            //dom.deselectButton(exportMenuButton);
+            //dom.show(examinePixelsPanel);
             dom.addClass(mandelCanvas, "magnifyCursor");
-            dom.hide(exportPanel); //element.style.cursor
+            //dom.hide(exportPanel); //element.style.cursor
             _mandelbrotSet.stop();
             _events.fire(_events.examinePixelState);
         }
     };
 
-    exportMenuButton.onclick = function () {
-        dom.selectButton(exportMenuButton);
-        dom.removeClass(_mandelbrotSet.canvas(), "magnifyCursor");
-        dom.deselectIcon(examineMenuButton);
-        dom.show(exportPanel);
-        dom.hide(examinePixelsPanel);
-        _events.fire(_events.stopExaminingPixelState);
-    };
-
-    dom.selectButton(exportMenuButton);
     dom.show(exportPanel);
     dom.deselectButton(examineMenuButton);
-    dom.hide(examinePixelsPanel);
+    dom.show(examinePixelsPanel);
 
     var ignoreDeadPixelsCheckbox = document.getElementById("ignoreDeadPixels");
     var ignoreDeadPixelsRadius = document.getElementById("ignoreDeadPixelsRadius");
