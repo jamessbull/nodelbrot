@@ -163,9 +163,31 @@ jim.init.run = function () {
 
 };
 
-// Next improvements
-//How do I know how many iterations to export to?
-//Show when average pixels per second escaping drops below x
+// Missing features
+// Once export progress is dismissed put download button on main panel
+// Make value text for pixel examination all correct colour - done
+// Show rate of pixel escape. Stop when escape rate drops below 0.5?
+// Show marker on colour gradient. Clicking on it moves marker. New nodes have that colour
+// New nodes appear in middle of largest gap.
+// Start when a zoom is selected
+// start when zoom out begun.
+// Make examine button behave
+//Make message scroll in - appear 1 char at a time
+    // So set timeout and each time just change
+
+// Write list of messages
+// Make message transition in appear for a set amount of time then transition out.
+// Make panels solid - try a thinner border
+// Make colour palette controls use events and only redraw when needed.
+// Make zoom border proper
+// Stop zoom out border appearing when fully zoomed out
+// Make parallelism and chunk size auto configure for max perf and smooth frame rate depending on conditions
+// Make buttons a different colour and round the edges and try a thinner border
+// Fix dead regions they should disappear
+// make details pixel border the correct colours
+// Hover text on controls
+
+
 
 //Make render size / resolution slightly configurable
 // can I pop up export progress when I start export and hide it afterwards?

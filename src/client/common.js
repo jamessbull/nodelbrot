@@ -131,12 +131,12 @@ jim.coord.translator2.create = function () {
     "use strict";
     return {
         translateX: function (fromTopLeftX, fromWidth, toTopLeftX, toWidth, x) {
-            var totalAmount = (((toWidth * 10000) / fromWidth) * (x - fromTopLeftX));
-            return ((toTopLeftX * 10000) + totalAmount) / 10000;
+            var totalAmount = (((toWidth) / fromWidth) * (x - fromTopLeftX));
+            return ((toTopLeftX) + totalAmount);
         },
         translateY: function (fromTopLeftY, fromHeight, toTopLeftY, toHeight, y) {
-            var totalAmount = (((toHeight * 10000) / fromHeight) * (y - fromTopLeftY));
-            return ((toTopLeftY * 10000) + totalAmount) / 10000;
+            var totalAmount = (((toHeight) / fromHeight) * (y - fromTopLeftY));
+            return ((toTopLeftY) + totalAmount);
         }
     };
 };
@@ -481,4 +481,105 @@ jim.anim.fixedLength.create = function () {
             });
         }
     };
+};
+
+
+namespace("jim.message.supplier");
+jim.message.supplier.create = function (_messages) {
+    "use strict";
+    var messages = _messages ? _messages : [
+        "Calculating Pixels",
+        "Examining dead areas",
+        "Reticulating splines",
+        "Wombling free"
+    ];
+    var currentMessage = 0;
+    return {
+        next: function () {
+            var message = messages[currentMessage];
+            currentMessage +=1;
+            if (currentMessage >= messages.length) {
+                currentMessage = 0;
+            }
+            return message;
+        }
+    };
+};
+
+namespace("jim.anim.textBox");
+jim.anim.textBox.create = function (canvas, _messages) {
+    "use strict";
+    var context = canvas.getContext('2d');
+    var messages = jim.message.supplier.create(_messages);
+
+    function messageWidthInPixels(_msg) {
+        var fontWidth = 7;
+        return _msg.length * fontWidth;
+    }
+
+    function finalPositionForCentredMessage(canvasWidth, messageWidth) {
+        return (canvasWidth - messageWidth) / 2;
+    }
+
+    function drawMsg() {
+        context.font = "12px courier";
+
+        function drawString(context, x, y) {
+            clearCanvas(context);
+            context.fillStyle="rgba(255,255,255,255)";
+            context.fillText(msg,x,y);
+        }
+
+        function clearCanvas(context) {
+            context.clearRect(0,0, canvas.width, canvas.height);
+        }
+
+        function slowingFunction(context, totalFrames, start, end) {
+            return function (i) {
+                var t = i;
+                var totalS = Math.abs(end - start);
+                var v = 0;
+                var a = (-2 * totalS)/(totalFrames * totalFrames);
+                var u = v - (a * totalFrames);
+                var s = ( u * t) + (0.5 * a * t * t);
+
+                var pos = start - s;
+                drawString(context, pos, 10);
+            };
+        }
+
+        function fasterFunction(context, totalFrames, start, end) {
+            return function (i) {
+                var t = i;
+                var totalS = Math.abs(end - start);
+                var u = 0;
+                var a = (2 * totalS) / (totalFrames * totalFrames);
+                var s = ( u * t) + (0.5 * a * t * t);
+
+                var pos = start - s;
+                drawString(context, pos, 10);
+            };
+        }
+
+        function getHoldMessageFunction(context, start) {
+            return function () { drawString(context, start, 10); };
+        }
+
+        var msg = messages.next();
+
+        var anim = jim.anim.fixedLength.create();
+        var messageWidth =  messageWidthInPixels(msg);
+        var stopHere = finalPositionForCentredMessage(canvas.width,messageWidth);
+        var scrollMessageFunction2 = slowingFunction(context, 100, canvas.width, stopHere);
+
+        anim.drawFrames(100, scrollMessageFunction2)
+            .then(function () {
+                return anim.drawFrames(messageWidth * 0.6, getHoldMessageFunction(context, stopHere));
+            }).then(function () {
+                return anim.drawFrames(100, fasterFunction(context, 100, stopHere, 0 - messageWidth));
+            }).then (function () {
+                drawMsg();
+            });
+    }
+    drawMsg();
 };

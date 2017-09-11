@@ -30,7 +30,7 @@
         margin-left: 10px;
         margin-top: -3px;
         padding-top: 10px;
-        border-style: solid;
+        border: 2px solid;
         border-radius: 10px;
     }
 
@@ -57,13 +57,13 @@
 
     .canvasBorder {
         position: absolute;
-        border-style: solid;
+        border: 2px solid;
         left: -3px;
         top: -3px;
     }
 
     .border{
-        border-style: solid;
+        border: 2px solid;
     }
 
     .canvasRadius {
@@ -78,6 +78,9 @@
 
     .bottomMargin {
         margin-bottom: 15px;
+    }
+    .smallBottomMargin {
+        margin-bottom: 10px;
     }
 
     .mediumBottomMargin {
@@ -172,9 +175,9 @@
 </style>
 
 <div class="standard">
-    <div class="border mediumRadius mediumLeftMargin messageBox mediumBottomMargin">
-        Mandelbrot fractal explorer
-    </div>
+
+    <div class="border mediumRadius mediumLeftMargin messageBox smallBottomMargin"><canvas width = 900, height = 15, id = "topMessageBox">I am hello message.</canvas></div>
+
     <div id="bothColumns" style="position:relative; height:575px;">
         <div id="left" style="position: absolute;">
             <div class="bodyText panel">
@@ -254,25 +257,25 @@
                         <table class="pixelDetail detailText">
                             <tr>
                                 <td>Escaped at</td>
-                                <td id="escapedAt"></td>
+                                <td><span class="valueText" id="escapedAt"></span></td>
                             </tr>
                             <tr>
                                 <td>Coloured at</td>
-                                <td id="imageEscapedAt"></td>
+                                <td><span class="valueText" id="imageEscapedAt"></span></td>
                             </tr>
                             <tr>
-                                <td rowspan="2">Point</td>
+                                <td rowspan="2">Calc value<</td>
                                 <td>x: <span class="valueText" id="mx"></span></td>
                             </tr>
                             <tr>
-                                <td>y: <span id="my"></span></td>
+                                <td>y: <span class="valueText" id="my"></span></td>
                             </tr>
                             <tr>
                                 <td>Colour</td>
                                 <td>
-                                    <span id="colourInfor"></span>
-                                    <span id="colourInfog"></span>
-                                    <span id="colourInfob"></span>
+                                    <span class="valueText" id="colourInfor"></span>
+                                    <span class="valueText" id="colourInfog"></span>
+                                    <span class="valueText" id="colourInfob"></span>
                                 </td>
                             </tr>
                         </table>
@@ -302,7 +305,7 @@
                     </tbody>
                 </table>
                 <div class="centered bottomMargin">
-                    <span class="button bodyText" id="export1">Open Image</span>
+                    <a class="button bodyText" id="export1">Open Image</a>
                 </div>
 
             </div>
@@ -328,5 +331,5 @@
 
         </div>
     </div>
-    <div class="border mediumRadius mediumLeftMargin messageBox">Hello</div>
+    <div class="border mediumRadius mediumLeftMargin messageBox"><canvas width = 900, height = 15, id = "bottomMessageBox">I am hello message.</canvas></div>
 </div>

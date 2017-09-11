@@ -82,15 +82,25 @@ jim.mandelbrot.image.exporter.create = function (_exportDimensions, _mandelbrotS
         var imageData = new Uint8ClampedArray(exportCanvas.width * exportCanvas.height * 4);
         var pixelsPerChunk = (exportDimensions.width * exportDimensions.height) / 100;
 
+
         function onAllJobsComplete() {
             _dom.deselectButton(exportButton);
-            //_dom.selectButton(downloadButton);
-            //_dom.hide(exportProgress);
+
             context.putImageData(new ImageData(imageData, exportCanvas.width, exportCanvas.height), 0,0);
-            //downloadButton.href = exportCanvas.toDataURL("image/png");
+            if (exportCanvas.toBlob) {
+                exportCanvas.toBlob(function(blob) {
+                    var   url = URL.createObjectURL(blob);
+                    window.open(url);
+                    _dom.hide(exportProgress);
+                });
+            } else {
+                downloadButton.href = exportCanvas.toDataURL("image/png");
+            }
+
             exporting = false;
             timeReporter.stop();
         }
+
 
         function onEachJob(_msg) {
             events.fire("imageExportProgress", pixelsPerChunk);

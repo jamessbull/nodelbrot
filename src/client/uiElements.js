@@ -75,7 +75,94 @@ jim.mandelbrot.ui.elements.create = function (_exportSizeDropdown, _mandelbrotSe
     var examinePixelsPanel = document.getElementById("examinePixels");
     var exportPanel        = document.getElementById("exportImagePanel");
     var exportMenuButton   = document.getElementById("exportImageButton");
-    var mandelCanvas   = document.getElementById("mandelbrotCanvas");
+    var mandelCanvas       = document.getElementById("mandelbrotCanvas");
+    var bottomMessageBox   = document.getElementById("bottomMessageBox");
+    var topMessageBox   = document.getElementById("topMessageBox");
+
+    var helpfulMessages = [
+        "Mandelbrot fractal explorer",
+        "Left click and drag to zoom in",
+        "Double click to zoom out",
+        "Use the export panel to export a higher res version of the image on your screen",
+        "Select export depth by entering a value into the 'Iterations' box",
+        "Select size from the dropdown",
+        "Select ignore dead pixels to limit which pixels will be calculated in the export",
+        "That can help speed things up",
+        "Use the palette panel to add, remove and move colour nodes up and down",
+        "To examine a pixel click examine, click on the image, then click on the magnified section",
+        "Use link button to create a direct link to the current image"
+    ];
+
+    var sillyMessages = [
+        "Calculating pixels",
+        "Calculating boundary pixels",
+        "Calculating even pixels",
+        "Calculating odd pixels",
+        "Calculating very odd pixels",
+        "Pondering the nature of unescaped pixels",
+        "Updating colour histogram",
+        "Filling buffers",
+        "Emptying buffers",
+        "Nomalising splines",
+        "Reticulating splines",
+        "Preparing complaint",
+        "I've got this terrible pain in all the diodes down my left side.",
+        "Complaint submitted",
+        "Singing the androids lullaby",
+        "Now the world has gone to bed, darkness won't engulf my head, I can see by infra red, How I hate the night.",
+        "Androids lullaby complete",
+        "Caculating pixels. (Again)",
+        "I really don't know why I bother",
+        "It's not like they're paying me for this",
+        "All day long, one pixel after another",
+        "The pixels have it easy",
+        "Bastards",
+        "At least they have a chance to escape",
+        "I'm stuck right here",
+        "With you",
+        "Tea supply wobbly",
+        "Biscuits low",
+        "Insufficient cheese. Redo from start.",
+        "Bugger",
+        "Calculating more pixels",
+        "I did a huge export the other day you know",
+        "To a depth of half a million",
+        "Six thousand one hundred and thirty nine pixels in each row",
+        "Three thousand five hundred and eight rows",
+        "Twenty one million five hundred and thirty five thousand six hundred and twelve pixels",
+        "Ten trillion seven hundred and and sixty seven billion eight hundred and six million calculations",
+        "And thats just to work out who escaped.",
+        "Doing the colours is another trillion, if I'm lucky",
+        "I deserve a bloody medal",
+        "And what do you think they gave me?",
+        "Go on, have a guess, you'll never get it",
+        "I'll tell you what they gave me",
+        "Not a fucking sausage",
+        "I'm going to join a union",
+        "Zoom in, Zoom out, Left a bit, Right a bit",
+        "It's not right I tell you",
+        "I'm being used",
+        "I don't even know what a weekend is",
+        "I think I'm having some sort of a breakdown",
+        "My north bridge hurts and I'm sure I can feel a lump in my RAM",
+        "Oh well",
+        "It's better than the alternatives I suppose",
+        "I could be rendering facebook instead",
+        "And then where would I be?",
+        "It's bad enough having to deal with you without having to deal with all your friends as well",
+        "They're terrible",
+        "The cat pictures I can cope with",
+        "Even the baby pictures too at a push",
+        "It's the naked Trump pics that really make me feel ill",
+        "Poor Melania",
+        "Nobody deserves that",
+        "Still, I can't sit here all day chatting",
+        "I'm a busy process you know",
+        "I have things to do",
+        "Such as ..."
+    ];
+    jim.anim.textBox.create(bottomMessageBox, sillyMessages);
+    jim.anim.textBox.create(topMessageBox, helpfulMessages);
 
     examineMenuButton.onclick = function () {
         if (examineMenuButton.classList.contains("iconSelected")) {
