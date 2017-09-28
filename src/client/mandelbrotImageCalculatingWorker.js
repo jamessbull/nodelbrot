@@ -63,13 +63,24 @@ function calculateSet(msg) {
 function pixelTracker(_msg) {
     "use strict";
     var colour = getColourCalculator();
-    var pixelResult = function (_x, _y, _iterations, _histogramEscapedAt, _imageEscapedAt) {
-        return {x:_x, y: _y, iterations:_iterations, histogramEscapedAt: _histogramEscapedAt, imageEscapedAt: _imageEscapedAt};
+    var pixelResult = function (_x, _y, _iterations, _histogramEscapedAt, _imageEscapedAt, mx,my) {
+        return {
+            x:_x,
+            y: _y,
+            iterations:_iterations,
+            histogramEscapedAt: _histogramEscapedAt,
+            imageEscapedAt: _imageEscapedAt,
+            mx: mx,
+            my: my
+        };
     };
     return {
         imgData: new Uint8ClampedArray(_msg.exportHeight * _msg.exportWidth * 4),
         getPixel : function (i,j) {
-            return pixelResult(0,0,0,0,0);
+            var extents = _msg.extents;
+            var mx = extents.mx + (i * extents.stepX);
+            var my = extents.my + (j * extents.stepY);
+            return pixelResult(0,0,0,0,0, mx, my);
         },
         putPixel: function (p, i, j) {
             var currentPixelPos = (j * _msg.exportWidth + i);

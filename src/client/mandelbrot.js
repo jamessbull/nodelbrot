@@ -23,7 +23,7 @@ jim.mandelbrotImage.create = function (_events, _width, _height) {
     var xState = new Uint32Array(_width * _height);
     var yState = new Uint32Array(_width * _height);
 
-    var mandelbrotCalculator = jim.mandelbrot.webworkerInteractive.create(_width, _height, _events, 70, 4, imgData, escapeValues, xState, yState, imageEscapeValues);
+    var mandelbrotCalculator = jim.mandelbrot.webworkerInteractive.create(_width, _height, _events, 70, 3, imgData, escapeValues, xState, yState, imageEscapeValues);
     return {
         histoData: function () {
           return histoData;
@@ -163,9 +163,15 @@ jim.init.run = function () {
 
 };
 
+// Stoopid histogram using totally different message format.
+// change it to use the same formatv/ render definition as the combined worker / export.
+// Todo. work out what the histogram generator is expecting in terms of messages
+// surely I just need to take the full extents and just split it a little differently.
+// Give the worker pool a number of jobs each one covers a bigger area so just split into smaller export size
+// So what is format
+
 // Missing features
 // Once export progress is dismissed put download button on main panel
-// Make value text for pixel examination all correct colour - done
 // Show rate of pixel escape. Stop when escape rate drops below 0.5?
 // Show marker on colour gradient. Clicking on it moves marker. New nodes have that colour
 // New nodes appear in middle of largest gap.
@@ -173,11 +179,8 @@ jim.init.run = function () {
 // start when zoom out begun.
 // Make examine button behave
 //Make message scroll in - appear 1 char at a time
-    // So set timeout and each time just change
+// So set timeout and each time just change
 
-// Write list of messages
-// Make message transition in appear for a set amount of time then transition out.
-// Make panels solid - try a thinner border
 // Make colour palette controls use events and only redraw when needed.
 // Make zoom border proper
 // Stop zoom out border appearing when fully zoomed out
@@ -185,7 +188,7 @@ jim.init.run = function () {
 // Make buttons a different colour and round the edges and try a thinner border
 // Fix dead regions they should disappear
 // make details pixel border the correct colours
-// Hover text on controls
+
 
 
 
@@ -199,10 +202,7 @@ jim.init.run = function () {
 
 // Adjust number of blocks I split the screen into according to performance;
 // Then adjust block size to maintain 24 fps
-// Show export progress better dim lines as they finish
 //
 // auto start stop when exporting / not exporting
-// progress messages during export
-// Help icons with hover
 // minify js
 // estimate long tail cap histo size at 300k use last 100k to  estimate next 500k

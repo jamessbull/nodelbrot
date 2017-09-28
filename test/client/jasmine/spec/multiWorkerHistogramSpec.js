@@ -44,36 +44,6 @@ describe("the multiworker histogram", function () {
 
     });
 
-    it("should hit the same mx my points for two jobs and one", function (done) {
-        var calculation = jim.mandelbrot.export.escapeHistogramCalculator.create();
-        var calculation2 = jim.mandelbrot.export.escapeHistogramCalculator.create();
-        var source = jim.rectangle.create(-2.5, -1, 3.5, 2);
-        var dest = jim.rectangle.create(0,0,700, 400);
-
-        function compareWithMultiWorkerHistogram (mxVals, myVals) {
-            calculation2.calculate(source, dest, 100, 2, 2, function (_data, _total, mxValues, myValues) {
-                for(var i = 130000 ; i <141000 ; i +=1) {
-                    expect(mxValues[i]).toBe(mxVals[i]);
-                    expect(myValues[i]).toBe(myVals[i]);
-                    if(mxValues[i] !== mxVals[i] || myValues[i] !== myVals[i]) {
-                        console.log("index :- " + i + ", multipart   mx :- " + mxValues[i] + ", my :- " + myValues[i]);
-                        console.log("index :- " + i + ", singlePart  mx :- " + mxVals[i]   + ", my :- " + myVals[i]);
-                        break;
-                    }
-
-
-                }
-                done();
-            });
-        }
-
-        calculation.calculate(source, dest, 100, 1, 1, function (_data, _total, mxValues, myValues) {
-            compareWithMultiWorkerHistogram(mxValues, myValues);
-        });
-
-    });
-});
-
 describe("The combined worker", function () {
     "use strict";
 
@@ -193,37 +163,6 @@ describe("The combined worker", function () {
         });
 
         events.fire(events.histogramUpdateReceivedFromWorker, update);
-
-    });
-
-    it("should update the histogram correctly for two updates and update totals", function (done) {
-        events.clear();
-        var histoUpdater = jim.mandelbrot.escapeDistributionHistogram.create(events);
-        var called = 0;
-        var update = {update: [0,1,2,3,4], currentIteration: 0};
-        var update2 = {update: [0,1,2,3,4], currentIteration: 5};
-
-        on(events.histogramUpdated, function (histoinfo) {
-            var histo = histoinfo.array;
-            called +=1;
-            if(called === 2) {
-                expect(histo[0]).toBe(0);
-                expect(histo[1]).toBe(1);
-                expect(histo[2]).toBe(3);
-                expect(histo[3]).toBe(6);
-                expect(histo[4]).toBe(10);
-                expect(histo[5]).toBe(10);
-                expect(histo[6]).toBe(11);
-                expect(histo[7]).toBe(13);
-                expect(histo[8]).toBe(16);
-                expect(histo[9]).toBe(20);
-                done();
-            }
-
-        });
-
-        events.fire(events.histogramUpdateReceivedFromWorker, update);
-        events.fire(events.histogramUpdateReceivedFromWorker, update2);
 
     });
 

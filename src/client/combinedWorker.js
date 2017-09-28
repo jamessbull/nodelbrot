@@ -41,6 +41,7 @@ var pixelStateTracker = (function () {
     pixelStateTracker.updateImageData = function (i, j, _p, _imageData, _histogram, _colour, _palette, _width) {
         var currentPixelPos = (j * _width + i);
         var currentRGBArrayPos = currentPixelPos * 4;
+
         var pixelColour = _p.imageEscapedAt !== 0 ? _colour.forPoint(_p.x, _p.y, _p.imageEscapedAt, _histogram, _palette): {r:0, g:0, b:0, a:255};
         _imageData[currentRGBArrayPos] = pixelColour.r;
         _imageData[currentRGBArrayPos + 1] = pixelColour.g;
@@ -54,12 +55,16 @@ var pixelStateTracker = (function () {
         }
     };
     pixelStateTracker.getPixel= function (i, j) {
+        var mx = extents.mx + (i * extents.stepX);
+        var my = extents.my + (j * extents.stepY);
         var index = (j * this.width) +i;
         var newPixel = {
             x: this.xState[index],
             y: this.yState[index],
             histogramEscapedAt: this.escapeValues[index],
-            imageEscapedAt: this.imageEscapeValues[index]
+            imageEscapedAt: this.imageEscapeValues[index],
+            mx: mx,
+            my: my
         };
         return newPixel;
     };
@@ -125,14 +130,22 @@ onmessage = function(e) {
         extents = msg.extents;
         pixelStateTracker.width = msg.exportWidth;
     }
+
     if (msg.paletteNodes) {
         palette.fromNodeList(msg.paletteNodes);
     }
+
     pixelStateTracker.palette = palette;
 
     histogramForColour.setData(new Uint32Array(histogramData), histogramTotal);
     pixelStateTracker.histogramForColour = histogramForColour;
     pixelStateTracker.width = msg.exportWidth;
+
+    pixelStateTracker.msg = msg;
+    pixelStateTracker.msg.mx = extents.mx;
+    pixelStateTracker.msg.my = extents.my;
+    pixelStateTracker.msg.mw = extents.mw;
+    pixelStateTracker.msg.mh = extents.mh;
 
     setProcessor.processSet(extents, pixelStateTracker, msg.currentIteration, noOfIterations, msg.exportWidth, msg.exportHeight, undefined);
     postMessage(message(), [pixelStateTracker.imageData.buffer, pixelStateTracker.histogramUpdate.buffer, escapeValuesToTransfer.buffer]);

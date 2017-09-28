@@ -13,6 +13,7 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
     var palette = null;
     var escapeValues = _escapeValues;
     var running = true;
+    var fragments;
 
     function onEachJob(_msg) {
         _events.fire(_events.histogramUpdateReceivedFromWorker, {update: new Uint32Array(_msg.histogramUpdate), currentIteration: currentIteration});
@@ -45,12 +46,17 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
         var my = extents ? extents.my : undefined;
         var mw = extents ? extents.mw : undefined;
         var mh = extents ? extents.mh : undefined;
-        var initialRenderDefinition = jim.messages.renderFragment.create(0, mx, my, mw, mh, _width, _height);
-
-        var fragments = initialRenderDefinition.split(_parallelism);
+        var initialRenderDefinition = jim.messages.renderFragment2.create(0, mx, my, mw, mh, _width, _height);
+        if(extents) {
+            fragments = initialRenderDefinition.split(_parallelism);
+        }
 
         var jobs = array(fragments.length, function (i) {
-            var job = jim.messages.interactive.create(fragments[i].asMessage(), copyOfHisto, currentIteration, stepSize, palette, histogramTotal);
+            var message = fragments[i];
+            if (!extents) {
+                message.extents = undefined;
+            }
+            var job = jim.messages.interactive.create(message, copyOfHisto, currentIteration, stepSize, palette, histogramTotal);
 
             if (requestExaminePixelData) {
                 job.sendData = true;

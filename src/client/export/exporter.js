@@ -64,23 +64,26 @@ jim.mandelbrot.image.exporter.create = function (_exportDimensions, _mandelbrotS
         var mw = extents.width();
         var mh = extents.height();
 
-        var initialRenderDefinition = jim.messages.renderFragment.create(0, mx, my, mw, mh, exportDimensions.width, exportDimensions.height);
-        var fragments = initialRenderDefinition.split(100);
+        var initialRenderDefinition = jim.messages.renderFragment2.create(0, mx, my, mw, mh, exportDimensions.width, exportDimensions.height);
+        var noOfJobs = 100;
+        var noOfThreads = noOfJobs < 8 ? noOfJobs : 8;
+
+        var fragments = initialRenderDefinition.split(noOfJobs);
         var splitter = jim.common.arraySplitter.create();
-        var deadSections = splitter.split(deadRegions, 100, 700);
+        var deadSections = splitter.split(deadRegions, noOfJobs, 700);
 
         var jobs = [];
         fragments.forEach(function (fragment,i) {
-             jobs[i] = jim.messages.export.create(fragment.asMessage(), exportDepth.value, deadSections[i]);
+             jobs[i] = jim.messages.export.create(fragment, exportDepth.value, deadSections[i]);
         });
 
-        var initialJobs = createInitialJobs(8, histogramData,  histogramTotal, palette.toNodeList());
-        var workerPool =  jim.worker.pool.create(8, "/js/mandelbrotImageCalculatingWorker.js", initialJobs, "histogramData", "none");
+        var initialJobs = createInitialJobs(noOfThreads, histogramData,  histogramTotal, palette.toNodeList());
+        var workerPool =  jim.worker.pool.create(noOfThreads, "/js/mandelbrotImageCalculatingWorker.js", initialJobs, "histogramData", "none");
 
         exportCanvas = makeExportCanvas(exportDimensions);
         var context = exportCanvas.getContext('2d');
         var imageData = new Uint8ClampedArray(exportCanvas.width * exportCanvas.height * 4);
-        var pixelsPerChunk = (exportDimensions.width * exportDimensions.height) / 100;
+        var pixelsPerChunk = (exportDimensions.width * exportDimensions.height) / noOfJobs;
 
 
         function onAllJobsComplete() {
