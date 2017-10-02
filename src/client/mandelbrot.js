@@ -168,7 +168,20 @@ jim.init.run = function () {
 // Todo. work out what the histogram generator is expecting in terms of messages
 // surely I just need to take the full extents and just split it a little differently.
 // Give the worker pool a number of jobs each one covers a bigger area so just split into smaller export size
-// So what is format
+// So what is format?
+// format expected by histo calcing worker is
+//        maxIterations: _iter,
+
+//    exportWidth: _width,
+//    exportHeight: _height,
+//    mx: _extents.topLeft().x,
+//    my: _extents.topLeft().y,
+//    mw: _extents.width(),
+//    mh: _extents.height(),
+//    offset: _offset
+
+// so fragment gives me same stuff
+// yay. Use this format and adapt fragment. All should be well.
 
 // Missing features
 // Once export progress is dismissed put download button on main panel

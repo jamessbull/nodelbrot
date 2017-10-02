@@ -9,7 +9,6 @@ importScripts(
 );
 var mxValues;
 var myValues;
-var translator   = jim.coord.translator2.create();
 
 function pixelTracker(_msg) {
     "use strict";
@@ -42,8 +41,8 @@ function pixelTracker(_msg) {
         histogramData: newHistogramDataArray(noOfIterations),
         histogramTotal: 0,
         getPixel : function (i,j) {
-            var mx = translator.translateX(0, _msg.exportWidth, _msg.mx, _msg.mw, i);
-            var my = translator.translateY(0, _msg.exportHeight, _msg.my, _msg.mh, j);
+            var mx = _msg.mx + (i * _msg.mw);
+            var my = _msg.my + (j * _msg.mh);
             return pixelResult(0,0,0,0,0,mx, my);
         },
         putPixel: function (p, i, j, mx, my) {
@@ -55,12 +54,6 @@ function pixelTracker(_msg) {
             mxValues[index] = mx;
             myValues[index] = my;
             this.histogramData[escapeOffset] = pixelResultHandler(p, i, j, startIteration, noOfIterations, this.histogramData[escapeOffset]);
-        },
-        mx: function (i,j) {
-
-        },
-        my: function (i,j) {
-
         }
     };
 }
