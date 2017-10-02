@@ -26,7 +26,6 @@ jim.mandelbrot.export.escapeHistogramCalculator.create = function () {
         var totalMxValues = new Float64Array(_target.width() * _target.height());
         var totalMyValues = new Float64Array(_target.width() * _target.height());
         var fullHistogramTotal = 0;
-        var jobs2 = jim.parallelHistogramGenerator.create().run(_source, _depth, _target.width(), _target.height(), _noOfParts);
         var initialRenderDefinition = jim.messages.renderFragment2.create(0, _source.topLeft().x, _source.topLeft().y, _source.width(), _source.height(), _target.width(), _target.height());
         var fragments = initialRenderDefinition.split(_noOfParts);
         var jobs = fragments.map(function (fragment) {
@@ -46,8 +45,6 @@ jim.mandelbrot.export.escapeHistogramCalculator.create = function () {
         }
 
         function onEveryJob(_msg) {
-            //addFirstToSecond(_msg.mxValues, totalMxValues); need to know which job has completed so I can put values in correct position in array
-            // Offset has been put on job
             var mxv = new Float64Array(_msg.result.mxValues);
             addToMxValues(mxv, _msg.offset);
             var myv = new Float64Array(_msg.result.myValues);

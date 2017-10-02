@@ -2,7 +2,6 @@
 <script src="/js/common.js"></script>
 <script src="/js/mandelbrotPoint.js"></script>
 <script src="/js/events.js"></script>
-<script src="/js/multiworkerHistogramGenerator.js"></script>
 <script src="/js/stopWatch.js"></script>
 <script src="/js/tinycolor.js"></script>
 <script src="/js/palette.js"></script>

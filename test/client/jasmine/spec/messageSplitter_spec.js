@@ -1,13 +1,12 @@
 describe("The message splitter", function () {
-
-
+    "use strict";
     function checkMessage(m, mx, my, rows, columns, stepX, stepY, offset) {
-        expect(m.mx).toBe(mx);
-        expect(m.my).toBe(my);
+        expect(m.extents.mx).toBe(mx);
+        expect(m.extents.my).toBe(my);
         expect(m.rows).toBe(rows);
         expect(m.columns).toBe(columns);
-        expect(m.stepX).toBe(stepX);
-        expect(m.stepY).toBe(stepY);
+        expect(m.extents.stepX).toBe(stepX);
+        expect(m.extents.stepY).toBe(stepY);
         expect(m.offset).toBe(offset);
     }
 

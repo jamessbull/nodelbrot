@@ -24,7 +24,7 @@ function pixelTracker(_msg) {
 
     var pixelResult = function (_x, _y, _iterations, _histogramEscapedAt, _imageEscapedAt, mx, my) {
         return {
-            x:_x,
+            x: _x,
             y: _y,
             iterations:_iterations,
             histogramEscapedAt: _histogramEscapedAt,

@@ -1,6 +1,6 @@
 describe("the multiworker histogram", function () {
-    jasmine.DEFAULT_TIMEOUT_INTERVAL = 5000;
     "use strict";
+    jasmine.DEFAULT_TIMEOUT_INTERVAL = 5000;
     it("should be the same as the combined worker histogram", function (done) {
         var calculation = jim.mandelbrot.export.escapeHistogramCalculator.create();
         var calculation2 = jim.mandelbrot.export.escapeHistogramCalculator.create();
@@ -10,8 +10,6 @@ describe("the multiworker histogram", function () {
         function compareWithMultiWorkerHistogram (previousData) {
             calculation2.calculate(source, dest, 1000, 2, 2, function (_data, _total) {
                 for(var i = 0 ; i < 100 ; i +=1) {
-                    //console.log("multipart  : " + _data[i]);
-                    //console.log("single job : " + previousData[i]);
                     expect(_data[i]).toBe(previousData[i]);
                 }
                 done();
@@ -23,34 +21,10 @@ describe("the multiworker histogram", function () {
         });
 
     });
-
-    it("should cover the same points regardless of how many pieces the job is split into", function () {
-        var source = jim.rectangle.create(-2.5, -1, 3.5, 2);
-
-        var singleJob = jim.parallelHistogramGenerator.create().run(source, 1000,700, 400, 1);
-        var twoJobs = jim.parallelHistogramGenerator.create().run(source, 1000, 700, 400, 2);
-
-        var one = singleJob[0];
-        var two = twoJobs[0];
-        var twotwo = twoJobs[1];
-        expect(one.mh).toBe(2);
-        expect(one.my).toBe(-1);
-
-        expect(two.mh).toBe(1);
-        expect(two.my).toBe(-1);
-
-        expect(twotwo.mh).toBe(1);
-        expect(twotwo.my).toBe(0);
-
-    });
+});
 
 describe("The combined worker", function () {
     "use strict";
-
-    var expectedHistogramValuesForTwentyIterations =
-        [0, 0, 47152, 64849, 123537, 152463, 170141, 180458, 187793, 192719,
-            196514, 199337, 201628, 203402, 204944, 206130, 207202, 208118,
-            208860, 209563, 210162, 210162];
 
     var point = jim.newMandelbrotPoint.create();
     var input = [
@@ -95,37 +69,6 @@ describe("The combined worker", function () {
         setState(p,i);
     });
 
-    var pixelStateTracker = {putPixel: putPixel, getPixel: getPixel};
-    function index(i,j){
-        return ((j * 2) + i);
-    }
-
-    function getPixel(i,j){
-        var idx = index(i,j);
-        var x = xState[idx];
-        var y = yState[idx];
-        var he = escapeValues[idx];
-        var ye = imageEscapeValues[idx];
-        return point.input(0,0,x,y,he,ye);
-    }
-
-    function putPixel(p,i,j) {
-        var idx = index(i,j);
-        setState(p, idx);
-    }
-
-    it("should be able to process the set and get and put pixels appropriately", function () {
-        var msg = {mx:-2.5, my: -1, mw: 2, mh: 1};
-        var processor = jim.worker.msetProcessor.create();
-        processor.processSet(msg, pixelStateTracker, 0, 3, 2, 5, []);
-        processor.processSet(msg, pixelStateTracker, 3, 3, 2, 5, []);
-        var expected = [2,3,2,4,2,4,2,5,2,6];
-        expected.forEach(function (val, i) {
-            expect(escapeValues[i]).toBe(val);
-        });
-
-    });
-
     it("should be able to calculate various mandelbrot points from 0 to 20", function () {
 
        input.forEach(function (d, i) {
@@ -144,59 +87,6 @@ describe("The combined worker", function () {
         expect(result.histogramEscapedAt).toBe(0);
     });
 
-    // What do I expect when I access histogram? Shouldn't I expect to get the iteration number? ie get(1) returns 1? etc at the moment it's getting put at 0
-    it("should update the histogram correctly for single update and total it", function (done) {
-        events.clear();
-        var histoUpdater = jim.mandelbrot.escapeDistributionHistogram.create(events);
-
-        var update = {update: [0,1,2,3,4], currentIteration: 0};
-
-        on(events.histogramUpdated, function (histoinfo) {
-            var histo = histoinfo.array;
-
-            expect(histo[0]).toBe(0);
-            expect(histo[1]).toBe(1);
-            expect(histo[2]).toBe(3);
-            expect(histo[3]).toBe(6);
-            expect(histo[4]).toBe(10);
-            done();
-        });
-
-        events.fire(events.histogramUpdateReceivedFromWorker, update);
-
-    });
-
-    it("should update the histogram correctly for two updates at th same point in the array", function (done) {
-        events.clear();
-        var histoUpdater = jim.mandelbrot.escapeDistributionHistogram.create(events);
-        var called = 0;
-        var update = {update: [0,1,2,3,4], currentIteration: 0};
-        var update2 = {update: [0,1,2,3,4], currentIteration: 0};
-
-        on(events.histogramUpdated, function (histoinfo) {
-            var histo = histoinfo.array;
-            called +=1;
-            if(called === 2) {
-                expect(histo[0]).toBe(0);
-                expect(histo[1]).toBe(2);
-                expect(histo[2]).toBe(6);
-                expect(histo[3]).toBe(12);
-                expect(histo[4]).toBe(20);
-                expect(histo[5]).toBe(0);
-                expect(histo[6]).toBe(0);
-                expect(histo[7]).toBe(0);
-                expect(histo[8]).toBe(0);
-                expect(histo[9]).toBe(0);
-                done();
-            }
-
-        });
-
-        events.fire(events.histogramUpdateReceivedFromWorker, update);
-        events.fire(events.histogramUpdateReceivedFromWorker, update2);
-
-    });
-
     it("should be able to calculate various mandelbrot points from 0 to 10 and 10 to 20", function () {
         var point = jim.newMandelbrotPoint.create();
 
@@ -208,27 +98,6 @@ describe("The combined worker", function () {
         });
     });
 
-    it("should create the same histo as the multiworker generator", function (done) {
-       var palette = jim.palette.create();
-       var currentExtents = jim.rectangle.create(-2.5, -1, 3.5, 2);
-       events.clear();
-
-       var mset = jim.mandelbrot.webworkerInteractive.create (700, 400, events, 20,1);
-
-       on(events.histogramUpdateReceivedFromWorker, function (update) {
-           var histoData = total(update.update);
-           console.log("histo worker up date received");
-           for (var i = 0 ; i < 10 ; i +=1) {
-               expect(histoData[i]).toBe(expectedHistogramValuesForTwentyIterations[i]);
-           }
-           mset.stop();
-           mset.destroy();
-           done();
-       });
-
-       events.fire(events.paletteChanged, palette);
-       events.fire(events.extentsUpdate, currentExtents);
-    });
      it("should calculate the same histogram whether or not it is 0 to 20 or 0 to 10 and then 10 to 20", function (done) {
          var newJob = jim.messages.interactive.create;
          var renderDefinition =  jim.messages.renderFragment.create;
@@ -277,39 +146,5 @@ describe("The combined worker", function () {
                  done();
              });
          });
-
-
-
      });
-    function doAThing(i) {
-        return function (done) {
-            console.log(i);
-            done();
-        };
-    }
-
-    function promise() {
-
-        var chain = [];
-        function done() {
-            var f = chain.shift();
-            if(f) f(done);
-        }
-        return {
-            then: function (f2) {
-                chain.push(f2);
-                return this;
-            },
-            resolve: done
-        };
-    }
-
-    it("should make callback hell less of an issue", function () {
-       promise()
-           .then(doAThing(1))
-           .then(doAThing(2))
-           .then(doAThing(3))
-           .resolve();
-    });
-
 });

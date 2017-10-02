@@ -1,5 +1,5 @@
 namespace("jim.mandelbrot.image.exporter");
-jim.mandelbrot.image.exporter.create = function (_exportDimensions, _mandelbrotSet, _histogramGenerator, _dom, _events) {
+jim.mandelbrot.image.exporter.create = function (_exportDimensions, _mandelbrotSet, _dom, _events) {
     "use strict";
     var exporting = false;
 
