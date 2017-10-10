@@ -54,6 +54,7 @@ var pixelStateTracker = (function () {
             this.histogramUpdate[(_p.histogramEscapedAt - _startIteration) ] +=1;
         }
     };
+
     pixelStateTracker.getPixel= function (i, j) {
         var mx = extents.mx + (i * extents.stepX);
         var my = extents.my + (j * extents.stepY);
@@ -137,7 +138,7 @@ onmessage = function(e) {
 
     pixelStateTracker.palette = palette;
 
-    histogramForColour.setData(new Uint32Array(histogramData), histogramTotal);
+    histogramForColour.setData(histogramData, histogramTotal);//array copy here. Needed?
     pixelStateTracker.histogramForColour = histogramForColour;
     pixelStateTracker.width = msg.exportWidth;
 

@@ -163,25 +163,9 @@ jim.init.run = function () {
 
 };
 
-// Stoopid histogram using totally different message format.
-// change it to use the same formatv/ render definition as the combined worker / export.
-// Todo. work out what the histogram generator is expecting in terms of messages
-// surely I just need to take the full extents and just split it a little differently.
-// Give the worker pool a number of jobs each one covers a bigger area so just split into smaller export size
-// So what is format?
-// format expected by histo calcing worker is
-//        maxIterations: _iter,
-
-//    exportWidth: _width,
-//    exportHeight: _height,
-//    mx: _extents.topLeft().x,
-//    my: _extents.topLeft().y,
-//    mw: _extents.width(),
-//    mh: _extents.height(),
-//    offset: _offset
-
-// so fragment gives me same stuff
-// yay. Use this format and adapt fragment. All should be well.
+// For the histogram should I be looking at the percentage of escaped pixels which have escaped at a certain iteration?
+// I think so.
+// Am I in fact looking at the percentage of total pixels?
 
 // Missing features
 // Once export progress is dismissed put download button on main panel
@@ -193,7 +177,8 @@ jim.init.run = function () {
 // Make examine button behave
 //Make message scroll in - appear 1 char at a time
 // So set timeout and each time just change
-
+// Don't send unnecessary arrays back and forth
+// investigate reduction in performance
 // Make colour palette controls use events and only redraw when needed.
 // Make zoom border proper
 // Stop zoom out border appearing when fully zoomed out
@@ -201,8 +186,6 @@ jim.init.run = function () {
 // Make buttons a different colour and round the edges and try a thinner border
 // Fix dead regions they should disappear
 // make details pixel border the correct colours
-
-
 
 
 //Make render size / resolution slightly configurable

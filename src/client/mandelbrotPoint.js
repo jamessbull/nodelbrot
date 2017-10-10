@@ -2,7 +2,7 @@ namespace("jim.newMandelbrotPoint");
 jim.newMandelbrotPoint.create = function () {
     "use strict";
 
-    var histogramEscapeValue = 4;
+    var histogramEscapeValue = 16;
     var imageEscapeValue = 9007199254740991;
 
     function output (_mx, _my, _x, _y, _iterations, _histogramEscapedAt, _imageEscapedAt) {

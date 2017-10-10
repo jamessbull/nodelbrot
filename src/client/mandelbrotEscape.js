@@ -1,11 +1,12 @@
 namespace("jim.colourCalculator");
 jim.colourCalculator.create = function () {
     "use strict";
-
-    var pixelCount = 0;
     return {
         nu:function (x, y, LN2, sqrt, log) {
-            return log(log(sqrt((x * x) + (y * y))) /  LN2) / LN2;
+            //nu = Math.log(Math.log(zn) / Math.log(2)) / Math.log(2);
+            var zn = sqrt((x * x) + (y * y));
+            var logznOnTwo = log(zn) /  LN2;
+            return log(logznOnTwo) / LN2;
         },
         interpolate: jim.interpolator.create().interpolate,
         forPoint: function (x, y, iterations, histogram, palette) {
@@ -123,6 +124,7 @@ jim.mandelbrot.escapeDistributionHistogram.create = function (_events, _histoDat
         for (var i = 0; i < updates.length; i += 1) {
             runningTotal += updates[i];
             var initialValue = lastIterationCalculated > lastTimeRound ? currentTotal : _histoData[lastIterationCalculated + i];
+            //var initialValue = _histoData[lastIterationCalculated + i];
             _histoData[lastIterationCalculated + i] = runningTotal + initialValue;
         }
         currentTotal += runningTotal;
