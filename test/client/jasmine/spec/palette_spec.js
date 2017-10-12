@@ -36,4 +36,27 @@ describe("The palette", function () {
         }
 
     });
+
+    it("should not dupe any colour across node boundaries", function () {
+        var palette = jim.palette.create(),
+            value = 0,
+            colour1,
+            colour2,
+            colour3;
+
+        palette.setNodes([]);
+        palette.addSpecificNode(35, 0.25);
+        colour1 = palette.colourAt(0.2499);
+        colour2 = palette.colourAt(0.25);
+        colour3 = palette.colourAt(0.2501);
+
+        console.log(colour1);
+        console.log(colour2);
+        console.log(colour3);
+
+        var allTheSame = (colour3.r === colour2.r && colour3.g === colour2.g && colour3.b === colour2.b && colour1.r === colour2.r && colour1.g === colour2.g && colour1.b === colour2.b);
+        expect(allTheSame).not.toBe(true);
+
+
+    });
 });

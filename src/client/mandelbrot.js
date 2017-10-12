@@ -120,46 +120,36 @@ jim.init.run = function () {
     jim.mandelbrot.imageRenderer.create(events, mandelbrot.canvas(), mandelbrot.width(), mandelbrot.height());
     jim.mandelbrot.examinePixelStateDisplay.create(events, pixelInfoCanvas, mandelbrot.imgData(), mandelbrot.xState(), mandelbrot.yState(), mandelbrot.escapeValues(), mandelbrot.imageEscapeValues(), mandelbrot.width());
 
-    var palette = jim.palette.create();
+    var palette = jim.palette.create(events);
     var colourGradientui = newColourGradientUI(colourGradientCanvas, addButton, removeButton, palette, events);
 
     var bookmarker = newBookmarker(bookmarkButton, mandelbrot, colourGradientui, events);
-    var colourPicker  = newColourPicker(colourPickerCanvas, colourGradientui);
+    newColourPicker(colourPickerCanvas, colourGradientui, events);
     var exportSizeDropdown = newExportSizeDropdown(exportSizeSelect, [smallExport, mediumExport, largeExport, veryLargeExport]);
     newMiscUiElements(exportSizeDropdown, mandelbrot, events);
-    var iter = 0;
-    var render = function () {
-        events.listenTo(events.maxIterationsUpdated, function (_iter) {
-            iter = _iter;
-        });
-        maxIteration.innerText = iter;
+    events.listenTo(events.maxIterationsUpdated, function (_iter) {
+        maxIteration.innerText = _iter;
         var total = 700 * 400;
         var escapedThisIteration = mandelbrot.state().escapedByCurrentIteration;
         var escaped = total - escapedThisIteration;
 
         if (escapedThisIteration > 0) {
             percEscaped.innerText = round((100 - ((escaped / total) * 100)), 2);
-            lastEscapedOn.innerText = iter;
+            lastEscapedOn.innerText = _iter;
         }
-        colourGradientui.draw();
-    };
+    });
 
     pixelInfoCanvas.width = 144;
     pixelInfoCanvas.height = 144;
 
-
-    //uiCanvas.className = "canvas";
     uiCanvas.oncontextmenu = function (e) {
         e.preventDefault();
     };
 
-    colourPicker.draw();
-
-    jim.anim.create(render).start();
-
     events.fire(events.paletteChanged, palette);
     bookmarker.changeLocation();
     events.fire(events.paletteChanged, palette);
+    events.fire(events.colourSelected);
 
 };
 
@@ -168,6 +158,7 @@ jim.init.run = function () {
 // Am I in fact looking at the percentage of total pixels?
 
 // Missing features
+// Move image to fit in thinner border.
 // Once export progress is dismissed put download button on main panel
 // Show rate of pixel escape. Stop when escape rate drops below 0.5?
 // Show marker on colour gradient. Clicking on it moves marker. New nodes have that colour
@@ -175,11 +166,10 @@ jim.init.run = function () {
 // Start when a zoom is selected
 // start when zoom out begun.
 // Make examine button behave
-//Make message scroll in - appear 1 char at a time
-// So set timeout and each time just change
 // Don't send unnecessary arrays back and forth
 // investigate reduction in performance
-// Make colour palette controls use events and only redraw when needed.
+
+
 // Make zoom border proper
 // Stop zoom out border appearing when fully zoomed out
 // Make parallelism and chunk size auto configure for max perf and smooth frame rate depending on conditions
@@ -199,6 +189,5 @@ jim.init.run = function () {
 // Adjust number of blocks I split the screen into according to performance;
 // Then adjust block size to maintain 24 fps
 //
-// auto start stop when exporting / not exporting
 // minify js
 // estimate long tail cap histo size at 300k use last 100k to  estimate next 500k

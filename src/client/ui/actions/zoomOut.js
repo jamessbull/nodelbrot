@@ -10,11 +10,12 @@ jim.mandelbrot.actions.zoomOut.create = function (_events, _timer, _zoomOutAnim,
     }
 
     on(_events.leftMouseDown, function () {
-        _events.fire(_events.hideDeadRegions);
         if (_timer.timeSinceMark("doubleClickBegin") < 700) {
             var from = _mandelbrotState.getExtents();
             var to = _mandelbrotState.getLastExtents();
+            _events.fire(_events.hideDeadRegions);
             _events.fire(_events.zoomOutAction);
+
             var oldCanvas = newMatchingCanvas(_mandelbrotCanvas);
             oldCanvas.getContext('2d').drawImage(_mandelbrotCanvas, 0, 0);
             //zoom out anim needs to know before and after mandelbrot coords

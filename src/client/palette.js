@@ -24,7 +24,7 @@ jim.palette.colourNode.create = function(hsv, position) {
 };
 
 namespace("jim.palette");
-jim.palette.create = function () {
+jim.palette.create = function (events) {
     "use strict";
     var colourNode = jim.palette.colourNode.create;
     var hsv = function (h, s, v){ return { h: h, s: s, v: v }; };
@@ -72,6 +72,9 @@ jim.palette.create = function () {
             actualColour.b = interpolate(fromColour.b, toColour.b, fraction);
             actualColour.a = 255;
             return actualColour;
+        },
+        addSpecificNode: function (hue, position) {
+            nodes.push(colourNode(hsv(hue, "100%", "100%"), position));
         },
         addNode: function () {
             var retVal = colourNode(green, 0.5);

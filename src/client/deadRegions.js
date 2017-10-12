@@ -31,6 +31,7 @@ jim.mandelbrot.deadRegions.create = function (_events, _canvas, _mandelbrotCanva
                 setPixel(i, deadRegionData, {r:1,g:1,b:1,a:0});
             }
         });
+        console.log("I shall show dead regions");
         context.putImageData(new ImageData(deadRegionData, _width, _height), 0, 0);
         return deadRegionsArray;
     }
@@ -42,21 +43,19 @@ jim.mandelbrot.deadRegions.create = function (_events, _canvas, _mandelbrotCanva
             calcDeadRegions = false;
             _events.fire(_events.deadRegionsPublished, deadRegions);
         }
-        if(showDeadRegions) {
-
-            var context = _mandelbrotCanvas.getContext('2d');
-            context.drawImage(deadRegionsCanvas, 0, 0);
-        }
     });
 
     on(_events.showDeadRegions, function (_radius) {
-        showDeadRegions = true;
+//        showDeadRegions = true;
         calcDeadRegions = true;
         radius = _radius;
     });
 
-    on(events.hideDeadRegions, function (_radius) {
-        showDeadRegions = false;
+    on(_events.hideDeadRegions, function (_radius) {
+        var context = _canvas.getContext('2d');
+        console.log("About to hide. width is " + _canvas.width);
+        console.log("About to hide. height is " + _canvas.height);
+        context.clearRect(0,0,deadRegionsCanvas.width, _canvas.height);
         radius = _radius;
     });
 

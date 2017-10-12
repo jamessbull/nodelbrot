@@ -36,6 +36,7 @@ jim.mandelbrot.actions.move.create = function (_events, _mandelbrotCanvas, _uiCa
 
     on(_events.endMoveAction, function (e) {
         moving = false;
+        _events.fire(_events.hideDeadRegions);
         _events.fire(_events.moveSetAction, {x: e.x - start.x, y: e.y - start.y});
         _mandelbrotCanvas.getContext('2d').drawImage(_uiCanvas, 0, 0, _uiCanvas.width, _uiCanvas.height);
         _uiCanvas.getContext('2d').clearRect(0, 0, _uiCanvas.width, _uiCanvas.height);

@@ -19,6 +19,7 @@ jim.events.create = function () {
         },
         extentsUpdate: "extentsUpdate",
         paletteChanged: "paletteUpdate",
+        colourSelected: "colourSelected",
         maxIterationsUpdated: "maxIterationsUpdated",
         escapeValuesPublished: "escapeValuesPublished",
         requestEscapeValues: "requestEscapeValues",

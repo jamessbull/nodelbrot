@@ -40,7 +40,7 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
     };
     var drawTicks = function () {
         var increment = length / 10;
-        var start = 6;
+        var start = 7;
         var total = length + start;
 
         for (start; start <= total; start += increment) {
@@ -76,7 +76,10 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
         },
         updatePosition: function (x) {
             if (this.selecting) {
-                selectedNode.node.setPosition(this.fractionalPosition(x));
+                var position = this.fractionalPosition(x);
+                if (position > 1) position = 1;
+                if (position < 0) position = 0;
+                selectedNode.node.setPosition(position);
                 palette.sort();
             }
         },
@@ -136,17 +139,33 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
         markers.stopMoving();
     };
 
+    gradientCanvas.onmouseout = function () {
+       markers.stopMoving();
+    };
+
     gradientCanvas.onmousemove = function (e) {
         markers.updatePosition(e.layerX);
         _events.fire(_events.paletteChanged, palette);
     };
 
+    function draw () {
+        clearDisplay();
+        drawTicks();
+        drawLine(5, 3, length +8, 3);
+        markers.drawMarkers();
+    }
+
+    on(events.paletteChanged, function () {
+        draw();
+    });
+
+    on(events.colourSelected, function () {
+        draw();
+    });
+
     return {
         draw: function () {
-            clearDisplay();
-            drawTicks();
-            drawLine(5, 3, length +7, 3);
-            markers.drawMarkers();
+            draw();
         },
         setSelectedNodeColour: function(tc) {
             markers.setColour(tc);
