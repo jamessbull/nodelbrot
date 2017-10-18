@@ -46,20 +46,31 @@ jim.colour.colourPicker.create = function (canvas, gradient, events) {
     var draw = function () {
         image.drawXY(drawColourPicker);
     };
-    on(events.colourSelected, function () {
-       draw();
+    on(events.colourSelected, function (pos) {
+        var context = canvas.getContext('2d');
+        draw();
+        context.fillStyle='white';
+        context.strokeStyle='black';
+        context.lineWidth=2;
+        context.beginPath();
+        context.arc(pos.x,pos.y, 3, 0, 2 * Math.PI);
+        context.fill();
+        context.stroke();
+        context.closePath();
     });
+
     canvas.onclick = function (e) {
         if (e.layerY <= h/3) {
             selectedHue =  interpolate(0, 359, e.layerX/w);
-            draw();
+            //draw();
             gradient.setSelectedNodeColour(tinycolor({h:selectedHue, s:1, v:1}));
-            events.fire(events.colourSelected);
+            events.fire(events.colourSelected, {x: e.layerX, y: e.layerY, hue:selectedHue});
+
         } else {
             var hueProportion = 0.3 * h;
             var shadeProportion = h - hueProportion;
             gradient.setSelectedNodeColour(tinycolor(shade(e.layerX, e.layerY, shadeProportion)));
-            events.fire(events.colourSelected);
+            events.fire(events.colourSelected, {x: e.layerX, y: e.layerY, hue: selectedHue});
         }
     };
 

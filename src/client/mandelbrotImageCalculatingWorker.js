@@ -4,6 +4,7 @@ importScripts('/js/common.js',
     '/js/mandelbrotPoint.js',
     '/js/stopWatch.js',
     '/js/tinycolor.js',
+    '/js/events.js',
     '/js/palette.js',
     '/js/histogram.js',
     '/js/mandelbrotEscape.js',
@@ -14,7 +15,7 @@ importScripts('/js/common.js',
 
 var newSetProcessor = jim.worker.msetProcessor.create;
 var histogram;
-var palette = jim.palette.create();
+var palette = jim.palette.create(jim.events.create());
 
 function getMessage(e) {
     "use strict";

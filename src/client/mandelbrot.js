@@ -149,7 +149,7 @@ jim.init.run = function () {
     events.fire(events.paletteChanged, palette);
     bookmarker.changeLocation();
     events.fire(events.paletteChanged, palette);
-    events.fire(events.colourSelected);
+    events.fire(events.colourSelected, {x:4,y:4, hue: 12});
 
 };
 
@@ -174,7 +174,6 @@ jim.init.run = function () {
 // Stop zoom out border appearing when fully zoomed out
 // Make parallelism and chunk size auto configure for max perf and smooth frame rate depending on conditions
 // Make buttons a different colour and round the edges and try a thinner border
-// Fix dead regions they should disappear
 // make details pixel border the correct colours
 
 

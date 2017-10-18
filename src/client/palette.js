@@ -26,6 +26,11 @@ jim.palette.colourNode.create = function(hsv, position) {
 namespace("jim.palette");
 jim.palette.create = function (events) {
     "use strict";
+
+    events.listenTo(events.colourSelected, function (args) {
+        selectedColour = args.hue;
+    });
+
     var colourNode = jim.palette.colourNode.create;
     var hsv = function (h, s, v){ return { h: h, s: s, v: v }; };
     var green = hsv(120,"100%","100%");
@@ -39,6 +44,7 @@ jim.palette.create = function (events) {
     var defaultToNode = colourNode(white, 1);
     var interpolate = jim.interpolator.create().interpolate;
     var rgb = {r:0,g:0,b:0,a:0};
+    var selectedColour = hsv(0,'100%', '100%');
     var nodes = [colourNode(blue,0), colourNode(yellow, 0.25),colourNode(red, 0.5), colourNode(green,0.75), colourNode(orange,1.0)];
     var colourNodes = {
         colourAt: function (n) {
@@ -77,7 +83,7 @@ jim.palette.create = function (events) {
             nodes.push(colourNode(hsv(hue, "100%", "100%"), position));
         },
         addNode: function () {
-            var retVal = colourNode(green, 0.5);
+            var retVal = colourNode(hsv(selectedColour, '100%', '100%'), 0.5);
             nodes.push(retVal);
             this.sort();
             return retVal;

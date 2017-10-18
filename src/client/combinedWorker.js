@@ -2,6 +2,7 @@ var window = self;
 
 importScripts(
     '/js/common.js',
+    '/js/events.js',
     '/js/mandelbrotPoint.js',
     '/js/stopWatch.js',
     '/js/setProcessor.js',
@@ -15,7 +16,7 @@ function newExtents(x,y,w,h) {
     return {mw:w, mh: h, mx: x, my:y};
 }
 var setProcessor = jim.worker.msetProcessor.create();
-var palette = jim.palette.create();
+var palette = jim.palette.create(jim.events.create());
 var colour = jim.colourCalculator.create();
 var histogram = jim.twoPhaseHistogram.create(0);
 var histogramForColour = jim.twoPhaseHistogram.create(0);

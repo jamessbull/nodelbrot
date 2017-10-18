@@ -3,6 +3,7 @@ var window = self;
 importScripts(
     '/js/common.js',
     '/js/mandelbrotPoint.js',
+    '/js/events.js',
     '/js/palette.js',
     '/js/histogram.js',
     '/js/setProcessor.js'

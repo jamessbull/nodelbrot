@@ -1,9 +1,6 @@
 namespace("jim.colour.gradientui");
 jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton, palette, _events) {
     "use strict";
-    var calculateFillStyle = function (colour) {
-        return "rgba(" + colour.r + "," + colour.g + ","  + colour.b + "," + colour.a +")";
-    };
     var context = gradientCanvas.getContext('2d');
     var drawLine = function (fromX, fromY, toX, toY) {
         context.beginPath();
@@ -57,7 +54,9 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
         selectionTolerance: 0.025,
 
         setColour:function (tc) {
-            selectedNode.node.setColour(tc);
+            if (selectedNode.selected) {
+                selectedNode.node.setColour(tc);
+            }
         },
         drawMarkers: function () {
             this.nodes.forEach (function (nodeInfo) {
@@ -121,6 +120,13 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
 
     markers.build();
 
+    function draw () {
+        clearDisplay();
+        drawTicks();
+        drawLine(5, 3, length +8, 3);
+        markers.drawMarkers();
+    }
+
     addButton.onclick = function () {
         markers.placeNewMarker();
         _events.fire(_events.paletteChanged, palette);
@@ -133,6 +139,7 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
 
     gradientCanvas.onmousedown = function (e) {
         markers.select(e.layerX);
+        draw();
     };
 
     gradientCanvas.onmouseup = function (e) {
@@ -148,12 +155,7 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
         _events.fire(_events.paletteChanged, palette);
     };
 
-    function draw () {
-        clearDisplay();
-        drawTicks();
-        drawLine(5, 3, length +8, 3);
-        markers.drawMarkers();
-    }
+
 
     on(events.paletteChanged, function () {
         draw();
