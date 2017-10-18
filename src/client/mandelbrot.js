@@ -153,16 +153,10 @@ jim.init.run = function () {
 
 };
 
-// For the histogram should I be looking at the percentage of escaped pixels which have escaped at a certain iteration?
-// I think so.
-// Am I in fact looking at the percentage of total pixels?
-
 // Missing features
 // Move image to fit in thinner border.
 // Once export progress is dismissed put download button on main panel
 // Show rate of pixel escape. Stop when escape rate drops below 0.5?
-// Show marker on colour gradient. Clicking on it moves marker. New nodes have that colour
-// New nodes appear in middle of largest gap.
 // Start when a zoom is selected
 // start when zoom out begun.
 // Make examine button behave

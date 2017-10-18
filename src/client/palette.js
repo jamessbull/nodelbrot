@@ -46,6 +46,35 @@ jim.palette.create = function (events) {
     var rgb = {r:0,g:0,b:0,a:0};
     var selectedColour = hsv(0,'100%', '100%');
     var nodes = [colourNode(blue,0), colourNode(yellow, 0.25),colourNode(red, 0.5), colourNode(green,0.75), colourNode(orange,1.0)];
+
+    function middleOfLargestGap() {
+        var lastNode = {};
+        lastNode.position = 0;
+        var gaps = nodes.map(function (node) {
+            var lastPosition = lastNode.position;
+            lastNode.position = node.position;
+            return {
+                start : lastPosition,
+                end : node.position,
+                gap: function () {return this.end - this.start;},
+                midPoint: function () {return this.start + (this.gap()/2);}
+            };
+        });
+        return gaps.reduce(function(a,b) {
+            if (a.gap() > b.gap()) {
+                return a;
+            }
+            return b;
+        }).midPoint();
+    }
+
+    function randomColour () {
+        var hue = Math.random() * 360;
+        var lightness = "100%";
+        var saturation = (Math.random() * 100) + "%";
+        return hsv(hue, saturation,lightness);
+    }
+
     var colourNodes = {
         colourAt: function (n) {
             var numberOfNodes = nodes.length;
@@ -69,6 +98,7 @@ jim.palette.create = function (events) {
                     break;
                 }
             }
+
             fromColour = from.rgb;
             toColour = to.rgb;
             fraction =  (n - from.position) / (to.position - from.position);
@@ -83,7 +113,8 @@ jim.palette.create = function (events) {
             nodes.push(colourNode(hsv(hue, "100%", "100%"), position));
         },
         addNode: function () {
-            var retVal = colourNode(hsv(selectedColour, '100%', '100%'), 0.5);
+
+            var retVal = colourNode(randomColour(), middleOfLargestGap());
             nodes.push(retVal);
             this.sort();
             return retVal;

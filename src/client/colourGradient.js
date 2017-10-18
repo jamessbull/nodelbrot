@@ -69,9 +69,8 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
             this.selecting = false;
         },
         add: function (node) {
-            var n = { node: node, selected: true };
+            var n = { node: node, selected: false };
             this.nodes.push(n);
-            selectedNode = n;
         },
         updatePosition: function (x) {
             if (this.selecting) {
@@ -154,8 +153,6 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
         markers.updatePosition(e.layerX);
         _events.fire(_events.paletteChanged, palette);
     };
-
-
 
     on(events.paletteChanged, function () {
         draw();

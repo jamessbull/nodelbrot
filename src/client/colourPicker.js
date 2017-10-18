@@ -46,6 +46,7 @@ jim.colour.colourPicker.create = function (canvas, gradient, events) {
     var draw = function () {
         image.drawXY(drawColourPicker);
     };
+
     on(events.colourSelected, function (pos) {
         var context = canvas.getContext('2d');
         draw();
