@@ -69,7 +69,9 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
             this.selecting = false;
         },
         add: function (node) {
-            var n = { node: node, selected: false };
+            if (selectedNode) selectedNode.selected = false;
+            var n = { node: node, selected: true };
+            selectedNode = n;
             this.nodes.push(n);
         },
         updatePosition: function (x) {
@@ -100,8 +102,15 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
         },
         selected: function () { return selectedNode; },
         removeSelectedNode: function () {
-            palette.removeNode(selectedNode.node);
-            this.nodes = this.nodes.filter(function (node) { return !node.selected; });
+            if(!selectedNode || !selectedNode.node) {
+                selectedNode = this.nodes[0];
+                selectedNode.selected = true;
+                this.removeSelectedNode();
+            } else {
+                palette.removeNode(selectedNode.node);
+                this.nodes = this.nodes.filter(function (node) { return !node.selected; });
+                selectedNode = null;
+            }
         },
         placeNewMarker: function () {
             this.add(palette.addNode());
@@ -129,11 +138,15 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
     addButton.onclick = function () {
         markers.placeNewMarker();
         _events.fire(_events.paletteChanged, palette);
+        _events.fire(_events.start);
+        _events.fire(_events.stop);
      };
 
     removeButton.onclick = function () {
         markers.removeSelectedNode();
         _events.fire(_events.paletteChanged, palette);
+        _events.fire(_events.start);
+        _events.fire(_events.stop);
     };
 
     gradientCanvas.onmousedown = function (e) {
@@ -143,14 +156,19 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
 
     gradientCanvas.onmouseup = function (e) {
         markers.stopMoving();
+        _events.fire(_events.stop);
+
     };
 
     gradientCanvas.onmouseout = function () {
        markers.stopMoving();
+        _events.fire(_events.stop);
+
     };
 
     gradientCanvas.onmousemove = function (e) {
         markers.updatePosition(e.layerX);
+        _events.fire(_events.start);
         _events.fire(_events.paletteChanged, palette);
     };
 

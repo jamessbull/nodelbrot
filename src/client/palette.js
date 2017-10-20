@@ -50,7 +50,10 @@ jim.palette.create = function (events) {
     function middleOfLargestGap() {
         var lastNode = {};
         lastNode.position = 0;
-        var gaps = nodes.map(function (node) {
+        var tempNodes = nodes.slice();
+        tempNodes.push(defaultToNode);
+        tempNodes.unshift(defaultFromNode);
+        var gaps = tempNodes.map(function (node) {
             var lastPosition = lastNode.position;
             lastNode.position = node.position;
             return {

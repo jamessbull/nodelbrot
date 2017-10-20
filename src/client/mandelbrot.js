@@ -23,7 +23,7 @@ jim.mandelbrotImage.create = function (_events, _width, _height) {
     var xState = new Uint32Array(_width * _height);
     var yState = new Uint32Array(_width * _height);
 
-    var mandelbrotCalculator = jim.mandelbrot.webworkerInteractive.create(_width, _height, _events, 70, 3, imgData, escapeValues, xState, yState, imageEscapeValues);
+    var mandelbrotCalculator = jim.mandelbrot.webworkerInteractive.create(_width, _height, _events, 30, 3, imgData, escapeValues, xState, yState, imageEscapeValues);
     return {
         histoData: function () {
           return histoData;
@@ -119,7 +119,7 @@ jim.init.run = function () {
     jim.mandelbrot.deadRegions.create(events, deadRegionCanvas, mandelbrot.canvas(), mandelbrot.escapeValues());
     jim.mandelbrot.imageRenderer.create(events, mandelbrot.canvas(), mandelbrot.width(), mandelbrot.height());
     jim.mandelbrot.examinePixelStateDisplay.create(events, pixelInfoCanvas, mandelbrot.imgData(), mandelbrot.xState(), mandelbrot.yState(), mandelbrot.escapeValues(), mandelbrot.imageEscapeValues(), mandelbrot.width());
-
+    jim.mandelbrot.pixelEscapeRateTracker.create(events);
     var palette = jim.palette.create(events);
     var colourGradientui = newColourGradientUI(colourGradientCanvas, addButton, removeButton, palette, events);
 
@@ -154,11 +154,7 @@ jim.init.run = function () {
 };
 
 // Missing features
-// Move image to fit in thinner border.
 // Once export progress is dismissed put download button on main panel
-// Show rate of pixel escape. Stop when escape rate drops below 0.5?
-// Start when a zoom is selected
-// start when zoom out begun.
 // Make examine button behave
 // Don't send unnecessary arrays back and forth
 // investigate reduction in performance

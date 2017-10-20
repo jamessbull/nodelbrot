@@ -18,6 +18,9 @@ jim.events.create = function () {
             listeners = {};
         },
         extentsUpdate: "extentsUpdate",
+        start : "start",
+        stop : "stop",
+        morePixelsEscaped: "morePixelsEscaped",
         paletteChanged: "paletteUpdate",
         colourSelected: "colourSelected",
         maxIterationsUpdated: "maxIterationsUpdated",

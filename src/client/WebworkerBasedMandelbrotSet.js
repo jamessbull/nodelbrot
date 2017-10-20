@@ -94,6 +94,19 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
         histogramTotal = info.total;
     });
 
+    on(_events.start, function () {
+        if (running === false) {
+            running = true;
+            postMessage();
+        }
+    });
+
+    on(_events.stop, function () {
+        if(running === true) {
+            running = false;
+        }
+    });
+
     on(_events.examinePixelState, function () {
         requestExaminePixelData = true;
         postMessage();

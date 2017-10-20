@@ -61,6 +61,10 @@ jim.colour.colourPicker.create = function (canvas, gradient, events) {
     });
 
     canvas.onclick = function (e) {
+        events.fire(events.start);
+        window.setTimeout(function () {
+            events.fire(events.stop);
+        },100);
         if (e.layerY <= h/3) {
             selectedHue =  interpolate(0, 359, e.layerX/w);
             //draw();
@@ -72,6 +76,7 @@ jim.colour.colourPicker.create = function (canvas, gradient, events) {
             var shadeProportion = h - hueProportion;
             gradient.setSelectedNodeColour(tinycolor(shade(e.layerX, e.layerY, shadeProportion)));
             events.fire(events.colourSelected, {x: e.layerX, y: e.layerY, hue: selectedHue});
+
         }
     };
 

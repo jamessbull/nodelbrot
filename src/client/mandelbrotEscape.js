@@ -62,6 +62,7 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
             previousExtents.push(currentExtents.copy());
             currentExtents = selection.area().translateFrom(screen).to(currentExtents);
             resetState();
+            _events.fire(_events.start);
             _events.fire(_events.extentsUpdate, currentExtents);
         },
         resize: function (sizeX, sizeY) {
@@ -71,6 +72,7 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
             if (previousExtents.length > 0) {
                 currentExtents = previousExtents.pop();
                 resetState();
+                _events.fire(_events.start);
                 _events.fire(_events.extentsUpdate, currentExtents);
             }
         },
@@ -78,6 +80,7 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
             var distance = fromScreen(moveX, moveY).distanceTo(currentExtents.topLeft());
             currentExtents.move(0 - distance.x, 0 - distance.y);
             resetState();
+            _events.fire(_events.start);
             _events.fire(_events.extentsUpdate, currentExtents);
         },
         getExtents: function () {
@@ -124,11 +127,11 @@ jim.mandelbrot.escapeDistributionHistogram.create = function (_events, _histoDat
         for (var i = 0; i < updates.length; i += 1) {
             runningTotal += updates[i];
             var initialValue = lastIterationCalculated > lastTimeRound ? currentTotal : _histoData[lastIterationCalculated + i];
-            //var initialValue = _histoData[lastIterationCalculated + i];
             _histoData[lastIterationCalculated + i] = runningTotal + initialValue;
         }
         currentTotal += runningTotal;
         lastTimeRound = lastIterationCalculated;
+        _events.fire(_events.morePixelsEscaped, currentTotal);
         return new Uint32Array(_histoData);
     }
 
@@ -144,6 +147,24 @@ jim.mandelbrot.escapeDistributionHistogram.create = function (_events, _histoDat
         lastTimeRound = 0;
     });
     return {};
+};
+
+namespace("jim.mandelbrot.pixelEscapeRateTracker");
+jim.mandelbrot.pixelEscapeRateTracker.create = function (events) {
+    "use strict";
+    var lastCheckpoint = 0;
+    var counter = 0;
+    on(events.morePixelsEscaped, function (_totalEscaped) {
+        counter +=1;
+        if (lastCheckpoint === _totalEscaped && counter > 500 && _totalEscaped > 0) {
+            console.log("stopping now");
+            events.fire(events.stop);
+            counter = 0;
+            lastCheckpoint = 0;
+        }
+        lastCheckpoint = _totalEscaped;
+    });
+
 };
 
 namespace("jim.mandelbrot.imageRenderer");
