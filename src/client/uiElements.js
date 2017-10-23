@@ -59,16 +59,22 @@ jim.mandelbrot.ui.elements.create = function (_exportSizeDropdown, _mandelbrotSe
 
     dom.selectButton(startButton);
 
-    startButton.onclick = function () {
+    on(_events.start, function () {
         dom.selectButton(startButton);
         dom.deselectButton(stopButton);
-        _mandelbrotSet.go();
+    });
+
+    on(_events.stop, function () {
+        dom.selectButton(stopButton);
+        dom.deselectButton(startButton);
+    });
+
+    startButton.onclick = function () {
+        _events.fire(_events.start);
     };
 
     stopButton.onclick = function () {
-        dom.selectButton(stopButton);
-        dom.deselectButton(startButton);
-        _mandelbrotSet.stop();
+        _events.fire(_events.stop);
     };
 
     var examineMenuButton  = document.getElementById("pixelInfoButton");

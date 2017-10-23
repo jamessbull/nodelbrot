@@ -52,12 +52,6 @@ jim.mandelbrotImage.create = function (_events, _width, _height) {
         state: function () {
             return state;
         },
-        stop: function () {
-            mandelbrotCalculator.stop();
-        },
-        go: function() {
-            mandelbrotCalculator.start();
-        },
         width: function () {
             return _width;
         },
