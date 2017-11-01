@@ -1,6 +1,7 @@
 namespace("jim.events");
 jim.events.create = function () {
     "use strict";
+    var logEvents = false;
     var listeners = {};
     return {
         listenTo: function (event, action) {
@@ -11,7 +12,13 @@ jim.events.create = function () {
         },
         fire: function (event, arg) {
             if (listeners[event]) {
-                listeners[event].forEach(function (action) { action(arg); });
+                if (logEvents) {
+                    console.log(event);
+                }
+                listeners[event].forEach(function (action) {
+
+                    action(arg);
+                });
             }
         },
         clear:function () {
@@ -20,6 +27,8 @@ jim.events.create = function () {
         extentsUpdate: "extentsUpdate",
         start : "start",
         stop : "stop",
+        nodeAdded: "nodeAdded",
+        pulseUI:"pulseUI",
         morePixelsEscaped: "morePixelsEscaped",
         paletteChanged: "paletteUpdate",
         colourSelected: "colourSelected",

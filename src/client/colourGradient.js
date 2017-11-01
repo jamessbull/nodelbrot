@@ -73,6 +73,7 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
             var n = { node: node, selected: true };
             selectedNode = n;
             this.nodes.push(n);
+            events.fire(events.nodeAdded, n);
         },
         updatePosition: function (x) {
             if (this.selecting) {
@@ -98,6 +99,7 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
             if(potentialNode) {
                 selectedNode = potentialNode;
                 potentialNode.selected = true;
+                events.fire(events.colourSelected, {x: potentialNode.markerX, y: potentialNode.markerY, hue: potentialNode.node.hsv.h} );
             }
         },
         selected: function () { return selectedNode; },
@@ -118,7 +120,12 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
         build: function () {
             this.nodes = [];
             var self = this;
-            palette.getNodes().forEach(function (node) { self.add(node); });
+            palette.getNodes().forEach(function (node) {
+                self.add(node);
+                //console.log("node position is " + node.position);
+
+            });
+            //self.select(self.nodes[(self.nodes.length - 1)].position);
         }
     };
 
@@ -138,37 +145,37 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
     addButton.onclick = function () {
         markers.placeNewMarker();
         _events.fire(_events.paletteChanged, palette);
-        _events.fire(_events.start);
-        _events.fire(_events.stop);
+        _events.fire(_events.pulseUI);
      };
 
     removeButton.onclick = function () {
         markers.removeSelectedNode();
         _events.fire(_events.paletteChanged, palette);
-        _events.fire(_events.start);
-        _events.fire(_events.stop);
+        _events.fire(_events.pulseUI);
+
     };
 
     gradientCanvas.onmousedown = function (e) {
         markers.select(e.layerX);
+        //console.log("marker selected");
         draw();
+        //console.log("markers redrawn");
     };
 
     gradientCanvas.onmouseup = function (e) {
         markers.stopMoving();
-        _events.fire(_events.stop);
+        _events.fire(_events.pulseUI);
 
     };
 
     gradientCanvas.onmouseout = function () {
        markers.stopMoving();
-        _events.fire(_events.stop);
-
+        _events.fire(_events.pulseUI);
     };
 
     gradientCanvas.onmousemove = function (e) {
         markers.updatePosition(e.layerX);
-        _events.fire(_events.start);
+        _events.fire(_events.pulseUI);
         _events.fire(_events.paletteChanged, palette);
     };
 

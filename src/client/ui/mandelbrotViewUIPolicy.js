@@ -2,6 +2,7 @@ namespace("jim.mandelbrot.mandelbrotViewUIPolicy");
 jim.mandelbrot.mandelbrotViewUIPolicy.create = function (_mainCanvas, _events) {
     "use strict";
     var exploring = true;
+    var selectingArea = false;
     var leftMouseButton = 0;
     var rightMouseButton = 2;
 
@@ -14,6 +15,7 @@ jim.mandelbrot.mandelbrotViewUIPolicy.create = function (_mainCanvas, _events) {
     });
 
     function mouseDown(e) {
+        selectingArea = true;
         e.preventDefault();
         if (exploring) {
             if (e.button === leftMouseButton) {
@@ -29,6 +31,7 @@ jim.mandelbrot.mandelbrotViewUIPolicy.create = function (_mainCanvas, _events) {
     }
 
     function mouseUp(e) {
+        selectingArea = false;
         e.preventDefault();
         if (exploring) {
             if (e.button === leftMouseButton) {
@@ -42,7 +45,7 @@ jim.mandelbrot.mandelbrotViewUIPolicy.create = function (_mainCanvas, _events) {
 
     function mouseMove(e) {
         e.preventDefault();
-        if (exploring) {
+        if (exploring && selectingArea) {
             _events.fire(_events.selectionChanged, {x: e.layerX, y: e.layerY});
             _events.fire(_events.viewMoveAction, {x: e.layerX, y: e.layerY});
         } else {

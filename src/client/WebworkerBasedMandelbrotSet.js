@@ -72,7 +72,6 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
     }
 
     on(_events.paletteChanged, function (_palette) {
-        console.log("palette updated");
         if (_palette === null || _palette === undefined) {
             console.log("Palette being set with an undefined value");
         }

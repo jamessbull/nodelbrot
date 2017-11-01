@@ -49,7 +49,9 @@ jim.colour.colourPicker.create = function (canvas, gradient, events) {
 
     on(events.colourSelected, function (pos) {
         var context = canvas.getContext('2d');
+        selectedHue = pos.hue;
         draw();
+
         context.fillStyle='white';
         context.strokeStyle='black';
         context.lineWidth=2;
@@ -60,11 +62,8 @@ jim.colour.colourPicker.create = function (canvas, gradient, events) {
         context.closePath();
     });
 
-    canvas.onclick = function (e) {
-        events.fire(events.start);
-        window.setTimeout(function () {
-            events.fire(events.stop);
-        },100);
+    function drawPicker(e) {
+
         if (e.layerY <= h/3) {
             selectedHue =  interpolate(0, 359, e.layerX/w);
             //draw();
@@ -76,8 +75,30 @@ jim.colour.colourPicker.create = function (canvas, gradient, events) {
             var shadeProportion = h - hueProportion;
             gradient.setSelectedNodeColour(tinycolor(shade(e.layerX, e.layerY, shadeProportion)));
             events.fire(events.colourSelected, {x: e.layerX, y: e.layerY, hue: selectedHue});
-
         }
+        events.fire(events.pulseUI);
+    }
+
+    function randomNumberBetween(x, y) {
+        return interpolate(x,y, Math.random());
+    }
+
+    on(events.nodeAdded, function (n) {
+        selectedHue = randomNumberBetween(0,359);
+        var shadeVal = ((h / 3) + 1);
+        var shadeX = 0, shadeY = randomNumberBetween(shadeVal,h);
+        var hueProportion = 0.3 * h;
+        var shadeProportion = h - hueProportion;
+
+        n.markerX = shadeX;
+        n.markerY = shadeY;
+        gradient.setSelectedNodeColour(tinycolor(shade(shadeX, shadeY, shadeProportion)));
+        events.fire(events.colourSelected, {x: shadeX, y: shadeY, hue: selectedHue});
+        events.fire(events.pulseUI, {});
+    });
+
+    canvas.onclick = function (e) {
+        drawPicker(e);
     };
 
     selectedHue = 120;

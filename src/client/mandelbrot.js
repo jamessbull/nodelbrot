@@ -143,7 +143,7 @@ jim.init.run = function () {
     events.fire(events.paletteChanged, palette);
     bookmarker.changeLocation();
     events.fire(events.paletteChanged, palette);
-    events.fire(events.colourSelected, {x:4,y:4, hue: 12});
+    //events.fire(events.colourSelected, {x:4,y:4, hue: 12});
 
 };
 
@@ -152,14 +152,13 @@ jim.init.run = function () {
 // Make examine button behave
 // Don't send unnecessary arrays back and forth
 // investigate reduction in performance
-
+// Should the buttons override the auto setting
 
 // Make zoom border proper
 // Stop zoom out border appearing when fully zoomed out
 // Make parallelism and chunk size auto configure for max perf and smooth frame rate depending on conditions
 // Make buttons a different colour and round the edges and try a thinner border
 // make details pixel border the correct colours
-
 
 //Make render size / resolution slightly configurable
 // can I pop up export progress when I start export and hide it afterwards?
