@@ -96,8 +96,8 @@ jim.mandelbrot.examinePixelStateDisplay.create = function (_events, _examinePixe
     };
 
     function centreToTopLeft(_point, _width) {
-        var magnifyingGlassCenterOffsetx = 20;
-        var magnifyingGlassCenterOffsety = 12;
+        var magnifyingGlassCenterOffsetx = 0;
+        var magnifyingGlassCenterOffsety = 0;
 
         var sourceX =  _point.x + magnifyingGlassCenterOffsetx - Math.floor(_width / 2);
         var sourceY =  _point.y + magnifyingGlassCenterOffsety - Math.floor(_width / 2);

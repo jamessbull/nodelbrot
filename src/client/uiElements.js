@@ -171,15 +171,15 @@ jim.mandelbrot.ui.elements.create = function (_exportSizeDropdown, _mandelbrotSe
     jim.anim.textBox.create(topMessageBox, helpfulMessages);
 
     examineMenuButton.onclick = function () {
-        if (examineMenuButton.classList.contains("iconSelected")) {
-            dom.deselectIcon(examineMenuButton);
+        if (examineMenuButton.classList.contains("buttonSelected")) {
+            dom.deselectButton(examineMenuButton);
             dom.removeClass(mandelCanvas, "magnifyCursor");
             _events.fire(_events.stopExaminingPixelState);
 
         } else{
-            dom.selectIcon(examineMenuButton);
+            dom.selectButton(examineMenuButton);
             dom.addClass(mandelCanvas, "magnifyCursor");
-            _mandelbrotSet.stop();
+            _events.fire(_events.stop);
             _events.fire(_events.examinePixelState);
         }
     };
