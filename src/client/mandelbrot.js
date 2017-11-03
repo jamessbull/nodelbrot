@@ -112,7 +112,7 @@ jim.init.run = function () {
     jim.mandelbrot.escapeDistributionHistogram.create(events, mandelbrot.histoData());
     jim.mandelbrot.deadRegions.create(events, deadRegionCanvas, mandelbrot.canvas(), mandelbrot.escapeValues());
     jim.mandelbrot.imageRenderer.create(events, mandelbrot.canvas(), mandelbrot.width(), mandelbrot.height());
-    jim.mandelbrot.examinePixelStateDisplay.create(events, pixelInfoCanvas, mandelbrot.imgData(), mandelbrot.xState(), mandelbrot.yState(), mandelbrot.escapeValues(), mandelbrot.imageEscapeValues(), mandelbrot.width());
+    jim.mandelbrot.examinePixelStateDisplay.create(events, pixelInfoCanvas, mandelbrot.imgData(), mandelbrot.xState(), mandelbrot.yState(), mandelbrot.escapeValues(), mandelbrot.imageEscapeValues(), mandelbrot.width(), uiCanvas);
     jim.mandelbrot.pixelEscapeRateTracker.create(events);
     var palette = jim.palette.create(events);
     var colourGradientui = newColourGradientUI(colourGradientCanvas, addButton, removeButton, palette, events);
@@ -149,10 +149,11 @@ jim.init.run = function () {
 
 // Missing features
 // Once export progress is dismissed put download button on main panel
-// Make examine button behave
+// Make examine button behave - show text while exploring -
+//need ui canvas then and need to draw that
 // Don't send unnecessary arrays back and forth
 // investigate reduction in performance
-// Should the buttons override the auto setting
+// Should the buttons override the auto setting ?
 
 // Make zoom border proper
 // Stop zoom out border appearing when fully zoomed out

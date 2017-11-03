@@ -1,5 +1,5 @@
 namespace("jim.mandelbrot.examinePixelStateDisplay");
-jim.mandelbrot.examinePixelStateDisplay.create = function (_events, _examinePixelCanvas, _imgData, _xState, _yState, _escapeValues, _imageEscapeValues, _sourceWidth) {
+jim.mandelbrot.examinePixelStateDisplay.create = function (_events, _examinePixelCanvas, _imgData, _xState, _yState, _escapeValues, _imageEscapeValues, _sourceWidth, _uiCanvas) {
     "use strict";
     var examiningPixels = false;
     var myContext = _examinePixelCanvas.getContext('2d');
@@ -74,6 +74,7 @@ jim.mandelbrot.examinePixelStateDisplay.create = function (_events, _examinePixe
         if (!examiningPixels) return;
         console.log("mouse down on pixel info");
 
+        displayAdditionalMessage("Click main image to start examining");
         drawMagnifiedPixels(_examinePixelCanvas, selectedArea, magnifiedAreaWidth, _sourceWidth);
 
         var squareSize = Math.round(_examinePixelCanvas.width / magnifiedAreaWidth);
@@ -119,12 +120,43 @@ jim.mandelbrot.examinePixelStateDisplay.create = function (_events, _examinePixe
         histogramForColour.setData(update.array, update.total);
     });
 
+    function displayMessage(msg, x, y) {
+        var context = uiCanvas.getContext('2d');
+        context.clearRect(x, y, _uiCanvas.width, _uiCanvas.height);
+        context.font = "14px courier";
+        context.strokeStyle = "rgba(0,0,0,255)";
+        context.fillStyle = "rgba(255,255,255,255)";
+        context.lineWidth = 3;
+        context.strokeText(msg, x, y);
+        context.fillText(msg, x, y);
+
+    }
+
+    function topLevelMessage(msg) {
+        var context = uiCanvas.getContext('2d');
+        context.clearRect(0, 0, _uiCanvas.width, _uiCanvas.height);
+        displayMessage(msg, 15, 15);
+    }
+
+    function displayAdditionalMessage(msg) {
+        var context = uiCanvas.getContext('2d');
+        context.clearRect(0, 20, _uiCanvas.width - 25, _uiCanvas.height - 25);
+        displayMessage(msg, 30, 30);
+    }
+
     on(_events.publishPixelState, function () {
         examiningPixels = true;
+        topLevelMessage("Examine pixels mode. (Click examine button to leave)");
+        displayAdditionalMessage("Click the left button on the image to select an area");
     });
 
     on(_events.examinePixelAction, function (e) {
        areaHasBeenSelected = !areaHasBeenSelected;
+       if (areaHasBeenSelected) {
+           displayAdditionalMessage("Click on magnified image to examine a pixel");
+       } else {
+           displayAdditionalMessage("Click the left button on the image to select an area");
+       }
        selectedArea = jim.rectangle.create(e.x, e.y, magnifiedAreaWidth, magnifiedAreaWidth);
     });
 
@@ -137,5 +169,8 @@ jim.mandelbrot.examinePixelStateDisplay.create = function (_events, _examinePixe
 
     on(_events.stopExaminingPixelState, function () {
         examiningPixels = false;
+        topLevelMessage("Leaving examine pixels mode");
+        setTimeout(function () {_uiCanvas.getContext('2d').clearRect(0,0, _uiCanvas.width, _uiCanvas.height);}, 1000);
+        _events.fire(_events.start);
     });
 };
