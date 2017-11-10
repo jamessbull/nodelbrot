@@ -1,5 +1,5 @@
 namespace("jim.mandelbrot.webworkerInteractive");
-jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events, _stepSize, _parallelism, _imgData, _escapeValues, _xState, _yState, _imageEscapeValues) {
+jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events, _stepSize, _parallelism, _imgData, _escapeValues, _xState, _yState, _imageEscapeValues, _extents) {
     "use strict";
 
     var pool = jim.worker.pool.create(_parallelism, "/js/combinedWorker.js", [], "none", "histogramDataBuffer");
@@ -9,10 +9,11 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
     var histogramTotal = 0;
     var stepSize = _stepSize;
     var currentIteration = 0;
-    var extents = null;
+    var extents = _extents;
     var palette = null;
     var escapeValues = _escapeValues;
     var running = true;
+    var stopped = false;
     var fragments;
 
     function onEachJob(_msg) {
@@ -36,7 +37,11 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
         _events.fire(_events.renderImage, {imgData: _imgData, offset: 0});
         _events.fire(_events.andFinally);
         _events.fire(_events.frameComplete);
-        if(running) postMessage();
+        if(running) {
+            postMessage();
+        } else {
+            stopped = true;
+        }
         palette = undefined;
         extents = undefined;
     }
@@ -47,6 +52,7 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
         var mw = extents ? extents.mw : undefined;
         var mh = extents ? extents.mh : undefined;
         var initialRenderDefinition = jim.messages.renderFragment2.create(0, mx, my, mw, mh, _width, _height);
+
         if(extents) {
             fragments = initialRenderDefinition.split(_parallelism);
         }
@@ -63,7 +69,7 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
             }
             return job;
         });
-
+        extents = undefined;
         pool.consume(jobs, onEachJob, onAllJobsComplete);
     }
 
@@ -73,7 +79,6 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
 
     on(_events.paletteChanged, function (_palette) {
         if (_palette === null || _palette === undefined) {
-            console.log("Palette being set with an undefined value");
         }
         palette = _palette.toNodeList();
     });
@@ -82,10 +87,7 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
         copyOfHisto = new Uint32Array(250000);
         currentIteration = 0;
         extents = extentsTransfer(_extents.topLeft().x, _extents.topLeft().y, _extents.width(), _extents.height());
-        console.log("Calling post from extents update");
-        postMessage();
         palette = undefined;
-        extents = undefined;
     });
 
     on(_events.histogramUpdated, function (info) {
@@ -96,6 +98,7 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
     on(_events.start, function () {
         if (running === false) {
             running = true;
+            stopped = false;
             postMessage();
         }
     });
@@ -106,17 +109,43 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
         }
     });
 
+    function isStopped() {
+        if (stopped) {
+            running = true;
+            stopped = false;
+            postMessage();
+        } else {
+            setTimeout(isStopped,10);
+        }
+    }
+
+    on(_events.pulseUI, function () {
+        if(running === false) {
+            stopped = false;
+            postMessage();
+        }
+    });
+
+    on(_events.restart, function () {
+        if(!running) {
+            setTimeout(isStopped, 10);
+        }
+    });
+
     on(_events.examinePixelState, function () {
         requestExaminePixelData = true;
+        stopped = false;
         postMessage();
     });
 
     return {
         stop: function () {
             running = false;
+            stopped = false;
         },
         start: function () {
             running = true;
+            stopped = false;
             postMessage();
         },
         destroy: function () {

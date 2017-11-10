@@ -84,7 +84,7 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
             return currentExtents;
         },
         getLastExtents: function () {
-            if (previousExtents.length === 0) return undefined;
+            if (previousExtents.length === 0) return currentExtents;
             return previousExtents[previousExtents.length - 1];
         },
         setExtents: function (extents) {
@@ -155,14 +155,9 @@ jim.mandelbrot.pixelEscapeRateTracker.create = function (events) {
     var running = true;
 
     function restart() {
-        events.fire(events.stop);
-
-        setTimeout(function () {
-            counter = 0;
-            escaped = 0;
-            running = true;
-            events.fire(events.start);
-        }, 100);
+        events.fire(events.restart);
+        counter = 0;
+        lastCheckpoint = 0;
     }
 
     on(events.zoomInAction, function () {
@@ -179,8 +174,12 @@ jim.mandelbrot.pixelEscapeRateTracker.create = function (events) {
 
     on(events.morePixelsEscaped, function (_totalEscaped) {
         counter +=1;
-        escaped = _totalEscaped;
-        if (lastCheckpoint === _totalEscaped && counter > 300 && _totalEscaped > 0) {
+
+        if (lastCheckpoint !== _totalEscaped) {
+            counter = 0;
+        }
+
+        if (lastCheckpoint === _totalEscaped && counter > 30 && _totalEscaped > 0) {
             events.fire(events.stop);
             running = false;
             counter = 0;
@@ -188,18 +187,6 @@ jim.mandelbrot.pixelEscapeRateTracker.create = function (events) {
         }
         lastCheckpoint = _totalEscaped;
     });
-
-    on(events.pulseUI, function () {
-        if (!running) {
-            events.fire(events.start);
-            running = true;
-            window.setTimeout(function () {
-                events.fire(events.stop);
-                running = false;
-            },100);
-        }
-    });
-
 };
 
 namespace("jim.mandelbrot.imageRenderer");

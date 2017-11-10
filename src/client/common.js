@@ -408,8 +408,6 @@ jim.dom.functions.create = function () {
 
 function asyncCallerThing(arg) {
     promise = jim.promise.create(function (resolve) {
-        //do async anim here and then
-        console.log(arg);
         resolve(arg);
     });
 }

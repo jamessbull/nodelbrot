@@ -23,7 +23,8 @@ jim.mandelbrotImage.create = function (_events, _width, _height) {
     var xState = new Uint32Array(_width * _height);
     var yState = new Uint32Array(_width * _height);
 
-    var mandelbrotCalculator = jim.mandelbrot.webworkerInteractive.create(_width, _height, _events, 30, 3, imgData, escapeValues, xState, yState, imageEscapeValues);
+    var mandelbrotCalculator = jim.mandelbrot.webworkerInteractive.create(_width, _height, _events, 30, 3, imgData, escapeValues, xState, yState, imageEscapeValues, startingExtent);
+    mandelbrotCalculator.start();
     return {
         histoData: function () {
           return histoData;
@@ -121,6 +122,7 @@ jim.init.run = function () {
     newColourPicker(colourPickerCanvas, colourGradientui, events);
     var exportSizeDropdown = newExportSizeDropdown(exportSizeSelect, [smallExport, mediumExport, largeExport, veryLargeExport]);
     newMiscUiElements(exportSizeDropdown, mandelbrot, events);
+
     events.listenTo(events.maxIterationsUpdated, function (_iter) {
         maxIteration.innerText = _iter;
         var total = 700 * 400;
@@ -143,17 +145,13 @@ jim.init.run = function () {
     events.fire(events.paletteChanged, palette);
     bookmarker.changeLocation();
     events.fire(events.paletteChanged, palette);
-    //events.fire(events.colourSelected, {x:4,y:4, hue: 12});
-
 };
 
 // Missing features
 // Once export progress is dismissed put download button on main panel
-// Make examine button behave - show text while exploring -
-//need ui canvas then and need to draw that
+// need ui canvas then and need to draw that
 // Don't send unnecessary arrays back and forth
 // investigate reduction in performance
-// Should the buttons override the auto setting ?
 
 // Make zoom border proper
 // Stop zoom out border appearing when fully zoomed out
@@ -161,7 +159,7 @@ jim.init.run = function () {
 // Make buttons a different colour and round the edges and try a thinner border
 // make details pixel border the correct colours
 
-//Make render size / resolution slightly configurable
+// Make render size / resolution slightly configurable
 // can I pop up export progress when I start export and hide it afterwards?
 
 // look at palette - can it be optimsed can I have hsl values back?
@@ -173,4 +171,3 @@ jim.init.run = function () {
 // Then adjust block size to maintain 24 fps
 //
 // minify js
-// estimate long tail cap histo size at 300k use last 100k to  estimate next 500k

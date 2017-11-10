@@ -16,9 +16,7 @@ jim.mandelbrot.exportDropdown.create = function (_exportSizeSelect, options) {
     var setExportSize = function () {
         options.forEach(function (option, index) {
             if (option.selected) {
-                console.log("option " + option + " index " + index);
                 selectedDimension = orderedDimensions[index];
-                console.log("width is " + selectedDimension.width);
             }
         });
     };
@@ -29,7 +27,6 @@ jim.mandelbrot.exportDropdown.create = function (_exportSizeSelect, options) {
     setExportSize();
     return {
         dimensions: function () {
-            console.log("width is " + selectedDimension.width);
             return selectedDimension;
         }
     };

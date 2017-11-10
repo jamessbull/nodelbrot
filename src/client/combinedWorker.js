@@ -106,7 +106,6 @@ onmessage = function(e) {
             reset: reset
         };
         if(msg.sendData) {
-            console.log("Send data is true");
             messageToPost.xState = xState;
             messageToPost.yState = yState;
             messageToPost.imageEscapeValues = pixelStateTracker.imageEscapeValues;

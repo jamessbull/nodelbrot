@@ -27,6 +27,7 @@ jim.events.create = function () {
         extentsUpdate: "extentsUpdate",
         start : "start",
         stop : "stop",
+        restart: "restart",
         nodeAdded: "nodeAdded",
         pulseUI:"pulseUI",
         morePixelsEscaped: "morePixelsEscaped",

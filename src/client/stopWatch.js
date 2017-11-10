@@ -13,7 +13,6 @@ jim.stopwatch.create = function () {
         },
         elapsed: function (message) {
             var time = stop - start;
-            console.log("" + message + " " + time);
             return  time;
         },
         mark: function (mark) {

@@ -1,6 +1,7 @@
 namespace("jim.colour.gradientui");
 jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton, palette, _events) {
     "use strict";
+    var leftMouseDown = false;
     var context = gradientCanvas.getContext('2d');
     var drawLine = function (fromX, fromY, toX, toY) {
         context.beginPath();
@@ -157,6 +158,7 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
 
     gradientCanvas.onmousedown = function (e) {
         markers.select(e.layerX);
+        leftMouseDown = true;
         //console.log("marker selected");
         draw();
         //console.log("markers redrawn");
@@ -164,19 +166,23 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
 
     gradientCanvas.onmouseup = function (e) {
         markers.stopMoving();
+        leftMouseDown = false;
         _events.fire(_events.pulseUI);
 
     };
 
     gradientCanvas.onmouseout = function () {
        markers.stopMoving();
+        leftMouseDown = false;
         _events.fire(_events.pulseUI);
     };
 
     gradientCanvas.onmousemove = function (e) {
         markers.updatePosition(e.layerX);
-        _events.fire(_events.pulseUI);
-        _events.fire(_events.paletteChanged, palette);
+        if(leftMouseDown) {
+            _events.fire(_events.pulseUI);
+            _events.fire(_events.paletteChanged, palette);
+        }
     };
 
     on(events.paletteChanged, function () {

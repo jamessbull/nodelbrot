@@ -28,7 +28,6 @@ jim.mandelbrot.ui.actions.zoomOutAnimation.create = function (_uiCanvas, _mandel
         play: function (_oldMandelCanvas, _from, _to) {
             var drawFunc = drawSelectionFun(_oldMandelCanvas, _uiCanvas);
             anim.drawFrames(duration, drawFunc).then(function (result) {
-                console.log("Selection drawn " + result);
                 var screenSize = jim.rectangle.create(0, 0, _uiCanvas.width, _uiCanvas.height);
                 var currentExpanded = _to.translateFrom(_from).to(screenSize);
                 var diff = screenSize.difference(currentExpanded);
@@ -39,7 +38,6 @@ jim.mandelbrot.ui.actions.zoomOutAnimation.create = function (_uiCanvas, _mandel
                 var drawZoomOutFrameFunction = drawZoomOutFrame(duration, _oldMandelCanvas, diff, currentExpanded, oldShrunkDiff, screenSize);
                 anim.drawFrames(duration, drawZoomOutFrameFunction);
             }).then(function (result2) {
-                console.log("Zoom out drawn " + result2);
             });
         }
     };

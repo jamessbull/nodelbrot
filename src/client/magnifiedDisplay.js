@@ -72,7 +72,6 @@ jim.mandelbrot.examinePixelStateDisplay.create = function (_events, _examinePixe
 
     _examinePixelCanvas.onmousedown = function (e) {
         if (!examiningPixels) return;
-        console.log("mouse down on pixel info");
 
         displayAdditionalMessage("Click main image to start examining");
         drawMagnifiedPixels(_examinePixelCanvas, selectedArea, magnifiedAreaWidth, _sourceWidth);

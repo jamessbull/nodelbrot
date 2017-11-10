@@ -26,7 +26,6 @@ jim.mandelbrot.bookmark.create = function (bookmarkButton, mandelbrot, colourGra
 
     var currentMandelbrotInfo = function() {
         var hash = decodeURI(window.location.hash);
-        console.log("hash is " + hash);
         return hash.length > 1 ? mandelbrotInfoFromUrl() : defaultMandelbrotInfo();
     };
 
@@ -54,7 +53,6 @@ jim.mandelbrot.bookmark.create = function (bookmarkButton, mandelbrot, colourGra
         var nodes = palette.toNodeList();
 
         var mandelbrotInfo = newLocation(pos, nodes);
-        console.log("current location is " + JSON.stringify(mandelbrotInfo));
         var hash = encodeURI(JSON.stringify(mandelbrotInfo));
         return window.location.origin + window.location.pathname + "#" + hash;
     };
