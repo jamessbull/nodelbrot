@@ -149,9 +149,9 @@ jim.init.run = function () {
 
 // Missing features
 // Once export progress is dismissed put download button on main panel
-// need ui canvas then and need to draw that
-// Don't send unnecessary arrays back and forth
-// investigate reduction in performance
+// Selecting dead pixels should trigger a redraw
+// tests select and deselect dead pixels. select dead pixels then move zoom in and zoom out
+// using link button should use saved colours
 
 // Make zoom border proper
 // Stop zoom out border appearing when fully zoomed out

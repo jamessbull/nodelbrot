@@ -203,8 +203,10 @@ jim.mandelbrot.ui.elements.create = function (_exportSizeDropdown, _mandelbrotSe
         ignoreDeadPixelsCheckbox.checked = ignoreChecked;
         if (ignoreChecked) {
             _events.fire("showDeadRegions", ignoreDeadPixelsRadius.value);
+            _events.fire(_events.pulseUI);
         } else {
             _events.fire("hideDeadRegions", ignoreDeadPixelsRadius.value);
+            _events.fire(_events.pulseUI);
         }
     };
 
