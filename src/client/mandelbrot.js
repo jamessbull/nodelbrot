@@ -153,7 +153,7 @@ jim.init.run = function () {
 // tests select and deselect dead pixels. select dead pixels then move zoom in and zoom out
 // using link button should use saved colours
 
-// Make zoom border proper
+// when you zoom when running you can't click stop sometimes
 // Stop zoom out border appearing when fully zoomed out
 // Make parallelism and chunk size auto configure for max perf and smooth frame rate depending on conditions
 // Make buttons a different colour and round the edges and try a thinner border

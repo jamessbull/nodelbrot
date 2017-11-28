@@ -24,7 +24,7 @@ jim.mandelbrot.ui.actions.zoomInAnimation.create = function (_uiCanvas, _mandelb
         return _start + increment;
     }
 
-    function getMainDrawFunction(_selection, _scaledCtx, _scaledCanvas) {
+    function getMainDrawFunction(_selection, _scaledCtx, _scaledCanvas, _oldView) {
         return function (i) {
             var unSelectedInitialXScale = positionForStep(noOfSteps, i, 1, (width / _selection.area().width()) - 1);
             var unSelectedInitialYScale = positionForStep(noOfSteps, i, 1, (height / _selection.area().height()) - 1);
@@ -47,12 +47,11 @@ jim.mandelbrot.ui.actions.zoomInAnimation.create = function (_uiCanvas, _mandelb
             var unselectedXPos = positionForStep(noOfSteps, i, sourceUnselectedXPos, finalUnselectedXPos - sourceUnselectedXPos);
             var unselectedYPos = positionForStep(noOfSteps, i, sourceUnselectedYPos, finalUnselectedYPos - sourceUnselectedYPos);
 
-            _scaledCtx.save();
-            _scaledCtx.setTransform(unSelectedInitialXScale, 0, 0, unSelectedInitialYScale, unselectedXPos, unselectedYPos);
-            _scaledCtx.drawImage(oldView, 0, 0);
-
             _scaledCtx.restore();
             uiCtx.drawImage(_scaledCanvas, 0, 0);
+            _scaledCtx.save();
+            _scaledCtx.setTransform(unSelectedInitialXScale, 0, 0, unSelectedInitialYScale, unselectedXPos, unselectedYPos);
+            _scaledCtx.drawImage(_oldView, 0, 0);
 
             var sourceSelectedX = _selection.area().x;
             var sourceSelectedY = _selection.area().y;
@@ -73,6 +72,8 @@ jim.mandelbrot.ui.actions.zoomInAnimation.create = function (_uiCanvas, _mandelb
             var selectedAreaCurrentPositionY = positionForStep(noOfSteps, i, sourceSelectedY, targetSelectedY - sourceSelectedY);
 
             uiCtx.drawImage(_mandelbrotCanvas, selectedAreaCurrentPositionX, selectedAreaCurrentPositionY, currentSelectedWidth, currentSelectedHeight);
+            _drawSelection.draw(1,1,_uiCanvas, jim.rectangle.create(selectedAreaCurrentPositionX, selectedAreaCurrentPositionY, currentSelectedWidth, currentSelectedHeight));
+
             if (i >= 50) {
                 uiCtx.clearRect(0, 0, _uiCanvas.width, _uiCanvas.height);
             }
@@ -80,17 +81,29 @@ jim.mandelbrot.ui.actions.zoomInAnimation.create = function (_uiCanvas, _mandelb
     }
 
     function getDrawSelectionFunction(_selection, _existingMandelbrot) {
+
+        function drawFullSetTo(uiContext) {
+            uiContext.drawImage(_existingMandelbrot, 0,0, mandelbrotCanvas.width, mandelbrotCanvas.height);
+        }
+
+        function dim(uiContext) {
+            uiContext.fillStyle = "rgba(0, 0, 0, 0.5)";
+            uiContext.fillRect(0, 0, _uiCanvas.width, _uiCanvas.height);
+        }
+
+        function drawSelection(uiContext, _selection) {
+            var selX = _selection.area().topLeft().x;
+            var selY = _selection.area().topLeft().y;
+            var selW = _selection.area().width();
+            var selH = _selection.area().height();
+            uiContext.drawImage(_existingMandelbrot, selX, selY, selW, selH, selX, selY, selW, selH);
+        }
+
         return function (i) {
-            var intermediate = newMatchingCanvas(_uiCanvas);
-            var interctx = intermediate.getContext('2d');
-            interctx.fillStyle = "rgba(0, 0, 0, 0.5)";
-            interctx.fillRect(0, 0, _uiCanvas.width, _uiCanvas.height);
-            interctx.clearRect(_selection.area().topLeft().x, _selection.area().topLeft().y, _selection.area().width(), _selection.area().height());
-
             var uiContext = _uiCanvas.getContext('2d');
-            uiContext.drawImage(_existingMandelbrot, 0, 0);
-            uiContext.drawImage(intermediate, 0, 0);
-
+            drawFullSetTo(uiContext);
+            dim(uiContext);
+            drawSelection(uiContext, _selection);
             _drawSelection.draw(i, noOfSelectionFrames, _uiCanvas, _selection.area());
             return uiContext;
         };
@@ -99,11 +112,15 @@ jim.mandelbrot.ui.actions.zoomInAnimation.create = function (_uiCanvas, _mandelb
     function playZoom(_selection, _existingMandelbrot) {
         var scaledCanvas = newMatchingCanvas(_uiCanvas);
         var scaledCtx = scaledCanvas.getContext('2d');
+
         oldCtx.drawImage(_mandelbrotCanvas, 0, 0);
-        _drawSelection.draw(1, 1, oldView, _selection.area());
+        oldCtx.fillStyle = "rgba(0, 0, 0, 0.5)";
+        oldCtx.fillRect(0, 0, _uiCanvas.width, _uiCanvas.height);
+        oldCtx.clearRect(_selection.area().topLeft().x, _selection.area().topLeft().y, _selection.area().width(), _selection.area().height());
+
         anim.drawFrames(40, getDrawSelectionFunction(_selection, _existingMandelbrot))
             .then(function (uiContext) {
-                anim.drawFrames(50, getMainDrawFunction(_selection, scaledCtx, scaledCanvas));
+                anim.drawFrames(50, getMainDrawFunction(_selection, scaledCtx, scaledCanvas, oldView));
                 return uiContext;
             });
     }
