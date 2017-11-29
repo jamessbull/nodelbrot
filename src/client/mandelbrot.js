@@ -148,6 +148,7 @@ jim.init.run = function () {
 };
 
 // Missing features
+// Had to turn off scrolling messages. Killing performance. Stop scrolling them and just repaint every few seconds?
 // Once export progress is dismissed put download button on main panel
 // Selecting dead pixels should trigger a redraw
 // tests select and deselect dead pixels. select dead pixels then move zoom in and zoom out

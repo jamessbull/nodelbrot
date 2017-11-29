@@ -64,6 +64,11 @@ jim.mandelbrot.ui.elements.create = function (_exportSizeDropdown, _mandelbrotSe
         dom.deselectButton(stopButton);
     });
 
+    on(_events.restart, function () {
+        dom.selectButton(startButton);
+        dom.deselectButton(stopButton);
+    });
+
     on(_events.stop, function () {
         dom.selectButton(stopButton);
         dom.deselectButton(startButton);
@@ -167,8 +172,9 @@ jim.mandelbrot.ui.elements.create = function (_exportSizeDropdown, _mandelbrotSe
         "I have things to do",
         "Such as ..."
     ];
-    jim.anim.textBox.create(bottomMessageBox, sillyMessages);
-    jim.anim.textBox.create(topMessageBox, helpfulMessages);
+    // These suck up too much cpu. what to do about that?
+    //jim.anim.textBox.create(bottomMessageBox, sillyMessages);
+    //jim.anim.textBox.create(topMessageBox, helpfulMessages);
 
     examineMenuButton.onclick = function () {
         if (examineMenuButton.classList.contains("buttonSelected")) {
