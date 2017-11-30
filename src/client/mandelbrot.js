@@ -149,13 +149,11 @@ jim.init.run = function () {
 
 // Missing features
 // Had to turn off scrolling messages. Killing performance. Stop scrolling them and just repaint every few seconds?
+// Could try scrolling domElement around? Probs quicker.
+
 // Once export progress is dismissed put download button on main panel
-// Selecting dead pixels should trigger a redraw
-// tests select and deselect dead pixels. select dead pixels then move zoom in and zoom out
 // using link button should use saved colours
 
-// when you zoom when running you can't click stop sometimes
-// Stop zoom out border appearing when fully zoomed out
 // Make parallelism and chunk size auto configure for max perf and smooth frame rate depending on conditions
 // Make buttons a different colour and round the edges and try a thinner border
 // make details pixel border the correct colours

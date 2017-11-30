@@ -74,6 +74,9 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
                 _events.fire(_events.extentsUpdate, currentExtents);
             }
         },
+        notFullyZoomedOut: function () {
+            return previousExtents.length > 0;
+        },
         move: function (moveX, moveY) {
             var distance = fromScreen(moveX, moveY).distanceTo(currentExtents.topLeft());
             currentExtents.move(0 - distance.x, 0 - distance.y);
@@ -172,6 +175,8 @@ jim.mandelbrot.pixelEscapeRateTracker.create = function (events) {
         restart();
     });
 
+    var target = 700 * 40;
+
     on(events.morePixelsEscaped, function (_totalEscaped) {
         counter +=1;
 
@@ -179,7 +184,7 @@ jim.mandelbrot.pixelEscapeRateTracker.create = function (events) {
             counter = 0;
         }
 
-        if (lastCheckpoint === _totalEscaped && counter > 30 && _totalEscaped > 0) {
+        if (lastCheckpoint === _totalEscaped && counter > 30 && _totalEscaped > target) {
             events.fire(events.stop);
             running = false;
             counter = 0;

@@ -14,12 +14,16 @@ jim.mandelbrot.actions.zoomOut.create = function (_events, _timer, _zoomOutAnim,
             var from = _mandelbrotState.getExtents();
             var to = _mandelbrotState.getLastExtents();
             _events.fire(_events.hideDeadRegions);
-            _events.fire(_events.zoomOutAction);
 
-            var oldCanvas = newMatchingCanvas(_mandelbrotCanvas);
-            oldCanvas.getContext('2d').drawImage(_mandelbrotCanvas, 0, 0);
-            //zoom out anim needs to know before and after mandelbrot coords
-            _zoomOutAnim.play(oldCanvas, from, to);
+            if (_mandelbrotState.notFullyZoomedOut()) {
+                _events.fire(_events.zoomOutAction);
+
+                var oldCanvas = newMatchingCanvas(_mandelbrotCanvas);
+                oldCanvas.getContext('2d').drawImage(_mandelbrotCanvas, 0, 0);
+                //zoom out anim needs to know before and after mandelbrot coords
+                _zoomOutAnim.play(oldCanvas, from, to);
+            }
+
         }
         _timer.mark("doubleClickBegin");
     });
