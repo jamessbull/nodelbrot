@@ -62,7 +62,7 @@
         top: -3px;
     }
 
-    .border{
+    .border {
         border: 2px solid;
     }
 
@@ -79,12 +79,13 @@
     .bottomMargin {
         margin-bottom: 15px;
     }
+
     .smallBottomMargin {
         margin-bottom: 10px;
     }
 
-    .mediumBottomMargin {
-        margin-bottom: 10px;;
+    .mediumTopMargin {
+        margin-top: 10px;
     }
 
     .leftMargin {
@@ -110,9 +111,9 @@
     }
 
     .exportButton {
-        margin-left: 40px;
-        margin-right: 50px;
-        margin-bottom: 10px;
+        margin-left: 5px;
+        margin-right: 5px;
+        margin-bottom: 15px;
     }
 
     .mediumRadius {
@@ -124,17 +125,19 @@
         border: 1px solid;
         display: inline-block;
     }
+
     .smallMargin {
-        margin:5px;
+        margin: 5px;
     }
+
     .detailText {
         font-size: x-small;
     }
 
     .progressPopUp {
-        position:absolute;
-        left:40%;
-        top:25%;
+        position: absolute;
+        left: 40%;
+        top: 25%;
         z-index: 1000;
         background-color: black;
     }
@@ -142,23 +145,33 @@
     .inline {
         display: inline-block;
     }
+
+    .disabled {
+        color: gray;
+    }
+
     .centered {
         text-align: center;
-        width:100%;
+        width: 100%;
     }
+
     .floatright {
         float: right;
     }
+
     .topMargin {
         margin-top: 10px;
     }
+
     .rightMargin {
         margin-right: 10px;
     }
+
     .padSides {
         padding-left: 6px;
         padding-right: 6px;
     }
+
     .padRight {
         padding-right: 5px;
     }
@@ -176,7 +189,9 @@
 
 <div class="standard">
 
-    <div class="border mediumRadius mediumLeftMargin messageBox smallBottomMargin"><canvas width = 900, height = 15, id = "topMessageBox">I am hello message.</canvas></div>
+    <div class="border mediumRadius mediumLeftMargin messageBox smallBottomMargin">
+        <canvas width=900, height=15, id="topMessageBox">I am hello message.</canvas>
+    </div>
 
     <div id="bothColumns" style="position:relative; height:575px;">
         <div id="left" style="position: absolute;">
@@ -208,39 +223,43 @@
             <div class="panel bodyText">
                 <div id="exportImagePanel">
                     <div class="panelContent">
-                        <div id="export" class="button exportButton">Export Png</div>
+                        <span id="export" class="button exportButton">Export Png</span>
+                        <span id="openLastExportButton" class="button disabled">Last Export</span>
 
-                        <table>
-                            <tbody>
-                            <tr>
-                                <td class="bodyText">Iterations</td>
-                                <td class="bodyText"><input size="8" id="exportDepth" type="text" class="export"
-                                                            value="1000"/></td>
-                            </tr>
-                            <tr>
-                                <td class="bodyText">Size</td>
+                        <div class="mediumTopMargin">
+                            <table>
+                                <tbody>
+                                <tr>
+                                    <td class="bodyText">Iterations</td>
+                                    <td class="bodyText"><input size="8" id="exportDepth" type="text" class="export"
+                                                                value="1000"/></td>
+                                </tr>
+                                <tr>
+                                    <td class="bodyText">Size</td>
 
-                                <td>
-                                    <select id=exportSizeSelect>
-                                        <option id="smallExport">Small</option>
-                                        <option id="mediumExport">Medium</option>
-                                        <option id="largeExport">Large</option>
-                                        <option id="veryLargeExport">Huge</option>
-                                    </select>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="bodyText">Ignore dead</td>
-                                <td><input id="ignoreDeadPixels" type="checkbox"/></td>
-                            </tr>
+                                    <td>
+                                        <select id=exportSizeSelect>
+                                            <option id="smallExport">Small</option>
+                                            <option id="mediumExport">Medium</option>
+                                            <option id="largeExport">Large</option>
+                                            <option id="veryLargeExport">Huge</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="bodyText">Ignore dead</td>
+                                    <td><input id="ignoreDeadPixels" type="checkbox"/></td>
+                                </tr>
 
-                            <tr>
-                                <td class="bodyText">Dead radius</td>
-                                <td><input size="8" id="ignoreDeadPixelsRadius" type="text" class="export" value="1"/>
-                                </td>
-                            </tr>
-                            </tbody>
-                        </table>
+                                <tr>
+                                    <td class="bodyText">Dead radius</td>
+                                    <td><input size="8" id="ignoreDeadPixelsRadius" type="text" class="export"
+                                               value="1"/>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -321,7 +340,8 @@
                         <span id="removeButton" class="button padSides">-</span>
                     </div>
 
-                    <canvas class="mediumRadius topMargin leftMargin" id="colourGradientCanvas" width=600 height=40></canvas>
+                    <canvas class="mediumRadius topMargin leftMargin" id="colourGradientCanvas" width=600
+                            height=40></canvas>
                 </div>
 
                 <div>
@@ -331,5 +351,7 @@
 
         </div>
     </div>
-    <div class="border mediumRadius mediumLeftMargin messageBox"><canvas width = 900, height = 15, id = "bottomMessageBox">I am hello message.</canvas></div>
+    <div class="border mediumRadius mediumLeftMargin messageBox">
+        <canvas width=900, height=15, id="bottomMessageBox">I am hello message.</canvas>
+    </div>
 </div>

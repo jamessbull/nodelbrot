@@ -4,6 +4,7 @@ jim.mandelbrot.image.exporter.create = function (_exportDimensions, _mandelbrotS
     var exporting = false;
 
     var exportButton = document.getElementById("export");
+    var lastExportButton = document.getElementById("openLastExportButton");
     var exportDepth = document.getElementById("exportDepth");
     var histogramProgress = document.getElementById("histogramProgress");
     var imageProgress = document.getElementById("imageProgress");
@@ -18,6 +19,15 @@ jim.mandelbrot.image.exporter.create = function (_exportDimensions, _mandelbrotS
     var timeReporter = jim.common.timeReporter.create(timeProgress);
     var histogramReporter = jim.common.imageExportProgressReporter.create(events, "histogramExportProgress", histogramProgress);
     var imageReporter = jim.common.imageExportProgressReporter.create(events, "imageExportProgress", imageProgress);
+
+    lastExportButton.onclick = function () {
+        if (exportCanvas.toBlob) {
+            exportCanvas.toBlob(function(blob) {
+                var   url = URL.createObjectURL(blob);
+                window.open(url);
+            });
+        }
+    };
 
     downloadButton.onclick = function () {
         _dom.hide(exportProgress);
@@ -93,10 +103,12 @@ jim.mandelbrot.image.exporter.create = function (_exportDimensions, _mandelbrotS
             if (exportCanvas.toBlob) {
                 exportCanvas.toBlob(function(blob) {
                     var   url = URL.createObjectURL(blob);
-                    window.open(url);
                     _dom.hide(exportProgress);
+                    _dom.removeClass(lastExportButton, "disabled");
+                    window.open(url);
                 });
             } else {
+                _dom.removeClass(lastExportButton, "disabled");
                 downloadButton.href = exportCanvas.toDataURL("image/png");
             }
 
