@@ -8,14 +8,14 @@ jim.colour.colourPicker.create = function (canvas, gradient, events) {
     var selectedHue;
     var selectedShade;
 
-    var toRgb = function(h,s,v) {
-        var colour = tinycolor({h:h, s: s, v: v}).toRgb();
+    var toRgb = function (h, s, v) {
+        var colour = tinycolor({h: h, s: s, v: v}).toRgb();
         colour.a = 255;
         return colour;
     };
 
     var huePicker = function (x) {
-        var hue = interpolate(0, 359, x/w);
+        var hue = interpolate(0, 359, x / w);
         return toRgb(hue, 100, 100);
     };
 
@@ -24,8 +24,8 @@ jim.colour.colourPicker.create = function (canvas, gradient, events) {
         var translatedY = y - heightOffset;
         var saturation = interpolate(0, 1, (translatedY / verticalSize));
 
-        var value = interpolate(1, 0, x/w);
-        return {h:selectedHue, s:saturation, v:value};
+        var value = interpolate(1, 0, x / w);
+        return {h: selectedHue, s: saturation, v: value};
     };
 
     var shadePicker = function (x, y, verticalSize) {
@@ -33,7 +33,7 @@ jim.colour.colourPicker.create = function (canvas, gradient, events) {
         var translatedY = y - heightOffset;
         var saturation = interpolate(0, 1, (translatedY / verticalSize));
 
-        var value = interpolate(1, 0, x/w);
+        var value = interpolate(1, 0, x / w);
         return toRgb(selectedHue, saturation, value);
     };
 
@@ -52,11 +52,11 @@ jim.colour.colourPicker.create = function (canvas, gradient, events) {
         selectedHue = pos.hue;
         draw();
 
-        context.fillStyle='white';
-        context.strokeStyle='black';
-        context.lineWidth=2;
+        context.fillStyle = 'white';
+        context.strokeStyle = 'black';
+        context.lineWidth = 2;
         context.beginPath();
-        context.arc(pos.x,pos.y, 3, 0, 2 * Math.PI);
+        context.arc(pos.x, pos.y, 3, 0, 2 * Math.PI);
         context.fill();
         context.stroke();
         context.closePath();
@@ -64,11 +64,11 @@ jim.colour.colourPicker.create = function (canvas, gradient, events) {
 
     function drawPicker(e) {
 
-        if (e.layerY <= h/3) {
-            selectedHue =  interpolate(0, 359, e.layerX/w);
+        if (e.layerY <= h / 3) {
+            selectedHue = interpolate(0, 359, e.layerX / w);
             //draw();
-            gradient.setSelectedNodeColour(tinycolor({h:selectedHue, s:1, v:1}));
-            events.fire(events.colourSelected, {x: e.layerX, y: e.layerY, hue:selectedHue});
+            gradient.setSelectedNodeColour(tinycolor({h: selectedHue, s: 1, v: 1}));
+            events.fire(events.colourSelected, {x: e.layerX, y: e.layerY, hue: selectedHue});
 
         } else {
             var hueProportion = 0.3 * h;
@@ -80,20 +80,25 @@ jim.colour.colourPicker.create = function (canvas, gradient, events) {
     }
 
     function randomNumberBetween(x, y) {
-        return interpolate(x,y, Math.random());
+        return interpolate(x, y, Math.random());
     }
 
     on(events.nodeAdded, function (n) {
-        selectedHue = randomNumberBetween(0,359);
-        var shadeVal = ((h / 3) + 1);
-        var shadeX = 0, shadeY = randomNumberBetween(shadeVal,h);
-        var hueProportion = 0.3 * h;
-        var shadeProportion = h - hueProportion;
 
-        n.markerX = shadeX;
-        n.markerY = shadeY;
-        gradient.setSelectedNodeColour(tinycolor(shade(shadeX, shadeY, shadeProportion)));
-        events.fire(events.colourSelected, {x: shadeX, y: shadeY, hue: selectedHue});
+        if (n.doNotRandomise) {
+            draw();
+        } else {
+            selectedHue = randomNumberBetween(0, 359);
+            var shadeVal = ((h / 3) + 1);
+            var shadeX = 0, shadeY = randomNumberBetween(shadeVal, h);
+            var hueProportion = 0.3 * h;
+            var shadeProportion = h - hueProportion;
+
+            n.markerX = shadeX;
+            n.markerY = shadeY;
+            gradient.setSelectedNodeColour(tinycolor(shade(shadeX, shadeY, shadeProportion)));
+            events.fire(events.colourSelected, {x: shadeX, y: shadeY, hue: selectedHue});
+        }
         events.fire(events.pulseUI, {});
     });
 
@@ -103,6 +108,6 @@ jim.colour.colourPicker.create = function (canvas, gradient, events) {
 
     selectedHue = 120;
     return {
-        draw : draw
+        draw: draw
     };
 };

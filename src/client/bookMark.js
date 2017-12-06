@@ -32,7 +32,7 @@ jim.mandelbrot.bookmark.create = function (bookmarkButton, mandelbrot, colourGra
     var changeCurrentMandelbrotStateToMatchUrl = function () {
         var mandelbrotInfo = currentMandelbrotInfo();
         palette.fromNodeList(mandelbrotInfo.nodes);
-        colourGradientui.rebuildMarkers();
+        colourGradientui.rebuildMarkers(true);
         mandelbrot.state().setExtents(jim.rectangle.create(mandelbrotInfo.location));
     };
 

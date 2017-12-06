@@ -69,9 +69,9 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
         stopMoving : function () {
             this.selecting = false;
         },
-        add: function (node) {
+        add: function (node, doNotRandomise) {
             if (selectedNode) selectedNode.selected = false;
-            var n = { node: node, selected: true };
+            var n = { node: node, selected: true, doNotRandomise: doNotRandomise };
             selectedNode = n;
             this.nodes.push(n);
             events.fire(events.nodeAdded, n);
@@ -118,11 +118,11 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
         placeNewMarker: function () {
             this.add(palette.addNode());
         },
-        build: function () {
+        build: function (doNotRandomise) {
             this.nodes = [];
             var self = this;
             palette.getNodes().forEach(function (node) {
-                self.add(node);
+                self.add(node, doNotRandomise);
                 //console.log("node position is " + node.position);
 
             });
@@ -201,8 +201,8 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
             markers.setColour(tc);
             _events.fire(_events.paletteChanged, palette);
         },
-        rebuildMarkers: function () {
-            markers.build();
+        rebuildMarkers: function (doNotRandomise) {
+            markers.build(doNotRandomise);
         }
 
     };
