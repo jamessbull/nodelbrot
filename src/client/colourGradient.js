@@ -180,7 +180,7 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
     gradientCanvas.onmousemove = function (e) {
         markers.updatePosition(e.layerX);
         if(leftMouseDown) {
-            _events.fire(_events.pulseUI);
+            _events.fire(_events.start);
             _events.fire(_events.paletteChanged, palette);
         }
     };
