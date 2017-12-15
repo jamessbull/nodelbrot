@@ -178,21 +178,32 @@
 
     .pixelInfo {
         margin-top: 15px;
+        margin-bottom: 8px;
     }
 
     .messageBox {
-        width: 897px;
+        width: 750px;
+    }
+
+    .donationLink {
+        color: yellow;
+    }
+
+    .topRight {
+        position: absolute;
+        top:10px;
+        left:840px;
     }
 
 
 </style>
 
 <div class="standard">
-
-    <div class="border mediumRadius mediumLeftMargin messageBox smallBottomMargin">
-        <canvas width=900, height=15, id="topMessageBox">I am hello message.</canvas>
+    <div class="bottomMargin">
+        <span><a class="donationLink leftMargin" href="http://www.payPal.me/fractalContribution">Donate!</a></span>
+        <span class="border mediumRadius mediumLeftMargin messageBox smallBottomMargin"><canvas width=740, height=15, id="topMessageBox">I am hello message.</canvas></span>
+        <span><a class="donationLink topRight leftMargin" href="http://www.payPal.me/fractalContribution">Donate!</a></span>
     </div>
-
     <div id="bothColumns" style="position:relative; height:575px;">
         <div id="left" style="position: absolute;">
             <div class="bodyText panel">
@@ -283,7 +294,7 @@
                                 <td><span class="valueText" id="imageEscapedAt"></span></td>
                             </tr>
                             <tr>
-                                <td rowspan="2">Calc value<</td>
+                                <td rowspan="2">Calc value</td>
                                 <td>x: <span class="valueText" id="mx"></span></td>
                             </tr>
                             <tr>
@@ -351,7 +362,11 @@
 
         </div>
     </div>
-    <div class="border mediumRadius mediumLeftMargin messageBox">
-        <canvas width=900, height=15, id="bottomMessageBox">I am hello message.</canvas>
-    </div>
+    <span><a class="donationLink leftMargin" href="http://www.payPal.me/fractalContribution">Donate!</a></span>
+
+    <span class="border mediumRadius mediumLeftMargin messageBox">
+        <canvas width=740, height=15, id="bottomMessageBox">I am hello message.</canvas>
+    </span>
+    <span><a class="donationLink leftMargin" href="http://www.payPal.me/fractalContribution">Donate!</a></span>
+
 </div>

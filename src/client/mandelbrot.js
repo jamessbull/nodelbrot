@@ -151,8 +151,10 @@ jim.init.run = function () {
 // Had to turn off scrolling messages. Killing performance. Stop scrolling them and just repaint every few seconds?
 // Could try scrolling domElement around? Probs quicker.
 
-// using link button should use saved colours
-// Moving colour nodes is broken
+
+// percentage complete on export all wrong
+// lost outline on zoom out
+// colour markers not in correct place on node selection
 
 // Make parallelism and chunk size auto configure for max perf and smooth frame rate depending on conditions
 // Make buttons a different colour and round the edges and try a thinner border
