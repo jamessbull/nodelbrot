@@ -96,21 +96,17 @@ jim.colour.colourPicker.create = function (canvas, gradient, events) {
         var shadeVal = (Math.floor((h / 3)));
         var hueProportion = Math.floor(0.3333333 * h);
         var shadeProportion = h - hueProportion;
+        var shadeX = 0, shadeY = randomNumberBetween(shadeVal, h);
+        selectedHue = randomNumberBetween(0, 359);
 
         if (n.doNotRandomise) {
-            var hsv = n.node.hsv;
-            var percentageS = percentFromString(hsv.s);
-            var shadeX2 = (1 - percentFromString(hsv.v)) * w;
-            var shadeY2 = shadeVal + (percentageS * shadeProportion);
-            gradient.setSelectedNodeColour(tinycolor(shade(shadeX2, shadeY2, shadeProportion)), shadeX2, shadeY2);
-            events.fire(events.colourSelected, {x: shadeX2, y: shadeY2, hue: hsv.h});
-
-        } else {
-            selectedHue = randomNumberBetween(0, 359);
-            var shadeX = 0, shadeY = randomNumberBetween(shadeVal, h);
-            gradient.setSelectedNodeColour(tinycolor(shade(shadeX, shadeY, shadeProportion)), shadeX, shadeY);
-            events.fire(events.colourSelected, {x: shadeX, y: shadeY, hue: selectedHue});
+            var percentageS = percentFromString(n.node.hsv.s);
+            shadeX = (1 - percentFromString(n.node.hsv.v)) * w;
+            shadeY = shadeVal + (percentageS * shadeProportion);
+            selectedHue = n.node.hsv.h;
         }
+        gradient.setSelectedNodeColour(tinycolor(shade(shadeX, shadeY, shadeProportion)), shadeX, shadeY);
+        events.fire(events.colourSelected, {x: shadeX, y: shadeY, hue: selectedHue});
         events.fire(events.pulseUI, {});
     });
 
