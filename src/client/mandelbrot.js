@@ -154,7 +154,7 @@ jim.init.run = function () {
 
 // percentage complete on export all wrong
 // lost outline on zoom out
-// colour markers not in correct place on node selection
+// Starting state no longer random do I care? No but need better starting set.
 
 // Make parallelism and chunk size auto configure for max perf and smooth frame rate depending on conditions
 // Make buttons a different colour and round the edges and try a thinner border

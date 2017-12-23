@@ -56,6 +56,7 @@ jim.mandelbrot.ui.actions.zoomOutAnimation.create = function (_uiCanvas, _mandel
 
             uiCtx.drawImage(_mandelbrotCanvas, target.x, target.y, target.width(), target.height());
             uiCtx.drawImage(_oldCanvas, oldTarget.x, oldTarget.y, oldTarget.width(), oldTarget.height());
+            _selectionBox.draw(1, 1, _uiCanvas, jim.rectangle.create(oldTarget.x, oldTarget.y, oldTarget.width(), oldTarget.height() - 12));
             if(i>= duration) {
                 uiCtx.clearRect(0, 0, _uiCanvas.width, _uiCanvas.height);
             }
