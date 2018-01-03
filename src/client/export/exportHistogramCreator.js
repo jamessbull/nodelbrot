@@ -61,6 +61,7 @@ jim.mandelbrot.export.escapeHistogramCalculator.create = function () {
             h.setData(fullHistogramData, fullHistogramTotal);
             h.process();
             _onComplete(fullHistogramData, fullHistogramTotal, totalMxValues, totalMyValues);
+            workerPool.terminate();
         }
         workerPool.consume(jobs, onEveryJob, onAllJobsComplete);
     }

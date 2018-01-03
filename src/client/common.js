@@ -86,11 +86,9 @@ jim.worker.pool.create = function (noOfWorkers, workerUrl, initialJobs, toTransf
             });
         },
         terminate: function () {
-
             workers.forEach(function (worker) {
                worker.terminate();
             });
-            workers = initWorkers(noOfWorkers, workerUrl);
         }
     };
 };

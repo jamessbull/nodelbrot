@@ -114,6 +114,7 @@ jim.mandelbrot.image.exporter.create = function (_exportDimensions, _mandelbrotS
 
             exporting = false;
             timeReporter.stop();
+            workerPool.terminate();
         }
 
 

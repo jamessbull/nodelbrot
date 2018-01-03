@@ -150,7 +150,6 @@ jim.init.run = function () {
 // Missing features
 // Had to turn off scrolling messages. Killing performance. Stop scrolling them and just repaint every few seconds?
 // Could try scrolling domElement around? Probs quicker.
-// end up multiplying workers on export oly need one exporter
 
 // Starting state no longer random do I care? No but need better starting set.
 
