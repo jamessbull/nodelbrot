@@ -28,6 +28,8 @@ jim.mandelbrot.export.escapeHistogramCalculator.create = function () {
         var fullHistogramTotal = 0;
         var initialRenderDefinition = jim.messages.renderFragment2.create(0, _source.topLeft().x, _source.topLeft().y, _source.width(), _source.height(), _target.width(), _target.height());
         var fragments = initialRenderDefinition.split(_noOfParts);
+        var chunkSize = _target.width() * _target.height() / _noOfParts;
+
         var jobs = fragments.map(function (fragment) {
             return fragmentToHistogramMessage(fragment);
         });
@@ -51,7 +53,7 @@ jim.mandelbrot.export.escapeHistogramCalculator.create = function () {
             addToMyValues(myv, _msg.offset);
             fullHistogramTotal += _msg.result.histogramTotal;
             addFirstToSecond(new Uint32Array(_msg.result.histogramData), fullHistogramData);
-            events.fire("histogramExportProgress", 280);
+            events.fire("histogramExportProgress", chunkSize);
         }
 
         function onAllJobsComplete(_msg) {

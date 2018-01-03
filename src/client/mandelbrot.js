@@ -150,10 +150,8 @@ jim.init.run = function () {
 // Missing features
 // Had to turn off scrolling messages. Killing performance. Stop scrolling them and just repaint every few seconds?
 // Could try scrolling domElement around? Probs quicker.
+// end up multiplying workers on export oly need one exporter
 
-
-// percentage complete on export all wrong
-// lost outline on zoom out
 // Starting state no longer random do I care? No but need better starting set.
 
 // Make parallelism and chunk size auto configure for max perf and smooth frame rate depending on conditions
