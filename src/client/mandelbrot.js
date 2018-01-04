@@ -148,15 +148,10 @@ jim.init.run = function () {
 };
 
 // Missing features
-// Had to turn off scrolling messages. Killing performance. Stop scrolling them and just repaint every few seconds?
-// Could try scrolling domElement around? Probs quicker.
-
 // Make parallelism and chunk size auto configure for max perf and smooth frame rate depending on conditions
 // Make buttons a different colour and round the edges and try a thinner border
-// make details pixel border the correct colours
 
 // Make render size / resolution slightly configurable
-// can I pop up export progress when I start export and hide it afterwards?
 
 // look at palette - can it be optimsed can I have hsl values back?
 // Maybe - maintain two sets of colours - one hsl one rgb update both as palette changes

@@ -507,7 +507,7 @@ jim.anim.textBox.create = function (canvas, _messages) {
     "use strict";
     var context = canvas.getContext('2d');
     var messages = jim.message.supplier.create(_messages);
-
+    var textOffset = 13;
     function messageWidthInPixels(_msg) {
         var fontWidth = 7;
         return _msg.length * fontWidth;
@@ -540,7 +540,7 @@ jim.anim.textBox.create = function (canvas, _messages) {
                 var s = ( u * t) + (0.5 * a * t * t);
 
                 var pos = start - s;
-                drawString(context, pos, 10);
+                drawString(context, pos, textOffset);
             };
         }
 
@@ -553,12 +553,12 @@ jim.anim.textBox.create = function (canvas, _messages) {
                 var s = ( u * t) + (0.5 * a * t * t);
 
                 var pos = start - s;
-                drawString(context, pos, 10);
+                drawString(context, pos, textOffset);
             };
         }
 
         function getHoldMessageFunction(context, start) {
-            return function () { drawString(context, start, 10); };
+            return function () { drawString(context, start, textOffset); };
         }
 
         var msg = messages.next();
@@ -566,15 +566,18 @@ jim.anim.textBox.create = function (canvas, _messages) {
         var anim = jim.anim.fixedLength.create();
         var messageWidth =  messageWidthInPixels(msg);
         var stopHere = finalPositionForCentredMessage(canvas.width,messageWidth);
-        var scrollMessageFunction2 = slowingFunction(context, 100, canvas.width, stopHere);
-
-        anim.drawFrames(100, scrollMessageFunction2)
+        var scrollFrames = 40;
+        var scrollMessageFunction2 = slowingFunction(context, scrollFrames, canvas.width, stopHere);
+        anim.drawFrames(scrollFrames, scrollMessageFunction2)
             .then(function () {
-                return anim.drawFrames(messageWidth * 0.6, getHoldMessageFunction(context, stopHere));
+                getHoldMessageFunction(context, stopHere)();
             }).then(function () {
-                return anim.drawFrames(100, fasterFunction(context, 100, stopHere, 0 - messageWidth));
-            }).then (function () {
-                drawMsg();
+                setTimeout(function () {
+                    anim.drawFrames(scrollFrames, fasterFunction(context, scrollFrames, stopHere, 0 - messageWidth)).then(function () {
+                        drawMsg();
+                    });
+                }, messageWidth * 15);
+
             });
     }
     drawMsg();

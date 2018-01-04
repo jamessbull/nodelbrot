@@ -120,7 +120,9 @@ jim.mandelbrot.ui.elements.create = function (_exportSizeDropdown, _mandelbrotSe
         "I've got this terrible pain in all the diodes down my left side.",
         "Complaint submitted",
         "Singing the androids lullaby",
-        "Now the world has gone to bed, darkness won't engulf my head, I can see by infra red, How I hate the night.",
+        "Now the world has gone to bed,", "darkness won't engulf my head, ",
+        "I can see by infra red, ",
+        "How I hate the night.",
         "Androids lullaby complete",
         "Caculating pixels. (Again)",
         "I really don't know why I bother",
@@ -173,8 +175,8 @@ jim.mandelbrot.ui.elements.create = function (_exportSizeDropdown, _mandelbrotSe
         "Such as ..."
     ];
     // These suck up too much cpu. what to do about that?
-    //jim.anim.textBox.create(bottomMessageBox, sillyMessages);
-    //jim.anim.textBox.create(topMessageBox, helpfulMessages);
+    jim.anim.textBox.create(bottomMessageBox, sillyMessages);
+    jim.anim.textBox.create(topMessageBox, helpfulMessages);
 
     examineMenuButton.onclick = function () {
         if (examineMenuButton.classList.contains("buttonSelected")) {
