@@ -151,8 +151,6 @@ jim.init.run = function () {
 // Had to turn off scrolling messages. Killing performance. Stop scrolling them and just repaint every few seconds?
 // Could try scrolling domElement around? Probs quicker.
 
-// Starting state no longer random do I care? No but need better starting set.
-
 // Make parallelism and chunk size auto configure for max perf and smooth frame rate depending on conditions
 // Make buttons a different colour and round the edges and try a thinner border
 // make details pixel border the correct colours
