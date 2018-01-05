@@ -157,4 +157,7 @@ jim.init.run = function () {
 // problem with hsl values is interpolated values still need to be changed back to rgb for rendering
 // have a think
 
+// tidying up. Is there any code that can go? The mandelbrot image in here seems a bit odd.
+// are the tests passing?
+
 // minify js

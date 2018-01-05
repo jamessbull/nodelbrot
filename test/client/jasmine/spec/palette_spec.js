@@ -2,7 +2,7 @@ describe("The palette", function () {
     "use strict";
 
     it("should return a colour for any number between 0 and 1", function () {
-        var palette = jim.palette.create(),
+        var palette = jim.palette.create(events),
             colours = [];
 
         colours.push(palette.colourAt(0));
@@ -18,7 +18,7 @@ describe("The palette", function () {
     });
 
     it("should take a number between 0 and 1 and return a different colour even for values which are close", function () {
-        var palette = jim.palette.create(),
+        var palette = jim.palette.create(events),
             count,
             value = 0,
             colour1,
@@ -38,7 +38,7 @@ describe("The palette", function () {
     });
 
     it("should not dupe any colour across node boundaries", function () {
-        var palette = jim.palette.create(),
+        var palette = jim.palette.create(events),
             value = 0,
             colour1,
             colour2,
@@ -46,9 +46,15 @@ describe("The palette", function () {
 
         palette.setNodes([]);
         palette.addSpecificNode(35, 0.25);
-        colour1 = palette.colourAt(0.2499);
-        colour2 = palette.colourAt(0.25);
-        colour3 = palette.colourAt(0.2501);
+        var t;
+        t = palette.colourAt(0.2499);
+        colour1 = {r: t.r, g: t.g, b: t.g};
+
+        t = palette.colourAt(0.25);
+        colour2 = {r: t.r, g: t.g, b: t.g};
+
+        t = palette.colourAt(0.2501);
+        colour3 = {r: t.r, g: t.g, b: t.g};
 
         console.log(colour1);
         console.log(colour2);

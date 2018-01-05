@@ -101,7 +101,7 @@ describe("The combined worker", function () {
      it("should calculate the same histogram whether or not it is 0 to 20 or 0 to 10 and then 10 to 20", function (done) {
          var newJob = jim.messages.interactive.create;
          var renderDefinition =  jim.messages.renderFragment.create;
-         var palette = jim.palette.create();
+         var palette = jim.palette.create(events);
          events.clear();
          var noughtToTwentyHistogram = new Uint32Array(20);
          var noughtToTenHistogram = new Uint32Array(20);
