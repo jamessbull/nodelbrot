@@ -148,17 +148,13 @@ jim.init.run = function () {
 };
 
 // Missing features
-// Make parallelism and chunk size auto configure for max perf and smooth frame rate depending on conditions
+
 // Make buttons a different colour and round the edges and try a thinner border
 
-// Make render size / resolution slightly configurable
 
 // look at palette - can it be optimsed can I have hsl values back?
 // Maybe - maintain two sets of colours - one hsl one rgb update both as palette changes
 // problem with hsl values is interpolated values still need to be changed back to rgb for rendering
 // have a think
 
-// Adjust number of blocks I split the screen into according to performance;
-// Then adjust block size to maintain 24 fps
-//
 // minify js

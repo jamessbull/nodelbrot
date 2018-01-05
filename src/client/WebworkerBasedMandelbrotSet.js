@@ -7,7 +7,7 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
     var requestExaminePixelData = false;
     var copyOfHisto = new Uint32Array(250000);
     var histogramTotal = 0;
-    var stepSize = _stepSize;
+    var stepSize = 95;
     var currentIteration = 0;
     var extents = _extents;
     var palette = null;
@@ -15,6 +15,7 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
     var running = true;
     var stopped = false;
     var fragments;
+    var timer = jim.stopwatch.create();
 
     function onEachJob(_msg) {
         _events.fire(_events.histogramUpdateReceivedFromWorker, {update: new Uint32Array(_msg.histogramUpdate), currentIteration: currentIteration});
@@ -27,7 +28,17 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
         }
     }
 
+    function updateStepSize (elapsed) {
+        if (elapsed > 42 && stepSize > 5) {
+            stepSize -= 5;
+        }
+        if (elapsed < 30 && stepSize < 100) {
+            stepSize +=5;
+        }
+    }
+
     function onAllJobsComplete() {
+        timer.stop();
         _events.fire(_events.maxIterationsUpdated, currentIteration);
         currentIteration += stepSize;
         if(requestExaminePixelData) {
@@ -37,6 +48,9 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
         _events.fire(_events.renderImage, {imgData: _imgData, offset: 0});
         _events.fire(_events.andFinally);
         _events.fire(_events.frameComplete);
+
+        updateStepSize(timer.elapsed());
+
         if(running) {
             postMessage();
         } else {
@@ -47,6 +61,7 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
     }
 
     function postMessage() {
+        timer.start();
         var mx = extents ? extents.mx : undefined;
         var my = extents ? extents.my : undefined;
         var mw = extents ? extents.mw : undefined;
