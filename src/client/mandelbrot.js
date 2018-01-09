@@ -4,19 +4,10 @@ jim.defaults.mandelbrotExtents = jim.rectangle.create(-2.5, -1, 3.5, 2);
 namespace("jim.mandelbrotImage");
 jim.mandelbrotImage.create = function (_events, _width, _height) {
     "use strict";
-    var dom                     = jim.dom.functions.create();
-
     var startingExtent = jim.rectangle.create(-2.5, -1, 3.5, 2);
 
     var state = jim.mandelbrot.state.create(_width, _height, startingExtent, _events);
 
-    var canvas = dom.element("mandelbrotCanvas");
-    canvas.width = _width;
-    canvas.height = _height;
-    canvas.oncontextmenu = function (e) {
-        e.preventDefault();
-    };
-    var histoData = new Uint32Array(250000);
     var imgData = new Uint8ClampedArray(_width * _height * 4 );
     var escapeValues = new Uint32Array(_width * _height);
     var imageEscapeValues = new Uint32Array(_width * _height);
@@ -26,12 +17,6 @@ jim.mandelbrotImage.create = function (_events, _width, _height) {
     var mandelbrotCalculator = jim.mandelbrot.webworkerInteractive.create(_width, _height, _events, 30, 3, imgData, escapeValues, xState, yState, imageEscapeValues, startingExtent);
     mandelbrotCalculator.start();
     return {
-        histoData: function () {
-          return histoData;
-        },
-        canvas: function () {
-            return canvas;
-        },
         imgData: function () {
             return imgData;
         },
@@ -64,16 +49,27 @@ jim.mandelbrotImage.create = function (_events, _width, _height) {
 namespace("jim.init");
 jim.init.run = function () {
     "use strict";
+    var displayWidth            = 700;
+    var displayHeight           = 400;
+    var histoData = new Uint32Array(250000);
     var round                   = jim.common.round;
     var newMainUI               = jim.mandelbrot.ui.create;
     var dom                     = jim.dom.functions.create();
+    var mainCanvas              = dom.element("mandelbrotCanvas");
+
+    mainCanvas.width = displayWidth;
+    mainCanvas.height = displayHeight;
+    mainCanvas.oncontextmenu = function (e) {
+        e.preventDefault();
+    };
+
     var mandelbrot              = jim.mandelbrotImage.create(events, 700, 400);
     var newColourGradientUI     = jim.colour.gradientui.create;
     var newColourPicker         = jim.colour.colourPicker.create;
     var newExportSizeDropdown   = jim.mandelbrot.exportDropdown.create;
     var newMiscUiElements       =  jim.mandelbrot.ui.elements.create;
     var newBookmarker           = jim.mandelbrot.bookmark.create;
-    var mandelCanvas            = mandelbrot.canvas();
+    var mandelCanvas            = mainCanvas;
 
     var uiCanvas                = dom.element('uiCanvas');
     var pixelInfoCanvas         = dom.element("pixelInfoCanvas");
@@ -92,8 +88,8 @@ jim.init.run = function () {
     var exportSizeSelect        = dom.element("exportSizeSelect");
     var fps                     = dom.element("framesPerSecond");
     var deadRegionCanvas        = dom.element("deadRegionCanvas");
-    deadRegionCanvas.width = mandelbrot.width();
-    deadRegionCanvas.height = mandelbrot.height();
+    deadRegionCanvas.width = displayWidth;
+    deadRegionCanvas.height = displayHeight;
     deadRegionCanvas.oncontextmenu = function (e) {
         e.preventDefault();
     };
@@ -102,17 +98,17 @@ jim.init.run = function () {
 
     jim.mandelbrot.mandelbrotViewUIPolicy.create(uiCanvas, events);
     var drawSelection = jim.mandelbrot.ui.actions.drawSelection.create();
-    var zoomInAnim = jim.mandelbrot.ui.actions.zoomInAnimation.create(uiCanvas, mandelbrot.canvas(), drawSelection);
-    var zoomOutAnim = jim.mandelbrot.ui.actions.zoomOutAnimation.create(uiCanvas, mandelbrot.canvas(), drawSelection);
-    jim.mandelbrot.actions.zoomOut.create(events, jim.stopwatch.create(), zoomOutAnim, mandelbrot.canvas(),mandelbrot.state());
-    jim.mandelbrot.actions.zoomIn.create(mandelbrot.canvas(), uiCanvas, events, jim.selection.create(jim.rectangle.create(0, 0, mandelbrot.canvas().width, mandelbrot.canvas().height)), zoomInAnim);
-    jim.mandelbrot.actions.move.create(events, mandelbrot.canvas(), uiCanvas);
+    var zoomInAnim = jim.mandelbrot.ui.actions.zoomInAnimation.create(uiCanvas, mainCanvas, drawSelection);
+    var zoomOutAnim = jim.mandelbrot.ui.actions.zoomOutAnimation.create(uiCanvas, mainCanvas, drawSelection);
+    jim.mandelbrot.actions.zoomOut.create(events, jim.stopwatch.create(), zoomOutAnim, mainCanvas,mandelbrot.state());
+    jim.mandelbrot.actions.zoomIn.create(mainCanvas, uiCanvas, events, jim.selection.create(jim.rectangle.create(0, 0, mainCanvas.width, mainCanvas.height)), zoomInAnim);
+    jim.mandelbrot.actions.move.create(events, mainCanvas, uiCanvas);
 
     jim.metrics.create(jim.metrics.clock.create(), events);
     jim.fpsdisplay.create(fps, events, dom);
-    jim.mandelbrot.escapeDistributionHistogram.create(events, mandelbrot.histoData());
-    jim.mandelbrot.deadRegions.create(events, deadRegionCanvas, mandelbrot.canvas(), mandelbrot.escapeValues());
-    jim.mandelbrot.imageRenderer.create(events, mandelbrot.canvas(), mandelbrot.width(), mandelbrot.height());
+    jim.mandelbrot.escapeDistributionHistogram.create(events, histoData);
+    jim.mandelbrot.deadRegions.create(events, deadRegionCanvas, mainCanvas, mandelbrot.escapeValues());
+    jim.mandelbrot.imageRenderer.create(events, mainCanvas, mandelbrot.width(), mandelbrot.height());
     jim.mandelbrot.examinePixelStateDisplay.create(events, pixelInfoCanvas, mandelbrot.imgData(), mandelbrot.xState(), mandelbrot.yState(), mandelbrot.escapeValues(), mandelbrot.imageEscapeValues(), mandelbrot.width(), uiCanvas);
     jim.mandelbrot.pixelEscapeRateTracker.create(events);
     var palette = jim.palette.create(events);
