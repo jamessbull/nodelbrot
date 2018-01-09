@@ -37,12 +37,6 @@ jim.mandelbrotImage.create = function (_events, _width, _height) {
         },
         state: function () {
             return state;
-        },
-        width: function () {
-            return _width;
-        },
-        height: function () {
-            return _height;
         }
     };
 };
@@ -108,8 +102,8 @@ jim.init.run = function () {
     jim.fpsdisplay.create(fps, events, dom);
     jim.mandelbrot.escapeDistributionHistogram.create(events, histoData);
     jim.mandelbrot.deadRegions.create(events, deadRegionCanvas, mainCanvas, mandelbrot.escapeValues());
-    jim.mandelbrot.imageRenderer.create(events, mainCanvas, mandelbrot.width(), mandelbrot.height());
-    jim.mandelbrot.examinePixelStateDisplay.create(events, pixelInfoCanvas, mandelbrot.imgData(), mandelbrot.xState(), mandelbrot.yState(), mandelbrot.escapeValues(), mandelbrot.imageEscapeValues(), mandelbrot.width(), uiCanvas);
+    jim.mandelbrot.imageRenderer.create(events, mainCanvas, displayWidth, displayHeight);
+    jim.mandelbrot.examinePixelStateDisplay.create(events, pixelInfoCanvas, mandelbrot.imgData(), mandelbrot.xState(), mandelbrot.yState(), mandelbrot.escapeValues(), mandelbrot.imageEscapeValues(), displayWidth, uiCanvas);
     jim.mandelbrot.pixelEscapeRateTracker.create(events);
     var palette = jim.palette.create(events);
     var colourGradientui = newColourGradientUI(colourGradientCanvas, addButton, removeButton, palette, events);
