@@ -1,5 +1,5 @@
 namespace("jim.mandelbrot.image.exporter");
-jim.mandelbrot.image.exporter.create = function (_exportDimensions, _mandelbrotSet, _dom, _events) {
+jim.mandelbrot.image.exporter.create = function (_exportDimensions, state, _dom, _events) {
     "use strict";
     var exporting = false;
 
@@ -67,7 +67,7 @@ jim.mandelbrot.image.exporter.create = function (_exportDimensions, _mandelbrotS
         }
 
         var timer = jim.stopwatch.create();
-        var extents = _mandelbrotSet.state().getExtents();
+        var extents = state.getExtents();
 
         var mx = extents.topLeft().x;
         var my = extents.topLeft().y;
@@ -142,7 +142,7 @@ jim.mandelbrot.image.exporter.create = function (_exportDimensions, _mandelbrotS
             return false ;
         }
         var depth = parseInt(exportDepth.value);
-        var source = _mandelbrotSet.state().getExtents();
+        var source = state.getExtents();
         var calculator = jim.mandelbrot.export.escapeHistogramCalculator.create();
         var dest = jim.rectangle.create(0, 0, roundedWidth, roundedHeight);
         var noOfParts = 10;

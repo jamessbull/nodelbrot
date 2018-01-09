@@ -1,39 +1,6 @@
 namespace("jim.defaults");
 jim.defaults.mandelbrotExtents = jim.rectangle.create(-2.5, -1, 3.5, 2);
 
-namespace("jim.mandelbrotImage");
-jim.mandelbrotImage.create = function (_events, _width, _height) {
-    "use strict";
-    var startingExtent = jim.rectangle.create(-2.5, -1, 3.5, 2);
-    var imgData = new Uint8ClampedArray(_width * _height * 4 );
-    var escapeValues = new Uint32Array(_width * _height);
-    var imageEscapeValues = new Uint32Array(_width * _height);
-    var xState = new Uint32Array(_width * _height);
-    var yState = new Uint32Array(_width * _height);
-
-    var mandelbrotCalculator = jim.mandelbrot.webworkerInteractive.create(_width, _height, _events, 30, 3, imgData, escapeValues, xState, yState, imageEscapeValues, startingExtent);
-    mandelbrotCalculator.start();
-    return {
-        imgData: function () {
-            return imgData;
-        },
-        escapeValues: function () {
-            return escapeValues;
-        },
-        imageEscapeValues: function () {
-          return imageEscapeValues;
-        },
-        xState: function () {
-            return xState;
-        },
-        yState: function () {
-            return yState;
-        },
-        move: function (x, y) {
-            state.move(x, y);
-        }
-    };
-};
 namespace("jim.init");
 jim.init.run = function () {
     "use strict";
@@ -41,7 +8,6 @@ jim.init.run = function () {
     var displayHeight           = 400;
     var histoData = new Uint32Array(250000);
     var round                   = jim.common.round;
-    var newMainUI               = jim.mandelbrot.ui.create;
     var dom                     = jim.dom.functions.create();
     var mainCanvas              = dom.element("mandelbrotCanvas");
 
@@ -50,13 +16,22 @@ jim.init.run = function () {
     var state = jim.mandelbrot.state.create(displayWidth, displayHeight, startingExtent, events);
 
 
+    var imgData = new Uint8ClampedArray(displayWidth * displayHeight * 4 );
+    var escapeValues = new Uint32Array(displayWidth * displayHeight);
+    var imageEscapeValues = new Uint32Array(displayWidth * displayHeight);
+    var xState = new Uint32Array(displayWidth * displayHeight);
+    var yState = new Uint32Array(displayWidth * displayHeight);
+
+    var mandelbrotCalculator = jim.mandelbrot.webworkerInteractive.create(displayWidth, displayHeight, events, 30, 3, imgData, escapeValues, xState, yState, imageEscapeValues, startingExtent);
+    mandelbrotCalculator.start();
+
+
     mainCanvas.width = displayWidth;
     mainCanvas.height = displayHeight;
     mainCanvas.oncontextmenu = function (e) {
         e.preventDefault();
     };
 
-    var mandelbrot              = jim.mandelbrotImage.create(events, 700, 400);
     var newColourGradientUI     = jim.colour.gradientui.create;
     var newColourPicker         = jim.colour.colourPicker.create;
     var newExportSizeDropdown   = jim.mandelbrot.exportDropdown.create;
@@ -100,9 +75,9 @@ jim.init.run = function () {
     jim.metrics.create(jim.metrics.clock.create(), events);
     jim.fpsdisplay.create(fps, events, dom);
     jim.mandelbrot.escapeDistributionHistogram.create(events, histoData);
-    jim.mandelbrot.deadRegions.create(events, deadRegionCanvas, mainCanvas, mandelbrot.escapeValues());
+    jim.mandelbrot.deadRegions.create(events, deadRegionCanvas, mainCanvas, escapeValues);
     jim.mandelbrot.imageRenderer.create(events, mainCanvas, displayWidth, displayHeight);
-    jim.mandelbrot.examinePixelStateDisplay.create(events, pixelInfoCanvas, mandelbrot.imgData(), mandelbrot.xState(), mandelbrot.yState(), mandelbrot.escapeValues(), mandelbrot.imageEscapeValues(), displayWidth, uiCanvas);
+    jim.mandelbrot.examinePixelStateDisplay.create(events, pixelInfoCanvas, imgData, xState, yState, escapeValues, imageEscapeValues, displayWidth, uiCanvas);
     jim.mandelbrot.pixelEscapeRateTracker.create(events);
     var palette = jim.palette.create(events);
     var colourGradientui = newColourGradientUI(colourGradientCanvas, addButton, removeButton, palette, events);
@@ -110,7 +85,7 @@ jim.init.run = function () {
     var bookmarker = newBookmarker(bookmarkButton, state, colourGradientui, events);
     newColourPicker(colourPickerCanvas, colourGradientui, events);
     var exportSizeDropdown = newExportSizeDropdown(exportSizeSelect, [smallExport, mediumExport, largeExport, veryLargeExport]);
-    newMiscUiElements(exportSizeDropdown, mandelbrot, events);
+    newMiscUiElements(exportSizeDropdown, state, events);
 
     events.listenTo(events.maxIterationsUpdated, function (_iter) {
         maxIteration.innerText = _iter;

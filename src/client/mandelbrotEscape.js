@@ -47,21 +47,10 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
         maxIterations   = 0,
         fromScreen = function (x, y) { return screen.at(x, y).translateTo(currentExtents);};
 
-    var noOfPixels = sizeX * sizeY;
-    var imgData;
-    var histogramTotal;
-
-    var resetState = function () {
-        imgData = new Uint8ClampedArray(4 * noOfPixels);
-        histogramTotal = 0;
-    };
-    resetState();
-
     var theState = {
         zoomTo: function (selection) {
             previousExtents.push(currentExtents.copy());
             currentExtents = selection.area().translateFrom(screen).to(currentExtents);
-            resetState();
             _events.fire(_events.extentsUpdate, currentExtents);
         },
         resize: function (sizeX, sizeY) {
@@ -70,7 +59,6 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
         zoomOut: function () {
             if (previousExtents.length > 0) {
                 currentExtents = previousExtents.pop();
-                resetState();
                 _events.fire(_events.extentsUpdate, currentExtents);
             }
         },
@@ -80,7 +68,6 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
         move: function (moveX, moveY) {
             var distance = fromScreen(moveX, moveY).distanceTo(currentExtents.topLeft());
             currentExtents.move(0 - distance.x, 0 - distance.y);
-            resetState();
             _events.fire(_events.extentsUpdate, currentExtents);
         },
         getExtents: function () {
@@ -114,7 +101,6 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
 namespace("jim.mandelbrot.escapeDistributionHistogram");
 jim.mandelbrot.escapeDistributionHistogram.create = function (_events, _histoData) {
     "use strict";
-    //var histoData = new Uint32Array(250000);
     var currentTotal = 0;
     var called = 0;
     var lastTimeRound = 0;

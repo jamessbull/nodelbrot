@@ -49,7 +49,7 @@ jim.mandelbrot.ui.histogram.create = function (_parallelHistogram, _mandelbrotSe
 };
 
 namespace("jim.mandelbrot.ui.elements");
-jim.mandelbrot.ui.elements.create = function (_exportSizeDropdown, _mandelbrotSet, _events) {
+jim.mandelbrot.ui.elements.create = function (_exportSizeDropdown, _state, _events) {
     "use strict";
     var dom = jim.dom.functions.create();
     var on = _events.listenTo;
@@ -218,5 +218,5 @@ jim.mandelbrot.ui.elements.create = function (_exportSizeDropdown, _mandelbrotSe
         }
     };
 
-    jim.mandelbrot.image.exporter.create(_exportSizeDropdown, _mandelbrotSet, dom, _events);
+    jim.mandelbrot.image.exporter.create(_exportSizeDropdown, _state, dom, _events);
 };
