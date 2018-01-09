@@ -5,9 +5,6 @@ namespace("jim.mandelbrotImage");
 jim.mandelbrotImage.create = function (_events, _width, _height) {
     "use strict";
     var startingExtent = jim.rectangle.create(-2.5, -1, 3.5, 2);
-
-    var state = jim.mandelbrot.state.create(_width, _height, startingExtent, _events);
-
     var imgData = new Uint8ClampedArray(_width * _height * 4 );
     var escapeValues = new Uint32Array(_width * _height);
     var imageEscapeValues = new Uint32Array(_width * _height);
@@ -34,9 +31,6 @@ jim.mandelbrotImage.create = function (_events, _width, _height) {
         },
         move: function (x, y) {
             state.move(x, y);
-        },
-        state: function () {
-            return state;
         }
     };
 };
@@ -50,6 +44,11 @@ jim.init.run = function () {
     var newMainUI               = jim.mandelbrot.ui.create;
     var dom                     = jim.dom.functions.create();
     var mainCanvas              = dom.element("mandelbrotCanvas");
+
+    var startingExtent = jim.rectangle.create(-2.5, -1, 3.5, 2);
+
+    var state = jim.mandelbrot.state.create(displayWidth, displayHeight, startingExtent, events);
+
 
     mainCanvas.width = displayWidth;
     mainCanvas.height = displayHeight;
@@ -94,7 +93,7 @@ jim.init.run = function () {
     var drawSelection = jim.mandelbrot.ui.actions.drawSelection.create();
     var zoomInAnim = jim.mandelbrot.ui.actions.zoomInAnimation.create(uiCanvas, mainCanvas, drawSelection);
     var zoomOutAnim = jim.mandelbrot.ui.actions.zoomOutAnimation.create(uiCanvas, mainCanvas, drawSelection);
-    jim.mandelbrot.actions.zoomOut.create(events, jim.stopwatch.create(), zoomOutAnim, mainCanvas,mandelbrot.state());
+    jim.mandelbrot.actions.zoomOut.create(events, jim.stopwatch.create(), zoomOutAnim, mainCanvas, state);
     jim.mandelbrot.actions.zoomIn.create(mainCanvas, uiCanvas, events, jim.selection.create(jim.rectangle.create(0, 0, mainCanvas.width, mainCanvas.height)), zoomInAnim);
     jim.mandelbrot.actions.move.create(events, mainCanvas, uiCanvas);
 
@@ -108,7 +107,7 @@ jim.init.run = function () {
     var palette = jim.palette.create(events);
     var colourGradientui = newColourGradientUI(colourGradientCanvas, addButton, removeButton, palette, events);
 
-    var bookmarker = newBookmarker(bookmarkButton, mandelbrot, colourGradientui, events);
+    var bookmarker = newBookmarker(bookmarkButton, state, colourGradientui, events);
     newColourPicker(colourPickerCanvas, colourGradientui, events);
     var exportSizeDropdown = newExportSizeDropdown(exportSizeSelect, [smallExport, mediumExport, largeExport, veryLargeExport]);
     newMiscUiElements(exportSizeDropdown, mandelbrot, events);
@@ -116,7 +115,7 @@ jim.init.run = function () {
     events.listenTo(events.maxIterationsUpdated, function (_iter) {
         maxIteration.innerText = _iter;
         var total = 700 * 400;
-        var escapedThisIteration = mandelbrot.state().escapedByCurrentIteration;
+        var escapedThisIteration = state.escapedByCurrentIteration;
         var escaped = total - escapedThisIteration;
 
         if (escapedThisIteration > 0) {

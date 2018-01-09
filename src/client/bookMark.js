@@ -1,5 +1,5 @@
 namespace("jim.mandelbrot.bookmark");
-jim.mandelbrot.bookmark.create = function (bookmarkButton, mandelbrot, colourGradientui, _events) {
+jim.mandelbrot.bookmark.create = function (bookmarkButton, state, colourGradientui, _events) {
 
     "use strict";
     var justBookmarked = false;
@@ -33,7 +33,7 @@ jim.mandelbrot.bookmark.create = function (bookmarkButton, mandelbrot, colourGra
         var mandelbrotInfo = currentMandelbrotInfo();
         palette.fromNodeList(mandelbrotInfo.nodes);
         colourGradientui.rebuildMarkers(true);
-        mandelbrot.state().setExtents(jim.rectangle.create(mandelbrotInfo.location));
+        state.setExtents(jim.rectangle.create(mandelbrotInfo.location));
     };
 
     window.onhashchange = function () {
@@ -44,7 +44,7 @@ jim.mandelbrot.bookmark.create = function (bookmarkButton, mandelbrot, colourGra
     };
 
     var currentMandelbrotInfoToUrl = function () {
-        var a = mandelbrot.state().getExtents();
+        var a = state.getExtents();
         var x = a.topLeft().x;
         var y = a.topLeft().y;
         var w = a.width();
