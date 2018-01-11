@@ -1,0 +1,376 @@
+<html>
+<head>
+    <title>Mandelbrot fractal explorer</title>
+    <script src="js/mandelbrotExplorer.js"></script>
+</head>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        jim.init.run();
+    });
+</script>
+
+<style>
+    .titleBar {
+        margin: 0px 0px 8px 200px;
+    }
+
+    .standard {
+        font-family: sans-serif;
+        color: antiquewhite;
+        background-color: black;
+    }
+
+    .bodyText {
+        font-size: smaller
+    }
+
+    .valueText {
+        font-size: smaller;
+        color: goldenrod;
+    }
+
+    .panel {
+        margin-bottom: 10px;
+        margin-left: 10px;
+        margin-top: -3px;
+        padding-top: 10px;
+        border: 2px solid;
+        border-radius: 10px;
+    }
+
+    .button {
+        padding: 2px 2px 2px 4px;
+        margin-right: 4px;
+        margin-left: 4px;
+        outline: outset 2px;
+        cursor: default;
+    }
+
+    .buttonSelected {
+        font-size: 0.9em;
+        padding: 2px 2px 2px 4px;
+        margin-right: 7px;
+        margin-left: 5px;
+        outline: inset 2px;
+    }
+
+    .canvas {
+        width: 700px;
+        height: 400px;
+    }
+
+    .canvasBorder {
+        position: absolute;
+        border: 2px solid;
+        left: -3px;
+        top: -3px;
+    }
+
+    .border {
+        border: 2px solid;
+    }
+
+    .canvasRadius {
+        border-radius: 10px;
+    }
+
+    .overlay {
+        position: absolute;
+        left: 0;
+        top: 0;
+    }
+
+    .bottomMargin {
+        margin-bottom: 15px;
+    }
+
+    .smallBottomMargin {
+        margin-bottom: 10px;
+    }
+
+    .mediumTopMargin {
+        margin-top: 10px;
+    }
+
+    .leftMargin {
+        margin-left: 15px;
+    }
+
+    .mediumLeftMargin {
+        margin-left: 10px;
+    }
+
+    .padBottom {
+        padding-bottom: 10px;
+    }
+
+    .shimmyLeft {
+        margin-left: -3px;
+    }
+
+    .panelContent {
+        padding-left: 10px;
+        padding-right: 10px;
+        margin-bottom: 7px;
+    }
+
+    .exportButton {
+        margin-left: 5px;
+        margin-right: 5px;
+        margin-bottom: 15px;
+    }
+
+    .mediumRadius {
+        border-radius: 5px;
+    }
+
+    .pixelInfoCanvas {
+        border-radius: 5px;
+        border: 1px solid;
+        display: inline-block;
+    }
+
+    .smallMargin {
+        margin: 5px;
+    }
+
+    .detailText {
+        font-size: x-small;
+    }
+
+    .progressPopUp {
+        position: absolute;
+        left: 40%;
+        top: 25%;
+        z-index: 1000;
+        background-color: black;
+    }
+
+    .inline {
+        display: inline-block;
+    }
+
+    .disabled {
+        color: gray;
+    }
+
+    .centered {
+        text-align: center;
+        width: 100%;
+    }
+
+    .floatright {
+        float: right;
+    }
+
+    .topMargin {
+        margin-top: 10px;
+    }
+
+    .rightMargin {
+        margin-right: 10px;
+    }
+
+    .padSides {
+        padding-left: 6px;
+        padding-right: 6px;
+    }
+
+    .padRight {
+        padding-right: 5px;
+    }
+
+    .pixelInfo {
+        margin-top: 15px;
+        margin-bottom: 8px;
+    }
+
+    .messageBox {
+        width: 750px;
+    }
+
+    .donationLink {
+        color: yellow;
+    }
+
+    .topRight {
+        position: absolute;
+        top:10px;
+        left:840px;
+    }
+
+
+</style>
+
+<div class="standard">
+    <div class="bottomMargin">
+        <span><a class="donationLink leftMargin" href="http://www.payPal.me/fractalContribution">Donate!</a></span>
+        <span class="border mediumRadius mediumLeftMargin messageBox smallBottomMargin"><canvas width=740, height=15, id="topMessageBox">I am hello message.</canvas></span>
+        <span><a class="donationLink topRight leftMargin" href="http://www.payPal.me/fractalContribution">Donate!</a></span>
+    </div>
+    <div id="bothColumns" style="position:relative; height:575px;">
+        <div id="left" style="position: absolute;">
+            <div class="bodyText panel">
+                <div class="panelContent">
+                    <div class="bottomMargin centered">
+                        <span id="stop" class="button">Stop </span>
+                        <span id="start" class="button">Start </span>
+                        <span id="bookmarkButton" class="button">Link </span>
+                    </div>
+                    <table>
+                        <tbody>
+                        <tr>
+                            <td>Iteration</td>
+                            <td><span class="valueText" id="maxIteration"></span></td>
+                        </tr>
+                        <tr>
+                            <td>Fps</td>
+                            <td><span class="valueText" id="framesPerSecond"></span></td>
+                        </tr>
+                        <tr>
+                            <td>Last escape</td>
+                            <td><span class="valueText" id="lastPointEscapedAt"></span></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="panel bodyText">
+                <div id="exportImagePanel">
+                    <div class="panelContent">
+                        <span id="export" class="button exportButton">Export Png</span>
+                        <span id="openLastExportButton" class="button disabled">Last Export</span>
+
+                        <div class="mediumTopMargin">
+                            <table>
+                                <tbody>
+                                <tr>
+                                    <td class="bodyText">Iterations</td>
+                                    <td class="bodyText"><input size="8" id="exportDepth" type="text" class="export"
+                                                                value="1000"/></td>
+                                </tr>
+                                <tr>
+                                    <td class="bodyText">Size</td>
+
+                                    <td>
+                                        <select id=exportSizeSelect>
+                                            <option id="smallExport">Small</option>
+                                            <option id="mediumExport">Medium</option>
+                                            <option id="largeExport">Large</option>
+                                            <option id="veryLargeExport">Huge</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="bodyText">Ignore dead</td>
+                                    <td><input id="ignoreDeadPixels" type="checkbox"/></td>
+                                </tr>
+
+                                <tr>
+                                    <td class="bodyText">Dead radius</td>
+                                    <td><input size="8" id="ignoreDeadPixelsRadius" type="text" class="export"
+                                               value="1"/>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="panel bodyText">
+                <div id=examinePixels class="examinePixels">
+                    <div class="centered bottomMargin">
+                        <span id="pixelInfoButton" class="button">Examine</span>
+                    </div>
+
+                    <div class="centered">
+                        <canvas id="pixelInfoCanvas" class="pixelInfoCanvas smallMargin"></canvas>
+                    </div>
+                    <div class="pixelInfo" id=pixelInfo>
+                        <table class="pixelDetail detailText">
+                            <tr>
+                                <td>Escaped at</td>
+                                <td><span class="valueText" id="escapedAt"></span></td>
+                            </tr>
+                            <tr>
+                                <td>Coloured at</td>
+                                <td><span class="valueText" id="imageEscapedAt"></span></td>
+                            </tr>
+                            <tr>
+                                <td rowspan="2">Calc value</td>
+                                <td>x: <span class="valueText" id="mx"></span></td>
+                            </tr>
+                            <tr>
+                                <td>y: <span class="valueText" id="my"></span></td>
+                            </tr>
+                            <tr>
+                                <td>Colour</td>
+                                <td>
+                                    <span class="valueText" id="colourInfor"></span>
+                                    <span class="valueText" id="colourInfog"></span>
+                                    <span class="valueText" id="colourInfob"></span>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="right" style="position: absolute; left:210px;">
+            <div class="panel progressPopUp bodyText" id="exportProgress">
+                <div class="centered">
+                    <span>Progress</span>
+                </div>
+                <table class="progressTable panelContent">
+                    <tbody>
+                    <tr>
+                        <td class="bodyText">Histogram:</td>
+                        <td class="bodyText" id="histogramProgress">0.00%</td>
+                    </tr>
+                    <tr>
+                        <td class="bodyText">Image:</td>
+                        <td class="bodyText" id="imageProgress">0.00%</td>
+                    </tr>
+                    <tr>
+                        <td class="bodyText">Elapsed:</td>
+                        <td class="bodyText"><span class="bodyText" id="elapsedTime">0</span> s</td>
+                    </tr>
+                    </tbody>
+                </table>
+                <div class="centered bottomMargin">
+                    <a class="button bodyText" id="export1">Open Image</a>
+                </div>
+
+            </div>
+            <div class="">
+                <canvas id="mandelbrotCanvas" class="canvasRadius"></canvas>
+                <canvas id="deadRegionCanvas" class="overlay canvasRadius"></canvas>
+                <canvas id="uiCanvas" class=" canvasBorder canvasRadius"></canvas>
+            </div>
+            <div class="border canvasRadius topMargin shimmyLeft">
+                <div class="colourPicker">
+                    <div class="topMargin rightMargin floatright">
+                        <span id="addButton" class="button padRight">+</span>
+                        <span id="removeButton" class="button padSides">-</span>
+                    </div>
+
+                    <canvas class="mediumRadius topMargin leftMargin" id="colourGradientCanvas" width=600
+                            height=40></canvas>
+                </div>
+
+                <div>
+                    <canvas id="colourPickerCanvas" class="mediumRadius" width=700, height=100></canvas>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <span><a class="donationLink leftMargin" href="http://www.payPal.me/fractalContribution">Donate!</a></span>
+
+    <span class="border mediumRadius mediumLeftMargin messageBox">
+        <canvas width=740, height=15, id="bottomMessageBox">I am hello message.</canvas>
+    </span>
+    <span><a class="donationLink leftMargin" href="http://www.payPal.me/fractalContribution">Donate!</a></span>
+
+</div>

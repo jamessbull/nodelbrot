@@ -125,3 +125,11 @@ jim.init.run = function () {
 // are the tests passing?
 
 // minify js
+// ok have written some code to plonk them all together for the main init.
+// need to do the same for all three web workers.
+// once that is done then I need to check it all works
+//1) work out where the files will be served from to test it
+// use hiawatha - installed in /usr/local/sbin conf in /usr/local/etc serving from nodelbrot latest.
+//2) add all code to html and call init.run
+//3) clump together code for all three webworkers - refactor so there is only one and a command i sent with each message identifying it?
+//4) Yes that way only two files are required not four

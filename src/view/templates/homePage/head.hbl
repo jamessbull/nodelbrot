@@ -1,4 +1,4 @@
-<title>Hello Me</title>
+<title>Mandelbrot fractal explorer</title>
 <script src="/js/common.js"></script>
 <script src="/js/events.js"></script>
 <script src="/js/mandelbrotPoint.js"></script>
