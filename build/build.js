@@ -35,42 +35,19 @@ var uiFiles = [
     "../src/client/magnifiedDisplay.js",
     "../src/client/export/exportHistogramCreator.js"];
 
-var histoFiles = [
+var workerFiles = [
     "../src/client/common.js",
     "../src/client/mandelbrotPoint.js",
-    "../src/client/events.js",
+    '../src/client/tinycolor.js',
     "../src/client/palette.js",
     "../src/client/histogram.js",
+    '../src/client/mandelbrotEscape.js',
     "../src/client/setProcessor.js",
-    "../src/client/histogramCalculatingWorker.js"
+    "../src/client/uiWorker.js",
+    "../src/client/histogramExportWorker.js",
+    "../src/client/imageExportWorker.js"
 ];
-var exportFiles = [
-    '../src/client/common.js',
-    '../src/client/mandelbrotPoint.js',
-    '../src/client/stopWatch.js',
-    '../src/client/tinycolor.js',
-    '../src/client/events.js',
-    '../src/client/palette.js',
-    '../src/client/histogram.js',
-    '../src/client/mandelbrotEscape.js',
-    '../src/client/selection.js',
-    '../src/client/mandelbrot.js',
-    '../src/client/colourPicker.js',
-    '../src/client/setProcessor.js',
-    '../src/client/mandelbrotImageCalculatingWorker.js'
-];
-var combinedFiles = [
-    '../src/client/common.js',
-    '../src/client/events.js',
-    '../src/client/mandelbrotPoint.js',
-    '../src/client/stopWatch.js',
-    '../src/client/setProcessor.js',
-    '../src/client/tinycolor.js',
-    '../src/client/palette.js',
-    '../src/client/histogram.js',
-    '../src/client/mandelbrotEscape.js',
-    '../src/client/combinedworker.js'
-];
+
 
 function concatFiles(files) {
     var content = ""
@@ -81,9 +58,53 @@ function concatFiles(files) {
     return content;
 }
 
-fs.writeFileSync("../latest/js/mandelbrotExplorer.js", concatFiles(uiFiles));
-fs.writeFileSync("../latest/js/histogramCalculatingWorker.js", concatFiles(histoFiles));
-fs.writeFileSync("../latest/js/mandelbrotImageCalculatingWorker.js", concatFiles(exportFiles));
-fs.writeFileSync("../latest/js/combinedWorker.js", concatFiles(combinedFiles));
-// write / close new file
+function buildWorker(location) {
+    var workerFileContent = concatFiles(workerFiles);
+    var unifiedworkerContent = fs.readFileSync("../src/client/unifiedworker.js", "utf8");
+    var modifiedUnifiedWorkerContent = unifiedworkerContent.replace(/importScripts[\s\S]*var u/, "var u");
+    var fullContent = workerFileContent + "\n" + modifiedUnifiedWorkerContent;
+    fs.writeFileSync(location, fullContent);
+}
+
+function loadFile(name) {
+    return fs.readFileSync(name, 'utf8');
+}
+
+function removeScriptTags(html) {
+    return html.replace(/<script.*<\/script>\n/g,"");
+}
+
+function processedHead() {
+    var head = "../src/view/templates/homePage/head.hbl";
+    return removeScriptTags(loadFile(head));
+}
+
+function processedBody() {
+    var body = "../src/view/templates/homePage/body.hbl";
+    var bodyMarkup = loadFile(body);
+    var js = concatFiles(uiFiles);
+    var allJs = js + "\n" + "jim.init.run();\n";
+
+    console.log("All js is");
+    console.log("***********************");
+    console.log(allJs);
+    console.log("***********************");
+
+    return bodyMarkup.replace(/jim.init.run\(\);/, allJs);
+}
+
+function fullHtml(head, body) {
+    var html = "../src/view/templates/html.hbl";
+    var htmlMarkup = loadFile(html);
+    htmlMarkup = htmlMarkup.replace(/{{{head}}}/, head);
+    return htmlMarkup.replace(/{{{body}}}/, body);
+}
+
+function buildUI(location) {
+    var html = fullHtml(processedHead(), processedBody());
+    fs.writeFileSync(location, html);
+}
+
+buildWorker("../latest/js/unifiedworker.js");
+buildUI("../latest/mandelbrotExplorer.html");
 
