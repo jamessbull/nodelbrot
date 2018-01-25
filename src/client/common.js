@@ -56,7 +56,6 @@ jim.worker.pool.create = function (noOfWorkers, workerUrl, initialJobs, toTransf
         var job = _jobs.shift();
         if (job) {
             job.batchid = _currentBatchId;
-
             var transferList = job[_nameOfStandardTransferList];
             if(transferList) {
                 _worker.postMessage(job, [transferList]);

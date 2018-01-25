@@ -1,7 +1,6 @@
 // Here I want to stitch files together into one large file
 
 var fs = require('fs');
-
 var uiFiles = [
     "../src/client/common.js",
     "../src/client/events.js",
@@ -76,7 +75,8 @@ var combinedFiles = [
 function concatFiles(files) {
     var content = ""
     files.forEach((fileName) => {
-        content += fs.readFileSync(fileName) + "\n";
+        var file = fs.readFileSync(fileName);
+        content += file + "\n";
     });
     return content;
 }

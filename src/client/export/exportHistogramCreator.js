@@ -11,6 +11,7 @@ jim.mandelbrot.export.escapeHistogramCalculator.create = function () {
 
         function fragmentToHistogramMessage(fragment) {
             return {
+                workerMessageType: "histogramexportworker",
                 maxIterations: _depth,
                 exportWidth: fragment.columns,
                 exportHeight: fragment.rows,
@@ -33,7 +34,7 @@ jim.mandelbrot.export.escapeHistogramCalculator.create = function () {
         var jobs = fragments.map(function (fragment) {
             return fragmentToHistogramMessage(fragment);
         });
-        var workerPool =  jim.worker.pool.create(_noOfWorkers, "/js/histogramCalculatingWorker.js", [], "");
+        var workerPool =  jim.worker.pool.create(_noOfWorkers, "/js/unifiedworker.js", [], "");
 
         function addToMxValues(_vals, _offset) {
             for (var i = 0 ; i < _vals.length; i +=1) {

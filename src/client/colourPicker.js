@@ -9,7 +9,7 @@ jim.colour.colourPicker.create = function (canvas, gradient, events) {
     var selectedShade;
 
     var toRgb = function (h, s, v) {
-        var colour = tinycolor({h: h, s: s, v: v}).toRgb();
+        var colour = jim.tinycolor({h: h, s: s, v: v}).toRgb();
         colour.a = 255;
         return colour;
     };
@@ -70,14 +70,14 @@ jim.colour.colourPicker.create = function (canvas, gradient, events) {
         if (e.layerY <= h / 3) {
             selectedHue = interpolate(0, 359, e.layerX / w);
             //draw();
-            var tc = tinycolor({h: selectedHue, s: 1, v: 1});
+            var tc = jim.tinycolor({h: selectedHue, s: 1, v: 1});
             gradient.setSelectedNodeColour(tc, e.layerX, e.layerY);
             events.fire(events.colourSelected, {x: e.layerX, y: e.layerY, hue: selectedHue});
 
         } else {
             var hueProportion = 0.3 * h;
             var shadeProportion = h - hueProportion;
-            var colour = tinycolor(shade(e.layerX, e.layerY, shadeProportion));
+            var colour = jim.tinycolor(shade(e.layerX, e.layerY, shadeProportion));
             gradient.setSelectedNodeColour(colour, e.layerX, e.layerY);
             events.fire(events.colourSelected, {x: e.layerX, y: e.layerY, hue: selectedHue});
         }
@@ -105,7 +105,7 @@ jim.colour.colourPicker.create = function (canvas, gradient, events) {
             shadeY = shadeVal + (percentageS * shadeProportion);
             selectedHue = n.node.hsv.h;
         }
-        gradient.setSelectedNodeColour(tinycolor(shade(shadeX, shadeY, shadeProportion)), shadeX, shadeY);
+        gradient.setSelectedNodeColour(jim.tinycolor(shade(shadeX, shadeY, shadeProportion)), shadeX, shadeY);
         events.fire(events.colourSelected, {x: shadeX, y: shadeY, hue: selectedHue});
         events.fire(events.pulseUI, {});
     });

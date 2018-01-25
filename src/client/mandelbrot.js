@@ -131,5 +131,13 @@ jim.init.run = function () {
 //1) work out where the files will be served from to test it
 // use hiawatha - installed in /usr/local/sbin conf in /usr/local/etc serving from nodelbrot latest.
 //2) add all code to html and call init.run
-//3) clump together code for all three webworkers - refactor so there is only one and a command i sent with each message identifying it?
-//4) Yes that way only two files are required not four
+
+// remainin build steps
+// create worker for build without imports - gets concatenated to end of other code
+// worker then built automatically
+// for html remove imports from head and include entire js content in a single
+
+// manual build steps after concatenation
+// remove import scripts from worker files
+// change head in html to only import a single js file
+// make a single worker which can handle all three messages
