@@ -123,7 +123,7 @@ jim.mandelbrot.escapeDistributionHistogram.create = function (_events, _histoDat
 
     on(_events.histogramUpdateReceivedFromWorker, function (updateInfo) {
         var updated = processHistogramUpdates(updateInfo);
-        var histoData = {array: updated, total: currentTotal};
+        var histoData = {array: updated, total: currentTotal, currentIteration: updateInfo.currentIteration};
         _events.fire(_events.histogramUpdated, histoData);
     });
 

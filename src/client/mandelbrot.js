@@ -87,15 +87,16 @@ jim.init.run = function () {
     var exportSizeDropdown = newExportSizeDropdown(exportSizeSelect, [smallExport, mediumExport, largeExport, veryLargeExport]);
     newMiscUiElements(exportSizeDropdown, state, events);
 
-    events.listenTo(events.maxIterationsUpdated, function (_iter) {
-        maxIteration.innerText = _iter;
-        var total = 700 * 400;
-        var escapedThisIteration = state.escapedByCurrentIteration;
-        var escaped = total - escapedThisIteration;
+    var lastTotal = 0;
+    events.listenTo(events.histogramUpdated, function (histoInfo) {
+        var iter = histoInfo.currentIteration;
+        var total = histoInfo.total;
+        maxIteration.innerText = iter;
+        var difference = total - lastTotal;
+        lastTotal = total;
 
-        if (escapedThisIteration > 0) {
-            percEscaped.innerText = round((100 - ((escaped / total) * 100)), 2);
-            lastEscapedOn.innerText = _iter;
+        if (difference > 0) {
+            lastEscapedOn.innerText = iter;
         }
     });
 
@@ -109,35 +110,99 @@ jim.init.run = function () {
     events.fire(events.paletteChanged, palette);
     bookmarker.changeLocation();
     events.fire(events.paletteChanged, palette);
+
+    function toggleVisibility(toggle, window, windowCtrl) {
+        var result = false;
+        if(toggle) {
+            result = false;
+            dom.addClass(window, "hidden");
+            if (windowCtrl) {
+                dom.deselectButton(windowCtrl);
+            }
+        } else {
+            result = true;
+            dom.removeClass(window, "hidden");
+            if(windowCtrl) {
+                dom.selectButton(windowCtrl);
+            }
+        }
+        return result;
+    }
+
+    function closeWindow(window, windowCtrls) {
+        dom.addClass(window, "hidden");
+        windowCtrls.forEach(function (windowctrl) {
+            dom.deselectButton(dom.element(windowctrl));
+        });
+        return false;
+    }
+
+    function setUpWindow(windowId, showWindowButtonIds, closeButtonId) {
+        var windowshowing = false;
+        var windy = dom.element(windowId);
+        var openButtons = [];
+
+        showWindowButtonIds.forEach(function (showWindowButtonId) {
+            openButtons.push(dom.element(showWindowButtonId));
+        });
+
+        var closeButton = dom.element(closeButtonId);
+
+        openButtons.forEach(function (openButton) {
+            openButton.onclick = function () {
+                windowshowing = toggleVisibility(windowshowing, windy, openButton);
+            };
+        });
+
+        closeButton.onclick = function (e) {
+            windowshowing = closeWindow(windy, showWindowButtonIds);
+        };
+
+        closeButton.onmousedown = function () {
+            dom.selectButton(closeButton);
+        };
+
+        closeButton.onmouseup = function () {
+            dom.deselectButton(closeButton);
+        };
+
+        return {
+            showWindow: function () {
+                windowshowing = toggleVisibility(windowshowing, windy, undefined);
+            }
+        };
+
+    }
+
+    setUpWindow("helptext", ["helptextbutton"], "closehelp");
+    setUpWindow("choosePaymentAmountWindow",["choosePaymentAmountButton1", "choosePaymentAmountButton2", "choosePaymentAmountButton3", "choosePaymentAmountButton4"], "closePaymentAmountWindow");
+    var thankswindy = setUpWindow("thankyoubox", [], "closeThankyouBoxWindow");
+
+    var paymentAmountInput = dom.element("amountInput");
+    paymentAmountInput.onchange = function (e) {
+        window.amount = e.target.value;
+    };
+
+    var allContent = dom.element("allContent");
+    dom.removeClass(allContent, "transparent");
+    dom.addClass(allContent, "fade");
+
+    return {
+        showThankyouWindow: function () {
+            thankswindy.showWindow();
+        }
+    };
 };
 
-// Missing features
-
-// Make buttons a different colour and round the edges and try a thinner border
-
-
-// look at palette - can it be optimsed can I have hsl values back?
-// Maybe - maintain two sets of colours - one hsl one rgb update both as palette changes
-// problem with hsl values is interpolated values still need to be changed back to rgb for rendering
-// have a think
-
-// tidying up. Is there any code that can go? The mandelbrot image in here seems a bit odd.
-// are the tests passing?
-
-// minify js
-// ok have written some code to plonk them all together for the main init.
-// need to do the same for all three web workers.
-// once that is done then I need to check it all works
-//1) work out where the files will be served from to test it
+// set up business pay pal account - done
+//set up fractal email address - done
+//set up www.mandelbrotfract.al - done
+//takes a little while to load paypal stuff.
+// Can I have everything start of not visible and then fade in? done.
+//fix last update iteration.
+    //ok first find all major divs
+    // make them invisible one at a time and make them visible on document ready after init has been called
+    //or wrap whole page in a div and make that visible/invisible
+//pop up window to choose amount on payment and have the paypal button in there - done
+//pop up window to thank the user for their purchase done
 // use hiawatha - installed in /usr/local/sbin conf in /usr/local/etc serving from nodelbrot latest.
-//2) add all code to html and call init.run
-
-// remainin build steps
-// create worker for build without imports - gets concatenated to end of other code
-// worker then built automatically
-// for html remove imports from head and include entire js content in a single
-
-// manual build steps after concatenation
-// remove import scripts from worker files
-// change head in html to only import a single js file
-// make a single worker which can handle all three messages

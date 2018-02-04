@@ -92,16 +92,13 @@ jim.mandelbrot.ui.elements.create = function (_exportSizeDropdown, _state, _even
 
     var helpfulMessages = [
         "Mandelbrot fractal explorer",
-        "Left click and drag to zoom in",
-        "Double click to zoom out",
-        "Use the export panel to export a higher res version of the image on your screen",
-        "Select export depth by entering a value into the 'Iterations' box",
-        "Select size from the dropdown",
-        "Select ignore dead pixels to limit which pixels will be calculated in the export",
-        "That can help speed things up",
-        "Use the palette panel to add, remove and move colour nodes up and down",
-        "To examine a pixel click examine, click on the image, then click on the magnified section",
-        "Use link button to create a direct link to the current image"
+        "Hello",
+        "This is a thing I made on my commute into work",
+        "Do you like it?",
+        "I like it",
+        "it would be really great to be able to spend more time doing cool stuff like  this",
+        "if you wan to help make that happen then you can make a donation",
+        "if you want to give me some feedback you can contact me at mandelbrot.fractal.explorer@gmail.com"
     ];
 
     var sillyMessages = [

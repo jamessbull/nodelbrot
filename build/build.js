@@ -1,6 +1,8 @@
 // Here I want to stitch files together into one large file
 
 var fs = require('fs');
+var UglifyJS = require('uglify-es');
+
 var uiFiles = [
     "../src/client/common.js",
     "../src/client/events.js",
@@ -49,6 +51,11 @@ var workerFiles = [
 ];
 
 
+function removeStrict(code) {
+    var strictDef = /"use strict";/g;
+    return code.replace(strictDef, "");
+}
+
 function concatFiles(files) {
     var content = ""
     files.forEach((fileName) => {
@@ -58,12 +65,23 @@ function concatFiles(files) {
     return content;
 }
 
+function replaceWorkerNameWithMinifiedWorkerName(js, newName) {
+    return js.replace(/\/js\/unifiedworker.js/g, newName);
+}
+
+function minify(js,reserved) {
+    return UglifyJS.minify(js,  { mangle: { reserved: reserved } }).code;
+}
+
 function buildWorker(location) {
     var workerFileContent = concatFiles(workerFiles);
     var unifiedworkerContent = fs.readFileSync("../src/client/unifiedworker.js", "utf8");
     var modifiedUnifiedWorkerContent = unifiedworkerContent.replace(/importScripts[\s\S]*var u/, "var u");
     var fullContent = workerFileContent + "\n" + modifiedUnifiedWorkerContent;
-    fs.writeFileSync(location, fullContent);
+    var contentWithoutUseStrict = removeStrict(fullContent);
+    var contentWithMinifiedWorkerName = replaceWorkerNameWithMinifiedWorkerName(contentWithoutUseStrict, "unifiedworker.js.min");
+    var minifiedJS = minify(contentWithMinifiedWorkerName, ["unifiedworker.js.min"]);
+    fs.writeFileSync(location, minifiedJS);
 }
 
 function loadFile(name) {
@@ -84,13 +102,11 @@ function processedBody() {
     var bodyMarkup = loadFile(body);
     var js = concatFiles(uiFiles);
     var allJs = js + "\n" + "jim.init.run();\n";
+    var contentWithMinifiedWorkerName = replaceWorkerNameWithMinifiedWorkerName(allJs, "unifiedworker.js.min");
 
-    console.log("All js is");
-    console.log("***********************");
-    console.log(allJs);
-    console.log("***********************");
-
-    return bodyMarkup.replace(/jim.init.run\(\);/, allJs);
+    var minifiedJS = removeStrict(contentWithMinifiedWorkerName);
+    minifiedJS = minify(minifiedJS, ["unifiedworker.js.min"]);
+    return bodyMarkup.replace(/jim.init.run\(\);/, minifiedJS);
 }
 
 function fullHtml(head, body) {
@@ -105,6 +121,6 @@ function buildUI(location) {
     fs.writeFileSync(location, html);
 }
 
-buildWorker("../latest/js/unifiedworker.js");
+buildWorker("../latest/unifiedworker.js");
 buildUI("../latest/mandelbrotExplorer.html");
 

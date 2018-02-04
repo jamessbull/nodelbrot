@@ -1,11 +1,20 @@
-<script>
+<script xmlns="http://www.w3.org/1999/html">
     var handleClickfunction
     document.addEventListener("DOMContentLoaded", function (event) {
-        jim.init.run();
+        window.fractal = jim.init.run();
     });
+    //jim.init.run();
 </script>
 
 <style>
+    .fade {
+        opacity:1;
+        transition: opacity 2s ease-in;
+        webkit-transition: opacity 1s ease-in;
+    }
+    .transparent {
+        opacity:0;
+    }
     .titleBar {
         margin: 0px 0px 8px 200px;
     }
@@ -30,15 +39,17 @@
         margin-left: 10px;
         margin-top: -3px;
         padding-top: 10px;
-        border: 2px solid;
-        border-radius: 10px;
+        border: 1px solid;
+        border-radius: 7px;
     }
 
     .button {
         padding: 2px 2px 2px 4px;
         margin-right: 4px;
         margin-left: 4px;
-        outline: outset 2px;
+        /*box-shadow: 1px 1px 4px gold;*/
+        border: 1px solid;
+        border-radius: 4px;
         cursor: default;
     }
 
@@ -47,7 +58,8 @@
         padding: 2px 2px 2px 4px;
         margin-right: 7px;
         margin-left: 5px;
-        outline: inset 2px;
+        box-shadow: 0 0 2px 2px gold;
+
     }
 
     .canvas {
@@ -57,17 +69,17 @@
 
     .canvasBorder {
         position: absolute;
-        border: 2px solid;
-        left: -3px;
-        top: -3px;
+        border: 1px solid;
+        left: -1px;
+        top: -1px;
     }
 
     .border {
-        border: 2px solid;
+        border: 1px solid;
     }
 
     .canvasRadius {
-        border-radius: 10px;
+        border-radius: 7px;
     }
 
     .overlay {
@@ -101,7 +113,7 @@
     }
 
     .shimmyLeft {
-        margin-left: -3px;
+        margin-left: -1px;
     }
 
     .panelContent {
@@ -194,15 +206,62 @@
         top:10px;
         left:840px;
     }
+    .hidden {
+        display: none;
+    }
+    .help {
+        position: absolute;
+        left: 224px;
+        padding-left: 5px;
+        top: 50px;
+        z-index: 1001;
+        border: 2px solid;
+        border-radius: 10px;
+        width: 679px;
+        font-size: smaller;
+    }
+    .closehelp {
+        float: right;
+        margin-top: 2px;
+        margin-right: 8px;
+        padding-left: 3px;
+        padding-right: 3px;
+        padding-bottom: 1px;
+        border: 2px outset;
+        top: 12px;
+        position: relative;
+        cursor: default;
+    }
 
+    .hrule {
+        margin-top:-10px;
+        margin-bottom: -10px;
+    }
+
+    .firsthrule {
+        margin-bottom: -10px;
+    }
+
+    .tophrule {
+        top: -14px;
+        position: relative;
+        width: 674px;
+        margin-bottom: -24px;
+        margin-top: 22px;
+    }
+    .right {
+        position: absolute;
+        left:216px;
+        top:-2px;
+    }
 
 </style>
 
-<div class="standard">
+<div id="allContent" class="transparent standard">
     <div class="bottomMargin">
-        <span><a class="donationLink leftMargin" href="http://www.payPal.me/fractalContribution">Donate!</a></span>
+        <span id="choosePaymentAmountButton1" class="button leftMargin">Donate</span>
         <span class="border mediumRadius mediumLeftMargin messageBox smallBottomMargin"><canvas width=740, height=15, id="topMessageBox">I am hello message.</canvas></span>
-        <span><a class="donationLink topRight leftMargin" href="http://www.payPal.me/fractalContribution">Donate!</a></span>
+        <span id="choosePaymentAmountButton2" class="button leftMargin">Donate</span>
     </div>
     <div id="bothColumns" style="position:relative; height:575px;">
         <div id="left" style="position: absolute;">
@@ -210,8 +269,9 @@
                 <div class="panelContent">
                     <div class="bottomMargin centered">
                         <span id="stop" class="button">Stop </span>
-                        <span id="start" class="button">Start </span>
+                        <span id="start" class="button">Go </span>
                         <span id="bookmarkButton" class="button">Link </span>
+                        <span id="helptextbutton" class="button">Help</span>
                     </div>
                     <table>
                         <tbody>
@@ -313,7 +373,7 @@
                 </div>
             </div>
         </div>
-        <div id="right" style="position: absolute; left:210px;">
+        <div id="right" class = "right">
             <div class="panel progressPopUp bodyText" id="exportProgress">
                 <div class="centered">
                     <span>Progress</span>
@@ -362,11 +422,100 @@
 
         </div>
     </div>
-    <span><a class="donationLink leftMargin" href="http://www.payPal.me/fractalContribution">Donate!</a></span>
-
+    <span id="choosePaymentAmountButton3" class="button leftMargin">Donate</span>
     <span class="border mediumRadius mediumLeftMargin messageBox">
         <canvas width=740, height=15, id="bottomMessageBox">I am hello message.</canvas>
     </span>
-    <span><a class="donationLink leftMargin" href="http://www.payPal.me/fractalContribution">Donate!</a></span>
+    <span id="choosePaymentAmountButton4" class="button leftMargin">Donate</span>
 
 </div>
+
+<div id="helptext" class="standard help hidden">
+    <span class = "closehelp" id="closehelp">x</span>
+    <hr class = 'tophrule'><h3>Exploring </h3><hr class="hrule">
+    <p>Left click and drag the mouse to zoom-in</p>
+    <p> Double click to zoom out</p>
+    <p> Right click and drag to scroll</p>
+
+    <hr class="firsthrule"><h3>Changing colours</h3><hr class="hrule">
+    <p>Left click and drag nodes to change how the colours are distributed across the image</p>
+    <p>Add and remove nodes using the plus and minus buttons</p>
+    <p>Change the colour of a node by left clicking it and then clicking on the colour picker</p>
+
+    <hr class="firsthrule"><h3>Bookmarks</h3><hr class="hrule">
+    <p>Use the link button to create a link to the current state of the interactive display</p>
+
+    <hr class="firsthrule"><h3>Exporting</h3><hr class="hrule">
+    <p>Select the iteration depth. The current iteration is displayed in the top panel which should help pick an appropriate value</p>
+    <p>Select a size. Small is the same resolution as the interactive display. Huge is really big.</p>
+    <p>'Ignore dead' means pixels that have not escaped in the interactive display will not be calculated as part of the export and will be black</p>
+    <p>If the export window does not open when it should then make sure you have enabled popups for this site. </p>
+    <p>Once you have exported your image then you can save it locally by right clicking and selecting save as or by using ctrl-c and then pasting it into a suitable paint program.</p>
+</div>
+
+<div id="thankyoubox" class = "standard help hidden">
+    <span class = "closehelp" id="closeThankyouBoxWindow">x</span>
+    <hr class = 'tophrule'><h3>I always knew you were great</h3><hr class="hrule">
+    <div>You're the best! Smart, witty, charming and above all generous. Legend.</div>
+</div>
+
+<div id = "choosePaymentAmountWindow" class="standard help hidden">
+    <span class = "closehelp" id="closePaymentAmountWindow">x</span>
+    <hr class = 'tophrule'><h3>Thinking of making a donation?</h3><hr class="hrule">
+
+    <p>You're very kind. Anything you donate will support me doing more things like this. If you change your mind and decide you don't want to donate after all then that's ok too. If you like this site please tell your friends about it!</p>
+    <p>Please enter the amount you would like to contribute. For example to donate a penny enter 0.01, to donate a pound enter 1.00</p>
+    <label>Enter an amount in gbp</label><input id="amountInput" type="text"/>
+    <hr>
+    <div id="paypal-button"></div>
+</div>
+<script src="https://www.paypalobjects.com/api/checkout.js"></script>
+<script>
+    window.amount = 0
+    function donationAmount () {return window.amount}
+    paypal.Button.render({
+        env: 'production', // Or 'sandbox',
+
+        client: {
+            sandbox: "Aepz4g_aY_uRq78jT9mKq9mvH2G6ktBIv-QTxyN_2fD5-uoAmyJn74IWmHaScyVCIGegzm0LmMX0Zh9c",
+            production: "ARyOzeIQeRxaJULBP_YHl5PEbT_YjJLl-MA9zNv0WWOF1KVB7OfnPyW4WQh2TGqioD1aLaLxxMualsV_"
+        },
+
+        commit: true, // Show a 'Pay Now' button
+
+        style: {
+            color: 'gold',
+            size: 'small'
+        },
+
+        payment: function(data, actions) {
+            return actions.payment.create({
+                payment: {
+                    transactions: [
+                        {
+                            amount: { total: donationAmount() + '.00', currency: 'GBP' }
+                        }
+                    ]
+                }
+            });
+        },
+
+        onAuthorize: function(data, actions) {
+            return actions.payment.execute().then(function(payment) {
+                window.fractal.showThankyouWindow();
+            });
+        },
+
+        onCancel: function(data, actions) {
+            /*
+             * Buyer cancelled the payment
+             */
+        },
+
+        onError: function(err) {
+            /*
+             * An error occurred during the transaction
+             */
+        }
+    }, '#paypal-button');
+</script>
