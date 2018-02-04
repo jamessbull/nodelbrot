@@ -101,12 +101,12 @@ function processedBody() {
     var body = "../src/view/templates/homePage/body.hbl";
     var bodyMarkup = loadFile(body);
     var js = concatFiles(uiFiles);
-    var allJs = js + "\n" + "jim.init.run();\n";
+    var allJs = js + "\n" + "window.fractal = jim.init.run();\n";
     var contentWithMinifiedWorkerName = replaceWorkerNameWithMinifiedWorkerName(allJs, "unifiedworker.js.min");
 
     var minifiedJS = removeStrict(contentWithMinifiedWorkerName);
     minifiedJS = minify(minifiedJS, ["unifiedworker.js.min"]);
-    return bodyMarkup.replace(/jim.init.run\(\);/, minifiedJS);
+    return bodyMarkup.replace(/window.fractal = jim.init.run\(\);/, minifiedJS);
 }
 
 function fullHtml(head, body) {
@@ -121,6 +121,6 @@ function buildUI(location) {
     fs.writeFileSync(location, html);
 }
 
-buildWorker("../latest/unifiedworker.js");
+buildWorker("../latest/unifiedworker.js.min");
 buildUI("../latest/mandelbrotExplorer.html");
 
