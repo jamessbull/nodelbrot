@@ -190,7 +190,7 @@
 
     .pixelInfo {
         margin-top: 15px;
-        margin-bottom: 8px;
+        margin-bottom: 10px;
     }
 
     .messageBox {
@@ -211,7 +211,7 @@
     }
     .help {
         position: absolute;
-        left: 224px;
+        left: 230px;
         padding-left: 5px;
         top: 50px;
         z-index: 1001;
@@ -455,7 +455,7 @@
 
 <div id="thankyoubox" class = "standard help hidden">
     <span class = "closehelp" id="closeThankyouBoxWindow">x</span>
-    <hr class = 'tophrule'><h3>I always knew you were great</h3><hr class="hrule">
+    <hr class = 'tophrule'><h3>I always knew you were great</h3><hr>
     <div>You're the best! Smart, witty, charming and above all generous. Legend.</div>
 </div>
 
@@ -471,7 +471,7 @@
 </div>
 <script src="https://www.paypalobjects.com/api/checkout.js"></script>
 <script>
-    window.amount = 0
+    window.amount = "2.00";
     function donationAmount () {return window.amount}
     paypal.Button.render({
         env: 'production', // Or 'sandbox',
@@ -489,11 +489,21 @@
         },
 
         payment: function(data, actions) {
+            var amt = donationAmount();
+            if(amt.indexOf(".") === 0) {
+                amt = "0." + donationAmount();
+            }
+            if (amt.indexOf(".") === -1) {
+                amt = amt + ".00";
+            }
+            if (amt.indexOf(".") === amt.length - 1) {
+                amt = amt + "00";
+            }
             return actions.payment.create({
                 payment: {
                     transactions: [
                         {
-                            amount: { total: donationAmount() + '.00', currency: 'GBP' }
+                            amount: { total: amt, currency: 'GBP' }
                         }
                     ]
                 }

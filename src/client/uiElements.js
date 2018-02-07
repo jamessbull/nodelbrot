@@ -96,9 +96,12 @@ jim.mandelbrot.ui.elements.create = function (_exportSizeDropdown, _state, _even
         "This is a thing I made on my commute into work",
         "Do you like it?",
         "I like it",
-        "it would be really great to be able to spend more time doing cool stuff like  this",
-        "if you wan to help make that happen then you can make a donation",
-        "if you want to give me some feedback you can contact me at mandelbrot.fractal.explorer@gmail.com"
+        "it would be really great to be able to spend more time doing stuff like this",
+        "if you want to help make that happen then you can make a donation",
+        "i could extend it to do the julia set as well",
+        "see if I could use webgl to get the graphics card involved in the rendering",
+        "or do something completely different",
+        "if you want to give me some feedback you can contact me at mandelbrot.fractal.explorer@gmail.com",
     ];
 
     var sillyMessages = [
@@ -171,7 +174,6 @@ jim.mandelbrot.ui.elements.create = function (_exportSizeDropdown, _state, _even
         "I have things to do",
         "Such as ..."
     ];
-    // These suck up too much cpu. what to do about that?
     jim.anim.textBox.create(bottomMessageBox, sillyMessages);
     jim.anim.textBox.create(topMessageBox, helpfulMessages);
 

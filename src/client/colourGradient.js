@@ -159,7 +159,7 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
     };
 
     gradientCanvas.onmousedown = function (e) {
-        markers.select(e.layerX);
+        markers.select(e.offsetX);
         leftMouseDown = true;
         //console.log("marker selected");
         draw();
@@ -180,7 +180,7 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
     };
 
     gradientCanvas.onmousemove = function (e) {
-        markers.updatePosition(e.layerX);
+        markers.updatePosition(e.offsetX);
         if(leftMouseDown) {
             _events.fire(_events.start);
             _events.fire(_events.paletteChanged, palette);

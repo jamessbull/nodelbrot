@@ -175,7 +175,7 @@ jim.init.run = function () {
     }
 
     setUpWindow("helptext", ["helptextbutton"], "closehelp");
-    setUpWindow("choosePaymentAmountWindow",["choosePaymentAmountButton1", "choosePaymentAmountButton2", "choosePaymentAmountButton3", "choosePaymentAmountButton4"], "closePaymentAmountWindow");
+    var chooseAmountWindow = setUpWindow("choosePaymentAmountWindow",["choosePaymentAmountButton1", "choosePaymentAmountButton2", "choosePaymentAmountButton3", "choosePaymentAmountButton4"], "closePaymentAmountWindow");
     var thankswindy = setUpWindow("thankyoubox", [], "closeThankyouBoxWindow");
 
     var paymentAmountInput = dom.element("amountInput");
@@ -190,19 +190,12 @@ jim.init.run = function () {
     return {
         showThankyouWindow: function () {
             thankswindy.showWindow();
+            chooseAmountWindow.showWindow();
         }
     };
 };
 
-// set up business pay pal account - done
-//set up fractal email address - done
-//set up www.mandelbrotfract.al - done
-//takes a little while to load paypal stuff.
-// Can I have everything start of not visible and then fade in? done.
-//fix last update iteration.
-    //ok first find all major divs
-    // make them invisible one at a time and make them visible on document ready after init has been called
-    //or wrap whole page in a div and make that visible/invisible
-//pop up window to choose amount on payment and have the paypal button in there - done
-//pop up window to thank the user for their purchase done
-// use hiawatha - installed in /usr/local/sbin conf in /usr/local/etc serving from nodelbrot latest.
+// Things to do before trying to ge some viewers
+// automate deployment. Should be ok.
+// use touch gestures for zooming
+// use x offset so it works in ie

@@ -67,19 +67,19 @@ jim.colour.colourPicker.create = function (canvas, gradient, events) {
 
     function drawPicker(e) {
 
-        if (e.layerY <= h / 3) {
-            selectedHue = interpolate(0, 359, e.layerX / w);
+        if (e.offsetY <= h / 3) {
+            selectedHue = interpolate(0, 359, e.offsetX / w);
             //draw();
             var tc = jim.tinycolor({h: selectedHue, s: 1, v: 1});
-            gradient.setSelectedNodeColour(tc, e.layerX, e.layerY);
-            events.fire(events.colourSelected, {x: e.layerX, y: e.layerY, hue: selectedHue});
+            gradient.setSelectedNodeColour(tc, e.offsetX, e.offsetY);
+            events.fire(events.colourSelected, {x: e.offsetX, y: e.offsetY, hue: selectedHue});
 
         } else {
             var hueProportion = 0.3 * h;
             var shadeProportion = h - hueProportion;
-            var colour = jim.tinycolor(shade(e.layerX, e.layerY, shadeProportion));
-            gradient.setSelectedNodeColour(colour, e.layerX, e.layerY);
-            events.fire(events.colourSelected, {x: e.layerX, y: e.layerY, hue: selectedHue});
+            var colour = jim.tinycolor(shade(e.offsetX, e.offsetY, shadeProportion));
+            gradient.setSelectedNodeColour(colour, e.offsetX, e.offsetY);
+            events.fire(events.colourSelected, {x: e.offsetX, y: e.offsetY, hue: selectedHue});
         }
         events.fire(events.pulseUI);
     }

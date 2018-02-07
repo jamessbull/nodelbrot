@@ -19,14 +19,14 @@ jim.mandelbrot.mandelbrotViewUIPolicy.create = function (_mainCanvas, _events) {
         e.preventDefault();
         if (exploring) {
             if (e.button === leftMouseButton) {
-                _events.fire(_events.beginSelectionAction, {x: e.layerX, y: e.layerY});
-                _events.fire(_events.leftMouseDown, {x: e.layerX, y: e.layerY});
+                _events.fire(_events.beginSelectionAction, {x: e.offsetX, y: e.offsetY});
+                _events.fire(_events.leftMouseDown, {x: e.layerX, y: e.offsetY});
             }
             if (e.button === rightMouseButton) {
-                _events.fire(_events.beginMoveAction, {x: e.layerX, y: e.layerY});
+                _events.fire(_events.beginMoveAction, {x: e.offsetX, y: e.offsetY});
             }
         } else {
-            _events.fire(_events.examinePixelAction, {x: e.layerX, y: e.layerY})
+            _events.fire(_events.examinePixelAction, {x: e.offsetX, y: e.offsetY});
         }
     }
 
@@ -35,10 +35,10 @@ jim.mandelbrot.mandelbrotViewUIPolicy.create = function (_mainCanvas, _events) {
         e.preventDefault();
         if (exploring) {
             if (e.button === leftMouseButton) {
-                _events.fire(_events.endSelectionAction, {x: e.layerX, y: e.layerY});
+                _events.fire(_events.endSelectionAction, {x: e.offsetX, y: e.offsetY});
             }
             if (e.button === rightMouseButton) {
-                _events.fire(_events.endMoveAction, {x: e.layerX, y: e.layerY});
+                _events.fire(_events.endMoveAction, {x: e.offsetX, y: e.offsetY});
             }
         }
     }
@@ -46,10 +46,10 @@ jim.mandelbrot.mandelbrotViewUIPolicy.create = function (_mainCanvas, _events) {
     function mouseMove(e) {
         e.preventDefault();
         if (exploring && selectingArea) {
-            _events.fire(_events.selectionChanged, {x: e.layerX, y: e.layerY});
-            _events.fire(_events.viewMoveAction, {x: e.layerX, y: e.layerY});
+            _events.fire(_events.selectionChanged, {x: e.offsetX, y: e.offsetY});
+            _events.fire(_events.viewMoveAction, {x: e.offsetX, y: e.offsetY});
         } else {
-            _events.fire(_events.mouseMoved, {x: e.layerX, y: e.layerY});
+            _events.fire(_events.mouseMoved, {x: e.offsetX, y: e.offsetY});
         }
     }
 

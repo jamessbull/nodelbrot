@@ -77,8 +77,8 @@ jim.mandelbrot.examinePixelStateDisplay.create = function (_events, _examinePixe
         drawMagnifiedPixels(_examinePixelCanvas, selectedArea, magnifiedAreaWidth, _sourceWidth);
 
         var squareSize = Math.round(_examinePixelCanvas.width / magnifiedAreaWidth);
-        var row = Math.floor(e.layerY / squareSize);
-        var column = Math.floor(e.layerX / squareSize);
+        var row = Math.floor(e.offsetY / squareSize);
+        var column = Math.floor(e.offsetX / squareSize);
 
         selectSquare(row, column, squareSize);
         var topLeft = centreToTopLeft(selectedArea, magnifiedAreaWidth);
