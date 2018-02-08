@@ -53,9 +53,57 @@ jim.mandelbrot.mandelbrotViewUIPolicy.create = function (_mainCanvas, _events) {
         }
     }
 
+    function getMouseEventForTouchEvent(ev) {
+        var touches = ev.touches;
+        var pageX = touches[0].clientX;
+        var pageY = touches[0].clientY;
+        var canvasX = pageX - _mainCanvas.getBoundingClientRect().x;
+        var canvasY = pageY - _mainCanvas.getBoundingClientRect().y;
+        return {offsetX: canvasX, offsetY: canvasY, button : leftMouseButton, preventDefault: function () {
+
+        }};
+    }
+var lasttouchLocationX = 0;
+var lasttouchLocationY = 0;
+    function handleStart(ev) {
+        ev.preventDefault();
+        //alert("A touch event has been initiated");
+        mouseDown(getMouseEventForTouchEvent(ev));
+    }
+
+    function handleEnd(ev) {
+        ev.preventDefault();
+        var event = {
+            button : leftMouseButton,
+            offsetX: lasttouchLocationX,
+            offsetY: lasttouchLocationY,
+            preventDefault: function () {
+        }};
+
+        mouseUp(event);
+    }
+
+    function handleCancel(ev) {
+        ev.preventDefault();
+        mouseUp(getMouseEventForTouchEvent(ev));
+    }
+
+    function handleMove(ev) {
+        ev.preventDefault();
+        var event = getMouseEventForTouchEvent(ev);
+        lasttouchLocationX = event.offsetX;
+        lasttouchLocationY = event.offsetY;
+        mouseMove(event);
+    }
+
     _mainCanvas.addEventListener("mousedown",  mouseDown);
     _mainCanvas.addEventListener("mouseup", mouseUp);
     _mainCanvas.addEventListener("mousemove", mouseMove);
+
+    _mainCanvas.addEventListener("touchstart", handleStart);
+    _mainCanvas.addEventListener("touchend", handleEnd);
+    _mainCanvas.addEventListener("touchcancel", handleCancel);
+    _mainCanvas.addEventListener("touchmove", handleMove);
 
     return { };
 };

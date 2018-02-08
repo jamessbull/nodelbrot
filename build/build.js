@@ -1,5 +1,5 @@
 // Here I want to stitch files together into one large file
-
+var zlib = require('zlib');
 var fs = require('fs');
 var UglifyJS = require('uglify-es');
 
@@ -124,3 +124,11 @@ function buildUI(location) {
 buildWorker("../latest/unifiedworker.js.min");
 buildUI("../latest/mandelbrotExplorer.html");
 
+//var gzip = zlib.createGzip();
+//var inp = fs.createReadStream("../latest/unifiedworker.js.min.unzipped");
+//var out = fs.createWriteStream("../latest/unifiedworker.js.min");
+//inp.pipe(gzip).pipe(out);
+//
+//var inp = fs.createReadStream("../latest/mandelbrotExplorer.html.unzipped");
+//var out = fs.createWriteStream("../latest/mandelbrotExplorer.html");
+//inp.pipe(gzip).pipe(out);

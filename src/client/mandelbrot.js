@@ -198,4 +198,5 @@ jim.init.run = function () {
 // Things to do before trying to ge some viewers
 // automate deployment. Should be ok.
 // use touch gestures for zooming
-// use x offset so it works in ie
+// use x offset so it works in ie done
+// addEventListener touchend touchstart touchmove
