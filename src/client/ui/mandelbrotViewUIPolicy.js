@@ -59,12 +59,11 @@ jim.mandelbrot.mandelbrotViewUIPolicy.create = function (_mainCanvas, _events) {
         var pageY = touches[0].clientY;
         var canvasX = pageX - _mainCanvas.getBoundingClientRect().x;
         var canvasY = pageY - _mainCanvas.getBoundingClientRect().y;
-        return {offsetX: canvasX, offsetY: canvasY, button : leftMouseButton, preventDefault: function () {
-
-        }};
+        return {offsetX: canvasX, offsetY: canvasY, button : leftMouseButton, preventDefault: function () { } };
     }
 var lasttouchLocationX = 0;
 var lasttouchLocationY = 0;
+
     function handleStart(ev) {
         ev.preventDefault();
         //alert("A touch event has been initiated");
@@ -85,7 +84,15 @@ var lasttouchLocationY = 0;
 
     function handleCancel(ev) {
         ev.preventDefault();
-        mouseUp(getMouseEventForTouchEvent(ev));
+        var event = {
+            button: leftMouseButton,
+            offsetX: lasttouchLocationX,
+            offsetY: lasttouchLocationY,
+            preventDefault: function () {
+
+            }
+        };
+        mouseUp(event);
     }
 
     function handleMove(ev) {

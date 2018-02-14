@@ -114,6 +114,54 @@ jim.colour.colourPicker.create = function (canvas, gradient, events) {
         drawPicker(e);
     };
 
+    function getMouseEventForTouchEvent(ev) {
+        var touches = ev.touches;
+        var pageX = touches[0].clientX;
+        var pageY = touches[0].clientY;
+        var canvasX = pageX - canvas.getBoundingClientRect().x;
+        var canvasY = pageY - canvas.getBoundingClientRect().y;
+        return {offsetX: canvasX, offsetY: canvasY, button : 0, preventDefault: function () { } };
+    }
+
+    var lasttouchLocationX = 0;
+    var lasttouchLocationY = 0;
+
+    function handleStart(ev) {
+        ev.preventDefault();
+        //alert("A touch event has been initiated");
+        var touchEvent = getMouseEventForTouchEvent(ev);
+        lasttouchLocationX = event.offsetX;
+        lasttouchLocationY = event.offsetY;
+        drawPicker(touchEvent);
+    }
+
+    function handleEnd(ev) {
+        ev.preventDefault();
+        var event = {
+            button : 0,
+            offsetX: lasttouchLocationX,
+            offsetY: lasttouchLocationY,
+            preventDefault: function () {
+            }};
+
+        //drawPicker(event);
+    }
+
+    function handleCancel(ev) {
+        ev.preventDefault();
+    }
+
+    function handleMove(ev) {
+        ev.preventDefault();
+        lasttouchLocationX = event.offsetX;
+        lasttouchLocationY = event.offsetY;
+    }
+
+    canvas.addEventListener("touchstart", handleStart);
+    canvas.addEventListener("touchend", handleEnd);
+    canvas.addEventListener("touchcancel", handleCancel);
+    canvas.addEventListener("touchmove", handleMove);
+
     selectedHue = 120;
     return {
         draw: draw

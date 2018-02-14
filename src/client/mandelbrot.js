@@ -197,6 +197,11 @@ jim.init.run = function () {
 
 // Things to do before trying to ge some viewers
 // automate deployment. Should be ok.
-// use touch gestures for zooming
-// use x offset so it works in ie done
-// addEventListener touchend touchstart touchmove
+// but issue with zipping with node and zlib setting wrong content encoding for that?
+
+
+// Anything else? Adjust parallelism by running test and seeing if I can detect correct number of cores to use.
+// Could do it by doing a message from the starting state start at one and increase parallelism until perf no longer goes up and then back off.
+// genuinely useful
+
+// better colours to start with don't like how the black looks as it zooms
