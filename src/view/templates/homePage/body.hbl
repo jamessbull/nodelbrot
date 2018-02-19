@@ -295,7 +295,7 @@
                 <div id="exportImagePanel">
                     <div class="panelContent">
                         <span id="export" class="button exportButton">Export Png</span>
-                        <span id="openLastExportButton" class="button disabled">Last Export</span>
+                        <span id="openLastExportButton" class="button disabled">View export</span>
 
                         <div class="mediumTopMargin">
                             <table>
@@ -447,9 +447,9 @@
 
     <hr class="firsthrule"><h3>Exporting</h3><hr class="hrule">
     <p>Select the iteration depth. The current iteration is displayed in the top panel which should help pick an appropriate value</p>
-    <p>Select a size. Small is the same resolution as the interactive display. Huge is really big.</p>
+    <p>Select a size. Small is the same resolution as the interactive display. Huge is, well, really quite large.</p>
     <p>'Ignore dead' means pixels that have not escaped in the interactive display will not be calculated as part of the export and will be black</p>
-    <p>If the export window does not open when it should then make sure you have enabled popups for this site. </p>
+    <p>You might need to enable popups. The open export button can be used to open the last export performed</p>
     <p>Once you have exported your image then you can save it locally by right clicking and selecting save as or by using ctrl-c and then pasting it into a suitable paint program.</p>
 </div>
 

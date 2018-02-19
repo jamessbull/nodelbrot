@@ -34,7 +34,7 @@ jim.palette.create = function (events) {
 
     var colourNode = jim.palette.colourNode.create;
     var hsv = function (h, s, v){ return { h: h, s: s, v: v }; };
-    var orange = jim.tinycolor({r: 253, g:193, b:27, a: 255}).toHsv();
+    var orange = jim.tinycolor({r: 243, g:193, b:27, a: 255}).toHsv();
     var black = hsv(100,"0%","0%");
     var white = hsv(10, "0%", "100%");
     var defaultFromNode = colourNode(black, 0);
@@ -42,7 +42,7 @@ jim.palette.create = function (events) {
     var interpolate = jim.interpolator.create().interpolate;
     var rgb = {r:0,g:0,b:0,a:0};
     var selectedColour = hsv(0,'100%', '100%');
-    var nodes = [colourNode(white,0.00), colourNode(orange,0.90), colourNode(black,1.0)];
+    var nodes = [ colourNode(orange,0.80)];
 
     function middleOfLargestGap() {
         var lastNode = {};

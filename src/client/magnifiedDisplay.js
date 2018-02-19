@@ -161,6 +161,7 @@ jim.mandelbrot.examinePixelStateDisplay.create = function (_events, _examinePixe
 
     on(_events.mouseMoved, function (movement) {
         if (!examiningPixels) return;
+
         if (areaHasBeenSelected) return;
 
         drawMagnifiedPixels(_examinePixelCanvas, movement, magnifiedAreaWidth, _sourceWidth);

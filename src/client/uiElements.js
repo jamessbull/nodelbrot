@@ -93,15 +93,17 @@ jim.mandelbrot.ui.elements.create = function (_exportSizeDropdown, _state, _even
     var helpfulMessages = [
         "Mandelbrot fractal explorer",
         "Hello",
-        "This is a thing I made on my commute into work",
-        "Do you like it?",
-        "I like it",
-        "it would be really great to be able to spend more time doing stuff like this",
-        "if you want to help make that happen then you can make a donation",
-        "i could extend it to do the julia set as well",
-        "see if I could use webgl to get the graphics card involved in the rendering",
-        "or do something completely different",
+        "This is a thing I made",
+        "Cool isn't it?",
+        "if you want to you can donate some money",
+        "I could spend more time on stuff like this if you did and that would be awesome",
         "if you want to give me some feedback you can contact me at mandelbrot.fractal.explorer@gmail.com",
+        "It works best in chrome",
+        "It works in fire fox too",
+        "and safari",
+        "maybe edge but I don't have a windows 10 box so can't check",
+        "It runs on IE 11 but it's horribly slow. Don't bother.",
+        "remember to enable popups or the export won't work"
     ];
 
     var sillyMessages = [

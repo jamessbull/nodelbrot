@@ -197,11 +197,8 @@ jim.init.run = function () {
 
 // Things to do before trying to ge some viewers
 // automate deployment. Should be ok.
-// but issue with zipping with node and zlib setting wrong content encoding for that?
-
-
-// Anything else? Adjust parallelism by running test and seeing if I can detect correct number of cores to use.
-// Could do it by doing a message from the starting state start at one and increase parallelism until perf no longer goes up and then back off.
-// genuinely useful
-
-// better colours to start with don't like how the black looks as it zooms
+// fix weird rendering on IOS for examine panel
+// add copyright notice to code.
+// add a message that recommends using chrome and put that in the help.
+// estimate number of cpus
+// change initial colours - orange and blue perhapps. different shades

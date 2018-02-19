@@ -15,18 +15,13 @@ jim.mandelbrot.image.exporter.create = function (_exportDimensions, state, _dom,
     var palette;
     var deadRegions = [];
     var exportCanvas;
-
+    var exportUrl;
     var timeReporter = jim.common.timeReporter.create(timeProgress);
     var histogramReporter = jim.common.imageExportProgressReporter.create(events, "histogramExportProgress", histogramProgress);
     var imageReporter = jim.common.imageExportProgressReporter.create(events, "imageExportProgress", imageProgress);
 
     lastExportButton.onclick = function () {
-        if (exportCanvas.toBlob) {
-            exportCanvas.toBlob(function(blob) {
-                var   url = URL.createObjectURL(blob);
-                window.open(url);
-            });
-        }
+        window.open(exportUrl);
     };
 
     downloadButton.onclick = function () {
@@ -56,7 +51,7 @@ jim.mandelbrot.image.exporter.create = function (_exportDimensions, state, _dom,
     }
 
     function exportImage(histogramData, histogramTotal) {
-
+        exportUrl = undefined;
         function createInitialJobs(number, histoData, histoTotal, nodeList) {
             var initialJobs = [];
             for(var i = 0 ; i < number; i+=1) {
@@ -102,10 +97,10 @@ jim.mandelbrot.image.exporter.create = function (_exportDimensions, state, _dom,
             context.putImageData(new ImageData(imageData, exportCanvas.width, exportCanvas.height), 0,0);
             if (exportCanvas.toBlob) {
                 exportCanvas.toBlob(function(blob) {
-                    var   url = URL.createObjectURL(blob);
+                    exportUrl  = URL.createObjectURL(blob);
                     _dom.hide(exportProgress);
                     _dom.removeClass(lastExportButton, "disabled");
-                    window.open(url);
+                    window.open(exportUrl);
                 });
             } else {
                 _dom.removeClass(lastExportButton, "disabled");
