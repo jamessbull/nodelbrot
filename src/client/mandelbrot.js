@@ -198,7 +198,4 @@ jim.init.run = function () {
 // Things to do before trying to ge some viewers
 // automate deployment. Should be ok.
 // fix weird rendering on IOS for examine panel
-// add copyright notice to code.
-// add a message that recommends using chrome and put that in the help.
-// estimate number of cpus
-// change initial colours - orange and blue perhapps. different shades
+// estimate number of cpus -?

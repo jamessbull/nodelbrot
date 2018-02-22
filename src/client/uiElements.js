@@ -96,14 +96,16 @@ jim.mandelbrot.ui.elements.create = function (_exportSizeDropdown, _state, _even
         "This is a thing I made",
         "Cool isn't it?",
         "if you want to you can donate some money",
-        "I could spend more time on stuff like this if you did and that would be awesome",
+        "I could spend more time on stuff like this if you did and that would be fantastic",
         "if you want to give me some feedback you can contact me at mandelbrot.fractal.explorer@gmail.com",
-        "It works best in chrome",
-        "It works in fire fox too",
-        "and safari",
-        "maybe edge but I don't have a windows 10 box so can't check",
-        "It runs on IE 11 but it's horribly slow. Don't bother.",
-        "remember to enable popups or the export won't work"
+        "It works well in the latest versions of Chrome, Firefox and Safari",
+        "on both windows and MacOS",
+        "It's ok in Edge but I haven't had the opportunity to test the export",
+        "It runs on IE 11 but it's very slow. I wouldn't if I were you.",
+        "It works on Android and IOS too",
+        "Which is nice.",
+        "If you enable popups the export window opens automatically",
+        "If you don't enable popups the export window can be opened by clicking the open export button"
     ];
 
     var sillyMessages = [

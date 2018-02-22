@@ -254,6 +254,18 @@
         left:216px;
         top:-2px;
     }
+    .examinePixels {
+        height: 294px;
+    }
+    .copyright {
+        position:absolute;
+        top:640px;
+        left:395px;
+        font-size: 10px;
+    }
+.input {
+    background-color: antiquewhite;
+}
 
 </style>
 
@@ -302,18 +314,18 @@
                                 <tbody>
                                 <tr>
                                     <td class="bodyText">Iterations</td>
-                                    <td class="bodyText"><input size="8" id="exportDepth" type="text" class="export"
+                                    <td class="bodyText"><input class ="input" size="8" id="exportDepth" type="text" class="export"
                                                                 value="1000"/></td>
                                 </tr>
                                 <tr>
                                     <td class="bodyText">Size</td>
 
                                     <td>
-                                        <select id=exportSizeSelect>
-                                            <option id="smallExport">Small</option>
-                                            <option id="mediumExport">Medium</option>
-                                            <option id="largeExport">Large</option>
-                                            <option id="veryLargeExport">Huge</option>
+                                        <select id=exportSizeSelect class="input">
+                                            <option value="small" id="smallExport" selected="selected">Small</option>
+                                            <option value="medium" id="mediumExport">Medium</option>
+                                            <option value="large" id="largeExport">Large</option>
+                                            <option value="huge" id="veryLargeExport">Huge</option>
                                         </select>
                                     </td>
                                 </tr>
@@ -324,7 +336,7 @@
 
                                 <tr>
                                     <td class="bodyText">Dead radius</td>
-                                    <td><input size="8" id="ignoreDeadPixelsRadius" type="text" class="export"
+                                    <td><input class="input" size="8" id="ignoreDeadPixelsRadius" type="text" class="export"
                                                value="1"/>
                                     </td>
                                 </tr>
@@ -427,7 +439,7 @@
         <canvas width=740, height=15, id="bottomMessageBox">I am hello message.</canvas>
     </span>
     <span id="choosePaymentAmountButton4" class="button leftMargin">Donate</span>
-
+    <div class="copyright">© Copyright 2018 Bull IT Consulting</div>
 </div>
 
 <div id="helptext" class="standard help hidden">
@@ -448,8 +460,8 @@
     <hr class="firsthrule"><h3>Exporting</h3><hr class="hrule">
     <p>Select the iteration depth. The current iteration is displayed in the top panel which should help pick an appropriate value</p>
     <p>Select a size. Small is the same resolution as the interactive display. Huge is, well, really quite large.</p>
-    <p>'Ignore dead' means pixels that have not escaped in the interactive display will not be calculated as part of the export and will be black</p>
-    <p>You might need to enable popups. The open export button can be used to open the last export performed</p>
+    <p>'Ignore dead' means black pixels will not be calculated as part of the export and will remain black</p>
+    <p>If popups are enabled the export will open automatically. If they are not then you can open it by clicking the 'View export' button.</p>
     <p>Once you have exported your image then you can save it locally by right clicking and selecting save as or by using ctrl-c and then pasting it into a suitable paint program.</p>
 </div>
 
