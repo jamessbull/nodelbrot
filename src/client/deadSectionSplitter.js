@@ -10,13 +10,13 @@ jim.common.arraySplitter.create = function () {
             }
             var rowsPerChunk = Math.floor(totalNumberOfRows / numberOfParts);
             var regularChunkSize = rowsPerChunk * rowLength;
-            var finalChunkSize = 1 +(regularChunkSize + (totalNumberOfRows % rowsPerChunk))* rowLength;
             var lastOne = function (x) {
                 return (x === (numberOfParts - 1));
             };
             for (var i = 0; i < numberOfParts; i +=1) {
                 var startIndex = (regularChunkSize * i);
-                var endIndex = startIndex + (lastOne(i) ? finalChunkSize : regularChunkSize);
+                // The last part takes the remaining rows plus any trailing partial row.
+                var endIndex = lastOne(i) ? arr.length : startIndex + regularChunkSize;
                 parts[i] = arr ? arr.slice(startIndex, endIndex) : [];
             }
             return parts;

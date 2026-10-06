@@ -5,7 +5,7 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
     var pool = jim.worker.pool.create(_parallelism, "/js/unifiedworker.js", [], "none", "histogramDataBuffer");
     var array = jim.common.array;
     var requestExaminePixelData = false;
-    var copyOfHisto = new Uint32Array(250000);
+    var copyOfHisto = new Uint32Array(jim.mandelbrot.initialHistogramSize);
     var histogramTotal = 0;
     var stepSize = 95;
     var currentIteration = 0;
@@ -22,9 +22,9 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
         escapeValues.set(new Uint32Array(_msg.escapeValues), (_msg.offset / 4));
         _imgData.set(new Uint8ClampedArray(_msg.imageDataBuffer), _msg.offset);
         if (_msg.extraDataSent) {
-            _xState.set(new Uint32Array(_msg.xState), (_msg.offset / 4));
-            _yState.set(new Uint32Array(_msg.yState), (_msg.offset / 4));
-            _imageEscapeValues.set(new Uint32Array(_msg.imageEscapeValues), (_msg.offset / 4));
+            _xState.set(_msg.xState, (_msg.offset / 4));
+            _yState.set(_msg.yState, (_msg.offset / 4));
+            _imageEscapeValues.set(_msg.imageEscapeValues, (_msg.offset / 4));
         }
     }
 
@@ -78,6 +78,8 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
                 message.extents = undefined;
             }
             var job = jim.messages.interactive.create(message, copyOfHisto, currentIteration, stepSize, palette, histogramTotal);
+            // The worker keeps the per-pixel state of its fragment between frames.
+            job.workerIndex = i % _parallelism;
 
             if (requestExaminePixelData) {
                 job.sendData = true;
@@ -99,7 +101,7 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
     });
 
     on(_events.extentsUpdate, function (_extents) {
-        copyOfHisto = new Uint32Array(250000);
+        copyOfHisto = new Uint32Array(jim.mandelbrot.initialHistogramSize);
         currentIteration = 0;
         extents = extentsTransfer(_extents.topLeft().x, _extents.topLeft().y, _extents.width(), _extents.height());
         palette = undefined;

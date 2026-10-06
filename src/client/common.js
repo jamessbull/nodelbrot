@@ -52,8 +52,7 @@ jim.worker.pool.create = function (noOfWorkers, workerUrl, initialJobs, toTransf
         });
     }
 
-    function postNextJob(_jobs, _worker, _currentBatchId) {
-        var job = _jobs.shift();
+    function postNextJob(job, _worker, _currentBatchId) {
         if (job) {
             job.batchid = _currentBatchId;
             var transferList = job[_nameOfStandardTransferList];
@@ -70,18 +69,27 @@ jim.worker.pool.create = function (noOfWorkers, workerUrl, initialJobs, toTransf
     return {
         consume: function (_jobs, _onEachJob, _onAllJobsComplete) {
             var jobsComplete = 0, jobsToComplete = _jobs.length, currentBatchId = batchid +=1;
-            workers.forEach(function (worker) {
+            // A job with a workerIndex must run on that worker (e.g. because the worker holds its state);
+            // other jobs go to whichever worker is free.
+            var sharedJobs = _jobs.filter(function (job) { return job.workerIndex === undefined; });
+            var pinnedJobs = workers.map(function (worker, i) {
+                return _jobs.filter(function (job) { return job.workerIndex === i; });
+            });
+            workers.forEach(function (worker, i) {
+                function nextJob() {
+                    return pinnedJobs[i].shift() || sharedJobs.shift();
+                }
                 worker.onmessage = function (e) {
                     var msg = e.data;
                     if(msg.batchid !== currentBatchId) {
                         return;
                     }
                     jobsComplete +=1;
-                    postNextJob(_jobs, this, currentBatchId);
+                    postNextJob(nextJob(), this, currentBatchId);
                     _onEachJob(msg);
                     if (jobsComplete === jobsToComplete) _onAllJobsComplete(msg);
                 };
-                postNextJob(_jobs, worker, currentBatchId);
+                postNextJob(nextJob(), worker, currentBatchId);
             });
         },
         terminate: function () {
@@ -91,6 +99,10 @@ jim.worker.pool.create = function (noOfWorkers, workerUrl, initialJobs, toTransf
         }
     };
 };
+
+namespace("jim.mandelbrot");
+// Starting size of the escape histogram. It grows when deeper iterations are reached.
+jim.mandelbrot.initialHistogramSize = 250000;
 
 namespace("jim.colour");
 jim.colour.create = function (r, g, b, a) {

@@ -6,7 +6,7 @@ jim.init.run = function () {
     "use strict";
     var displayWidth            = 700;
     var displayHeight           = 400;
-    var histoData = new Uint32Array(250000);
+    var histoData = new Uint32Array(jim.mandelbrot.initialHistogramSize);
     var round                   = jim.common.round;
     var dom                     = jim.dom.functions.create();
     var mainCanvas              = dom.element("mandelbrotCanvas");
@@ -19,8 +19,8 @@ jim.init.run = function () {
     var imgData = new Uint8ClampedArray(displayWidth * displayHeight * 4 );
     var escapeValues = new Uint32Array(displayWidth * displayHeight);
     var imageEscapeValues = new Uint32Array(displayWidth * displayHeight);
-    var xState = new Uint32Array(displayWidth * displayHeight);
-    var yState = new Uint32Array(displayWidth * displayHeight);
+    var xState = new Float64Array(displayWidth * displayHeight);
+    var yState = new Float64Array(displayWidth * displayHeight);
 
     var mandelbrotCalculator = jim.mandelbrot.webworkerInteractive.create(displayWidth, displayHeight, events, 30, 3, imgData, escapeValues, xState, yState, imageEscapeValues, startingExtent);
     mandelbrotCalculator.start();
