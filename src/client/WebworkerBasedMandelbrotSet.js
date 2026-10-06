@@ -16,7 +16,8 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
     var stepSize = initialStepSize;
     var currentIteration = 0;
     var extents = _extents;
-    var palette = null;
+    var palette = null;         // palette nodes to send with the next batch, if they've changed
+    var paletteBlend = "rgb";
     var escapeValues = _escapeValues;
     var running = true;
     var stopped = false;
@@ -94,6 +95,9 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
                 message.extents = undefined;
             }
             var job = jim.messages.interactive.create(message, histogram, currentIteration, stepSize, palette, histogramTotal, histogramFilledLength);
+            if (palette) {
+                job.paletteBlend = paletteBlend;
+            }
             // The worker keeps the per-pixel state of its fragment between frames.
             job.workerIndex = i % _parallelism;
 
@@ -114,6 +118,7 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
         if (_palette === null || _palette === undefined) {
         }
         palette = _palette.toNodeList();
+        paletteBlend = _palette.blend();
     });
 
     on(_events.extentsUpdate, function (_extents) {

@@ -419,6 +419,10 @@
             <div class="border canvasRadius topMargin shimmyLeft">
                 <div class="colourPicker">
                     <div class="topMargin rightMargin floatright">
+                        <select id="paletteBlendSelect" class="input bodyText" title="How colours are blended between the markers">
+                            <option value="rgb" selected="selected">RGB</option>
+                            <option value="hsv">HSV</option>
+                        </select>
                         <span id="addButton" class="button padRight">+</span>
                         <span id="removeButton" class="button padSides">-</span>
                     </div>

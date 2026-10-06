@@ -46,6 +46,7 @@ jim.imageexportworker.create = function () {
             histogramData = new Uint32Array(msg.histogramData);
             histogramTotal = msg.histogramTotal;
             palette.fromNodeList(msg.paletteNodes);
+            palette.setBlend(msg.paletteBlend);
             colours = palette.toLookupTable(jim.pixelIterator.lookupTableSize);
         } else {
             exportStrip(msg);

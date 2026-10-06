@@ -52,11 +52,11 @@ jim.mandelbrot.image.exporter.create = function (_exportDimensions, state, _dom,
 
     function exportImage(histogramData, histogramTotal) {
         exportUrl = undefined;
-        function createInitialJobs(number, histoData, histoTotal, nodeList) {
+        function createInitialJobs(number, histoData, histoTotal, nodeList, blend) {
             var initialJobs = [];
             for(var i = 0 ; i < number; i+=1) {
                 var histoCopy =  new Uint32Array(histoData);
-                initialJobs.push({workerMessageType: "imageexportworker", updateHistogramData: true, paletteNodes: nodeList,histogramData: histoCopy.buffer, histogramSize: histoCopy.length, histogramTotal:histoTotal});
+                initialJobs.push({workerMessageType: "imageexportworker", updateHistogramData: true, paletteNodes: nodeList, paletteBlend: blend, histogramData: histoCopy.buffer, histogramSize: histoCopy.length, histogramTotal:histoTotal});
             }
             return initialJobs;
         }
@@ -82,7 +82,7 @@ jim.mandelbrot.image.exporter.create = function (_exportDimensions, state, _dom,
              jobs[i] = jim.messages.export.create(fragment, exportDepth.value, deadSections[i]);
         });
 
-        var initialJobs = createInitialJobs(noOfThreads, histogramData,  histogramTotal, palette.toNodeList());
+        var initialJobs = createInitialJobs(noOfThreads, histogramData,  histogramTotal, palette.toNodeList(), palette.blend());
         var workerPool =  jim.worker.pool.create(noOfThreads, jim.worker.url, initialJobs, "histogramData", "none");
 
         exportCanvas = makeExportCanvas(exportDimensions);

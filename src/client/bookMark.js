@@ -4,10 +4,11 @@ jim.mandelbrot.bookmark.create = function (bookmarkButton, state, colourGradient
     "use strict";
     var justBookmarked = false;
     var palette;
-    var newLocation = function (pos, nodes) {
+    var newLocation = function (pos, nodes, blend) {
         return {
             location: pos,
-            nodes: nodes
+            nodes: nodes,
+            blend: blend
         };
     };
 
@@ -16,12 +17,13 @@ jim.mandelbrot.bookmark.create = function (bookmarkButton, state, colourGradient
     });
 
     var defaultMandelbrotInfo = function () {
-        return newLocation({x:-2.5,y:-1, w:3.5, h: 2}, palette.toNodeList());
+        return newLocation({x:-2.5,y:-1, w:3.5, h: 2}, palette.toNodeList(), palette.blend());
     };
 
+    // Bookmarks from before the blend was saved have none, and load as rgb.
     var mandelbrotInfoFromUrl = function () {
         var decoded = JSON.parse(decodeURI(window.location.hash.substring(1)));
-        return newLocation(decoded.location, decoded.nodes);
+        return newLocation(decoded.location, decoded.nodes, decoded.blend);
     };
 
     var currentMandelbrotInfo = function() {
@@ -32,6 +34,7 @@ jim.mandelbrot.bookmark.create = function (bookmarkButton, state, colourGradient
     var changeCurrentMandelbrotStateToMatchUrl = function () {
         var mandelbrotInfo = currentMandelbrotInfo();
         palette.fromNodeList(mandelbrotInfo.nodes);
+        palette.setBlend(mandelbrotInfo.blend);
         colourGradientui.rebuildMarkers(true);
         state.setExtents(jim.rectangle.create(mandelbrotInfo.location));
     };
@@ -52,7 +55,7 @@ jim.mandelbrot.bookmark.create = function (bookmarkButton, state, colourGradient
         var pos = {x:x, y:y, w:w, h:h};
         var nodes = palette.toNodeList();
 
-        var mandelbrotInfo = newLocation(pos, nodes);
+        var mandelbrotInfo = newLocation(pos, nodes, palette.blend());
         var hash = encodeURI(JSON.stringify(mandelbrotInfo));
         return window.location.origin + window.location.pathname + "#" + hash;
     };

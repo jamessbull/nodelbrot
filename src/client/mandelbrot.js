@@ -81,6 +81,17 @@ jim.init.run = function () {
     var palette = jim.palette.create(events);
     var colourGradientui = newColourGradientUI(colourGradientCanvas, addButton, removeButton, palette, events);
 
+    var paletteBlendSelect = dom.element("paletteBlendSelect");
+    paletteBlendSelect.onchange = function () {
+        palette.setBlend(paletteBlendSelect.value);
+        events.fire(events.paletteChanged, palette);
+        events.fire(events.pulseUI);
+    };
+    // Keeps the selector right when a bookmark changes the blend.
+    events.listenTo(events.paletteChanged, function () {
+        paletteBlendSelect.value = palette.blend();
+    });
+
     var bookmarker = newBookmarker(bookmarkButton, state, colourGradientui, events);
     newColourPicker(colourPickerCanvas, colourGradientui, events);
     var exportSizeDropdown = newExportSizeDropdown(exportSizeSelect, [smallExport, mediumExport, largeExport, veryLargeExport]);

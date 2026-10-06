@@ -19,6 +19,7 @@ jim.uiWorker.create = function () {
         }
         if (msg.paletteNodes) {
             palette.fromNodeList(msg.paletteNodes);
+            palette.setBlend(msg.paletteBlend);
             colours = palette.toLookupTable(jim.pixelIterator.lookupTableSize);
         }
 
