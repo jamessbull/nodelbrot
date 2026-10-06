@@ -428,7 +428,7 @@
                     </div>
 
                     <canvas class="mediumRadius topMargin leftMargin" id="colourGradientCanvas" width=600
-                            height=40></canvas>
+                            height=52></canvas>
                 </div>
 
                 <div>

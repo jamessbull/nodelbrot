@@ -36,6 +36,25 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
         drawCircle(x, y, 9, c, selected);
         drawTriangle(x - 5, y - 8, 5, 10, selected);
     };
+    // The palette's colours from position 0 to 1, as a strip under the markers, lined up with them.
+    var gradientTop = 36;
+    var drawGradient = function () {
+        var width = length + 1;
+        var height = gradientCanvas.height - gradientTop - 4;
+        var strip = context.createImageData(width, height);
+        for (var x = 0; x < width; x += 1) {
+            var colour = palette.colourAt(x / length);
+            for (var y = 0; y < height; y += 1) {
+                var i = ((y * width) + x) * 4;
+                strip.data[i] = colour.r;
+                strip.data[i + 1] = colour.g;
+                strip.data[i + 2] = colour.b;
+                strip.data[i + 3] = 255;
+            }
+        }
+        context.putImageData(strip, 7, gradientTop);
+    };
+
     var drawTicks = function () {
         var increment = length / 10;
         var start = 7;
@@ -140,6 +159,7 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
         drawTicks();
         drawLine(5, 3, length +8, 3);
         markers.drawMarkers();
+        drawGradient();
     }
 
     addButton.onclick = function () {
