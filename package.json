@@ -3,6 +3,7 @@
   "private": true,
   "description": "Mandelbrot set explorer",
   "scripts": {
-    "dev": "node dev/server.js --open"
+    "dev": "node dev/server.js --open",
+    "check": "node dev/workerCheck.js"
   }
 }
