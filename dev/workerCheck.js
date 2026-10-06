@@ -10,7 +10,9 @@
 // It also reports time per frame spent in the workers (all workers added together, as they run
 // one after another here) and on the main thread including message copying. These are steadier
 // than browser timings, but only comparable between runs on the same machine.
-// Exits with status 1 if any view differs.
+// It also recomputes the escape iteration of a sample of pixels from scratch, to check the output
+// is right and not just unchanged.
+// Exits with status 1 if any view differs or the working tree has wrong escape values.
 "use strict";
 
 const fs = require("fs");
@@ -25,10 +27,16 @@ const width = 700;
 const height = 400;
 const parallelism = 3;
 
+const defaultView = { x: -2.5, y: -1, w: 3.5, h: 2 };
+const bulbView = { x: -0.35, y: 0.55, w: 0.45, h: 0.2571 };
+const deepView = { x: -0.74364, y: 0.13182, w: 0.00003, h: 0.0000171 };
+// switchAfter: change to the view in switchTo once that many frames have completed, while the
+// next batch of jobs is still in the workers, as happens when you zoom or move during rendering.
 const views = [
-    { name: "default", frames: 60, x: -2.5, y: -1, w: 3.5, h: 2 },
-    { name: "period-3 bulb", frames: 60, x: -0.35, y: 0.55, w: 0.45, h: 0.2571 },
-    { name: "deep", frames: 40, x: -0.74364, y: 0.13182, w: 0.00003, h: 0.0000171 }
+    { name: "default", frames: 60, view: defaultView },
+    { name: "period-3 bulb", frames: 60, view: bulbView },
+    { name: "deep", frames: 40, view: deepView },
+    { name: "zoom while rendering", frames: 50, view: defaultView, switchAfter: 10, switchTo: bulbView }
 ];
 
 // Elapsed frame times fed to the renderer's step-size adjustment, cycled. Mixes slow, fast and
@@ -105,12 +113,19 @@ function render(read, view) {
     let frames = 0;
     let depth = 0;
     ctx.fakeFrameTimes = fakeFrameTimes;
-    ctx.view = view;
+    ctx.view = view.view;
     ctx.onFrame = function (imgData, escapeValues, iteration) {
         hash.update(Buffer.from(imgData.buffer, imgData.byteOffset, imgData.byteLength));
         hash.update(Buffer.from(escapeValues.buffer, escapeValues.byteOffset, escapeValues.byteLength));
         frames += 1;
         depth = iteration;
+        if (frames === view.switchAfter) {
+            // Runs after the renderer has posted its next batch, before the workers handle it.
+            scheduler.post(() => {
+                ctx.view = view.switchTo;
+                vm.runInContext("events.fire(events.extentsUpdate, jim.rectangle.create(view.x, view.y, view.w, view.h));", ctx);
+            });
+        }
         return frames >= view.frames;
     };
 
@@ -144,21 +159,62 @@ function render(read, view) {
     const start = process.hrtime.bigint();
     scheduler.drain();
     const ms = Number(process.hrtime.bigint() - start) / 1e6;
-    return { hash: hash.digest("hex").slice(0, 16), frames: frames, depth: depth, workerMs: scheduler.workerMs, mainMs: ms - scheduler.workerMs };
+    return {
+        hash: hash.digest("hex").slice(0, 16), frames: frames, depth: depth,
+        workerMs: scheduler.workerMs, mainMs: ms - scheduler.workerMs,
+        escapes: checkEscapes(ctx, read)
+    };
+}
+
+// Recomputes the escape iteration of a sample of pixels from scratch and compares it with the
+// renderer's escape values. A pixel that has escaped must have escaped at exactly the right
+// iteration, and one that hasn't must not escape by the start of the last frame.
+function checkEscapes(ctx, read) {
+    run(ctx, read, "src/client/mandelbrotPoint.js");
+    return vm.runInContext(`(function () {
+        var point = jim.newMandelbrotPoint.create();
+        var fragments = jim.messages.renderFragment2.create(0, view.x, view.y, view.w, view.h, ${width}, ${height}).split(${parallelism});
+        var limit = lastIteration;
+        for (var p = 0; p < escapeValues.length; p += 1) limit = Math.max(limit, escapeValues[p]);
+        var result = {checked: 0, wrong: 0, firstWrong: null};
+        fragments.forEach(function (fragment) {
+            var e = fragment.extents;
+            for (var p = 0; p < fragment.rows * fragment.columns; p += 13) {
+                var i = p % fragment.columns;
+                var j = Math.floor(p / fragment.columns);
+                var expected = point.calculate(e.mx + (i * e.stepX), e.my + (j * e.stepY), limit, 0, 0, 0, 0).histogramEscapedAt;
+                var actual = escapeValues[fragment.offset + p];
+                var ok = actual !== 0 ? actual === expected : (expected === 0 || expected > lastIteration);
+                result.checked += 1;
+                if (!ok) {
+                    result.wrong += 1;
+                    result.firstWrong = result.firstWrong || {pixel: fragment.offset + p, expected: expected, actual: actual};
+                }
+            }
+        });
+        return result;
+    })()`, ctx);
+}
+
+function describeEscapes(e) {
+    return e.wrong === 0 ? "escapes ok" :
+        "escapes WRONG " + e.wrong + "/" + e.checked + " (e.g. pixel " + e.firstWrong.pixel + ": expected " +
+        e.firstWrong.expected + ", got " + e.firstWrong.actual + ")";
 }
 
 const sides = [
     { label: ref, read: sourceReader(ref) },
     { label: "working tree", read: sourceReader(null) }
 ];
-let mismatches = 0;
+let failures = 0;
 views.forEach((view) => {
     const results = sides.map((side) => render(side.read, view));
     const same = results[0].hash === results[1].hash && results[0].frames === results[1].frames;
-    if (!same) mismatches += 1;
-    console.log((same ? "SAME   " : "DIFFER ") + view.name + " (" + results[1].frames + " frames, depth " + results[1].depth + ")");
+    if (!same || results[1].escapes.wrong) failures += 1;
+    console.log((same ? "SAME   " : "DIFFER ") + view.name + " (" + results[1].frames + " frames)");
     results.forEach((r, i) => console.log("    " + sides[i].label.padEnd(14) + r.hash +
+        "  depth " + String(r.depth).padStart(6) +
         "  workers " + (r.workerMs / r.frames).toFixed(2).padStart(6) + " ms/frame" +
-        "  main thread " + (r.mainMs / r.frames).toFixed(2).padStart(6) + " ms/frame"));
+        "  main thread " + (r.mainMs / r.frames).toFixed(2).padStart(6) + " ms/frame  " + describeEscapes(r.escapes)));
 });
-process.exit(mismatches ? 1 : 0);
+process.exit(failures ? 1 : 0);
