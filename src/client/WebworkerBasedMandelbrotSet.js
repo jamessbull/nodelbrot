@@ -5,7 +5,8 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
     var pool = jim.worker.pool.create(_parallelism, "/js/unifiedworker.js", [], "none", "histogramDataBuffer");
     var array = jim.common.array;
     var requestExaminePixelData = false;
-    var copyOfHisto = new Uint32Array(jim.mandelbrot.initialHistogramSize);
+    var histogram = new Uint32Array(jim.mandelbrot.initialHistogramSize);
+    var histogramFilledLength = 0;
     var histogramTotal = 0;
     var stepSize = 95;
     var currentIteration = 0;
@@ -77,7 +78,7 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
             if (!extents) {
                 message.extents = undefined;
             }
-            var job = jim.messages.interactive.create(message, copyOfHisto, currentIteration, stepSize, palette, histogramTotal);
+            var job = jim.messages.interactive.create(message, histogram, currentIteration, stepSize, palette, histogramTotal, histogramFilledLength);
             // The worker keeps the per-pixel state of its fragment between frames.
             job.workerIndex = i % _parallelism;
 
@@ -101,14 +102,16 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
     });
 
     on(_events.extentsUpdate, function (_extents) {
-        copyOfHisto = new Uint32Array(jim.mandelbrot.initialHistogramSize);
+        histogram = new Uint32Array(jim.mandelbrot.initialHistogramSize);
+        histogramFilledLength = 0;
         currentIteration = 0;
         extents = extentsTransfer(_extents.topLeft().x, _extents.topLeft().y, _extents.width(), _extents.height());
         palette = undefined;
     });
 
     on(_events.histogramUpdated, function (info) {
-        copyOfHisto = info.array;
+        histogram = info.array;
+        histogramFilledLength = info.filledLength;
         histogramTotal = info.total;
     });
 

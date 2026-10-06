@@ -75,10 +75,15 @@ jim.uiWorker.create = function () {
         }
     }
 
-    function colour(noOfPixels, imageData, histogramData, histogramTotal) {
+    // histogramData holds only the filled part of a histogram of histogramLength entries.
+    function colour(noOfPixels, imageData, histogramData, histogramLength, histogramTotal) {
         function percentEscapedBy(iteration) {
             var no = histogramData[iteration];
-            return no === undefined ? 1 : no === 0 ? 0 : no / histogramTotal;
+            if (no === undefined) {
+                // Unfilled entries are zero; past the end of the histogram everything has escaped.
+                return iteration >= histogramData.length && iteration < histogramLength ? 0 : 1;
+            }
+            return no === 0 ? 0 : no / histogramTotal;
         }
 
         for (var idx = 0, rgbaIdx = 0; idx < noOfPixels; idx += 1, rgbaIdx += 4) {
@@ -118,7 +123,9 @@ jim.uiWorker.create = function () {
         }
 
         iterate(width, msg.exportHeight, msg.currentIteration, msg.iterations, histogramUpdate);
-        colour(noOfPixels, imageData, new Uint32Array(msg.histogramDataBuffer), msg.histogramTotal);
+        var histogramData = new Uint32Array(msg.histogramDataBuffer);
+        var histogramLength = msg.histogramLength === undefined ? histogramData.length : msg.histogramLength;
+        colour(noOfPixels, imageData, histogramData, histogramLength, msg.histogramTotal);
 
         var escapeValuesToTransfer = new Uint32Array(escapeValues);
         var reply = {

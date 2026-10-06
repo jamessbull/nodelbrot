@@ -104,6 +104,7 @@ jim.mandelbrot.escapeDistributionHistogram.create = function (_events, _histoDat
     var currentTotal = 0;
     var called = 0;
     var lastTimeRound = 0;
+    var filledLength = 0;       // entries at and beyond this index have not been written yet, so are zero
 
     function ensureCapacity(size) {
         if (size > _histoData.length) {
@@ -126,13 +127,15 @@ jim.mandelbrot.escapeDistributionHistogram.create = function (_events, _histoDat
         }
         currentTotal += runningTotal;
         lastTimeRound = lastIterationCalculated;
+        filledLength = Math.max(filledLength, lastIterationCalculated + updates.length);
         _events.fire(_events.morePixelsEscaped, currentTotal);
-        return new Uint32Array(_histoData);
     }
 
+    // Listeners get the live histogram rather than a copy, so they must not modify it, and must copy
+    // it if they need it to stay unchanged.
     on(_events.histogramUpdateReceivedFromWorker, function (updateInfo) {
-        var updated = processHistogramUpdates(updateInfo);
-        var histoData = {array: updated, total: currentTotal, currentIteration: updateInfo.currentIteration};
+        processHistogramUpdates(updateInfo);
+        var histoData = {array: _histoData, filledLength: filledLength, total: currentTotal, currentIteration: updateInfo.currentIteration};
         _events.fire(_events.histogramUpdated, histoData);
     });
 
@@ -140,6 +143,7 @@ jim.mandelbrot.escapeDistributionHistogram.create = function (_events, _histoDat
         _histoData = new Uint32Array(jim.mandelbrot.initialHistogramSize);
         currentTotal = 0;
         lastTimeRound = 0;
+        filledLength = 0;
     });
     return {};
 };

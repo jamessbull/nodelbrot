@@ -51,8 +51,11 @@ jim.messages.export.create = function exportJob (_renderFragment, _iter, _deadRe
 };
 
 namespace(("jim.messages.interactive"));
-jim.messages.interactive.create = function (_fragment, copyOfHisto, currentIteration, stepSize, palette, histogramTotal) {
+// Only the first histogramFilledLength entries of the histogram are sent (all of it if not given);
+// the worker treats the rest, up to histogramLength, as zero.
+jim.messages.interactive.create = function (_fragment, histogram, currentIteration, stepSize, palette, histogramTotal, histogramFilledLength) {
     "use strict";
+    var filledLength = histogramFilledLength === undefined ? histogram.length : histogramFilledLength;
     return {
         workerMessageType: "uiworker",
         offset: _fragment.offset * 4,
@@ -60,7 +63,8 @@ jim.messages.interactive.create = function (_fragment, copyOfHisto, currentItera
         exportHeight : _fragment.rows,
         extents: _fragment.extents,
         deadRegions: [],
-        histogramDataBuffer: new Uint32Array(copyOfHisto).buffer,
+        histogramDataBuffer: histogram.slice(0, filledLength).buffer,
+        histogramLength: histogram.length,
         currentIteration : currentIteration,
         iterations : stepSize,
         paletteNodes: palette,
