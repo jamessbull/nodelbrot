@@ -149,11 +149,11 @@ function render(read, view) {
         events.listenTo(events.frameComplete, function () {
             if (onFrame(imgData, escapeValues, lastIteration)) calculator.stop();
         });
-        calculator.start();
         var palette = jim.palette.create(events);
         events.fire(events.paletteChanged, palette);
         events.fire(events.extentsUpdate, jim.rectangle.create(view.x, view.y, view.w, view.h));
         events.fire(events.paletteChanged, palette);
+        calculator.start();
     `, ctx);
 
     const start = process.hrtime.bigint();

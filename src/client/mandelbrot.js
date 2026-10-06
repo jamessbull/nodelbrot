@@ -23,7 +23,6 @@ jim.init.run = function () {
     var yState = new Float64Array(displayWidth * displayHeight);
 
     var mandelbrotCalculator = jim.mandelbrot.webworkerInteractive.create(displayWidth, displayHeight, events, 30, 3, imgData, escapeValues, xState, yState, imageEscapeValues, startingExtent);
-    mandelbrotCalculator.start();
 
 
     mainCanvas.width = displayWidth;
@@ -110,6 +109,8 @@ jim.init.run = function () {
     events.fire(events.paletteChanged, palette);
     bookmarker.changeLocation();
     events.fire(events.paletteChanged, palette);
+    // Start once the view and palette are set, so the first batch isn't for a placeholder view.
+    mandelbrotCalculator.start();
 
     function toggleVisibility(toggle, window, windowCtrl) {
         var result = false;

@@ -17,8 +17,15 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
     var stopped = false;
     var fragments;
     var timer = jim.stopwatch.create();
+    // Bumped whenever the view changes. A batch posted before then is for the old view, so its
+    // results are discarded instead of being mixed into the new view's state.
+    var viewGeneration = 0;
+    var batchGeneration = 0;
 
     function onEachJob(_msg) {
+        if (batchGeneration !== viewGeneration) {
+            return;
+        }
         _events.fire(_events.histogramUpdateReceivedFromWorker, {update: new Uint32Array(_msg.histogramUpdate), currentIteration: currentIteration});
         escapeValues.set(new Uint32Array(_msg.escapeValues), (_msg.offset / 4));
         _imgData.set(new Uint8ClampedArray(_msg.imageDataBuffer), _msg.offset);
@@ -40,17 +47,19 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
 
     function onAllJobsComplete() {
         timer.stop();
-        _events.fire(_events.maxIterationsUpdated, currentIteration);
-        currentIteration += stepSize;
-        if(requestExaminePixelData) {
-            _events.fire(_events.publishPixelState);
-        }
-        requestExaminePixelData = false;
-        _events.fire(_events.renderImage, {imgData: _imgData, offset: 0});
-        _events.fire(_events.andFinally);
-        _events.fire(_events.frameComplete);
+        if (batchGeneration === viewGeneration) {
+            _events.fire(_events.maxIterationsUpdated, currentIteration);
+            currentIteration += stepSize;
+            if(requestExaminePixelData) {
+                _events.fire(_events.publishPixelState);
+            }
+            requestExaminePixelData = false;
+            _events.fire(_events.renderImage, {imgData: _imgData, offset: 0});
+            _events.fire(_events.andFinally);
+            _events.fire(_events.frameComplete);
 
-        updateStepSize(timer.elapsed());
+            updateStepSize(timer.elapsed());
+        }
 
         if(running) {
             postMessage();
@@ -63,6 +72,7 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
 
     function postMessage() {
         timer.start();
+        batchGeneration = viewGeneration;
         var mx = extents ? extents.mx : undefined;
         var my = extents ? extents.my : undefined;
         var mw = extents ? extents.mw : undefined;
@@ -102,6 +112,7 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
     });
 
     on(_events.extentsUpdate, function (_extents) {
+        viewGeneration += 1;
         histogram = new Uint32Array(jim.mandelbrot.initialHistogramSize);
         histogramFilledLength = 0;
         currentIteration = 0;
