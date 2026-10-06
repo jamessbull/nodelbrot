@@ -7,6 +7,9 @@
 // fixed number of frames on a few views. Every frame's image and escape values are hashed, so any
 // difference in output between the working tree and the ref shows up as a hash mismatch.
 // The step size is made deterministic by giving the renderer a fake stopwatch.
+// It also reports time per frame spent in the workers (all workers added together, as they run
+// one after another here) and on the main thread including message copying. These are steadier
+// than browser timings, but only comparable between runs on the same machine.
 // Exits with status 1 if any view differs.
 "use strict";
 
@@ -59,6 +62,7 @@ function run(ctx, read, file) {
 function newScheduler() {
     const queue = [];
     return {
+        workerMs: 0,
         post: function (task) { queue.push(task); },
         drain: function () {
             while (queue.length) queue.shift()();
@@ -80,7 +84,11 @@ function workerClass(read, scheduler) {
         run(ctx, read, url.replace(/^\/js\//, "src/client/"));
         self.postMessage = function (msg, transfer) {
             const copy = structuredClone(msg, { transfer: transfer || [] });
-            scheduler.post(() => vm.runInContext("onmessage", ctx)({ data: copy }));
+            scheduler.post(() => {
+                const start = process.hrtime.bigint();
+                vm.runInContext("onmessage", ctx)({ data: copy });
+                scheduler.workerMs += Number(process.hrtime.bigint() - start) / 1e6;
+            });
         };
         self.terminate = function () {};
     };
@@ -136,7 +144,7 @@ function render(read, view) {
     const start = process.hrtime.bigint();
     scheduler.drain();
     const ms = Number(process.hrtime.bigint() - start) / 1e6;
-    return { hash: hash.digest("hex").slice(0, 16), frames: frames, depth: depth, ms: ms };
+    return { hash: hash.digest("hex").slice(0, 16), frames: frames, depth: depth, workerMs: scheduler.workerMs, mainMs: ms - scheduler.workerMs };
 }
 
 const sides = [
@@ -149,6 +157,8 @@ views.forEach((view) => {
     const same = results[0].hash === results[1].hash && results[0].frames === results[1].frames;
     if (!same) mismatches += 1;
     console.log((same ? "SAME   " : "DIFFER ") + view.name + " (" + results[1].frames + " frames, depth " + results[1].depth + ")");
-    results.forEach((r, i) => console.log("    " + sides[i].label.padEnd(14) + r.hash + "  " + r.ms.toFixed(0).padStart(6) + " ms"));
+    results.forEach((r, i) => console.log("    " + sides[i].label.padEnd(14) + r.hash +
+        "  workers " + (r.workerMs / r.frames).toFixed(2).padStart(6) + " ms/frame" +
+        "  main thread " + (r.mainMs / r.frames).toFixed(2).padStart(6) + " ms/frame"));
 });
 process.exit(mismatches ? 1 : 0);
