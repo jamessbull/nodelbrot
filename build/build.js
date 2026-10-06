@@ -42,9 +42,7 @@ var workerFiles = [
     "../src/client/mandelbrotPoint.js",
     '../src/client/tinycolor.js',
     "../src/client/palette.js",
-    "../src/client/histogram.js",
-    '../src/client/mandelbrotEscape.js',
-    "../src/client/setProcessor.js",
+    "../src/client/pixelIterator.js",
     "../src/client/uiWorker.js",
     "../src/client/histogramExportWorker.js",
     "../src/client/imageExportWorker.js"

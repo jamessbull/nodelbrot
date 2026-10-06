@@ -1,99 +1,52 @@
 namespace("jim.imageexportworker");
 
+// Second phase of an image export: iterates one strip of the full-size image to the export depth and
+// colours it against the histogram from the first phase. The histogram and palette arrive in a message
+// with updateHistogramData set, sent once to each worker before any strips.
 jim.imageexportworker.create = function () {
-
-
-    var newSetProcessor = jim.worker.msetProcessor.create;
-    var histogram;
+    "use strict";
     var palette = jim.palette.create();
+    var histogramData;
+    var histogramTotal;
 
-    function getMessage(e) {
-        "use strict";
-        return e.data;
+    // Dead regions are laid out 700 pixels wide, as in the interactive view, so each covers a block
+    // of width / 700 pixels each way in the export.
+    function deadRegionMask(deadRegions, width, height) {
+        var floor = Math.floor;
+        var scale = width / 700;
+        var mask = new Uint8Array(width * height);
+        for (var j = 0, idx = 0; j < height; j += 1) {
+            for (var i = 0; i < width; i += 1, idx += 1) {
+                mask[idx] = deadRegions[(floor(j / scale) * 700) + floor(i / scale)] ? 1 : 0;
+            }
+        }
+        return mask;
     }
 
-    function getColourCalculator() {
-        "use strict";
-        return jim.colourCalculator.create();
-    }
-
-    function initPalette(msg) {
-        "use strict";
-        palette.fromNodeList(msg.paletteNodes);
-        return palette;
-    }
-
-    function initHistogram(msg) {
-        "use strict";
-        histogram = jim.twoPhaseHistogram.create(msg.histogramSize);
-        var histogramDataArray = new Uint32Array(msg.histogramData);
-        histogram.setData(histogramDataArray, msg.histogramTotal);
-    }
-
-    function response (msg, imgData) {
-        "use strict";
-        var retVal = {};
-        retVal.result = {};
-        retVal.result.imgData = imgData.buffer;
-        retVal.result.offset = msg.offset;
-        retVal.batchid = msg.batchid;
-        return retVal;
-    }
-
-    function calculateSet(msg) {
-        "use strict";
-        var setProcessor = newSetProcessor();
+    function exportStrip(msg) {
         var width = msg.exportWidth;
         var height = msg.exportHeight;
-        var result;
-        result = setProcessor.processSet(msg.extents, pixelTracker(msg), 0, msg.maxIterations, width, height, msg.deadRegions);
-        var responseObject = response(msg, result.imgData);
-        postMessage(responseObject, [responseObject.result.imgData]);
+        var maxIterations = parseInt(msg.maxIterations, 10);
+        var pixels = jim.pixelIterator.create(width, height, msg.extents);
+        var skip = msg.deadRegions ? deadRegionMask(msg.deadRegions, width, height) : undefined;
+        pixels.iterate(0, maxIterations, new Uint32Array(maxIterations + 1), skip);
+        var imageData = new Uint8ClampedArray(width * height * 4);
+        pixels.colour(imageData, histogramData, histogramData.length, histogramTotal, palette);
+        var reply = {
+            batchid: msg.batchid,
+            result: {imgData: imageData.buffer, offset: msg.offset}
+        };
+        postMessage(reply, [imageData.buffer]);
     }
 
-    function pixelTracker(_msg) {
-        "use strict";
-        var colour = getColourCalculator();
-        var pixelResult = function (_x, _y, _iterations, _histogramEscapedAt, _imageEscapedAt, mx,my) {
-            return {
-                x:_x,
-                y: _y,
-                iterations:_iterations,
-                histogramEscapedAt: _histogramEscapedAt,
-                imageEscapedAt: _imageEscapedAt,
-                mx: mx,
-                my: my
-            };
-        };
-        return {
-            imgData: new Uint8ClampedArray(_msg.exportHeight * _msg.exportWidth * 4),
-            getPixel : function (i,j) {
-                var extents = _msg.extents;
-                var mx = extents.mx + (i * extents.stepX);
-                var my = extents.my + (j * extents.stepY);
-                return pixelResult(0,0,0,0,0, mx, my);
-            },
-            putPixel: function (p, i, j) {
-                var currentPixelPos = (j * _msg.exportWidth + i);
-                var currentRGBArrayPos = currentPixelPos * 4;
-
-                var pixelColour = p.imageEscapedAt !== 0 ? colour.forPoint(p.x, p.y, p.imageEscapedAt, histogram, palette): {r:0, g:0, b:0, a:255};
-                this.imgData[currentRGBArrayPos] = pixelColour.r;
-                this.imgData[currentRGBArrayPos + 1] = pixelColour.g;
-                this.imgData[currentRGBArrayPos + 2] = pixelColour.b;
-                this.imgData[currentRGBArrayPos + 3] = pixelColour.a;
-            }
-        };
-    }
-
-    var onmessage = function(e) {
-        "use strict";
-        var msg = getMessage(e);
+    var onmessage = function (e) {
+        var msg = e.data;
         if (msg.updateHistogramData) {
-            initHistogram(msg);
-            initPalette(msg);
+            histogramData = new Uint32Array(msg.histogramData);
+            histogramTotal = msg.histogramTotal;
+            palette.fromNodeList(msg.paletteNodes);
         } else {
-            calculateSet(msg);
+            exportStrip(msg);
         }
     };
 
@@ -101,5 +54,3 @@ jim.imageexportworker.create = function () {
         onmessage: onmessage
     };
 };
-
-

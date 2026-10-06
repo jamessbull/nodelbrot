@@ -3,9 +3,7 @@ importScripts(
     '/js/mandelbrotPoint.js',
     '/js/tinycolor.js',
     '/js/palette.js',
-    '/js/histogram.js',
-    '/js/mandelbrotEscape.js',
-    '/js/setProcessor.js',
+    '/js/pixelIterator.js',
     '/js/uiWorker.js',
     '/js/histogramExportWorker.js',
     '/js/imageExportWorker.js'
