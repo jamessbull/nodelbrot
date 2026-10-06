@@ -5,7 +5,9 @@
   "scripts": {
     "dev": "node dev/server.js --open",
     "check": "node dev/workerCheck.js",
-    "build": "cd build && node build.js"
+    "build": "node build/build.js",
+    "dev:built": "node build/build.js && node dev/server.js --built --open",
+    "check:built": "node build/build.js && node dev/workerCheck.js --built"
   },
   "devDependencies": {
     "uglify-js": "^3.19.3"

@@ -1,46 +1,54 @@
 // Zero-dependency local dev server for nodelbrot.
 //
-//   node dev/server.js [--port 8090] [--open]
+//   node dev/server.js [--port 8090] [--open] [--built [dir]]
 //
 // Serves the explorer page with the same URL layout as the production router
 // (src/routing/nodelbrotRouter.js), disables caching so edits show up on reload,
 // injects the performance HUD (dev/perfHud.js) and records benchmark results
 // to dev/bench-results.log.
+//
+// With --built, serves the output of build/build.js instead (default dir: latest) as plain static
+// files, as any web server would, adding only the HUD and the PayPal stub to the page.
 "use strict";
 
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
 const { execFileSync, spawn } = require("child_process");
+const { jsDirs } = require("../build/sourcePaths");
 
 const root = path.resolve(__dirname, "..");
 const args = process.argv.slice(2);
 const portArg = args.indexOf("--port");
 const port = Number(portArg !== -1 ? args[portArg + 1] : process.env.PORT) || 8090;
 const shouldOpen = args.includes("--open");
+const builtArg = args.indexOf("--built");
+const builtDirArg = builtArg !== -1 && args[builtArg + 1] && !args[builtArg + 1].startsWith("--") ? args[builtArg + 1] : "latest";
+const builtDir = builtArg === -1 ? null : path.resolve(root, builtDirArg);
+const builtPage = "mandelbrotExplorer.html";
 const resultsLog = path.join(__dirname, "bench-results.log");
 
-// URL prefix -> directory, mirroring nodelbrotRouter.js. Longest prefix wins.
-const staticDirs = [
-    ["/js/export/", "src/client/export"],
-    ["/js/messages/", "src/client/messages"],
-    ["/js/ui/", "src/client/ui"],
-    ["/js/actions/", "src/client/ui/actions"],
-    ["/js/", "src/client"],
-    ["/specs/", "test/client/jasmine/spec"],
-    ["/dev/", "dev"]
-];
+// URL prefix -> directory. Longest prefix wins. The built version gets only its own folder.
+const staticDirs = builtDir
+    ? [["/dev/", "dev"], ["/", path.relative(root, builtDir)]]
+    : jsDirs.concat([["/specs/", "test/client/jasmine/spec"], ["/dev/", "dev"]]);
 
 const contentTypes = {
     ".js": "application/javascript; charset=utf-8",
     ".css": "text/css; charset=utf-8",
     ".png": "image/png",
-    ".html": "text/html; charset=utf-8"
+    ".html": "text/html; charset=utf-8",
+    ".map": "application/json; charset=utf-8"
 };
 
 // The live page loads PayPal's checkout script; stub it so the dev page works offline
 // and never talks to PayPal.
 const paypalStub = "<script>window.paypal = {Button: {render: function () {}}};</script>";
+const hudScript = '<script src="/dev/perfHud.js"></script>\n';
+
+function stubPaypal(html) {
+    return html.replace(/<script src="https:\/\/www\.paypalobjects\.com[^"]*"><\/script>/, paypalStub);
+}
 
 function readTemplate(name) {
     return fs.readFileSync(path.join(root, "src/view/templates", name + ".hbl"), "utf8");
@@ -52,9 +60,13 @@ function fill(template, context) {
 }
 
 function homePage() {
-    const head = readTemplate("homePage/head") + '\n<script src="/dev/perfHud.js"></script>\n';
-    const body = readTemplate("homePage/body")
-        .replace(/<script src="https:\/\/www\.paypalobjects\.com[^"]*"><\/script>/, paypalStub);
+    if (builtDir) {
+        // The HUD goes at the end of the head, after the built script it hooks into.
+        const html = fs.readFileSync(path.join(builtDir, builtPage), "utf8");
+        return stubPaypal(html.replace("</head>", hudScript + "</head>"));
+    }
+    const head = readTemplate("homePage/head") + "\n" + hudScript;
+    const body = stubPaypal(readTemplate("homePage/body"));
     return fill(readTemplate("html"), { head: head, body: body });
 }
 
@@ -96,7 +108,7 @@ function recordBenchmark(req, res) {
         }
         const line = [
             new Date().toISOString(),
-            gitVersion(),
+            gitVersion() + (builtDir ? "+built" : ""),
             "view=" + r.view,
             "target=" + r.target,
             "time=" + (r.ms / 1000).toFixed(2) + "s",
@@ -114,7 +126,7 @@ function recordBenchmark(req, res) {
 const server = http.createServer((req, res) => {
     const urlPath = req.url.split("?")[0];
     if (req.method === "POST" && urlPath === "/dev/bench") return recordBenchmark(req, res);
-    if (urlPath === "/" || urlPath === "/index.html") {
+    if (urlPath === "/" || urlPath === "/index.html" || (builtDir && urlPath === "/" + builtPage)) {
         try {
             return send(res, 200, contentTypes[".html"], homePage());
         } catch (e) {
@@ -126,7 +138,7 @@ const server = http.createServer((req, res) => {
 
 server.listen(port, "127.0.0.1", () => {
     const url = "http://localhost:" + port + "/";
-    console.log("nodelbrot dev server running at " + url);
+    console.log("nodelbrot dev server running at " + url + (builtDir ? " (serving " + path.relative(root, builtDir) + "/)" : ""));
     console.log("Benchmark results are appended to " + path.relative(root, resultsLog));
     if (shouldOpen) {
         const [cmd, cmdArgs] = process.platform === "win32" ? ["cmd", ["/c", "start", "", url]]

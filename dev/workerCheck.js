@@ -1,6 +1,6 @@
 // Checks that the interactive render pipeline produces exactly the same output as another revision.
 //
-//   node dev/workerCheck.js [git-ref] [--only=interactive|export] [--tolerance=N]      (default ref: HEAD)
+//   node dev/workerCheck.js [git-ref | --built[=dir]] [--only=interactive|export] [--tolerance=N]      (default ref: HEAD)
 //
 // Runs the real main-thread code (webworkerInteractive, the worker pool, histogram bookkeeping) and
 // the real worker code (unifiedworker.js) in Node, with an in-process stand-in for Worker, for a
@@ -79,18 +79,32 @@ function newScheduler() {
     };
 }
 
-function workerClass(read, scheduler) {
+// Loads the page code into ctx: the given source files, or for a built side the whole bundle.
+function loadPage(ctx, side, files) {
+    if (side.bundle) {
+        vm.runInContext(side.bundle, ctx, { filename: "built bundle" });
+    } else {
+        files.forEach((f) => run(ctx, side.read, "src/client/" + f));
+    }
+}
+
+function workerClass(side, scheduler) {
     return function FakeWorker(url) {
         const self = this;
         const ctx = newContext();
         ctx.importScripts = function () {
-            Array.prototype.forEach.call(arguments, (script) => run(ctx, read, script.replace(/^\/js\//, "src/client/")));
+            Array.prototype.forEach.call(arguments, (script) => run(ctx, side.read, script.replace(/^\/js\//, "src/client/")));
         };
         ctx.postMessage = function (msg, transfer) {
             const copy = structuredClone(msg, { transfer: transfer || [] });
             scheduler.post(() => self.onmessage && self.onmessage({ data: copy }));
         };
-        run(ctx, read, url.replace(/^\/js\//, "src/client/"));
+        if (side.bundle) {
+            // The bundle starts the worker when importScripts exists, as it does in a real worker.
+            vm.runInContext(side.bundle, ctx, { filename: "built bundle" });
+        } else {
+            run(ctx, side.read, url.replace(/^\/js\//, "src/client/"));
+        }
         self.postMessage = function (msg, transfer) {
             const copy = structuredClone(msg, { transfer: transfer || [] });
             scheduler.post(() => {
@@ -103,12 +117,12 @@ function workerClass(read, scheduler) {
     };
 }
 
-function render(read, view) {
+function render(side, view) {
     const scheduler = newScheduler();
     const ctx = newContext();
-    ctx.Worker = workerClass(read, scheduler);
-    ["common.js", "events.js", "stopWatch.js", "tinycolor.js", "palette.js", "mandelbrotEscape.js",
-        "messages/messages.js", "WebworkerBasedMandelbrotSet.js"].forEach((f) => run(ctx, read, "src/client/" + f));
+    ctx.Worker = workerClass(side, scheduler);
+    loadPage(ctx, side, ["common.js", "events.js", "stopWatch.js", "tinycolor.js", "palette.js", "mandelbrotEscape.js",
+        "messages/messages.js", "WebworkerBasedMandelbrotSet.js"]);
 
     const hash = crypto.createHash("sha256");
     const escapeHash = crypto.createHash("sha256");
@@ -178,7 +192,7 @@ function render(read, view) {
     return {
         hash: hash.digest("hex").slice(0, 16), escapeHash: escapeHash.digest("hex"), images: images, frames: frames, depth: depth,
         workerMs: scheduler.workerMs, mainMs: ms - scheduler.workerMs - harnessMs, modelMs: modelMs,
-        escapes: checkEscapes(ctx, read)
+        escapes: checkEscapes(ctx, side.read)
     };
 }
 
@@ -221,12 +235,12 @@ function describeEscapes(e) {
 // Image export: the real histogram phase (escapeHistogramCalculator) followed by the image phase
 // as set up by exportImage in export/exporter.js, which is mirrored here since the rest of that
 // file is DOM handling. Returns a hash of the exported image.
-function exportImage(read, exp) {
+function exportImage(side, exp) {
     const scheduler = newScheduler();
     const ctx = newContext();
-    ctx.Worker = workerClass(read, scheduler);
-    ["common.js", "events.js", "stopWatch.js", "tinycolor.js", "palette.js", "histogram.js", "messages/messages.js",
-        "deadSectionSplitter.js", "export/exportHistogramCreator.js"].forEach((f) => run(ctx, read, "src/client/" + f));
+    ctx.Worker = workerClass(side, scheduler);
+    loadPage(ctx, side, ["common.js", "events.js", "stopWatch.js", "tinycolor.js", "palette.js", "histogram.js", "messages/messages.js",
+        "deadSectionSplitter.js", "export/exportHistogramCreator.js"]);
     ctx.exp = exp;
     ctx.deadRegions = exp.deadRegions || [];
     let image;
@@ -249,7 +263,7 @@ function exportImage(read, exp) {
                 // exporter.js passes the depth input's value, which is a string.
                 return jim.messages.export.create(fragment, String(exp.depth), deadSections[i]);
             });
-            var pool = jim.worker.pool.create(8, "/js/unifiedworker.js", initialJobs, "histogramData", "none");
+            var pool = jim.worker.pool.create(8, jim.worker.url || "/js/unifiedworker.js", initialJobs, "histogramData", "none");
             var imageData = new Uint8ClampedArray(exp.width * exp.height * 4);
             pool.consume(jobs, function (msg) {
                 imageData.set(new Uint8ClampedArray(msg.result.imgData), msg.result.offset);
@@ -310,13 +324,20 @@ function verdict(results, escapesMatch) {
     const detail = " [max channel difference " + c.maxDiff + ", " + c.percentDiffering.toFixed(3) + "% of pixels differ]";
     return c.maxDiff <= tolerance ? { label: "CLOSE  ", pass: true, detail: detail } : { label: "DIFFER ", pass: false, detail: detail };
 }
-const sides = [
+// With --built[=dir], compares the working tree's source with the bundle built from it (default
+// dir: latest), instead of with a ref.
+const builtArg = process.argv.find((a) => a === "--built" || a.startsWith("--built="));
+const builtBundle = builtArg && path.resolve(root, builtArg.includes("=") ? builtArg.slice(8) : "latest", "mandelbrotExplorer.min.js");
+const sides = builtBundle ? [
+    { label: "source", read: sourceReader(null) },
+    { label: "built", read: sourceReader(null), bundle: fs.readFileSync(builtBundle, "utf8") }
+] : [
     { label: ref, read: sourceReader(ref) },
     { label: "working tree", read: sourceReader(null) }
 ];
 let failures = 0;
 (only === "export" ? [] : views).forEach((view) => {
-    const results = sides.map((side) => render(side.read, view));
+    const results = sides.map((side) => render(side, view));
     const v = verdict(results, results[0].escapeHash === results[1].escapeHash);
     if (!v.pass || results[1].escapes.wrong) failures += 1;
     console.log(v.label + view.name + " (" + results[1].frames + " frames)" + (v.detail || ""));
@@ -326,7 +347,7 @@ let failures = 0;
         "  main thread " + (r.mainMs / r.frames).toFixed(2).padStart(6) + " ms/frame  " + describeEscapes(r.escapes)));
 });
 (only === "interactive" ? [] : exportScenarios).forEach((exp) => {
-    const results = sides.map((side) => exportImage(side.read, exp));
+    const results = sides.map((side) => exportImage(side, exp));
     const v = verdict(results, true);
     if (!v.pass) failures += 1;
     console.log(v.label + exp.name + " (" + exp.width + "x" + exp.height + ", depth " + exp.depth + ")" + (v.detail || ""));
