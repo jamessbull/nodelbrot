@@ -1,0 +1,8 @@
+{
+  "name": "nodelbrot",
+  "private": true,
+  "description": "Mandelbrot set explorer",
+  "scripts": {
+    "dev": "node dev/server.js --open"
+  }
+}

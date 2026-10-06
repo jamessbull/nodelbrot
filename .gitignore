@@ -5,3 +5,4 @@ toolchain/*
 .idea/tasks.xml
 .idea/misc.xml
 .idea/jsLibraryMappings.xml
+dev/bench-results.log
