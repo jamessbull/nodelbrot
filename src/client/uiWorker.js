@@ -19,6 +19,15 @@ jim.uiWorker.create = function () {
     var escapeValues;           // iteration at which |z|^2 passed histogramEscapeValue, or 0
     var imageEscapeValues;      // iteration at which |z|^2 passed imageEscapeValue, or 0
     var smoothIterations;       // smoothed escape iteration used for colouring, set once a pixel escapes
+    var neverEscapes;           // 1 once a pixel is known to be in the set, so needs no more iterating
+    // Periodicity checking (Brent's method): each pixel keeps a reference point from its orbit,
+    // replaced after periodWindow iterations, with the window doubling each time. If the orbit lands
+    // exactly on the reference point it is in a cycle and will never escape. Exact equality means the
+    // check can't change the result: the iteration as computed would repeat forever.
+    var periodRefX;
+    var periodRefY;
+    var periodWindow;
+    var periodCount;            // iterations since the reference point was taken
 
     function initState(noOfPixels) {
         xState = new Float64Array(noOfPixels);
@@ -26,6 +35,11 @@ jim.uiWorker.create = function () {
         escapeValues = new Uint32Array(noOfPixels);
         imageEscapeValues = new Uint32Array(noOfPixels);
         smoothIterations = new Float64Array(noOfPixels);
+        neverEscapes = new Uint8Array(noOfPixels);
+        periodRefX = new Float64Array(noOfPixels);
+        periodRefY = new Float64Array(noOfPixels);
+        periodWindow = new Uint32Array(noOfPixels).fill(1);
+        periodCount = new Uint32Array(noOfPixels);
     }
 
     function iterate(width, height, startIteration, noOfIterations, histogramUpdate) {
@@ -37,14 +51,21 @@ jim.uiWorker.create = function () {
                 if (startIteration !== 0 && escapeValues[idx] === startIteration) {
                     histogramUpdate[0] += 1;
                 }
-                if (imageEscapeValues[idx] !== 0) continue;
+                if (imageEscapeValues[idx] !== 0 || neverEscapes[idx] !== 0) continue;
                 var mx = extents.mx + (i * extents.stepX);
                 var my = extents.my + (j * extents.stepY);
-                if (inMainCardioidOrBulb(mx, my)) continue;
+                if (inMainCardioidOrBulb(mx, my)) {
+                    neverEscapes[idx] = 1;
+                    continue;
+                }
 
                 var x = xState[idx];
                 var y = yState[idx];
                 var histogramEscapedAt = escapeValues[idx];
+                var refX = periodRefX[idx];
+                var refY = periodRefY[idx];
+                var window = periodWindow[idx];
+                var sinceRef = periodCount[idx];
                 var n = 0;
                 var xSquared, ySquared, xSquaredPlusYSquared;
                 while (n < noOfIterations) {
@@ -67,10 +88,25 @@ jim.uiWorker.create = function () {
                         smoothIterations[idx] = startIteration + n + 1 - log(log(x * x + y * y) / 2 / LN2) / LN2;
                         break;
                     }
+                    if (x === refX && y === refY) {
+                        neverEscapes[idx] = 1;
+                        break;
+                    }
+                    sinceRef += 1;
+                    if (sinceRef === window) {
+                        sinceRef = 0;
+                        window *= 2;
+                        refX = x;
+                        refY = y;
+                    }
                 }
                 xState[idx] = x;
                 yState[idx] = y;
                 escapeValues[idx] = histogramEscapedAt;
+                periodRefX[idx] = refX;
+                periodRefY[idx] = refY;
+                periodWindow[idx] = window;
+                periodCount[idx] = sinceRef;
             }
         }
     }
