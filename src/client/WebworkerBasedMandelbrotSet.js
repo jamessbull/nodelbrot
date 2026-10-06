@@ -8,7 +8,12 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
     var histogram = new Uint32Array(jim.mandelbrot.initialHistogramSize);
     var histogramFilledLength = 0;
     var histogramTotal = 0;
-    var stepSize = 95;
+    // Iterations per frame. Adjusted after each frame to keep the workers' time per frame between
+    // 30 and 42ms, and reset when the view changes, since a new view starts with every pixel active.
+    var initialStepSize = 95;
+    var minStepSize = 5;
+    var maxStepSize = 20000;
+    var stepSize = initialStepSize;
     var currentIteration = 0;
     var extents = _extents;
     var palette = null;
@@ -37,12 +42,12 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
     }
 
     function updateStepSize (elapsed) {
-        if (elapsed > 42 && stepSize > 5) {
-            stepSize -= 5;
+        if (elapsed >= 30 && elapsed <= 42) {
+            return;
         }
-        if (elapsed < 30 && stepSize < 100) {
-            stepSize +=5;
-        }
+        // Scale towards 36ms, by at most a factor of two so one odd frame can't swing it too far.
+        var scale = Math.min(2, Math.max(0.5, 36 / Math.max(elapsed, 1)));
+        stepSize = Math.min(maxStepSize, Math.max(minStepSize, Math.round(stepSize * scale)));
     }
 
     function onAllJobsComplete() {
@@ -116,6 +121,7 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
         histogram = new Uint32Array(jim.mandelbrot.initialHistogramSize);
         histogramFilledLength = 0;
         currentIteration = 0;
+        stepSize = initialStepSize;
         extents = extentsTransfer(_extents.topLeft().x, _extents.topLeft().y, _extents.width(), _extents.height());
         palette = undefined;
     });
