@@ -1,6 +1,6 @@
 // Checks that the interactive render pipeline produces exactly the same output as another revision.
 //
-//   node dev/workerCheck.js [git-ref] [--only=interactive|export]      (default ref: HEAD)
+//   node dev/workerCheck.js [git-ref] [--only=interactive|export] [--tolerance=N]      (default ref: HEAD)
 //
 // Runs the real main-thread code (webworkerInteractive, the worker pool, histogram bookkeeping) and
 // the real worker code (unifiedworker.js) in Node, with an in-process stand-in for Worker, for a
@@ -111,6 +111,8 @@ function render(read, view) {
         "messages/messages.js", "WebworkerBasedMandelbrotSet.js"].forEach((f) => run(ctx, read, "src/client/" + f));
 
     const hash = crypto.createHash("sha256");
+    const escapeHash = crypto.createHash("sha256");
+    const images = [];
     let frames = 0;
     let depth = 0;
     let modelMs = 0;
@@ -122,9 +124,14 @@ function render(read, view) {
         return ms;
     };
     ctx.view = view.view;
+    let harnessMs = 0;   // time spent here recording frames, left out of the main thread figure
     ctx.onFrame = function (imgData, escapeValues, iteration) {
+        const recordStart = process.hrtime.bigint();
         hash.update(Buffer.from(imgData.buffer, imgData.byteOffset, imgData.byteLength));
         hash.update(Buffer.from(escapeValues.buffer, escapeValues.byteOffset, escapeValues.byteLength));
+        escapeHash.update(Buffer.from(escapeValues.buffer, escapeValues.byteOffset, escapeValues.byteLength));
+        images.push(new Uint8Array(imgData));
+        harnessMs += Number(process.hrtime.bigint() - recordStart) / 1e6;
         frames += 1;
         depth = iteration;
         if (frames === view.switchAfter) {
@@ -169,8 +176,8 @@ function render(read, view) {
     scheduler.drain();
     const ms = Number(process.hrtime.bigint() - start) / 1e6;
     return {
-        hash: hash.digest("hex").slice(0, 16), frames: frames, depth: depth,
-        workerMs: scheduler.workerMs, mainMs: ms - scheduler.workerMs, modelMs: modelMs,
+        hash: hash.digest("hex").slice(0, 16), escapeHash: escapeHash.digest("hex"), images: images, frames: frames, depth: depth,
+        workerMs: scheduler.workerMs, mainMs: ms - scheduler.workerMs - harnessMs, modelMs: modelMs,
         escapes: checkEscapes(ctx, read)
     };
 }
@@ -255,7 +262,7 @@ function exportImage(read, exp) {
     scheduler.drain();
     const ms = Number(process.hrtime.bigint() - start) / 1e6;
     return {
-        hash: crypto.createHash("sha256").update(Buffer.from(image.buffer)).digest("hex").slice(0, 16),
+        hash: crypto.createHash("sha256").update(Buffer.from(image.buffer)).digest("hex").slice(0, 16), images: [new Uint8Array(image)],
         workerMs: scheduler.workerMs, mainMs: ms - scheduler.workerMs
     };
 }
@@ -274,6 +281,35 @@ const exportScenarios = [
 ];
 
 const only = (process.argv.find((a) => a.startsWith("--only=")) || "").slice(7);
+// With --tolerance=N, output that differs only in colour, by at most N per channel, passes as CLOSE.
+// Interactive escape values must still be identical.
+const toleranceArg = process.argv.find((a) => a.startsWith("--tolerance="));
+const tolerance = toleranceArg ? Number(toleranceArg.slice(12)) : null;
+
+function compareImages(a, b) {
+    let maxDiff = 0;
+    let pixelsDiffering = 0;
+    let pixels = 0;
+    for (let f = 0; f < Math.min(a.length, b.length); f += 1) {
+        for (let p = 0; p < a[f].length; p += 4) {
+            let pixelDiff = 0;
+            for (let c = 0; c < 4; c += 1) pixelDiff = Math.max(pixelDiff, Math.abs(a[f][p + c] - b[f][p + c]));
+            if (pixelDiff) pixelsDiffering += 1;
+            maxDiff = Math.max(maxDiff, pixelDiff);
+            pixels += 1;
+        }
+    }
+    return { maxDiff: maxDiff, percentDiffering: 100 * pixelsDiffering / pixels };
+}
+
+// SAME, CLOSE (within tolerance) or DIFFER, and whether that counts as a pass.
+function verdict(results, escapesMatch) {
+    if (results[0].hash === results[1].hash && results[0].frames === results[1].frames) return { label: "SAME   ", pass: true };
+    if (tolerance === null || !escapesMatch || results[0].frames !== results[1].frames) return { label: "DIFFER ", pass: false };
+    const c = compareImages(results[0].images, results[1].images);
+    const detail = " [max channel difference " + c.maxDiff + ", " + c.percentDiffering.toFixed(3) + "% of pixels differ]";
+    return c.maxDiff <= tolerance ? { label: "CLOSE  ", pass: true, detail: detail } : { label: "DIFFER ", pass: false, detail: detail };
+}
 const sides = [
     { label: ref, read: sourceReader(ref) },
     { label: "working tree", read: sourceReader(null) }
@@ -281,9 +317,9 @@ const sides = [
 let failures = 0;
 (only === "export" ? [] : views).forEach((view) => {
     const results = sides.map((side) => render(side.read, view));
-    const same = results[0].hash === results[1].hash && results[0].frames === results[1].frames;
-    if (!same || results[1].escapes.wrong) failures += 1;
-    console.log((same ? "SAME   " : "DIFFER ") + view.name + " (" + results[1].frames + " frames)");
+    const v = verdict(results, results[0].escapeHash === results[1].escapeHash);
+    if (!v.pass || results[1].escapes.wrong) failures += 1;
+    console.log(v.label + view.name + " (" + results[1].frames + " frames)" + (v.detail || ""));
     results.forEach((r, i) => console.log("    " + sides[i].label.padEnd(14) + r.hash +
         "  depth " + String(r.depth).padStart(6) + "  model depth/s " + String(Math.round(r.depth / (r.modelMs / 1000))).padStart(7) +
         "  workers " + (r.workerMs / r.frames).toFixed(2).padStart(6) + " ms/frame" +
@@ -291,9 +327,9 @@ let failures = 0;
 });
 (only === "interactive" ? [] : exportScenarios).forEach((exp) => {
     const results = sides.map((side) => exportImage(side.read, exp));
-    const same = results[0].hash === results[1].hash;
-    if (!same) failures += 1;
-    console.log((same ? "SAME   " : "DIFFER ") + exp.name + " (" + exp.width + "x" + exp.height + ", depth " + exp.depth + ")");
+    const v = verdict(results, true);
+    if (!v.pass) failures += 1;
+    console.log(v.label + exp.name + " (" + exp.width + "x" + exp.height + ", depth " + exp.depth + ")" + (v.detail || ""));
     results.forEach((r, i) => console.log("    " + sides[i].label.padEnd(14) + r.hash +
         "  workers " + (r.workerMs / 1000).toFixed(2).padStart(7) + " s" +
         "  main thread " + (r.mainMs / 1000).toFixed(2).padStart(6) + " s"));
