@@ -1,5 +1,9 @@
 namespace("jim.pixelIterator");
 
+// Number of entries in the palette lookup table used for colouring. With 16384 entries a colour is
+// at most one shade out on palettes whose colours are at least about 1% apart.
+jim.pixelIterator.lookupTableSize = 16384;
+
 // Iterates and colours a block of width x height pixels starting at extents.mx, extents.my, with
 // extents.stepX and extents.stepY between pixels. Iteration can be done in steps: each call to
 // iterate carries on from where the last one stopped. The per-pixel state lives in typed arrays
@@ -11,6 +15,7 @@ jim.pixelIterator.create = function (width, height, extents) {
     var log = Math.log;
     var LN2 = Math.LN2;
     var floor = Math.floor;
+    var black = new Uint32Array(new Uint8ClampedArray([0, 0, 0, 255]).buffer)[0];
     var inMainCardioidOrBulb = jim.newMandelbrotPoint.create().inMainCardioidOrBulb;
     var noOfPixels = width * height;
     var xState = new Float64Array(noOfPixels);
@@ -103,7 +108,8 @@ jim.pixelIterator.create = function (width, height, extents) {
 
     // Colours escaped pixels by their position in the cumulative escape histogram, and the rest black.
     // histogramData holds only the filled part of a histogram of histogramLength entries.
-    function colour(imageData, histogramData, histogramLength, histogramTotal, palette) {
+    // colours is a palette lookup table from palette.toLookupTable; the nearest entry is used.
+    function colour(imageData, histogramData, histogramLength, histogramTotal, colours) {
         function percentEscapedBy(iteration) {
             var no = histogramData[iteration];
             if (no === undefined) {
@@ -113,22 +119,18 @@ jim.pixelIterator.create = function (width, height, extents) {
             return no === 0 ? 0 : no / histogramTotal;
         }
 
-        for (var idx = 0, rgbaIdx = 0; idx < noOfPixels; idx += 1, rgbaIdx += 4) {
+        var pixels = new Uint32Array(imageData.buffer, imageData.byteOffset, noOfPixels);
+        var lastColour = colours.length - 1;
+        for (var idx = 0; idx < noOfPixels; idx += 1) {
             if (imageEscapeValues[idx] === 0) {
-                imageData[rgbaIdx] = 0;
-                imageData[rgbaIdx + 1] = 0;
-                imageData[rgbaIdx + 2] = 0;
+                pixels[idx] = black;
             } else {
                 var iteration = smoothIterations[idx];
                 var iterationFloor = floor(iteration);
                 var lower = percentEscapedBy(iterationFloor);
                 var higher = percentEscapedBy(iterationFloor + 1);
-                var pixelColour = palette.colourAt(lower + ((higher - lower) * (iteration % 1)));
-                imageData[rgbaIdx] = pixelColour.r;
-                imageData[rgbaIdx + 1] = pixelColour.g;
-                imageData[rgbaIdx + 2] = pixelColour.b;
+                pixels[idx] = colours[(((lower + ((higher - lower) * (iteration % 1))) * lastColour) + 0.5) | 0];
             }
-            imageData[rgbaIdx + 3] = 255;
         }
     }
 

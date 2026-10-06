@@ -6,6 +6,7 @@ namespace("jim.imageexportworker");
 jim.imageexportworker.create = function () {
     "use strict";
     var palette = jim.palette.create();
+    var colours;
     var histogramData;
     var histogramTotal;
 
@@ -31,7 +32,7 @@ jim.imageexportworker.create = function () {
         var skip = msg.deadRegions ? deadRegionMask(msg.deadRegions, width, height) : undefined;
         pixels.iterate(0, maxIterations, new Uint32Array(maxIterations + 1), skip);
         var imageData = new Uint8ClampedArray(width * height * 4);
-        pixels.colour(imageData, histogramData, histogramData.length, histogramTotal, palette);
+        pixels.colour(imageData, histogramData, histogramData.length, histogramTotal, colours);
         var reply = {
             batchid: msg.batchid,
             result: {imgData: imageData.buffer, offset: msg.offset}
@@ -45,6 +46,7 @@ jim.imageexportworker.create = function () {
             histogramData = new Uint32Array(msg.histogramData);
             histogramTotal = msg.histogramTotal;
             palette.fromNodeList(msg.paletteNodes);
+            colours = palette.toLookupTable(jim.pixelIterator.lookupTableSize);
         } else {
             exportStrip(msg);
         }

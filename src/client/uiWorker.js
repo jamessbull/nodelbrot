@@ -5,6 +5,7 @@ namespace("jim.uiWorker");
 jim.uiWorker.create = function () {
     "use strict";
     var palette = jim.palette.create();
+    var colours;
     var pixels;
 
     var onmessage = function (e) {
@@ -18,12 +19,13 @@ jim.uiWorker.create = function () {
         }
         if (msg.paletteNodes) {
             palette.fromNodeList(msg.paletteNodes);
+            colours = palette.toLookupTable(jim.pixelIterator.lookupTableSize);
         }
 
         pixels.iterate(msg.currentIteration, msg.iterations, histogramUpdate);
         var histogramData = new Uint32Array(msg.histogramDataBuffer);
         var histogramLength = msg.histogramLength === undefined ? histogramData.length : msg.histogramLength;
-        pixels.colour(imageData, histogramData, histogramLength, msg.histogramTotal, palette);
+        pixels.colour(imageData, histogramData, histogramLength, msg.histogramTotal, colours);
 
         var escapeValuesToTransfer = new Uint32Array(pixels.escapeValues);
         var reply = {

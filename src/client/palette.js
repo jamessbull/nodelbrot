@@ -139,6 +139,20 @@ jim.palette.create = function (events) {
         },
         toNodeList: function () {
             return nodes.map(function (n) { return {position: n.position, colourDesc: n.hsv}; });
+        },
+        // The colours at size evenly spaced positions from 0 to 1, each packed as RGBA bytes in the
+        // order canvas image data uses, so an entry can be written to a Uint32Array view of image data.
+        toLookupTable: function (size) {
+            var table = new Uint32Array(size);
+            var bytes = new Uint8ClampedArray(table.buffer);
+            for (var i = 0; i < size; i += 1) {
+                var colour = colourNodes.colourAt(i / (size - 1));
+                bytes[i * 4] = colour.r;
+                bytes[(i * 4) + 1] = colour.g;
+                bytes[(i * 4) + 2] = colour.b;
+                bytes[(i * 4) + 3] = 255;
+            }
+            return table;
         }
     };
 
