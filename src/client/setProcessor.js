@@ -20,9 +20,9 @@ jim.worker.msetProcessor.create = function () {
         for (var j = 0 ; j < _height; j +=1) {
             for (var i = 0 ; i < _width; i += 1) {
                 currentPoint = _pixelStateTracker.getPixel(i,j);
-                if (shouldCalculatePoint(i, j, _deadRegionInfo) && currentPoint.imageEscapedAt === 0) {
-                    mx = currentPoint.mx;
-                    my = currentPoint.my;
+                mx = currentPoint.mx;
+                my = currentPoint.my;
+                if (shouldCalculatePoint(i, j, _deadRegionInfo) && currentPoint.imageEscapedAt === 0 && !point.inMainCardioidOrBulb(mx, my)) {
                     currentPointX = currentPoint.x || 0;
                     currentPointY = currentPoint.y || 0;
                     currentPointHistoEscaped = currentPoint.histogramEscapedAt;
