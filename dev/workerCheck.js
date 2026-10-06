@@ -6,7 +6,7 @@
 // the real worker code (unifiedworker.js) in Node, with an in-process stand-in for Worker, for a
 // fixed number of frames on a few views. Every frame's image and escape values are hashed, so any
 // difference in output between the working tree and the ref shows up as a hash mismatch.
-// The step size is made deterministic by giving the renderer a fake stopwatch.
+// The step size is made deterministic by giving the renderer a stopwatch driven by a cost model.
 // It also reports time per frame spent in the workers (all workers added together, as they run
 // one after another here) and on the main thread including message copying. These are steadier
 // than browser timings, but only comparable between runs on the same machine.
@@ -39,9 +39,10 @@ const views = [
     { name: "zoom while rendering", frames: 50, view: defaultView, switchAfter: 10, switchTo: bulbView }
 ];
 
-// Elapsed frame times fed to the renderer's step-size adjustment, cycled. Mixes slow, fast and
-// in-between frames so the step size moves up and down.
-const fakeFrameTimes = [50, 20, 20, 35, 45, 20, 10, 60, 25, 38];
+// The renderer's stopwatch is replaced by a cost model so step sizes are deterministic but still
+// respond to the work done: a frame takes 2ms plus (step size x pixels not yet escaped) iterations
+// spread across the workers at this many iterations per millisecond each.
+const modelIterationsPerMs = 600000;
 
 function sourceReader(revision) {
     const cache = {};
@@ -112,7 +113,14 @@ function render(read, view) {
     const hash = crypto.createHash("sha256");
     let frames = 0;
     let depth = 0;
-    ctx.fakeFrameTimes = fakeFrameTimes;
+    let modelMs = 0;
+    ctx.modelFrameTime = function (escapeValues, step) {
+        let active = 0;
+        for (let p = 0; p < escapeValues.length; p += 1) if (escapeValues[p] === 0) active += 1;
+        const ms = 2 + (step * active) / (parallelism * modelIterationsPerMs);
+        modelMs += ms;
+        return ms;
+    };
     ctx.view = view.view;
     ctx.onFrame = function (imgData, escapeValues, iteration) {
         hash.update(Buffer.from(imgData.buffer, imgData.byteOffset, imgData.byteLength));
@@ -131,10 +139,11 @@ function render(read, view) {
 
     // Mirrors the start-up order in mandelbrot.js.
     vm.runInContext(`
-        var frameNo = 0;
+        var lastStep = 0;
+        events.listenTo(events.histogramUpdateReceivedFromWorker, function (u) { lastStep = u.update.length; });
         jim.stopwatch.create = function () {
             return {start: function () {}, stop: function () {}, elapsed: function () {
-                return fakeFrameTimes[frameNo++ % fakeFrameTimes.length];
+                return modelFrameTime(escapeValues, lastStep);
             }};
         };
         var pixels = ${width * height};
@@ -161,7 +170,7 @@ function render(read, view) {
     const ms = Number(process.hrtime.bigint() - start) / 1e6;
     return {
         hash: hash.digest("hex").slice(0, 16), frames: frames, depth: depth,
-        workerMs: scheduler.workerMs, mainMs: ms - scheduler.workerMs,
+        workerMs: scheduler.workerMs, mainMs: ms - scheduler.workerMs, modelMs: modelMs,
         escapes: checkEscapes(ctx, read)
     };
 }
@@ -213,7 +222,7 @@ views.forEach((view) => {
     if (!same || results[1].escapes.wrong) failures += 1;
     console.log((same ? "SAME   " : "DIFFER ") + view.name + " (" + results[1].frames + " frames)");
     results.forEach((r, i) => console.log("    " + sides[i].label.padEnd(14) + r.hash +
-        "  depth " + String(r.depth).padStart(6) +
+        "  depth " + String(r.depth).padStart(6) + "  model depth/s " + String(Math.round(r.depth / (r.modelMs / 1000))).padStart(7) +
         "  workers " + (r.workerMs / r.frames).toFixed(2).padStart(6) + " ms/frame" +
         "  main thread " + (r.mainMs / r.frames).toFixed(2).padStart(6) + " ms/frame  " + describeEscapes(r.escapes)));
 });
