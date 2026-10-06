@@ -100,6 +100,10 @@ jim.worker.pool.create = function (noOfWorkers, workerUrl, initialJobs, toTransf
     };
 };
 
+// The script the web workers run. In the built version the page and worker code are one file,
+// and it points this at itself.
+jim.worker.url = "/js/unifiedworker.js";
+
 namespace("jim.mandelbrot");
 // Starting size of the escape histogram. It grows when deeper iterations are reached.
 jim.mandelbrot.initialHistogramSize = 250000;

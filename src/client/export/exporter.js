@@ -83,7 +83,7 @@ jim.mandelbrot.image.exporter.create = function (_exportDimensions, state, _dom,
         });
 
         var initialJobs = createInitialJobs(noOfThreads, histogramData,  histogramTotal, palette.toNodeList());
-        var workerPool =  jim.worker.pool.create(noOfThreads, "/js/unifiedworker.js", initialJobs, "histogramData", "none");
+        var workerPool =  jim.worker.pool.create(noOfThreads, jim.worker.url, initialJobs, "histogramData", "none");
 
         exportCanvas = makeExportCanvas(exportDimensions);
         var context = exportCanvas.getContext('2d');

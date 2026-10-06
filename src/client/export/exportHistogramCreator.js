@@ -32,7 +32,7 @@ jim.mandelbrot.export.escapeHistogramCalculator.create = function () {
         var jobs = fragments.map(function (fragment) {
             return fragmentToHistogramMessage(fragment);
         });
-        var workerPool =  jim.worker.pool.create(_noOfWorkers, "/js/unifiedworker.js", [], "");
+        var workerPool =  jim.worker.pool.create(_noOfWorkers, jim.worker.url, [], "");
 
         function onEveryJob(_msg) {
             fullHistogramTotal += _msg.result.histogramTotal;
