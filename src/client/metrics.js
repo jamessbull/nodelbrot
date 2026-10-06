@@ -1,7 +1,6 @@
 namespace("jim.metrics");
 jim.metrics.create = function (_clock, _events) {
     "use strict";
-    var round = jim.common.round;
     var times = new Uint32Array(3);
     var currentIndex = -1;
     function nextIndex(i) { return currentIndex > 1 ? 0 : i + 1; }

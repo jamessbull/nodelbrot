@@ -6,7 +6,6 @@ jim.colour.colourPicker.create = function (canvas, gradient, events) {
     var w = canvas.width;
     var h = canvas.height;
     var selectedHue;
-    var selectedShade;
 
     var toRgb = function (h, s, v) {
         var colour = jim.tinycolor({h: h, s: s, v: v}).toRgb();
@@ -123,44 +122,20 @@ jim.colour.colourPicker.create = function (canvas, gradient, events) {
         return {offsetX: canvasX, offsetY: canvasY, button : 0, preventDefault: function () { } };
     }
 
-    var lasttouchLocationX = 0;
-    var lasttouchLocationY = 0;
-
     function handleStart(ev) {
         ev.preventDefault();
-        //alert("A touch event has been initiated");
-        var touchEvent = getMouseEventForTouchEvent(ev);
-        lasttouchLocationX = event.offsetX;
-        lasttouchLocationY = event.offsetY;
-        drawPicker(touchEvent);
+        drawPicker(getMouseEventForTouchEvent(ev));
     }
 
-    function handleEnd(ev) {
+    // Only the start of a touch picks a colour; the rest just mustn't scroll the page.
+    function ignoreTouch(ev) {
         ev.preventDefault();
-        var event = {
-            button : 0,
-            offsetX: lasttouchLocationX,
-            offsetY: lasttouchLocationY,
-            preventDefault: function () {
-            }};
-
-        //drawPicker(event);
-    }
-
-    function handleCancel(ev) {
-        ev.preventDefault();
-    }
-
-    function handleMove(ev) {
-        ev.preventDefault();
-        lasttouchLocationX = event.offsetX;
-        lasttouchLocationY = event.offsetY;
     }
 
     canvas.addEventListener("touchstart", handleStart);
-    canvas.addEventListener("touchend", handleEnd);
-    canvas.addEventListener("touchcancel", handleCancel);
-    canvas.addEventListener("touchmove", handleMove);
+    canvas.addEventListener("touchend", ignoreTouch);
+    canvas.addEventListener("touchcancel", ignoreTouch);
+    canvas.addEventListener("touchmove", ignoreTouch);
 
     selectedHue = 120;
     return {

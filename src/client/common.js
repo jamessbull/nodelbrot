@@ -1,16 +1,3 @@
-var total = function (arr) {
-    "use strict";
-    var arrResult = [];
-    arr.forEach(function (e, i) {
-        if (i === 0) {
-            arrResult[i] = e;
-        } else {
-             arrResult[i] = arrResult[i - 1] + e;
-        }
-    });
-    return arrResult;
-};
-
 var namespace = function (name) {
     "use strict";
     var parts = name.split("."), partial = self;
@@ -135,21 +122,6 @@ jim.coord.translator.create = function (fromRect, fromPoint) {
                 toRect.topLeft().x + (((fromPoint.x - fromRect.topLeft().x) * toRect.width()) / fromRect.width()),
                 toRect.topLeft().y + (((fromPoint.y - fromRect.topLeft().y) * toRect.height()) / fromRect.height())
             );
-        }
-    };
-};
-
-namespace("jim.coord.translator2");
-jim.coord.translator2.create = function () {
-    "use strict";
-    return {
-        translateX: function (fromTopLeftX, fromWidth, toTopLeftX, toWidth, x) {
-            var totalAmount = (((toWidth) / fromWidth) * (x - fromTopLeftX));
-            return ((toTopLeftX) + totalAmount);
-        },
-        translateY: function (fromTopLeftY, fromHeight, toTopLeftY, toHeight, y) {
-            var totalAmount = (((toHeight) / fromHeight) * (y - fromTopLeftY));
-            return ((toTopLeftY) + totalAmount);
         }
     };
 };
@@ -419,12 +391,6 @@ jim.dom.functions.create = function () {
     };
 };
 
-function asyncCallerThing(arg) {
-    promise = jim.promise.create(function (resolve) {
-        resolve(arg);
-    });
-}
-
 namespace("jim.promise");
 jim.promise.create = function (initial) {
     "use strict";
@@ -498,12 +464,7 @@ jim.anim.fixedLength.create = function () {
 namespace("jim.message.supplier");
 jim.message.supplier.create = function (_messages) {
     "use strict";
-    var messages = _messages ? _messages : [
-        "Calculating Pixels",
-        "Examining dead areas",
-        "Reticulating splines",
-        "Wombling free"
-    ];
+    var messages = _messages;
     var currentMessage = 0;
     return {
         next: function () {

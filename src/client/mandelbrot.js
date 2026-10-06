@@ -1,14 +1,10 @@
-namespace("jim.defaults");
-jim.defaults.mandelbrotExtents = jim.rectangle.create(-2.5, -1, 3.5, 2);
-
 namespace("jim.init");
 jim.init.run = function () {
     "use strict";
     var displayWidth            = 700;
     var displayHeight           = 400;
     var histoData = new Uint32Array(jim.mandelbrot.initialHistogramSize);
-    var round                   = jim.common.round;
-    var dom                     = jim.dom.functions.create();
+    var dom                    = jim.dom.functions.create();
     var mainCanvas              = dom.element("mandelbrotCanvas");
 
     var startingExtent = jim.rectangle.create(-2.5, -1, 3.5, 2);
@@ -46,7 +42,6 @@ jim.init.run = function () {
     var removeButton            = dom.element("removeButton");
     var bookmarkButton          = dom.element("bookmarkButton");
     var maxIteration            = dom.element("maxIteration");
-    var percEscaped             = dom.element("totalHistogramPerc");
     var lastEscapedOn           = dom.element("lastPointEscapedAt");
     var smallExport             = dom.element("smallExport");
     var mediumExport            = dom.element("mediumExport");
@@ -78,7 +73,7 @@ jim.init.run = function () {
     jim.mandelbrot.imageRenderer.create(events, mainCanvas, displayWidth, displayHeight);
     jim.mandelbrot.examinePixelStateDisplay.create(events, pixelInfoCanvas, imgData, xState, yState, escapeValues, imageEscapeValues, displayWidth, uiCanvas);
     jim.mandelbrot.pixelEscapeRateTracker.create(events);
-    var palette = jim.palette.create(events);
+    var palette = jim.palette.create();
     var colourGradientui = newColourGradientUI(colourGradientCanvas, addButton, removeButton, palette, events);
 
     var paletteBlendSelect = dom.element("paletteBlendSelect");

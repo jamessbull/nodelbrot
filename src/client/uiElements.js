@@ -1,53 +1,3 @@
-namespace("jim.mandelbrot.ui.histogram");
-jim.mandelbrot.ui.histogram.create = function (_parallelHistogram, _mandelbrotSet, _dom) {
-    "use strict";
-    var histogramButton = document.getElementById("showHistogramButton");
-    var histogramCanvas = document.getElementById("histogramCanvas");
-    _dom.hide(histogramCanvas);
-    var interpolate = jim.interpolator.create().interpolate;
-    var context = histogramCanvas.getContext('2d');
-
-    var drawLine = function (fromX, fromY, toX, toY) {
-        context.beginPath();
-        context.moveTo(fromX, fromY);
-        context.lineTo(toX, toY);
-        context.lineWidth = 1;
-        context.strokeStyle = 'rgba(30,255,30,255)';
-        context.stroke();
-    };
-    context.strokeStyle = 'rgba(0,255,0,255)';
-    context.fillStyle = 'rgba(0,0,0,255)';
-    context.fillRect(0,0,700,400);
-
-    var drawHistogram = function (e) {
-        context.clearRect(0,0, 700, 400);
-        var histogram = jim.twoPhaseHistogram.create(e.histogramData.length);
-        histogram.setData(e.histogramData, e.histogramTotal);
-        histogram.process();
-        for (var i = 0; i < 700; i++) {
-            var index = Math.floor(interpolate(0, e.histogramData.length, i / 700));
-            drawLine(i, 400, i, 400 - histogram.percentEscapedBy(index) * 400);
-        }
-    };
-
-    events.listenTo("histogramViewComplete", drawHistogram);
-    var showing = false;
-
-
-    histogramButton.onclick  = function () {
-        if (showing) {
-            _dom.hide(histogramCanvas);
-            showing = false;
-        } else {
-            _dom.show(histogramCanvas);
-            showing = true;
-        }
-
-        _parallelHistogram.run(_mandelbrotSet.state().getExtents(),1000, 140, 80, "histogramViewComplete", "histoProgress", 10);
-    };
-
-};
-
 namespace("jim.mandelbrot.ui.elements");
 jim.mandelbrot.ui.elements.create = function (_exportSizeDropdown, _state, _events) {
     "use strict";
@@ -85,7 +35,6 @@ jim.mandelbrot.ui.elements.create = function (_exportSizeDropdown, _state, _even
     var examineMenuButton  = document.getElementById("pixelInfoButton");
     var examinePixelsPanel = document.getElementById("examinePixels");
     var exportPanel        = document.getElementById("exportImagePanel");
-    var exportMenuButton   = document.getElementById("exportImageButton");
     var mandelCanvas       = document.getElementById("mandelbrotCanvas");
     var bottomMessageBox   = document.getElementById("bottomMessageBox");
     var topMessageBox   = document.getElementById("topMessageBox");

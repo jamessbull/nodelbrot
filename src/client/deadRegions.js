@@ -12,7 +12,6 @@ jim.mandelbrot.deadRegions.create = function (_events, _canvas, _mandelbrotCanva
     }
 
     var radius ;
-    var showDeadRegions;
     var calc;
     var calcDeadRegions = false;
 
@@ -45,7 +44,6 @@ jim.mandelbrot.deadRegions.create = function (_events, _canvas, _mandelbrotCanva
     });
 
     on(_events.showDeadRegions, function (_radius) {
-//        showDeadRegions = true;
         calcDeadRegions = true;
         radius = _radius;
     });

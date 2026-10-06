@@ -9,10 +9,6 @@ jim.newMandelbrotPoint.create = function () {
         return {mx: _mx, my:_my, x:_x, y: _y, iterations:_iterations, histogramEscapedAt: _histogramEscapedAt, imageEscapedAt:_imageEscapedAt};
     }
 
-    function input(_mx, _my, _x, _y, _histogramEscapedAt, imageEscapedAt) {
-        return output(_mx, _my, _x, _y, 0, _histogramEscapedAt, imageEscapedAt || 0);
-    }
-
     // Points inside the main cardioid or the period-2 bulb never escape, so they don't need iterating.
     function inMainCardioidOrBulb(_mx, _my) {
         var xMinusQuarter = _mx - 0.25;
@@ -20,10 +16,6 @@ jim.newMandelbrotPoint.create = function () {
         var q = (xMinusQuarter * xMinusQuarter) + ySquared;
         var xPlusOne = _mx + 1;
         return q * (q + xMinusQuarter) <= 0.25 * ySquared || (xPlusOne * xPlusOne) + ySquared <= 0.0625;
-    }
-
-    function calcObject(p, startAt, times) {
-        return calculate(p.mx, p.my, times, startAt, p.x, p.y, p.histogramEscapedAt);
     }
 
     function calculate (_mx, _my, _noOfIterations, _startIteration, _x, _y, _histogramEscapedAt) {
@@ -74,8 +66,6 @@ jim.newMandelbrotPoint.create = function () {
 
     return {
         calculate : calculate,
-        calcObject: calcObject,
-        inMainCardioidOrBulb: inMainCardioidOrBulb,
-        input: input
+        inMainCardioidOrBulb: inMainCardioidOrBulb
     };
 };

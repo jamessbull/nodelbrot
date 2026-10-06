@@ -20,6 +20,7 @@ const path = require("path");
 const vm = require("vm");
 const crypto = require("crypto");
 const { execFileSync } = require("child_process");
+const { sourceFor } = require("../build/sourcePaths");
 
 const root = path.resolve(__dirname, "..");
 const ref = process.argv.slice(2).find((a) => !a.startsWith("--")) || "HEAD";
@@ -79,12 +80,15 @@ function newScheduler() {
     };
 }
 
-// Loads the page code into ctx: the given source files, or for a built side the whole bundle.
-function loadPage(ctx, side, files) {
+// Loads the page code into ctx: the scripts the development page loads in that revision, in order,
+// or for a built side the whole bundle.
+function loadPage(ctx, side) {
     if (side.bundle) {
         vm.runInContext(side.bundle, ctx, { filename: "built bundle" });
     } else {
-        files.forEach((f) => run(ctx, side.read, "src/client/" + f));
+        const head = side.read("src/view/templates/homePage/head.hbl");
+        Array.from(head.matchAll(/<script src="(\/js\/[^"]+)"><\/script>/g), (m) => sourceFor(m[1]))
+            .forEach((file) => run(ctx, side.read, file));
     }
 }
 
@@ -121,8 +125,7 @@ function render(side, view) {
     const scheduler = newScheduler();
     const ctx = newContext();
     ctx.Worker = workerClass(side, scheduler);
-    loadPage(ctx, side, ["common.js", "events.js", "stopWatch.js", "tinycolor.js", "palette.js", "mandelbrotEscape.js",
-        "messages/messages.js", "WebworkerBasedMandelbrotSet.js"]);
+    loadPage(ctx, side);
 
     const hash = crypto.createHash("sha256");
     const escapeHash = crypto.createHash("sha256");
@@ -239,8 +242,7 @@ function exportImage(side, exp) {
     const scheduler = newScheduler();
     const ctx = newContext();
     ctx.Worker = workerClass(side, scheduler);
-    loadPage(ctx, side, ["common.js", "events.js", "stopWatch.js", "tinycolor.js", "palette.js", "histogram.js", "messages/messages.js",
-        "deadSectionSplitter.js", "export/exportHistogramCreator.js"]);
+    loadPage(ctx, side);
     ctx.exp = exp;
     ctx.deadRegions = exp.deadRegions || [];
     let image;

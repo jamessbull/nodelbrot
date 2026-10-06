@@ -41,9 +41,10 @@ jim.mandelbrot.export.escapeHistogramCalculator.create = function () {
         }
 
         function onAllJobsComplete(_msg) {
-            var h = jim.twoPhaseHistogram.create(fullHistogramData.length);
-            h.setData(fullHistogramData, fullHistogramTotal);
-            h.process();
+            // The image phase needs cumulative counts: how many pixels had escaped by each iteration.
+            for (var i = 1; i < fullHistogramData.length; i += 1) {
+                fullHistogramData[i] += fullHistogramData[i - 1];
+            }
             _onComplete(fullHistogramData, fullHistogramTotal);
             workerPool.terminate();
         }

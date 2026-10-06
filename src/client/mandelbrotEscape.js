@@ -5,7 +5,6 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
         currentExtents  = startingExtent,
         previousExtents = [],
         screen          = aRectangle(0, 0, sizeX - 1, sizeY - 1),
-        maxIterations   = 0,
         fromScreen = function (x, y) { return screen.at(x, y).translateTo(currentExtents);};
 
     var theState = {
@@ -40,7 +39,6 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
         },
         setExtents: function (extents) {
             currentExtents = extents;
-            maxIterations = 0;
             _events.fire(_events.extentsUpdate, currentExtents);
         }
     };
@@ -63,7 +61,6 @@ namespace("jim.mandelbrot.escapeDistributionHistogram");
 jim.mandelbrot.escapeDistributionHistogram.create = function (_events, _histoData) {
     "use strict";
     var currentTotal = 0;
-    var called = 0;
     var lastTimeRound = 0;
     var filledLength = 0;       // entries at and beyond this index have not been written yet, so are zero
 
@@ -78,7 +75,6 @@ jim.mandelbrot.escapeDistributionHistogram.create = function (_events, _histoDat
     function processHistogramUpdates(updateInfo) {
         var updates = updateInfo.update;
         var lastIterationCalculated = updateInfo.currentIteration;
-        called +=1;
         ensureCapacity(lastIterationCalculated + updates.length);
         var runningTotal = 0;
         for (var i = 0; i < updates.length; i += 1) {
@@ -114,8 +110,6 @@ jim.mandelbrot.pixelEscapeRateTracker.create = function (events) {
     "use strict";
     var lastCheckpoint = 0;
     var counter = 0;
-    var escaped = 0;
-    var running = true;
 
     function restart() {
         events.fire(events.restart);
@@ -146,7 +140,6 @@ jim.mandelbrot.pixelEscapeRateTracker.create = function (events) {
 
         if (lastCheckpoint === _totalEscaped && counter > 30 && _totalEscaped > target) {
             events.fire(events.stop);
-            running = false;
             counter = 0;
             lastCheckpoint = 0;
         }

@@ -31,10 +31,6 @@ jim.mandelbrot.image.exporter.create = function (_exportDimensions, state, _dom,
 
     _dom.hide(exportProgress);
 
-    function log(thing) {
-        console.log(thing);
-    }
-
     on(_events.paletteChanged, function (_palette) {
         palette = _palette;
     });
@@ -61,7 +57,6 @@ jim.mandelbrot.image.exporter.create = function (_exportDimensions, state, _dom,
             return initialJobs;
         }
 
-        var timer = jim.stopwatch.create();
         var extents = state.getExtents();
 
         var mx = extents.topLeft().x;

@@ -7,7 +7,6 @@ jim.mandelbrot.examinePixelStateDisplay.create = function (_events, _examinePixe
     var magnifiedAreaWidth  = 18;
     var areaHasBeenSelected = false;
     var selectedArea;
-    var histogramForColour = jim.twoPhaseHistogram.create(0);
 
     var calculateFillStyle = function (colour) {
         return "rgba(" + round(colour.r, 0) + "," + round(colour.g, 0) + ","  + round(colour.b, 0) + "," + round(colour.a, 0) +")";
@@ -114,10 +113,6 @@ jim.mandelbrot.examinePixelStateDisplay.create = function (_events, _examinePixe
             myContext.fillRect(point.x * pixelsPerBlock, point.y * pixelsPerBlock, pixelsPerBlock, pixelsPerBlock);
         });
     }
-
-    on(_events.histogramUpdated, function (update) {
-        histogramForColour.setData(update.array, update.total);
-    });
 
     function displayMessage(msg, x, y) {
         var context = uiCanvas.getContext('2d');
