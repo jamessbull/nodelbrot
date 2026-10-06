@@ -1,10 +1,10 @@
 // Checks that the interactive render pipeline produces exactly the same output as another revision.
 //
-//   node dev/workerCheck.js [git-ref]      (default ref: HEAD)
+//   node dev/workerCheck.js [git-ref] [--only=interactive|export]      (default ref: HEAD)
 //
 // Runs the real main-thread code (webworkerInteractive, the worker pool, histogram bookkeeping) and
 // the real worker code (unifiedworker.js) in Node, with an in-process stand-in for Worker, for a
-// fixed number of frames on a few views. Every frame's image and escape values are hashed, so any
+// fixed number of frames on a few views, and a few image exports. Every frame and export is hashed, so any
 // difference in output between the working tree and the ref shows up as a hash mismatch.
 // The step size is made deterministic by giving the renderer a stopwatch driven by a cost model.
 // It also reports time per frame spent in the workers (all workers added together, as they run
@@ -22,7 +22,7 @@ const crypto = require("crypto");
 const { execFileSync } = require("child_process");
 
 const root = path.resolve(__dirname, "..");
-const ref = process.argv[2] || "HEAD";
+const ref = process.argv.slice(2).find((a) => !a.startsWith("--")) || "HEAD";
 const width = 700;
 const height = 400;
 const parallelism = 3;
@@ -211,12 +211,75 @@ function describeEscapes(e) {
         e.firstWrong.expected + ", got " + e.firstWrong.actual + ")";
 }
 
+// Image export: the real histogram phase (escapeHistogramCalculator) followed by the image phase
+// as set up by exportImage in export/exporter.js, which is mirrored here since the rest of that
+// file is DOM handling. Returns a hash of the exported image.
+function exportImage(read, exp) {
+    const scheduler = newScheduler();
+    const ctx = newContext();
+    ctx.Worker = workerClass(read, scheduler);
+    ["common.js", "events.js", "stopWatch.js", "tinycolor.js", "palette.js", "histogram.js", "messages/messages.js",
+        "deadSectionSplitter.js", "export/exportHistogramCreator.js"].forEach((f) => run(ctx, read, "src/client/" + f));
+    ctx.exp = exp;
+    ctx.deadRegions = exp.deadRegions || [];
+    let image;
+    ctx.done = (imageData) => { image = imageData; };
+    vm.runInContext(`
+        var v = exp.view;
+        var source = jim.rectangle.create(v.x, v.y, v.w, v.h);
+        var dest = jim.rectangle.create(0, 0, Math.floor(exp.width / 10), Math.floor(exp.height / 10));
+        jim.mandelbrot.export.escapeHistogramCalculator.create().calculate(source, dest, exp.depth, 10, 8, function (histogramData, histogramTotal) {
+            var nodeList = jim.palette.create().toNodeList();
+            var initialJobs = [];
+            for (var i = 0; i < 8; i += 1) {
+                var histoCopy = new Uint32Array(histogramData);
+                initialJobs.push({workerMessageType: "imageexportworker", updateHistogramData: true, paletteNodes: nodeList,
+                    histogramData: histoCopy.buffer, histogramSize: histoCopy.length, histogramTotal: histogramTotal});
+            }
+            var fragments = jim.messages.renderFragment2.create(0, v.x, v.y, v.w, v.h, exp.width, exp.height).split(100);
+            var deadSections = jim.common.arraySplitter.create().split(deadRegions, 100, 700);
+            var jobs = fragments.map(function (fragment, i) {
+                // exporter.js passes the depth input's value, which is a string.
+                return jim.messages.export.create(fragment, String(exp.depth), deadSections[i]);
+            });
+            var pool = jim.worker.pool.create(8, "/js/unifiedworker.js", initialJobs, "histogramData", "none");
+            var imageData = new Uint8ClampedArray(exp.width * exp.height * 4);
+            pool.consume(jobs, function (msg) {
+                imageData.set(new Uint8ClampedArray(msg.result.imgData), msg.result.offset);
+            }, function () {
+                done(imageData);
+            });
+        });
+    `, ctx);
+    const start = process.hrtime.bigint();
+    scheduler.drain();
+    const ms = Number(process.hrtime.bigint() - start) / 1e6;
+    return {
+        hash: crypto.createHash("sha256").update(Buffer.from(image.buffer)).digest("hex").slice(0, 16),
+        workerMs: scheduler.workerMs, mainMs: ms - scheduler.workerMs
+    };
+}
+
+// A block of dead regions, in the 700x400 layout the interactive view publishes them in.
+function deadRegionBlock() {
+    const regions = new Uint32Array(700 * 400);
+    for (let j = 100; j < 250; j += 1) for (let i = 200; i < 450; i += 1) regions[j * 700 + i] = 1;
+    return regions;
+}
+
+const exportScenarios = [
+    { name: "export default view", view: defaultView, width: 1400, height: 800, depth: 1000 },
+    { name: "export period-3 bulb", view: bulbView, width: 700, height: 400, depth: 5000 },
+    { name: "export with dead regions", view: defaultView, width: 1400, height: 800, depth: 1000, deadRegions: deadRegionBlock() }
+];
+
+const only = (process.argv.find((a) => a.startsWith("--only=")) || "").slice(7);
 const sides = [
     { label: ref, read: sourceReader(ref) },
     { label: "working tree", read: sourceReader(null) }
 ];
 let failures = 0;
-views.forEach((view) => {
+(only === "export" ? [] : views).forEach((view) => {
     const results = sides.map((side) => render(side.read, view));
     const same = results[0].hash === results[1].hash && results[0].frames === results[1].frames;
     if (!same || results[1].escapes.wrong) failures += 1;
@@ -225,5 +288,14 @@ views.forEach((view) => {
         "  depth " + String(r.depth).padStart(6) + "  model depth/s " + String(Math.round(r.depth / (r.modelMs / 1000))).padStart(7) +
         "  workers " + (r.workerMs / r.frames).toFixed(2).padStart(6) + " ms/frame" +
         "  main thread " + (r.mainMs / r.frames).toFixed(2).padStart(6) + " ms/frame  " + describeEscapes(r.escapes)));
+});
+(only === "interactive" ? [] : exportScenarios).forEach((exp) => {
+    const results = sides.map((side) => exportImage(side.read, exp));
+    const same = results[0].hash === results[1].hash;
+    if (!same) failures += 1;
+    console.log((same ? "SAME   " : "DIFFER ") + exp.name + " (" + exp.width + "x" + exp.height + ", depth " + exp.depth + ")");
+    results.forEach((r, i) => console.log("    " + sides[i].label.padEnd(14) + r.hash +
+        "  workers " + (r.workerMs / 1000).toFixed(2).padStart(7) + " s" +
+        "  main thread " + (r.mainMs / 1000).toFixed(2).padStart(6) + " s"));
 });
 process.exit(failures ? 1 : 0);
