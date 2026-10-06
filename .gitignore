@@ -6,3 +6,4 @@ toolchain/*
 .idea/misc.xml
 .idea/jsLibraryMappings.xml
 dev/bench-results.log
+node_modules/

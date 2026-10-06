@@ -1,7 +1,7 @@
 // Here I want to stitch files together into one large file
 var zlib = require('zlib');
 var fs = require('fs');
-var UglifyJS = require('uglify-es');
+var UglifyJS = require('uglify-js');
 
 var uiFiles = [
     "../src/client/common.js",
@@ -63,12 +63,19 @@ function concatFiles(files) {
     return content;
 }
 
-function replaceWorkerNameWithMinifiedWorkerName(js, newName) {
-    return js.replace(/\/js\/unifiedworker.js/g, newName);
+// The worker is served next to the page in the built version, rather than under /js/.
+var builtWorkerName = "unifiedworker.js";
+
+function replaceWorkerPath(js) {
+    return js.replace(/\/js\/unifiedworker.js/g, builtWorkerName);
 }
 
-function minify(js,reserved) {
-    return UglifyJS.minify(js,  { mangle: { reserved: reserved } }).code;
+function minify(js) {
+    var result = UglifyJS.minify(js);
+    if (result.error) {
+        throw result.error;
+    }
+    return result.code;
 }
 
 function buildWorker(location) {
@@ -77,8 +84,7 @@ function buildWorker(location) {
     var modifiedUnifiedWorkerContent = unifiedworkerContent.replace(/importScripts[\s\S]*var u/, "var u");
     var fullContent = workerFileContent + "\n" + modifiedUnifiedWorkerContent;
     var contentWithoutUseStrict = removeStrict(fullContent);
-    var contentWithMinifiedWorkerName = replaceWorkerNameWithMinifiedWorkerName(contentWithoutUseStrict, "unifiedworker.js.min");
-    var minifiedJS = minify(contentWithMinifiedWorkerName, ["unifiedworker.js.min"]);
+    var minifiedJS = minify(replaceWorkerPath(contentWithoutUseStrict));
     fs.writeFileSync(location, minifiedJS);
 }
 
@@ -87,7 +93,7 @@ function loadFile(name) {
 }
 
 function removeScriptTags(html) {
-    return html.replace(/<script.*<\/script>\n/g,"");
+    return html.replace(/<script.*<\/script>\r?\n/g,"");
 }
 
 function processedHead() {
@@ -100,10 +106,7 @@ function processedBody() {
     var bodyMarkup = loadFile(body);
     var js = concatFiles(uiFiles);
     var allJs = js + "\n" + "window.fractal = jim.init.run();\n";
-    var contentWithMinifiedWorkerName = replaceWorkerNameWithMinifiedWorkerName(allJs, "unifiedworker.js.min");
-
-    var minifiedJS = removeStrict(contentWithMinifiedWorkerName);
-    minifiedJS = minify(minifiedJS, ["unifiedworker.js.min"]);
+    var minifiedJS = minify(removeStrict(replaceWorkerPath(allJs)));
     return bodyMarkup.replace(/window.fractal = jim.init.run\(\);/, minifiedJS);
 }
 
@@ -119,7 +122,7 @@ function buildUI(location) {
     fs.writeFileSync(location, html);
 }
 
-buildWorker("../latest/unifiedworker.js.min");
+buildWorker("../latest/" + builtWorkerName);
 buildUI("../latest/mandelbrotExplorer.html");
 
 //var gzip = zlib.createGzip();

@@ -4,6 +4,10 @@
   "description": "Mandelbrot set explorer",
   "scripts": {
     "dev": "node dev/server.js --open",
-    "check": "node dev/workerCheck.js"
+    "check": "node dev/workerCheck.js",
+    "build": "cd build && node build.js"
+  },
+  "devDependencies": {
+    "uglify-js": "^3.19.3"
   }
 }
