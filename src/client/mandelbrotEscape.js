@@ -158,15 +158,22 @@ namespace("jim.mandelbrot.imageRenderer");
 jim.mandelbrot.imageRenderer.create = function (_events, _canvas, _width, _height) {
     "use strict";
     var context = _canvas.getContext('2d');
-    var imageData = context.getImageData(0,0,_width, _height);
-    var screenData = imageData.data;
+    var imageData;      // wraps the renderer's image buffer, so drawing it needs no copy
+    var imageBuffer;
 
+    // args.imgData is the whole image for the canvas (args.offset is always 0), and is the same
+    // buffer every frame.
     on(_events.renderImage, function (args) {
-        screenData.set(args.imgData, args.offset);
+        if (args.imgData !== imageBuffer) {
+            imageBuffer = args.imgData;
+            imageData = new ImageData(imageBuffer, _width, _height);
+        }
     });
 
     on(_events.andFinally, function () {
-        context.putImageData(imageData, 0, 0);
+        if (imageData) {
+            context.putImageData(imageData, 0, 0);
+        }
     });
 
     return {};
