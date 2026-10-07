@@ -39,6 +39,8 @@ export function createGpuRenderer({width, height, events, imgData, escapeValues,
     const initialStepSize = 95;
     const minStepSize = 5;
     const maxStepSize = 20000;
+    // Iterations are counted in 32-bit floats, which are exact up to here; rendering stops there.
+    const maxDepth = 2 ** 24;
 
     // The counts of escapes in a frame, by iteration from its start.
     const countRows = Math.ceil(maxStepSize / arrayTextureWidth);
@@ -252,7 +254,14 @@ export function createGpuRenderer({width, height, events, imgData, escapeValues,
     }
 
     function submitFrame() {
-        const room = orbitRoom();
+        if (submittedIteration >= maxDepth) {
+            frameWanted = false;
+            if (running) {
+                events.fire(events.stop);
+            }
+            return;
+        }
+        const room = Math.min(orbitRoom(), maxDepth - submittedIteration);
         if (room < 1) {
             waitingForOrbit = true;
             referenceOrbit.want(submittedIteration + stepSize + 2);
@@ -559,10 +568,23 @@ export function createGpuRenderer({width, height, events, imgData, escapeValues,
     on(events.start, start);
     on(events.restart, start);
     on(events.stop, stop);
+    // A change while stopped (to the colours, say) shows by colouring the pixels again, without iterating
+    // them further: frames still in flight show it anyway. Only pixels yet to be iterated at all need a
+    // frame.
     on(events.showChanges, function () {
-        if (!running) {
-            requestFrame();
+        if (running || framesInFlight.length > 0) {
+            return;
         }
+        if (resetPending) {
+            requestFrame();
+            return;
+        }
+        drawImage();
+        if (examining) {
+            readExamineData();
+            events.fire(events.pixelDataReady);
+        }
+        events.fire(events.frameComplete);
     });
     // While examining, every frame fetches the pixel data, so the magnifier keeps up with changes.
     on(events.startExamining, function () {

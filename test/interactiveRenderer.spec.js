@@ -56,7 +56,8 @@ describe("the interactive renderer", function () {
                     });
                 });
             },
-            waiting: () => workers.reduce((total, w) => total + w.held.length, 0)
+            waiting: () => workers.reduce((total, w) => total + w.held.length, 0),
+            heldJobs: () => workers.flatMap((w) => w.held)
         };
     }
 
@@ -107,6 +108,32 @@ describe("the interactive renderer", function () {
         expect(workers.waiting()).toBe(2);
         workers.replyAll();
         expect(workers.waiting()).toBe(0);
+    });
+
+    it("should only colour the pixels again for changes while stopped, not iterate them further", function () {
+        const events = createEvents();
+        const workers = heldWorkers();
+        const depths = [];
+        events.listenTo(events.depthReached, (depth) => depths.push(depth));
+        startedRenderer(events, workers);
+        workers.replyAll();
+        events.fire(events.stop);
+        workers.replyAll();
+        const before = depths.length;
+        // As dragging a colour about does, many times over.
+        for (let i = 0; i < 50; i += 1) {
+            events.fire(events.paletteChanged, createPalette());
+            events.fire(events.showChanges);
+            expect(workers.heldJobs().every((job) => job.iterations === 0)).withContext("change " + i).toBe(true);
+            workers.replyAll();
+        }
+        // The depth stays where rendering stopped.
+        const recoloured = depths.slice(before);
+        expect(recoloured.length).toBe(50);
+        expect(recoloured.every((d) => d === recoloured[0] && d > 0)).toBe(true);
+        // Going on again iterates them as before.
+        events.fire(events.restart);
+        expect(workers.heldJobs().every((job) => job.iterations > 0)).toBe(true);
     });
 
     it("should only say the examine data is ready after a frame that fetched it", function () {

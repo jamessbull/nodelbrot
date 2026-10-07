@@ -37,6 +37,7 @@ export function createInteractiveRenderer({width, height, events, workers, newWo
     let running = true;         // whether to carry on with another frame after each one
     let inFlight = false;       // whether a batch is out with the workers
     let frameWanted = false;    // whether one more frame has been asked for, even if not running
+    let recolourOnly = false;   // whether that frame is only to colour the pixels again, not iterate them
     let destroyed = false;      // once destroyed, nothing more is sent to the workers
     let batchSendsData = false; // whether the batch out asked for the examine data
     let fragments;
@@ -66,7 +67,7 @@ export function createInteractiveRenderer({width, height, events, workers, newWo
             return;
         }
         const escapes = escapesPast(new Uint32Array(msg.histogramUpdate), currentIteration, catchUpTo);
-        if (escapes) {
+        if (escapes && escapes.update.length > 0) {
             events.fire(events.escapesFromWorkers, escapes);
         }
         placeRows(escapeValues, new Uint32Array(msg.escapeValues), msg, 1);
@@ -99,7 +100,10 @@ export function createInteractiveRenderer({width, height, events, workers, newWo
                 events.fire(events.frameComplete);
             }
 
-            updateStepSize(timer.elapsed());
+            // A frame that only coloured the pixels again says nothing about how long iterations take.
+            if (frameIterations > 0) {
+                updateStepSize(timer.elapsed());
+            }
             rereferenceIfNeeded();
         }
 
@@ -151,13 +155,15 @@ export function createInteractiveRenderer({width, height, events, workers, newWo
         if (destroyed) {
             return;
         }
-        const room = orbitRoom();
-        if (room < 1) {
+        const recolouring = recolourOnly && !running;
+        recolourOnly = false;
+        const room = recolouring ? 0 : orbitRoom();
+        if (!recolouring && room < 1) {
             waitingForOrbit = true;
             referenceOrbit.want(currentIteration + stepSize + 2);
             return;
         }
-        frameIterations = Math.min(stepSize, room);
+        frameIterations = recolouring ? 0 : Math.min(stepSize, room);
         inFlight = true;
         frameWanted = false;
         batchSendsData = requestExaminePixelData;
@@ -292,9 +298,11 @@ export function createInteractiveRenderer({width, height, events, workers, newWo
     on(events.restart, start);
     on(events.stop, stop);
 
-    // One more frame while stopped, so a change (such as to the colours) shows.
+    // One more frame while stopped, so a change (such as to the colours) shows: of no iterations, so the
+    // workers just colour the pixels again, unless the view has yet to be sent to them.
     on(events.showChanges, function () {
         if (!running) {
+            recolourOnly = !extents;
             requestFrame();
         }
     });
