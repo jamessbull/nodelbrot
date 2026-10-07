@@ -27,9 +27,12 @@ export function createInteractiveRenderer({width: _width, height: _height, event
     let palette = null;         // palette nodes to send with the next batch, if they've changed
     let paletteBlend = "rgb";
     const escapeValues = _escapeValues;
-    let running = true;
-    let stopped = false;
+    // Rendering goes a batch (a frame) at a time, with at most one batch out with the workers.
+    let running = true;         // whether to carry on with another frame after each one
+    let inFlight = false;       // whether a batch is out with the workers
+    let frameWanted = false;    // whether one more frame has been asked for, even if not running
     let destroyed = false;      // once destroyed, nothing more is sent to the workers
+    let batchSendsData = false; // whether the batch out asked for the examine data
     let fragments;
     const timer = stopwatch;
     // Bumped whenever the view changes. A batch posted before then is for the old view, so its
@@ -74,10 +77,9 @@ export function createInteractiveRenderer({width: _width, height: _height, event
         if (batchGeneration === viewGeneration) {
             _events.fire(_events.maxIterationsUpdated, currentIteration);
             currentIteration += stepSize;
-            if(requestExaminePixelData) {
+            if (batchSendsData) {
                 _events.fire(_events.publishPixelState);
             }
-            requestExaminePixelData = false;
             _events.fire(_events.renderImage, {imgData: _imgData, offset: 0});
             _events.fire(_events.andFinally);
             _events.fire(_events.frameComplete);
@@ -85,24 +87,37 @@ export function createInteractiveRenderer({width: _width, height: _height, event
             updateStepSize(timer.elapsed());
         }
 
-        if(running) {
+        inFlight = false;
+        if (running || frameWanted) {
             postMessage();
-        } else {
-            stopped = true;
         }
     }
 
     // Stops rendering, rather than retrying something that may fail every frame. Go starts it again.
     function onWorkerError(message) {
         console.error("Rendering stopped: a worker failed: " + message);
-        stopped = true;
+        inFlight = false;
+        frameWanted = false;
         _events.fire(_events.stop);
+    }
+
+    // Sends the next batch now, or once the one out with the workers is done.
+    function requestFrame() {
+        if (inFlight) {
+            frameWanted = true;
+        } else {
+            postMessage();
+        }
     }
 
     function postMessage() {
         if (destroyed) {
             return;
         }
+        inFlight = true;
+        frameWanted = false;
+        batchSendsData = requestExaminePixelData;
+        requestExaminePixelData = false;
         timer.start();
         batchGeneration = viewGeneration;
         const mx = extents ? extents.mx : undefined;
@@ -127,7 +142,7 @@ export function createInteractiveRenderer({width: _width, height: _height, event
             // The worker keeps the per-pixel state of its fragment between frames.
             job.workerIndex = i % _parallelism;
 
-            if (requestExaminePixelData) {
+            if (batchSendsData) {
                 job.sendData = true;
             }
             return job;
@@ -164,62 +179,37 @@ export function createInteractiveRenderer({width: _width, height: _height, event
         histogramTotal = info.total;
     });
 
-    on(_events.start, function () {
-        if (running === false) {
-            running = true;
-            stopped = false;
+    // Carries on rendering: now, or after the batch out with the workers, which a stop before then cancels.
+    function start() {
+        running = true;
+        if (!inFlight) {
             postMessage();
-        }
-    });
-
-    on(_events.stop, function () {
-        if(running === true) {
-            running = false;
-        }
-    });
-
-    function isStopped() {
-        if (destroyed) {
-            return;
-        }
-        if (stopped) {
-            running = true;
-            stopped = false;
-            postMessage();
-        } else {
-            setTimeout(isStopped,10);
         }
     }
 
-    on(_events.pulseUI, function () {
-        if(running === false) {
-            stopped = false;
-            postMessage();
-        }
-    });
+    function stop() {
+        running = false;
+    }
 
-    on(_events.restart, function () {
-        if(!running) {
-            setTimeout(isStopped, 10);
+    on(_events.start, start);
+    on(_events.restart, start);
+    on(_events.stop, stop);
+
+    // One more frame while stopped, so a change (such as to the colours) shows.
+    on(_events.pulseUI, function () {
+        if (!running) {
+            requestFrame();
         }
     });
 
     on(_events.examinePixelState, function () {
         requestExaminePixelData = true;
-        stopped = false;
-        postMessage();
+        requestFrame();
     });
 
     return {
-        stop: function () {
-            running = false;
-            stopped = false;
-        },
-        start: function () {
-            running = true;
-            stopped = false;
-            postMessage();
-        },
+        stop: stop,
+        start: start,
         destroy: function () {
             destroyed = true;
             pool.terminate();
