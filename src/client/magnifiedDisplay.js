@@ -1,6 +1,13 @@
 import { rectangle } from "./geometry.js";
 import { round } from "./math.js";
 
+// The top left of the size x size area of a width x height image centred on (x, y), moved in where
+// needed so all of it is in the image.
+export function magnifiedArea(x, y, size, width, height) {
+    const clamp = (value, max) => Math.max(0, Math.min(max, value));
+    return {x: clamp(x - Math.floor(size / 2), width - size), y: clamp(y - Math.floor(size / 2), height - size)};
+}
+
 export function createPixelExaminer(_events, _examinePixelCanvas, _imgData, _xState, _yState, _escapeValues, _imageEscapeValues, _sourceWidth, _uiCanvas, _sourceHeight, _state) {
     const on = _events.listenTo;
     let examiningPixels = false;
@@ -71,7 +78,7 @@ export function createPixelExaminer(_events, _examinePixelCanvas, _imgData, _xSt
     }
 
     _examinePixelCanvas.onmousedown = function (e) {
-        if (!examiningPixels) return;
+        if (!examiningPixels || !selectedArea) return;
 
         displayAdditionalMessage("Click main image to start examining");
         drawMagnifiedPixels(_examinePixelCanvas, selectedArea, magnifiedAreaWidth, _sourceWidth);
@@ -103,12 +110,7 @@ export function createPixelExaminer(_events, _examinePixelCanvas, _imgData, _xSt
     };
 
     function centreToTopLeft(_point, _width) {
-        const magnifyingGlassCenterOffsetx = 0;
-        const magnifyingGlassCenterOffsety = 0;
-
-        const sourceX =  _point.x + magnifyingGlassCenterOffsetx - Math.floor(_width / 2);
-        const sourceY =  _point.y + magnifyingGlassCenterOffsety - Math.floor(_width / 2);
-        return {x: sourceX,y: sourceY};
+        return magnifiedArea(_point.x, _point.y, _width, _sourceWidth, _sourceHeight);
     }
 
     function drawMagnifiedPixels(_canvas, _centre, _magnifiedAreaWidth, _sourceWidth) {
