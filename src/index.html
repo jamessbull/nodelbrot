@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en" style="background-color: black;">
+<head>
+    <title>Mandelbrot fractal explorer</title>
+    <meta charset="UTF-8">
+    <script type="module" src="client/main.js"></script>
+</head>
+<body>
+<style>
+    .fade {
+        opacity:1;
+        transition: opacity 2s ease-in;
+        webkit-transition: opacity 1s ease-in;
+    }
+    .transparent {
+        opacity:0;
+    }
+    .titleBar {
+        margin: 0px 0px 8px 200px;
+    }
+
+    .standard {
+        font-family: sans-serif;
+        color: antiquewhite;
+        background-color: black;
+    }
+
+    .bodyText {
+        font-size: smaller
+    }
+
+    .valueText {
+        font-size: smaller;
+        color: goldenrod;
+    }
+
+    .panel {
+        margin-bottom: 10px;
+        margin-left: 10px;
+        margin-top: -3px;
+        padding-top: 10px;
+        border: 1px solid;
+        border-radius: 7px;
+    }
+
+    .button {
+        padding: 2px 2px 2px 4px;
+        margin-right: 4px;
+        margin-left: 4px;
+        /*box-shadow: 1px 1px 4px gold;*/
+        border: 1px solid;
+        border-radius: 4px;
+        cursor: default;
+    }
+
+    .buttonSelected {
+        font-size: 0.9em;
+        padding: 2px 2px 2px 4px;
+        margin-right: 7px;
+        margin-left: 5px;
+        box-shadow: 0 0 2px 2px gold;
+
+    }
+
+    .canvas {
+        width: 700px;
+        height: 400px;
+    }
+
+    .canvasBorder {
+        position: absolute;
+        border: 1px solid;
+        left: -1px;
+        top: -1px;
+    }
+
+    .border {
+        border: 1px solid;
+    }
+
+    .canvasRadius {
+        border-radius: 7px;
+    }
+
+    .bottomMargin {
+        margin-bottom: 15px;
+    }
+
+    .smallBottomMargin {
+        margin-bottom: 10px;
+    }
+
+    .mediumTopMargin {
+        margin-top: 10px;
+    }
+
+    .leftMargin {
+        margin-left: 15px;
+    }
+
+    .mediumLeftMargin {
+        margin-left: 10px;
+    }
+
+    .padBottom {
+        padding-bottom: 10px;
+    }
+
+    .shimmyLeft {
+        margin-left: -1px;
+    }
+
+    .panelContent {
+        padding-left: 10px;
+        padding-right: 10px;
+        margin-bottom: 7px;
+    }
+
+    .exportButton {
+        margin-left: 5px;
+        margin-right: 5px;
+        margin-bottom: 15px;
+    }
+
+    .mediumRadius {
+        border-radius: 5px;
+    }
+
+    .pixelInfoCanvas {
+        border-radius: 5px;
+        border: 1px solid;
+        display: inline-block;
+    }
+
+    .smallMargin {
+        margin: 5px;
+    }
+
+    .detailText {
+        font-size: x-small;
+    }
+
+    .progressPopUp {
+        position: absolute;
+        left: 40%;
+        top: 25%;
+        z-index: 1000;
+        background-color: black;
+    }
+
+    .inline {
+        display: inline-block;
+    }
+
+    .disabled {
+        color: gray;
+    }
+
+    .centered {
+        text-align: center;
+        width: 100%;
+    }
+
+    .floatright {
+        float: right;
+    }
+
+    .topMargin {
+        margin-top: 10px;
+    }
+
+    .rightMargin {
+        margin-right: 10px;
+    }
+
+    .padSides {
+        padding-left: 6px;
+        padding-right: 6px;
+    }
+
+    .padRight {
+        padding-right: 5px;
+    }
+
+    .pixelInfo {
+        margin-top: 15px;
+        margin-bottom: 10px;
+    }
+
+    .topRight {
+        position: absolute;
+        top:10px;
+        left:840px;
+    }
+    .hidden {
+        display: none;
+    }
+    .help {
+        position: absolute;
+        left: 230px;
+        padding-left: 5px;
+        top: 50px;
+        z-index: 1001;
+        border: 2px solid;
+        border-radius: 10px;
+        width: 679px;
+        font-size: smaller;
+    }
+    .closehelp {
+        float: right;
+        margin-top: 2px;
+        margin-right: 8px;
+        padding-left: 3px;
+        padding-right: 3px;
+        padding-bottom: 1px;
+        border: 2px outset;
+        top: 12px;
+        position: relative;
+        cursor: default;
+    }
+
+    .hrule {
+        margin-top:-10px;
+        margin-bottom: -10px;
+    }
+
+    .firsthrule {
+        margin-bottom: -10px;
+    }
+
+    .tophrule {
+        top: -14px;
+        position: relative;
+        width: 674px;
+        margin-bottom: -24px;
+        margin-top: 22px;
+    }
+    .right {
+        position: absolute;
+        left:216px;
+        top:-2px;
+    }
+    .examinePixels {
+        height: 294px;
+    }
+    .copyright {
+        position:absolute;
+        top:640px;
+        left:395px;
+        font-size: 10px;
+    }
+.input {
+    background-color: antiquewhite;
+}
+
+</style>
+
+<div id="allContent" class="transparent standard">
+    <div id="bothColumns" style="position:relative; height:575px;">
+        <div id="left" style="position: absolute;">
+            <div class="bodyText panel">
+                <div class="panelContent">
+                    <div class="bottomMargin centered">
+                        <span id="stop" class="button">Stop </span>
+                        <span id="start" class="button">Go </span>
+                        <span id="bookmarkButton" class="button">Link </span>
+                        <span id="helptextbutton" class="button">Help</span>
+                    </div>
+                    <table>
+                        <tbody>
+                        <tr>
+                            <td>Iteration</td>
+                            <td><span class="valueText" id="maxIteration"></span></td>
+                        </tr>
+                        <tr>
+                            <td>Fps</td>
+                            <td><span class="valueText" id="framesPerSecond"></span></td>
+                        </tr>
+                        <tr>
+                            <td>Last escape</td>
+                            <td><span class="valueText" id="lastPointEscapedAt"></span></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="panel bodyText">
+                <div id="exportImagePanel">
+                    <div class="panelContent">
+                        <span id="export" class="button exportButton">Export Png</span>
+                        <span id="openLastExportButton" class="button disabled">View export</span>
+
+                        <div class="mediumTopMargin">
+                            <table>
+                                <tbody>
+                                <tr>
+                                    <td class="bodyText">Iterations</td>
+                                    <td class="bodyText"><input class ="input" size="8" id="exportDepth" type="text" class="export"
+                                                                value="1000"/></td>
+                                </tr>
+                                <tr>
+                                    <td class="bodyText">Size</td>
+
+                                    <td>
+                                        <select id=exportSizeSelect class="input">
+                                            <option value="small" id="smallExport" selected="selected">Small</option>
+                                            <option value="medium" id="mediumExport">Medium</option>
+                                            <option value="large" id="largeExport">Large</option>
+                                            <option value="huge" id="veryLargeExport">Huge</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="panel bodyText">
+                <div id=examinePixels class="examinePixels">
+                    <div class="centered bottomMargin">
+                        <span id="pixelInfoButton" class="button">Examine</span>
+                    </div>
+
+                    <div class="centered">
+                        <canvas id="pixelInfoCanvas" class="pixelInfoCanvas smallMargin"></canvas>
+                    </div>
+                    <div class="pixelInfo" id=pixelInfo>
+                        <table class="pixelDetail detailText">
+                            <tr>
+                                <td>Escaped at</td>
+                                <td><span class="valueText" id="escapedAt"></span></td>
+                            </tr>
+                            <tr>
+                                <td>Coloured at</td>
+                                <td><span class="valueText" id="imageEscapedAt"></span></td>
+                            </tr>
+                            <tr>
+                                <td rowspan="2">Point (c)</td>
+                                <td>x: <span class="valueText" id="cx"></span></td>
+                            </tr>
+                            <tr>
+                                <td>y: <span class="valueText" id="cy"></span></td>
+                            </tr>
+                            <tr>
+                                <td rowspan="2">Orbit (z)</td>
+                                <td>x: <span class="valueText" id="zx"></span></td>
+                            </tr>
+                            <tr>
+                                <td>y: <span class="valueText" id="zy"></span></td>
+                            </tr>
+                            <tr>
+                                <td>Colour</td>
+                                <td>
+                                    <span class="valueText" id="colourInfor"></span>
+                                    <span class="valueText" id="colourInfog"></span>
+                                    <span class="valueText" id="colourInfob"></span>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="right" class = "right">
+            <div class="panel progressPopUp bodyText" id="exportProgress">
+                <div class="centered">
+                    <span>Progress</span>
+                </div>
+                <table class="progressTable panelContent">
+                    <tbody>
+                    <tr>
+                        <td class="bodyText">Histogram:</td>
+                        <td class="bodyText" id="histogramProgress">0.00%</td>
+                    </tr>
+                    <tr>
+                        <td class="bodyText">Image:</td>
+                        <td class="bodyText" id="imageProgress">0.00%</td>
+                    </tr>
+                    <tr>
+                        <td class="bodyText">Elapsed:</td>
+                        <td class="bodyText"><span class="bodyText" id="elapsedTime">0</span> s</td>
+                    </tr>
+                    </tbody>
+                </table>
+                <div class="centered bottomMargin bodyText" id="exportMessage"></div>
+                <div class="centered bottomMargin">
+                    <a class="button bodyText" id="export1">Open Image</a>
+                </div>
+
+            </div>
+            <div class="">
+                <canvas id="mandelbrotCanvas" class="canvasRadius"></canvas>
+                <canvas id="uiCanvas" class=" canvasBorder canvasRadius"></canvas>
+            </div>
+            <div class="border canvasRadius topMargin shimmyLeft">
+                <div class="colourPicker">
+                    <div class="topMargin rightMargin floatright">
+                        <select id="paletteBlendSelect" class="input bodyText" title="How colours are blended between the markers">
+                            <option value="rgb" selected="selected">RGB</option>
+                            <option value="hsv">HSV</option>
+                        </select>
+                        <span id="addButton" class="button padRight">+</span>
+                        <span id="removeButton" class="button padSides">-</span>
+                    </div>
+
+                    <canvas class="mediumRadius topMargin leftMargin" id="colourGradientCanvas" width=600
+                            height=52></canvas>
+                </div>
+
+                <div>
+                    <canvas id="colourPickerCanvas" class="mediumRadius" width=700, height=100></canvas>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <div class="copyright">© Copyright 2018 Bull IT Consulting</div>
+</div>
+
+<div id="helptext" class="standard help hidden">
+    <span class = "closehelp" id="closehelp">x</span>
+    <hr class = 'tophrule'><h3>Exploring </h3><hr class="hrule">
+    <p>Left click and drag the mouse to zoom-in</p>
+    <p> Double click to zoom out</p>
+    <p> Right click and drag to scroll</p>
+
+    <hr class="firsthrule"><h3>Changing colours</h3><hr class="hrule">
+    <p>Left click and drag nodes to change how the colours are distributed across the image</p>
+    <p>Add and remove nodes using the plus and minus buttons</p>
+    <p>Change the colour of a node by left clicking it and then clicking on the colour picker</p>
+
+    <hr class="firsthrule"><h3>Bookmarks</h3><hr class="hrule">
+    <p>Use the link button to create a link to the current state of the interactive display</p>
+
+    <hr class="firsthrule"><h3>Exporting</h3><hr class="hrule">
+    <p>Select the iteration depth. The current iteration is displayed in the top panel which should help pick an appropriate value</p>
+    <p>Select a size. Small is the same resolution as the interactive display. Huge is, well, really quite large.</p>
+    <p>If popups are enabled the export will open automatically. If they are not then you can open it by clicking the 'View export' button.</p>
+    <p>Once you have exported your image then you can save it locally by right clicking and selecting save as or by using ctrl-c and then pasting it into a suitable paint program.</p>
+</div>
+</body>
+</html>

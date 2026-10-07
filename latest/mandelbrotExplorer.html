@@ -1,28 +1,11 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
-<html style="background-color: black;">
+<!DOCTYPE html>
+<html lang="en" style="background-color: black;">
 <head>
     <title>Mandelbrot fractal explorer</title>
-<meta charset="UTF-8">
-<script src="mandelbrotExplorer.min.js"></script>
-
+    <meta charset="UTF-8">
+    <script type="module" src="mandelbrotExplorer.min.js"></script>
 </head>
-
 <body>
-    <script xmlns="http://www.w3.org/1999/html">
-    var handleClickfunction
-    document.addEventListener("DOMContentLoaded", function (event) {
-        try {
-            window.fractal = jim.init.run();
-        } finally {
-            // Fade the page in even if starting up failed, rather than leaving it blank.
-            var allContent = document.getElementById("allContent");
-            allContent.classList.remove("transparent");
-            allContent.classList.add("fade");
-        }
-    });
-    //jim.init.run();
-</script>
-
 <style>
     .fade {
         opacity:1;
@@ -456,6 +439,5 @@
     <p>If popups are enabled the export will open automatically. If they are not then you can open it by clicking the 'View export' button.</p>
     <p>Once you have exported your image then you can save it locally by right clicking and selecting save as or by using ctrl-c and then pasting it into a suitable paint program.</p>
 </div>
-
 </body>
 </html>

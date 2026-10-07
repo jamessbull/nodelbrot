@@ -1,10 +1,7 @@
-namespace("jim.ui.notice");
-
 // Shows short messages across the top of a canvas (the one drawn over the image) for a few seconds.
-jim.ui.notice.create = function (canvas) {
-    "use strict";
-    var context = canvas.getContext('2d');
-    var clearTimer;
+export function createNotice(canvas) {
+    const context = canvas.getContext('2d');
+    let clearTimer;
     return {
         show: function (message) {
             clearTimeout(clearTimer);
@@ -20,4 +17,4 @@ jim.ui.notice.create = function (canvas) {
             }, 5000);
         }
     };
-};
+}

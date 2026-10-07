@@ -1,71 +1,57 @@
-namespace("jim.newMandelbrotPoint");
-jim.newMandelbrotPoint.create = function () {
-    "use strict";
+const histogramEscapeValue = 16;
+const imageEscapeValue = 9007199254740991;
 
-    var histogramEscapeValue = 16;
-    var imageEscapeValue = 9007199254740991;
+// Points inside the main cardioid or the period-2 bulb never escape, so they don't need iterating.
+export function inMainCardioidOrBulb(mx, my) {
+    const xMinusQuarter = mx - 0.25;
+    const ySquared = my * my;
+    const q = (xMinusQuarter * xMinusQuarter) + ySquared;
+    const xPlusOne = mx + 1;
+    return q * (q + xMinusQuarter) <= 0.25 * ySquared || (xPlusOne * xPlusOne) + ySquared <= 0.0625;
+}
 
-    function output (_mx, _my, _x, _y, _iterations, _histogramEscapedAt, _imageEscapedAt) {
-        return {mx: _mx, my:_my, x:_x, y: _y, iterations:_iterations, histogramEscapedAt: _histogramEscapedAt, imageEscapedAt:_imageEscapedAt};
-    }
+// Iterates one point from scratch or from where an earlier call left it, one iteration at a time. The
+// renderer uses pixelIterator, which does the same for many points at once; this is the reference it
+// is checked against.
+export function calculatePoint(mx, my, noOfIterations, startIteration, startX, startY, startHistogramEscapedAt) {
+    let x = startX;
+    let y = startY;
+    let timesToRun = noOfIterations;
+    let iterations = 0;
+    let imageEscapedAt = 0;
+    let histogramEscapedAt = startHistogramEscapedAt;
+    const alreadyEscaped = startHistogramEscapedAt !== 0;
 
-    // Points inside the main cardioid or the period-2 bulb never escape, so they don't need iterating.
-    function inMainCardioidOrBulb(_mx, _my) {
-        var xMinusQuarter = _mx - 0.25;
-        var ySquared = _my * _my;
-        var q = (xMinusQuarter * xMinusQuarter) + ySquared;
-        var xPlusOne = _mx + 1;
-        return q * (q + xMinusQuarter) <= 0.25 * ySquared || (xPlusOne * xPlusOne) + ySquared <= 0.0625;
-    }
+    while (timesToRun > 0 && imageEscapedAt === 0) {
+        const xSquared = x * x;
+        const ySquared = y * y;
+        const xSquaredPlusYSquared = xSquared + ySquared;
 
-    function calculate (_mx, _my, _noOfIterations, _startIteration, _x, _y, _histogramEscapedAt) {
-        var x = _x;
-        var y = _y;
-        var timesToRun = _noOfIterations;
-        var iterations = 0;
-        var imageEscapedAt = 0;
-        var histogramEscapedAt = _histogramEscapedAt;
-        var xSquared = 0;
-        var ySquared = 0;
-        var xSquaredPlusYSquared = 0;
-        var alreadyEscaped = false;
-        if (_histogramEscapedAt !== 0) {
-            alreadyEscaped = true;
+        iterations++;
+        if (xSquaredPlusYSquared < imageEscapeValue) {
+            y = ((x * y) * 2) + my;
+            x = xSquared - ySquared + mx;
         }
 
-        while (timesToRun > 0 && imageEscapedAt === 0) {
-            xSquared = x * x;
-            ySquared = y * y;
-            xSquaredPlusYSquared = xSquared + ySquared;
+        timesToRun -= 1;
 
-            iterations++;
-            if (xSquaredPlusYSquared < imageEscapeValue) {
-                y = ((x * y) *2 ) + _my;
-                x = xSquared - ySquared + _mx;
-            }
-
-            timesToRun -=1;
-
-            if(histogramEscapedAt === 0 && xSquaredPlusYSquared > histogramEscapeValue) {
-                histogramEscapedAt = iterations;
-            }
-
-            if(imageEscapedAt === 0 && xSquaredPlusYSquared > imageEscapeValue) {
-                imageEscapedAt = iterations;
-            }
+        if (histogramEscapedAt === 0 && xSquaredPlusYSquared > histogramEscapeValue) {
+            histogramEscapedAt = iterations;
         }
-        var finalHistogramEscapeValue;
-        if (alreadyEscaped) {
-            finalHistogramEscapeValue = _histogramEscapedAt;
-        } else {
-            finalHistogramEscapeValue = histogramEscapedAt === 0 ? 0 : _startIteration + histogramEscapedAt;
+
+        if (imageEscapedAt === 0 && xSquaredPlusYSquared > imageEscapeValue) {
+            imageEscapedAt = iterations;
         }
-        var finalImageEscapeValue = imageEscapedAt === 0 ? 0 : _startIteration + imageEscapedAt;
-        return output(_mx, _my, x, y, _startIteration + iterations,finalHistogramEscapeValue, finalImageEscapeValue);
     }
-
+    let finalHistogramEscapeValue;
+    if (alreadyEscaped) {
+        finalHistogramEscapeValue = startHistogramEscapedAt;
+    } else {
+        finalHistogramEscapeValue = histogramEscapedAt === 0 ? 0 : startIteration + histogramEscapedAt;
+    }
+    const finalImageEscapeValue = imageEscapedAt === 0 ? 0 : startIteration + imageEscapedAt;
     return {
-        calculate : calculate,
-        inMainCardioidOrBulb: inMainCardioidOrBulb
+        mx: mx, my: my, x: x, y: y, iterations: startIteration + iterations,
+        histogramEscapedAt: finalHistogramEscapeValue, imageEscapedAt: finalImageEscapeValue
     };
-};
+}

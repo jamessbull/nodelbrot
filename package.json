@@ -8,13 +8,21 @@
     "build": "node build/build.js",
     "dev:built": "node build/build.js && node dev/server.js --built --open",
     "check:built": "node build/build.js && node dev/workerCheck.js --built",
-    "test": "jasmine --config=dev/jasmine.json"
+    "test": "jasmine --config=test/jasmine.json",
+    "lint": "eslint ."
   },
   "devDependencies": {
-    "jasmine": "^7.0.0",
-    "uglify-js": "^3.19.3"
+    "@eslint/js": "^10.0.1",
+    "esbuild": "^0.28.2",
+    "eslint": "^10.12.0",
+    "globals": "^17.13.0",
+    "jasmine": "^7.0.0"
   },
   "engines": {
     "node": ">=24"
+  },
+  "type": "module",
+  "allowScripts": {
+    "esbuild": false
   }
 }

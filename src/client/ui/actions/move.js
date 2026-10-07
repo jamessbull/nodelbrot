@@ -1,11 +1,12 @@
-namespace("jim.mandelbrot.actions.move");
-jim.mandelbrot.actions.move.create = function (_events, _mandelbrotCanvas, _uiCanvas) {
-    "use strict";
+import { coord } from "../../geometry.js";
 
-    var moving = false;
-    var totalXMovement;
-    var totalYMovement;
-    var start = jim.coord.create();
+export function createMove(_events, _mandelbrotCanvas, _uiCanvas) {
+    const on = _events.listenTo;
+
+    let moving = false;
+    let totalXMovement;
+    let totalYMovement;
+    const start = coord();
 
     on(_events.beginMoveAction, function (e) {
         moving = true;
@@ -30,7 +31,7 @@ jim.mandelbrot.actions.move.create = function (_events, _mandelbrotCanvas, _uiCa
     });
 
     function show() {
-        var ctx = _uiCanvas.getContext('2d'), w = _uiCanvas.width, h = _uiCanvas.height;
+        const ctx = _uiCanvas.getContext('2d'), w = _uiCanvas.width, h = _uiCanvas.height;
 
         ctx.clearRect(0, 0, w, h);
         ctx.fillStyle = "rgba(0, 0, 0, 1.0)";
@@ -39,4 +40,4 @@ jim.mandelbrot.actions.move.create = function (_events, _mandelbrotCanvas, _uiCa
     }
 
     return {};
-};
+}

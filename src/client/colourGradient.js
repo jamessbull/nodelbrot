@@ -1,9 +1,11 @@
-namespace("jim.colour.gradientui");
-jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton, palette, _events) {
-    "use strict";
-    var leftMouseDown = false;
-    var context = gradientCanvas.getContext('2d');
-    var drawLine = function (fromX, fromY, toX, toY) {
+import { interpolate } from "./math.js";
+import { forwardTouchToMouse } from "./ui/touch.js";
+
+export function createGradientEditor(gradientCanvas, addButton, removeButton, palette, _events) {
+    const on = _events.listenTo;
+    let leftMouseDown = false;
+    const context = gradientCanvas.getContext('2d');
+    const drawLine = function (fromX, fromY, toX, toY) {
         context.beginPath();
         context.moveTo(fromX, fromY);
         context.lineTo(toX, toY);
@@ -11,7 +13,7 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
         context.lineWidth = 2;
         context.stroke();
     };
-    var drawCircle = function (x, y, r, c, selected) {
+    const drawCircle = function (x, y, r, c, selected) {
         context.beginPath();
         context.arc(x, y, r, 0, 2 * Math.PI, false);
         context.fillStyle = 'rgba('+ c.r +',' + c.g + ',' + c.b + ',' + c.a + ')';
@@ -20,7 +22,7 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
         context.strokeStyle = !selected ? 'gray' : 'antiquewhite';
         context.stroke();
     };
-    var drawTriangle = function (x, y, w, h, selected) {
+    const drawTriangle = function (x, y, w, h, selected) {
         context.beginPath();
         context.moveTo(x, y);
         context.lineTo(x + w , y - h);
@@ -30,22 +32,22 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
         context.fillStyle = !selected ? 'gray' : 'antiquewhite';
         context.fill();
     };
-    var length = gradientCanvas.width - 15;
+    const length = gradientCanvas.width - 15;
 
-    var drawMarker = function (x, y, c, selected) {
+    const drawMarker = function (x, y, c, selected) {
         drawCircle(x, y, 9, c, selected);
         drawTriangle(x - 5, y - 8, 5, 10, selected);
     };
     // The palette's colours from position 0 to 1, as a strip under the markers, lined up with them.
-    var gradientTop = 36;
-    var drawGradient = function () {
-        var width = length + 1;
-        var height = gradientCanvas.height - gradientTop - 4;
-        var strip = context.createImageData(width, height);
-        for (var x = 0; x < width; x += 1) {
-            var colour = palette.colourAt(x / length);
-            for (var y = 0; y < height; y += 1) {
-                var i = ((y * width) + x) * 4;
+    const gradientTop = 36;
+    const drawGradient = function () {
+        const width = length + 1;
+        const height = gradientCanvas.height - gradientTop - 4;
+        const strip = context.createImageData(width, height);
+        for (let x = 0; x < width; x += 1) {
+            const colour = palette.colourAt(x / length);
+            for (let y = 0; y < height; y += 1) {
+                const i = ((y * width) + x) * 4;
                 strip.data[i] = colour.r;
                 strip.data[i + 1] = colour.g;
                 strip.data[i + 2] = colour.b;
@@ -55,19 +57,18 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
         context.putImageData(strip, 7, gradientTop);
     };
 
-    var drawTicks = function () {
-        var increment = length / 10;
-        var start = 7;
-        var total = length + start;
+    const drawTicks = function () {
+        const increment = length / 10;
+        let start = 7;
+        const total = length + start;
 
         for (start; start <= total; start += increment) {
             drawLine(start, 4, start, 10);
         }
     };
 
-    var interpolate = jim.interpolator.create().interpolate;
-    var selectedNode = null;
-    var markers = {
+    let selectedNode = null;
+    const markers = {
         selecting: false,
         length: length,
         nodes: [],
@@ -88,7 +89,7 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
         },
         drawMarkers: function () {
             this.nodes.forEach (function (nodeInfo) {
-                var x = Math.floor(interpolate(10, length + 10, nodeInfo.node.position));
+                let x = Math.floor(interpolate(10, length + 10, nodeInfo.node.position));
                 x = x - 3;
                 drawMarker(x, 22, nodeInfo.node.rgb, nodeInfo.selected);
             });
@@ -98,14 +99,14 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
         },
         add: function (node, doNotRandomise) {
             if (selectedNode) selectedNode.selected = false;
-            var n = { node: node, selected: true, doNotRandomise: doNotRandomise };
+            const n = { node: node, selected: true, doNotRandomise: doNotRandomise };
             selectedNode = n;
             this.nodes.push(n);
-            events.fire(events.nodeAdded, n);
+            _events.fire(_events.nodeAdded, n);
         },
         updatePosition: function (x) {
             if (this.selecting) {
-                var position = this.fractionalPosition(x);
+                let position = this.fractionalPosition(x);
                 if (position > 1) position = 1;
                 if (position < 0) position = 0;
                 selectedNode.node.setPosition(position);
@@ -116,18 +117,18 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
             return  (x - 10) / this.length;
         },
         at: function (x) {
-            var self = this;
-            var distanceToNode = function (nodeInfo, x) { return  Math.abs(nodeInfo.node.position - self.fractionalPosition(x)); };
+            const self = this;
+            const distanceToNode = function (nodeInfo, x) { return  Math.abs(nodeInfo.node.position - self.fractionalPosition(x)); };
             return this.nodes.filter(function (nodeInfo) { return distanceToNode(nodeInfo, x) < self.selectionTolerance; })[0];
         },
         select: function (position) {
             this.selecting = true;
             this.nodes.forEach(function (node) { node.selected = false; });
-            var potentialNode = this.at(position);
+            const potentialNode = this.at(position);
             if(potentialNode) {
                 selectedNode = potentialNode;
                 potentialNode.selected = true;
-                events.fire(events.colourSelected, {x: potentialNode.markerX, y: potentialNode.markerY, hue: potentialNode.node.hsv.h} );
+                _events.fire(_events.colourSelected, {x: potentialNode.markerX, y: potentialNode.markerY, hue: potentialNode.node.hsv.h} );
             }
         },
         selected: function () { return selectedNode; },
@@ -147,14 +148,14 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
         },
         build: function (doNotRandomise) {
             this.nodes = [];
-            var self = this;
+            const self = this;
             palette.getNodes().forEach(function (node) {
                 self.add(node, doNotRandomise);
             });
         }
     };
 
-    var clearDisplay = function () {
+    const clearDisplay = function () {
         context.clearRect(0,0, gradientCanvas.width, gradientCanvas.height);
     };
 
@@ -208,17 +209,17 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
         }
     };
 
-    jim.touch.forwardToMouse(gradientCanvas, {
+    forwardTouchToMouse(gradientCanvas, {
         down: gradientCanvas.onmousedown,
         move: gradientCanvas.onmousemove,
         up: gradientCanvas.onmouseup
     });
 
-    on(events.paletteChanged, function () {
+    on(_events.paletteChanged, function () {
         draw();
     });
 
-    on(events.colourSelected, function () {
+    on(_events.colourSelected, function () {
         draw();
     });
 
@@ -238,4 +239,4 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
         }
 
     };
-};
+}

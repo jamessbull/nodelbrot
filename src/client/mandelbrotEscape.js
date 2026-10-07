@@ -1,20 +1,25 @@
-namespace("jim.mandelbrot.state");
-jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
-    "use strict";
-    var aRectangle      = jim.rectangle.create,
-        currentExtents  = startingExtent,
-        previousExtents = [],
-        screen          = aRectangle(0, 0, sizeX - 1, sizeY - 1),
-        fromScreen = function (x, y) { return screen.at(x, y).translateTo(currentExtents);};
+import { rectangle } from "./geometry.js";
 
-    var theState = {
+// Starting size of the escape histogram. It grows when deeper iterations are reached.
+export const initialHistogramSize = 250000;
+
+// The view: the rectangle of the complex plane shown on a sizeX x sizeY display, and the views zoomed
+// in from, for zooming out again.
+export function createViewState(sizeX, sizeY, startingExtent, _events) {
+    const on = _events.listenTo;
+    let currentExtents = startingExtent;
+    const previousExtents = [];
+    let screen = rectangle(0, 0, sizeX - 1, sizeY - 1);
+    const fromScreen = (x, y) => screen.at(x, y).translateTo(currentExtents);
+
+    const theState = {
         zoomTo: function (selection) {
             previousExtents.push(currentExtents.copy());
             currentExtents = selection.area().translateFrom(screen).to(currentExtents);
             _events.fire(_events.extentsUpdate, currentExtents);
         },
         resize: function (sizeX, sizeY) {
-            screen = aRectangle(0, 0, sizeX - 1, sizeY - 1);
+            screen = rectangle(0, 0, sizeX - 1, sizeY - 1);
         },
         zoomOut: function () {
             if (previousExtents.length > 0) {
@@ -26,7 +31,7 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
             return previousExtents.length > 0;
         },
         move: function (moveX, moveY) {
-            var distance = fromScreen(moveX, moveY).distanceTo(currentExtents.topLeft());
+            const distance = fromScreen(moveX, moveY).distanceTo(currentExtents.topLeft());
             currentExtents.move(0 - distance.x, 0 - distance.y);
             _events.fire(_events.extentsUpdate, currentExtents);
         },
@@ -55,31 +60,31 @@ jim.mandelbrot.state.create = function (sizeX, sizeY, startingExtent, _events) {
        theState.move(_location.x, _location.y);
     });
     return theState;
-};
+}
 
-namespace("jim.mandelbrot.escapeDistributionHistogram");
-jim.mandelbrot.escapeDistributionHistogram.create = function (_events, _histoData) {
-    "use strict";
-    var currentTotal = 0;
-    var lastTimeRound = 0;
-    var filledLength = 0;       // entries at and beyond this index have not been written yet, so are zero
+// The cumulative count of escapes at each iteration, built from the workers' updates.
+export function createEscapeHistogram(_events, _histoData) {
+    const on = _events.listenTo;
+    let currentTotal = 0;
+    let lastTimeRound = 0;
+    let filledLength = 0;       // entries at and beyond this index have not been written yet, so are zero
 
     function ensureCapacity(size) {
         if (size > _histoData.length) {
-            var grown = new Uint32Array(Math.max(size, _histoData.length * 2));
+            const grown = new Uint32Array(Math.max(size, _histoData.length * 2));
             grown.set(_histoData);
             _histoData = grown;
         }
     }
 
     function processHistogramUpdates(updateInfo) {
-        var updates = updateInfo.update;
-        var lastIterationCalculated = updateInfo.currentIteration;
+        const updates = updateInfo.update;
+        const lastIterationCalculated = updateInfo.currentIteration;
         ensureCapacity(lastIterationCalculated + updates.length);
-        var runningTotal = 0;
-        for (var i = 0; i < updates.length; i += 1) {
+        let runningTotal = 0;
+        for (let i = 0; i < updates.length; i += 1) {
             runningTotal += updates[i];
-            var initialValue = lastIterationCalculated > lastTimeRound ? currentTotal : _histoData[lastIterationCalculated + i];
+            const initialValue = lastIterationCalculated > lastTimeRound ? currentTotal : _histoData[lastIterationCalculated + i];
             _histoData[lastIterationCalculated + i] = runningTotal + initialValue;
         }
         currentTotal += runningTotal;
@@ -92,27 +97,26 @@ jim.mandelbrot.escapeDistributionHistogram.create = function (_events, _histoDat
     // it if they need it to stay unchanged.
     on(_events.histogramUpdateReceivedFromWorker, function (updateInfo) {
         processHistogramUpdates(updateInfo);
-        var histoData = {array: _histoData, filledLength: filledLength, total: currentTotal, currentIteration: updateInfo.currentIteration};
+        const histoData = {array: _histoData, filledLength: filledLength, total: currentTotal, currentIteration: updateInfo.currentIteration};
         _events.fire(_events.histogramUpdated, histoData);
     });
 
     on(_events.extentsUpdate, function () {
-        _histoData = new Uint32Array(jim.mandelbrot.initialHistogramSize);
+        _histoData = new Uint32Array(initialHistogramSize);
         currentTotal = 0;
         lastTimeRound = 0;
         filledLength = 0;
     });
     return {};
-};
+}
 
-namespace("jim.mandelbrot.pixelEscapeRateTracker");
-jim.mandelbrot.pixelEscapeRateTracker.create = function (events, pixelCount) {
-    "use strict";
+export function createAutoStop(events, pixelCount) {
+    const on = events.listenTo;
     // A tenth of the image must have escaped before rendering can stop on its own.
-    var target = pixelCount / 10;
-    var totalEscaped = 0;
-    var totalAtLastFrame = 0;
-    var framesWithoutEscapes = 0;
+    const target = pixelCount / 10;
+    let totalEscaped = 0;
+    let totalAtLastFrame = 0;
+    let framesWithoutEscapes = 0;
 
     function restart() {
         events.fire(events.restart);
@@ -147,14 +151,14 @@ jim.mandelbrot.pixelEscapeRateTracker.create = function (events, pixelCount) {
             framesWithoutEscapes = 0;
         }
     });
-};
+}
 
-namespace("jim.mandelbrot.imageRenderer");
-jim.mandelbrot.imageRenderer.create = function (_events, _canvas, _width, _height) {
-    "use strict";
-    var context = _canvas.getContext('2d');
-    var imageData;      // wraps the renderer's image buffer, so drawing it needs no copy
-    var imageBuffer;
+// Draws the renderer's image on the canvas after each frame.
+export function createImageRenderer(_events, _canvas, _width, _height) {
+    const on = _events.listenTo;
+    const context = _canvas.getContext('2d');
+    let imageData;      // wraps the renderer's image buffer, so drawing it needs no copy
+    let imageBuffer;
 
     // args.imgData is the whole image for the canvas (args.offset is always 0), and is the same
     // buffer every frame.
@@ -172,4 +176,4 @@ jim.mandelbrot.imageRenderer.create = function (_events, _canvas, _width, _heigh
     });
 
     return {};
-};
+}

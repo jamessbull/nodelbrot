@@ -1,10 +1,11 @@
-namespace("jim.mandelbrot.mandelbrotViewUIPolicy");
-jim.mandelbrot.mandelbrotViewUIPolicy.create = function (_mainCanvas, _events) {
-    "use strict";
-    var exploring = true;
-    var selectingArea = false;
-    var leftMouseButton = 0;
-    var rightMouseButton = 2;
+import { forwardTouchToMouse } from "./touch.js";
+
+export function createViewInteraction(_mainCanvas, _events) {
+    const on = _events.listenTo;
+    let exploring = true;
+    let selectingArea = false;
+    const leftMouseButton = 0;
+    const rightMouseButton = 2;
 
     on(_events.examinePixelState, function () {
         exploring = false;
@@ -59,7 +60,7 @@ jim.mandelbrot.mandelbrotViewUIPolicy.create = function (_mainCanvas, _events) {
 
     // A touch only starts a selection or move when exploring; when examining, the pixel is picked
     // where the touch ends.
-    jim.touch.forwardToMouse(_mainCanvas, {
+    forwardTouchToMouse(_mainCanvas, {
         down: function (e) {
             if (exploring) {
                 mouseDown(e);
@@ -77,4 +78,4 @@ jim.mandelbrot.mandelbrotViewUIPolicy.create = function (_mainCanvas, _events) {
     });
 
     return { };
-};
+}

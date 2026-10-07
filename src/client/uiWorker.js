@@ -1,35 +1,36 @@
-namespace("jim.uiWorker");
+import { createPalette } from "./palette.js";
+import { createPixelIterator, lookupTableSize } from "./pixelIterator.js";
 
 // Computes the interactive view. Each message advances every pixel of this worker's fragment by
-// msg.iterations iterations, then recolours the whole fragment against the latest histogram.
-jim.uiWorker.create = function () {
-    "use strict";
-    var palette = jim.palette.create();
-    var colours;
-    var pixels;
+// msg.iterations iterations, then recolours the whole fragment against the latest histogram. Replies
+// go to postMessage.
+export function createUiWorker(postMessage) {
+    const palette = createPalette();
+    let colours;
+    let pixels;
 
-    var onmessage = function (e) {
-        var msg = e.data;
-        var noOfPixels = msg.exportWidth * msg.exportHeight;
-        var histogramUpdate = new Uint32Array(msg.iterations);
-        var imageData = new Uint8ClampedArray(4 * noOfPixels);
+    const onmessage = function (e) {
+        const msg = e.data;
+        const noOfPixels = msg.exportWidth * msg.exportHeight;
+        const histogramUpdate = new Uint32Array(msg.iterations);
+        const imageData = new Uint8ClampedArray(4 * noOfPixels);
 
         if (msg.extents) {
-            pixels = jim.pixelIterator.create(msg.exportWidth, msg.exportHeight, msg.extents);
+            pixels = createPixelIterator(msg.exportWidth, msg.exportHeight, msg.extents);
         }
         if (msg.paletteNodes) {
             palette.fromNodeList(msg.paletteNodes);
             palette.setBlend(msg.paletteBlend);
-            colours = palette.toLookupTable(jim.pixelIterator.lookupTableSize);
+            colours = palette.toLookupTable(lookupTableSize);
         }
 
         pixels.iterate(msg.currentIteration, msg.iterations, histogramUpdate);
-        var histogramData = new Uint32Array(msg.histogramDataBuffer);
-        var histogramLength = msg.histogramLength === undefined ? histogramData.length : msg.histogramLength;
+        const histogramData = new Uint32Array(msg.histogramDataBuffer);
+        const histogramLength = msg.histogramLength === undefined ? histogramData.length : msg.histogramLength;
         pixels.colour(imageData, histogramData, histogramLength, msg.histogramTotal, colours);
 
-        var escapeValuesToTransfer = new Uint32Array(pixels.escapeValues);
-        var reply = {
+        const escapeValuesToTransfer = new Uint32Array(pixels.escapeValues);
+        const reply = {
             firstRow: msg.firstRow,
             rowStride: msg.rowStride,
             batchid: msg.batchid,
@@ -50,4 +51,4 @@ jim.uiWorker.create = function () {
     return {
         onmessage: onmessage
     };
-};
+}

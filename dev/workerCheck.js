@@ -2,27 +2,27 @@
 //
 //   node dev/workerCheck.js [git-ref | --built[=dir]] [--only=interactive|export] [--tolerance=N]      (default ref: HEAD)
 //
-// Runs the real main-thread code (webworkerInteractive, the worker pool, histogram bookkeeping) and
-// the real worker code (unifiedworker.js) in Node, with an in-process stand-in for Worker, for a
-// fixed number of frames on a few views, and a few image exports. Every frame and export is hashed, so any
-// difference in output between the working tree and the ref shows up as a hash mismatch.
+// Runs the real main-thread code (the interactive renderer, the worker pool, histogram bookkeeping) and
+// the real worker code in Node, with an in-process stand-in for Worker, for a fixed number of frames on
+// a few views, and a few image exports. Every frame and export is hashed, so any difference in output
+// between the working tree and the ref shows up as a hash mismatch.
 // The step size is made deterministic by giving the renderer a stopwatch driven by a cost model.
 // It also reports time per frame spent in the workers (all workers added together, as they run
 // one after another here) and on the main thread including message copying. These are steadier
 // than browser timings, but only comparable between runs on the same machine.
 // It also recomputes the escape iteration of a sample of pixels from scratch, to check the output
 // is right and not just unchanged.
+// Each side's code is imported from src/client/main.js (or the built bundle), which exports what this
+// needs. A ref's files are copied out of git into a temporary folder to import them.
 // Exits with status 1 if any view differs or the working tree has wrong escape values.
-"use strict";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import crypto from "node:crypto";
+import { execFileSync } from "node:child_process";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
-const fs = require("fs");
-const path = require("path");
-const vm = require("vm");
-const crypto = require("crypto");
-const { execFileSync } = require("child_process");
-const { sourceFor } = require("../build/sourcePaths");
-
-const root = path.resolve(__dirname, "..");
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const ref = process.argv.slice(2).find((a) => !a.startsWith("--")) || "HEAD";
 const width = 700;
 const height = 400;
@@ -45,27 +45,21 @@ const views = [
 // spread across the workers at this many iterations per millisecond each.
 const modelIterationsPerMs = 600000;
 
-function sourceReader(revision) {
-    const cache = {};
-    return function (file) {
-        if (!(file in cache)) {
-            cache[file] = revision === null
-                ? fs.readFileSync(path.join(root, file), "utf8")
-                : execFileSync("git", ["show", revision + ":" + file], { cwd: root, encoding: "utf8", maxBuffer: 1 << 26 });
-        }
-        return cache[file];
-    };
-}
-
-function newContext() {
-    const ctx = { console: console };
-    ctx.self = ctx;
-    vm.createContext(ctx);
-    return ctx;
-}
-
-function run(ctx, read, file) {
-    vm.runInContext(read(file), ctx, { filename: file });
+// Copies src/ at revision into a temporary folder, returning the folder.
+function checkout(revision) {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "nodelbrot-check-"));
+    const git = (args, options) => execFileSync("git", args, { cwd: root, maxBuffer: 1 << 26, ...options });
+    const files = git(["ls-tree", "-r", "--name-only", revision, "src"], { encoding: "utf8" }).split("\n").filter(Boolean);
+    if (!files.includes("src/client/main.js")) {
+        throw new Error(revision + " has no src/client/main.js, so predates ES modules and can't be compared with this check");
+    }
+    files.forEach((file) => {
+        fs.mkdirSync(path.join(dir, path.dirname(file)), { recursive: true });
+        fs.writeFileSync(path.join(dir, file), git(["show", revision + ":" + file]));
+    });
+    // The code is ES modules, which Node only treats as such inside a package that says so.
+    fs.writeFileSync(path.join(dir, "package.json"), JSON.stringify({ type: "module" }));
+    return dir;
 }
 
 // Message delivery queue shared by the main thread and all workers, processed in order.
@@ -80,69 +74,62 @@ function newScheduler() {
     };
 }
 
-// Loads the page code into ctx: the scripts the development page loads in that revision, in order,
-// or for a built side the whole bundle.
-function loadPage(ctx, side) {
-    if (side.bundle) {
-        vm.runInContext(side.bundle, ctx, { filename: "built bundle" });
-    } else {
-        const head = side.read("src/view/templates/homePage/head.hbl");
-        Array.from(head.matchAll(/<script src="(\/js\/[^"]+)"><\/script>/g), (m) => sourceFor(m[1]))
-            .forEach((file) => run(ctx, side.read, file));
-    }
-}
-
-function workerClass(side, scheduler) {
-    return function FakeWorker(url) {
-        const self = this;
-        const ctx = newContext();
-        ctx.importScripts = function () {
-            Array.prototype.forEach.call(arguments, (script) => run(ctx, side.read, script.replace(/^\/js\//, "src/client/")));
-        };
-        ctx.postMessage = function (msg, transfer) {
+// Stands in for new Worker(...): runs the worker code in this process, delivering messages through
+// the scheduler, copied (or transferred) as a real worker's would be.
+function workerFactory(api, scheduler) {
+    return function () {
+        const worker = { terminate: function () {} };
+        const handle = api.createWorkerHandler(function (msg, transfer) {
             const copy = structuredClone(msg, { transfer: transfer || [] });
-            scheduler.post(() => self.onmessage && self.onmessage({ data: copy }));
-        };
-        if (side.bundle) {
-            // The bundle starts the worker when importScripts exists, as it does in a real worker.
-            vm.runInContext(side.bundle, ctx, { filename: "built bundle" });
-        } else {
-            run(ctx, side.read, url.replace(/^\/js\//, "src/client/"));
-        }
-        self.postMessage = function (msg, transfer) {
+            scheduler.post(() => worker.onmessage && worker.onmessage({ data: copy }));
+        });
+        worker.postMessage = function (msg, transfer) {
             const copy = structuredClone(msg, { transfer: transfer || [] });
             scheduler.post(() => {
                 const start = process.hrtime.bigint();
-                vm.runInContext("onmessage", ctx)({ data: copy });
+                handle({ data: copy });
                 scheduler.workerMs += Number(process.hrtime.bigint() - start) / 1e6;
             });
         };
-        self.terminate = function () {};
+        return worker;
     };
 }
 
-function render(side, view, workers) {
+function render(api, view, workers) {
     const scheduler = newScheduler();
-    const ctx = newContext();
-    ctx.Worker = workerClass(side, scheduler);
-    loadPage(ctx, side);
+    const events = api.createEvents();
+    const pixels = width * height;
+    const imgData = new Uint8ClampedArray(pixels * 4);
+    const escapeValues = new Uint32Array(pixels);
 
     const hash = crypto.createHash("sha256");
     const escapeHash = crypto.createHash("sha256");
     const images = [];
     let frames = 0;
-    let depth = 0;
     let modelMs = 0;
-    ctx.modelFrameTime = function (escapeValues, step) {
-        let active = 0;
-        for (let p = 0; p < escapeValues.length; p += 1) if (escapeValues[p] === 0) active += 1;
-        const ms = 2 + (step * active) / (parallelism * modelIterationsPerMs);
-        modelMs += ms;
-        return ms;
-    };
-    ctx.view = view.view;
+    let lastStep = 0;
+    let lastIteration = 0;
     let harnessMs = 0;   // time spent here recording frames, left out of the main thread figure
-    ctx.onFrame = function (imgData, escapeValues, iteration) {
+
+    events.listenTo(events.histogramUpdateReceivedFromWorker, (u) => { lastStep = u.update.length; });
+    const stopwatch = {
+        start: function () {}, stop: function () {}, elapsed: function () {
+            let active = 0;
+            for (let p = 0; p < escapeValues.length; p += 1) if (escapeValues[p] === 0) active += 1;
+            const ms = 2 + (lastStep * active) / (parallelism * modelIterationsPerMs);
+            modelMs += ms;
+            return ms;
+        }
+    };
+    events.listenTo(events.maxIterationsUpdated, (i) => { lastIteration = i; });
+    api.createEscapeHistogram(events, new Uint32Array(api.initialHistogramSize));
+    const calculator = api.createInteractiveRenderer({
+        width: width, height: height, events: events, workers: workers || parallelism, newWorker: workerFactory(api, scheduler),
+        imgData: imgData, escapeValues: escapeValues, xState: new Float64Array(pixels), yState: new Float64Array(pixels),
+        imageEscapeValues: new Uint32Array(pixels), stopwatch: stopwatch
+    });
+    const viewRectangle = (v) => api.rectangle(v.x, v.y, v.w, v.h);
+    events.listenTo(events.frameComplete, function () {
         const recordStart = process.hrtime.bigint();
         hash.update(Buffer.from(imgData.buffer, imgData.byteOffset, imgData.byteLength));
         hash.update(Buffer.from(escapeValues.buffer, escapeValues.byteOffset, escapeValues.byteLength));
@@ -150,87 +137,52 @@ function render(side, view, workers) {
         images.push(new Uint8Array(imgData));
         harnessMs += Number(process.hrtime.bigint() - recordStart) / 1e6;
         frames += 1;
-        depth = iteration;
         if (frames === view.switchAfter) {
             // Runs after the renderer has posted its next batch, before the workers handle it.
-            scheduler.post(() => {
-                ctx.view = view.switchTo;
-                vm.runInContext("events.fire(events.extentsUpdate, jim.rectangle.create(view.x, view.y, view.w, view.h));", ctx);
-            });
+            scheduler.post(() => events.fire(events.extentsUpdate, viewRectangle(view.switchTo)));
         }
-        return frames >= view.frames;
-    };
-
-    // Mirrors the start-up order in mandelbrot.js.
-    vm.runInContext(`
-        var lastStep = 0;
-        events.listenTo(events.histogramUpdateReceivedFromWorker, function (u) { lastStep = u.update.length; });
-        jim.stopwatch.create = function () {
-            return {start: function () {}, stop: function () {}, elapsed: function () {
-                return modelFrameTime(escapeValues, lastStep);
-            }};
-        };
-        var pixels = ${width * height};
-        var imgData = new Uint8ClampedArray(pixels * 4);
-        var escapeValues = new Uint32Array(pixels);
-        var startingExtent = jim.rectangle.create(-2.5, -1, 3.5, 2);
-        var lastIteration = 0;
-        events.listenTo(events.maxIterationsUpdated, function (i) { lastIteration = i; });
-        jim.mandelbrot.escapeDistributionHistogram.create(events, new Uint32Array(jim.mandelbrot.initialHistogramSize));
-        var calculator = jim.mandelbrot.webworkerInteractive.create(${width}, ${height}, events, 30, ${workers || parallelism}, imgData,
-            escapeValues, new Float64Array(pixels), new Float64Array(pixels), new Uint32Array(pixels), startingExtent);
-        events.listenTo(events.frameComplete, function () {
-            if (onFrame(imgData, escapeValues, lastIteration)) calculator.stop();
-        });
-        var palette = jim.palette.create(events);
-        events.fire(events.paletteChanged, palette);
-        events.fire(events.extentsUpdate, jim.rectangle.create(view.x, view.y, view.w, view.h));
-        events.fire(events.paletteChanged, palette);
-        calculator.start();
-    `, ctx);
+        if (frames >= view.frames) calculator.stop();
+    });
+    const palette = api.createPalette();
+    events.fire(events.paletteChanged, palette);
+    events.fire(events.extentsUpdate, viewRectangle(view.view));
+    events.fire(events.paletteChanged, palette);
+    calculator.start();
 
     const start = process.hrtime.bigint();
     scheduler.drain();
     const ms = Number(process.hrtime.bigint() - start) / 1e6;
     return {
-        hash: hash.digest("hex").slice(0, 16), escapeHash: escapeHash.digest("hex"), images: images, frames: frames, depth: depth,
+        hash: hash.digest("hex").slice(0, 16), escapeHash: escapeHash.digest("hex"), images: images, frames: frames, depth: lastIteration,
         workerMs: scheduler.workerMs, mainMs: ms - scheduler.workerMs - harnessMs, modelMs: modelMs,
-        escapes: checkEscapes(ctx, side.read)
+        escapes: checkEscapes(api, view.switchTo || view.view, escapeValues, lastIteration)
     };
 }
 
 // Recomputes the escape iteration of a sample of pixels from scratch and compares it with the
 // renderer's escape values. A pixel that has escaped must have escaped at exactly the right
 // iteration, and one that hasn't must not escape by the start of the last frame.
-function checkEscapes(ctx, read) {
-    run(ctx, read, "src/client/mandelbrotPoint.js");
-    return vm.runInContext(`(function () {
-        var point = jim.newMandelbrotPoint.create();
-        var fragments = jim.messages.renderFragment2.create(0, view.x, view.y, view.w, view.h, ${width}, ${height}).split(${parallelism});
-        var limit = lastIteration;
-        for (var p = 0; p < escapeValues.length; p += 1) limit = Math.max(limit, escapeValues[p]);
-        var result = {checked: 0, wrong: 0, firstWrong: null};
-        fragments.forEach(function (fragment) {
-            var e = fragment.extents;
-            for (var p = 0; p < fragment.rows * fragment.columns; p += 13) {
-                var i = p % fragment.columns;
-                var j = Math.floor(p / fragment.columns);
-                // Revisions with firstRow place every pixel from the top of the image; older ones from
-                // the top of its fragment.
-                var row = fragment.firstRow === undefined ? null : fragment.firstRow + (j * fragment.rowStride);
-                var my = row === null ? e.my + (j * e.stepY) : e.my + (row * e.stepY);
-                var expected = point.calculate(e.mx + (i * e.stepX), my, limit, 0, 0, 0, 0).histogramEscapedAt;
-                var actual = escapeValues[row === null ? fragment.offset + p : (row * fragment.columns) + i];
-                var ok = actual !== 0 ? actual === expected : (expected === 0 || expected > lastIteration);
-                result.checked += 1;
-                if (!ok) {
-                    result.wrong += 1;
-                    result.firstWrong = result.firstWrong || {pixel: fragment.offset + p, expected: expected, actual: actual};
-                }
+function checkEscapes(api, view, escapeValues, lastIteration) {
+    const fragments = api.renderFragments(view.x, view.y, view.w, view.h, width, height).split(parallelism);
+    let limit = lastIteration;
+    for (let p = 0; p < escapeValues.length; p += 1) limit = Math.max(limit, escapeValues[p]);
+    const result = { checked: 0, wrong: 0, firstWrong: null };
+    fragments.forEach(function (fragment) {
+        const e = fragment.extents;
+        for (let p = 0; p < fragment.rows * fragment.columns; p += 13) {
+            const i = p % fragment.columns;
+            const row = fragment.firstRow + Math.floor(p / fragment.columns) * fragment.rowStride;
+            const expected = api.calculatePoint(e.mx + (i * e.stepX), e.my + (row * e.stepY), limit, 0, 0, 0, 0).histogramEscapedAt;
+            const actual = escapeValues[(row * fragment.columns) + i];
+            const ok = actual !== 0 ? actual === expected : (expected === 0 || expected > lastIteration);
+            result.checked += 1;
+            if (!ok) {
+                result.wrong += 1;
+                result.firstWrong = result.firstWrong || { pixel: fragment.offset + p, expected: expected, actual: actual };
             }
-        });
-        return result;
-    })()`, ctx);
+        }
+    });
+    return result;
 }
 
 function describeEscapes(e) {
@@ -239,54 +191,17 @@ function describeEscapes(e) {
         e.firstWrong.expected + ", got " + e.firstWrong.actual + ")";
 }
 
-// Image export with the default palette, through jim.mandelbrot.export.render (the whole export apart
-// from showing the image). Returns a hash of the exported image.
-function exportImage(side, exp) {
+// Image export with the default palette, through renderExport (the whole export apart from showing
+// the image). Returns a hash of the exported image.
+function exportImage(api, exp) {
     const scheduler = newScheduler();
-    const ctx = newContext();
-    ctx.Worker = workerClass(side, scheduler);
-    loadPage(ctx, side);
-    ctx.exp = exp;
-    ctx.deadRegions = [];
     let image;
-    ctx.done = (imageData) => { image = imageData; };
-    vm.runInContext(`
-        var v = exp.view;
-        var source = jim.rectangle.create(v.x, v.y, v.w, v.h);
-        if (jim.mandelbrot.export.render) {
-            // Revisions that still had dead regions (and so the array splitter) take them as an extra argument.
-            if (jim.common.arraySplitter) {
-                jim.mandelbrot.export.render(source, exp.width, exp.height, exp.depth, jim.palette.create(), deadRegions, done);
-            } else {
-                jim.mandelbrot.export.render(source, exp.width, exp.height, exp.depth, jim.palette.create(), done);
-            }
-        } else {
-            // Revisions before jim.mandelbrot.export.render: the same steps as their exporter.js took.
-            var dest = jim.rectangle.create(0, 0, Math.floor(exp.width / 10), Math.floor(exp.height / 10));
-            jim.mandelbrot.export.escapeHistogramCalculator.create().calculate(source, dest, exp.depth, 10, 8, function (histogramData, histogramTotal) {
-                var nodeList = jim.palette.create().toNodeList();
-                var initialJobs = [];
-                for (var i = 0; i < 8; i += 1) {
-                    var histoCopy = new Uint32Array(histogramData);
-                    initialJobs.push({workerMessageType: "imageexportworker", updateHistogramData: true, paletteNodes: nodeList,
-                        histogramData: histoCopy.buffer, histogramSize: histoCopy.length, histogramTotal: histogramTotal});
-                }
-                var fragments = jim.messages.renderFragment2.create(0, v.x, v.y, v.w, v.h, exp.width, exp.height).split(100);
-                var deadSections = jim.common.arraySplitter.create().split(deadRegions, 100, 700);
-                var jobs = fragments.map(function (fragment, i) {
-                    // exporter.js passed the depth input's value, which is a string.
-                    return jim.messages.export.create(fragment, String(exp.depth), deadSections[i]);
-                });
-                var pool = jim.worker.pool.create(8, jim.worker.url || "/js/unifiedworker.js", initialJobs, "histogramData", "none");
-                var imageData = new Uint8ClampedArray(exp.width * exp.height * 4);
-                pool.consume(jobs, function (msg) {
-                    imageData.set(new Uint8ClampedArray(msg.result.imgData), msg.result.offset);
-                }, function () {
-                    done(imageData);
-                });
-            });
-        }
-    `, ctx);
+    const v = exp.view;
+    api.renderExport({
+        extents: api.rectangle(v.x, v.y, v.w, v.h), width: exp.width, height: exp.height, depth: exp.depth,
+        palette: api.createPalette(), newWorker: workerFactory(api, scheduler), workers: parallelism,
+        onComplete: (imageData) => { image = imageData; }
+    });
     const start = process.hrtime.bigint();
     scheduler.drain();
     const ms = Number(process.hrtime.bigint() - start) / 1e6;
@@ -334,20 +249,22 @@ function verdict(results, escapesMatch) {
         c.percentDifferingByMoreThan3.toFixed(3) + "% by more than 3]";
     return c.maxDiff <= tolerance ? { label: "CLOSE  ", pass: true, detail: detail } : { label: "DIFFER ", pass: false, detail: detail };
 }
+
+const importFrom = (file) => import(pathToFileURL(file).href);
+const workingTree = { label: "working tree", api: await importFrom(path.join(root, "src/client/main.js")) };
 // With --built[=dir], compares the working tree's source with the bundle built from it (default
 // dir: latest), instead of with a ref.
 const builtArg = process.argv.find((a) => a === "--built" || a.startsWith("--built="));
-const builtBundle = builtArg && path.resolve(root, builtArg.includes("=") ? builtArg.slice(8) : "latest", "mandelbrotExplorer.min.js");
-const sides = builtBundle ? [
-    { label: "source", read: sourceReader(null) },
-    { label: "built", read: sourceReader(null), bundle: fs.readFileSync(builtBundle, "utf8") }
+const sides = builtArg ? [
+    workingTree,
+    { label: "built", api: await importFrom(path.resolve(root, builtArg.includes("=") ? builtArg.slice(8) : "latest", "mandelbrotExplorer.min.js")) }
 ] : [
-    { label: ref, read: sourceReader(ref) },
-    { label: "working tree", read: sourceReader(null) }
+    { label: ref, api: await importFrom(path.join(checkout(ref), "src/client/main.js")) },
+    workingTree
 ];
 let failures = 0;
 (only === "export" ? [] : views).forEach((view) => {
-    const results = sides.map((side) => render(side, view));
+    const results = sides.map((side) => render(side.api, view));
     const v = verdict(results, results[0].escapeHash === results[1].escapeHash);
     if (!v.pass || results[1].escapes.wrong) failures += 1;
     console.log(v.label + view.name + " (" + results[1].frames + " frames)" + (v.detail || ""));
@@ -360,15 +277,15 @@ let failures = 0;
 // and with 16 workers and require identical frames.
 (only === "export" ? [] : views.slice(0, 2)).forEach((view) => {
     const side = sides[1];
-    const few = render(side, view, 3);
-    const many = render(side, view, 16);
+    const few = render(side.api, view, 3);
+    const many = render(side.api, view, 16);
     const same = few.hash === many.hash && few.frames === many.frames;
     if (!same) failures += 1;
     console.log((same ? "SAME   " : "DIFFER ") + view.name + " with 3 and 16 workers (" + side.label + ")");
     [few, many].forEach((r, i) => console.log("    " + (i === 0 ? "3 workers" : "16 workers").padEnd(14) + r.hash));
 });
 (only === "interactive" ? [] : exportScenarios).forEach((exp) => {
-    const results = sides.map((side) => exportImage(side, exp));
+    const results = sides.map((side) => exportImage(side.api, exp));
     const v = verdict(results, true);
     if (!v.pass) failures += 1;
     console.log(v.label + exp.name + " (" + exp.width + "x" + exp.height + ", depth " + exp.depth + ")" + (v.detail || ""));

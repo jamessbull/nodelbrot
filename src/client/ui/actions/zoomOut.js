@@ -1,23 +1,17 @@
-namespace("jim.mandelbrot.actions.zoomOut");
-jim.mandelbrot.actions.zoomOut.create = function (_events, _timer, _zoomOutAnim, _mandelbrotCanvas, _mandelbrotState) {
-    "use strict";
+import { matchingCanvas } from "../../dom.js";
 
-    function newMatchingCanvas(_originalCanvas) {
-        var matchingCanvas = document.createElement('canvas');
-        matchingCanvas.width = _originalCanvas.width;
-        matchingCanvas.height = _originalCanvas.height;
-        return matchingCanvas;
-    }
+export function createZoomOut(_events, _timer, _zoomOutAnim, _mandelbrotCanvas, _mandelbrotState) {
+    const on = _events.listenTo;
 
     on(_events.leftMouseDown, function () {
         if (_timer.timeSinceMark("doubleClickBegin") < 700) {
-            var from = _mandelbrotState.getExtents();
-            var to = _mandelbrotState.getLastExtents();
+            const from = _mandelbrotState.getExtents();
+            const to = _mandelbrotState.getLastExtents();
 
             if (_mandelbrotState.notFullyZoomedOut()) {
                 _events.fire(_events.zoomOutAction);
 
-                var oldCanvas = newMatchingCanvas(_mandelbrotCanvas);
+                const oldCanvas = matchingCanvas(_mandelbrotCanvas);
                 oldCanvas.getContext('2d').drawImage(_mandelbrotCanvas, 0, 0);
                 //zoom out anim needs to know before and after mandelbrot coords
                 _zoomOutAnim.play(oldCanvas, from, to);
@@ -28,4 +22,4 @@ jim.mandelbrot.actions.zoomOut.create = function (_events, _timer, _zoomOutAnim,
     });
 
     return {};
-};
+}

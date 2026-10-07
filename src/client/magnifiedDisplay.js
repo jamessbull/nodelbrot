@@ -1,18 +1,19 @@
-namespace("jim.mandelbrot.examinePixelStateDisplay");
-jim.mandelbrot.examinePixelStateDisplay.create = function (_events, _examinePixelCanvas, _imgData, _xState, _yState, _escapeValues, _imageEscapeValues, _sourceWidth, _uiCanvas, _sourceHeight, _state) {
-    "use strict";
-    var examiningPixels = false;
-    var myContext = _examinePixelCanvas.getContext('2d');
-    var round = jim.common.round;
-    var magnifiedAreaWidth  = 18;
-    var areaHasBeenSelected = false;
-    var selectedArea;
+import { rectangle } from "./geometry.js";
+import { round } from "./math.js";
 
-    var calculateFillStyle = function (colour) {
+export function createPixelExaminer(_events, _examinePixelCanvas, _imgData, _xState, _yState, _escapeValues, _imageEscapeValues, _sourceWidth, _uiCanvas, _sourceHeight, _state) {
+    const on = _events.listenTo;
+    let examiningPixels = false;
+    let myContext = _examinePixelCanvas.getContext('2d');
+    const magnifiedAreaWidth  = 18;
+    let areaHasBeenSelected = false;
+    let selectedArea;
+
+    const calculateFillStyle = function (colour) {
         return "rgba(" + round(colour.r, 0) + "," + round(colour.g, 0) + ","  + round(colour.b, 0) + "," + round(colour.a, 0) +")";
     };
 
-    var setText = function (id, text) {
+    const setText = function (id, text) {
         document.getElementById(id).textContent = text;
     };
 
@@ -25,8 +26,8 @@ jim.mandelbrot.examinePixelStateDisplay.create = function (_events, _examinePixe
     }
 
     function extractPointFromData(i) {
-        var imageIndex = i * 4;
-        var colour = {r: _imgData[imageIndex], g:_imgData[imageIndex + 1], b: _imgData[imageIndex + 2], a: _imgData[imageIndex +3]};
+        const imageIndex = i * 4;
+        const colour = {r: _imgData[imageIndex], g:_imgData[imageIndex + 1], b: _imgData[imageIndex + 2], a: _imgData[imageIndex +3]};
         return {
             colour: colour,
             xState: _xState[i],
@@ -37,9 +38,9 @@ jim.mandelbrot.examinePixelStateDisplay.create = function (_events, _examinePixe
     }
 
     function pointSequence(_startIndex, _number, _y) {
-        var seq = [];
-        for (var i = 0; i < _number ; i +=1) {
-            var item = extractPointFromData(_startIndex + i);
+        const seq = [];
+        for (let i = 0; i < _number ; i +=1) {
+            const item = extractPointFromData(_startIndex + i);
             item.x = i;
             item.y = _y;
             seq.push(item);
@@ -48,10 +49,10 @@ jim.mandelbrot.examinePixelStateDisplay.create = function (_events, _examinePixe
     }
 
     function extractData(_x, _y, _displayWidth, _numberToTake) {
-        var points = [];
-        for (var i = 0; i < _numberToTake; i +=1) {
-            var startIndex = xyToIndex(_x, _y + i, _displayWidth);
-            var nextRow = pointSequence(startIndex, _numberToTake, i);
+        let points = [];
+        for (let i = 0; i < _numberToTake; i +=1) {
+            const startIndex = xyToIndex(_x, _y + i, _displayWidth);
+            const nextRow = pointSequence(startIndex, _numberToTake, i);
             points = points.concat(nextRow);
         }
         return points;
@@ -65,7 +66,7 @@ jim.mandelbrot.examinePixelStateDisplay.create = function (_events, _examinePixe
     }
 
     function selectSquare(_row, _column, _squareSize) {
-        var selectedSquare = jim.rectangle.create(_column * _squareSize, _row * _squareSize, _squareSize, _squareSize);
+        const selectedSquare = rectangle(_column * _squareSize, _row * _squareSize, _squareSize, _squareSize);
         drawSelectionOutline(selectedSquare);
     }
 
@@ -75,20 +76,20 @@ jim.mandelbrot.examinePixelStateDisplay.create = function (_events, _examinePixe
         displayAdditionalMessage("Click main image to start examining");
         drawMagnifiedPixels(_examinePixelCanvas, selectedArea, magnifiedAreaWidth, _sourceWidth);
 
-        var squareSize = Math.round(_examinePixelCanvas.width / magnifiedAreaWidth);
-        var row = Math.floor(e.offsetY / squareSize);
-        var column = Math.floor(e.offsetX / squareSize);
+        const squareSize = Math.round(_examinePixelCanvas.width / magnifiedAreaWidth);
+        const row = Math.floor(e.offsetY / squareSize);
+        const column = Math.floor(e.offsetX / squareSize);
 
         selectSquare(row, column, squareSize);
-        var topLeft = centreToTopLeft(selectedArea, magnifiedAreaWidth);
-        var points = extractData(topLeft.x, topLeft.y, _sourceWidth, magnifiedAreaWidth);
-        var pointsIndex = (row * magnifiedAreaWidth) + column;
-        var point = points[pointsIndex];
+        const topLeft = centreToTopLeft(selectedArea, magnifiedAreaWidth);
+        const points = extractData(topLeft.x, topLeft.y, _sourceWidth, magnifiedAreaWidth);
+        const pointsIndex = (row * magnifiedAreaWidth) + column;
+        const point = points[pointsIndex];
 
         // The point c that was iterated, worked out the same way as the renderer places pixels.
-        var view = _state.getExtents();
-        var cx = view.topLeft().x + ((topLeft.x + column) * (view.width() / (_sourceWidth - 1)));
-        var cy = view.topLeft().y + ((topLeft.y + row) * (view.height() / (_sourceHeight - 1)));
+        const view = _state.getExtents();
+        const cx = view.topLeft().x + ((topLeft.x + column) * (view.width() / (_sourceWidth - 1)));
+        const cy = view.topLeft().y + ((topLeft.y + row) * (view.height() / (_sourceHeight - 1)));
 
         setText("escapedAt", point.escapedAt);
         setText("imageEscapedAt", point.imageEscapedAt);
@@ -102,18 +103,18 @@ jim.mandelbrot.examinePixelStateDisplay.create = function (_events, _examinePixe
     };
 
     function centreToTopLeft(_point, _width) {
-        var magnifyingGlassCenterOffsetx = 0;
-        var magnifyingGlassCenterOffsety = 0;
+        const magnifyingGlassCenterOffsetx = 0;
+        const magnifyingGlassCenterOffsety = 0;
 
-        var sourceX =  _point.x + magnifyingGlassCenterOffsetx - Math.floor(_width / 2);
-        var sourceY =  _point.y + magnifyingGlassCenterOffsety - Math.floor(_width / 2);
+        const sourceX =  _point.x + magnifyingGlassCenterOffsetx - Math.floor(_width / 2);
+        const sourceY =  _point.y + magnifyingGlassCenterOffsety - Math.floor(_width / 2);
         return {x: sourceX,y: sourceY};
     }
 
     function drawMagnifiedPixels(_canvas, _centre, _magnifiedAreaWidth, _sourceWidth) {
-        var topLeft = centreToTopLeft(_centre, _magnifiedAreaWidth);
-        var points  = extractData(topLeft.x, topLeft.y, _sourceWidth, _magnifiedAreaWidth);
-        var pixelsPerBlock = Math.round(_canvas.width / _magnifiedAreaWidth);
+        const topLeft = centreToTopLeft(_centre, _magnifiedAreaWidth);
+        const points  = extractData(topLeft.x, topLeft.y, _sourceWidth, _magnifiedAreaWidth);
+        const pixelsPerBlock = Math.round(_canvas.width / _magnifiedAreaWidth);
 
         points.forEach(function (point) {
             myContext.fillStyle = calculateFillStyle(point.colour);
@@ -122,7 +123,7 @@ jim.mandelbrot.examinePixelStateDisplay.create = function (_events, _examinePixe
     }
 
     function displayMessage(msg, x, y) {
-        var context = _uiCanvas.getContext('2d');
+        const context = _uiCanvas.getContext('2d');
         context.clearRect(x, y, _uiCanvas.width, _uiCanvas.height);
         context.font = "14px courier";
         context.strokeStyle = "rgba(0,0,0,255)";
@@ -134,13 +135,13 @@ jim.mandelbrot.examinePixelStateDisplay.create = function (_events, _examinePixe
     }
 
     function topLevelMessage(msg) {
-        var context = _uiCanvas.getContext('2d');
+        const context = _uiCanvas.getContext('2d');
         context.clearRect(0, 0, _uiCanvas.width, _uiCanvas.height);
         displayMessage(msg, 15, 15);
     }
 
     function displayAdditionalMessage(msg) {
-        var context = _uiCanvas.getContext('2d');
+        const context = _uiCanvas.getContext('2d');
         context.clearRect(0, 20, _uiCanvas.width - 25, _uiCanvas.height - 25);
         displayMessage(msg, 30, 30);
     }
@@ -158,7 +159,7 @@ jim.mandelbrot.examinePixelStateDisplay.create = function (_events, _examinePixe
        } else {
            displayAdditionalMessage("Click the left button on the image to select an area");
        }
-       selectedArea = jim.rectangle.create(e.x, e.y, magnifiedAreaWidth, magnifiedAreaWidth);
+       selectedArea = rectangle(e.x, e.y, magnifiedAreaWidth, magnifiedAreaWidth);
     });
 
     on(_events.mouseMoved, function (movement) {
@@ -175,4 +176,4 @@ jim.mandelbrot.examinePixelStateDisplay.create = function (_events, _examinePixe
         setTimeout(function () {_uiCanvas.getContext('2d').clearRect(0,0, _uiCanvas.width, _uiCanvas.height);}, 1000);
         _events.fire(_events.start);
     });
-};
+}

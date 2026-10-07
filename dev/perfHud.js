@@ -6,21 +6,21 @@
 // until the iteration depth reaches the target (default 5000, override with ?bench=N).
 (function () {
     "use strict";
-    var target = Number(new URLSearchParams(window.location.search).get("bench")) || 5000;
-    var windowMs = 1000;
-    var samples = [];          // {t, depth} for each completed frame within windowMs
-    var depth = 0;
-    var running = true;
-    var bench;
-    var history = loadHistory();
-    var panel;
+    const target = Number(new URLSearchParams(window.location.search).get("bench")) || 5000;
+    const windowMs = 1000;
+    let samples = [];          // {t, depth} for each completed frame within windowMs
+    let depth = 0;
+    let running = true;
+    let bench;
+    const history = loadHistory();
+    let panel;
 
     function now() { return performance.now(); }
 
     function loadHistory() {
         try {
             return JSON.parse(localStorage.getItem("nodelbrot.bench") || "[]");
-        } catch (e) {
+        } catch {
             return [];
         }
     }
@@ -28,7 +28,7 @@
     function saveHistory() {
         try {
             localStorage.setItem("nodelbrot.bench", JSON.stringify(history.slice(-20)));
-        } catch (e) { /* storage unavailable */ }
+        } catch { /* storage unavailable */ }
     }
 
     function viewName() {
@@ -42,8 +42,8 @@
     }
 
     function finishBenchmark() {
-        var ms = now() - bench.start;
-        var result = {
+        const ms = now() - bench.start;
+        const result = {
             view: bench.view,
             target: target,
             ms: ms,
@@ -61,12 +61,12 @@
     }
 
     function browserName() {
-        var m = navigator.userAgent.match(/(Firefox|Edg|Chrome|Safari)\/(\d+)/);
+        const m = navigator.userAgent.match(/(Firefox|Edg|Chrome|Safari)\/(\d+)/);
         return m ? m[1] + "/" + m[2] : "unknown";
     }
 
     function onFrame() {
-        var t = now();
+        const t = now();
         samples.push({t: t, depth: depth});
         while (samples.length > 2 && t - samples[0].t > windowMs) {
             samples.shift();
@@ -82,9 +82,9 @@
 
     function rates() {
         if (samples.length < 2) return {fps: 0, frameMs: 0, depthPerSec: 0, step: 0};
-        var first = samples[0], last = samples[samples.length - 1];
-        var seconds = (last.t - first.t) / 1000;
-        var frames = samples.length - 1;
+        const first = samples[0], last = samples[samples.length - 1];
+        const seconds = (last.t - first.t) / 1000;
+        const frames = samples.length - 1;
         return {
             fps: frames / seconds,
             frameMs: (seconds * 1000) / frames,
@@ -99,8 +99,8 @@
 
     function render() {
         if (!panel) return;
-        var r = rates();
-        var benchText;
+        const r = rates();
+        let benchText;
         if (!bench) {
             benchText = "waiting";
         } else if (bench.done) {
@@ -110,9 +110,9 @@
         } else {
             benchText = ((now() - bench.start) / 1000).toFixed(1) + "s…";
         }
-        var view = bench ? bench.view : viewName();
-        var comparable = history.filter(function (h) { return h.target === target && h.view === view; });
-        var previous = comparable.slice(-4, bench && bench.done ? -1 : undefined).map(function (h) {
+        const view = bench ? bench.view : viewName();
+        const comparable = history.filter(function (h) { return h.target === target && h.view === view; });
+        const previous = comparable.slice(-4, bench && bench.done ? -1 : undefined).map(function (h) {
             return (h.ms / 1000).toFixed(2) + "s";
         }).join(", ");
 
@@ -138,11 +138,15 @@
         setInterval(render, 250);
     }
 
-    events.listenTo(events.extentsUpdate, startBenchmark);
-    events.listenTo(events.maxIterationsUpdated, function (iteration) { depth = iteration; });
-    events.listenTo(events.frameComplete, onFrame);
-    events.listenTo(events.stop, function () { running = false; });
-    events.listenTo(events.restart, function () { running = true; });
-    events.listenTo(events.start, function () { running = true; });
+    // The explorer sends out its events as it starts, before it sets the first view.
+    window.addEventListener("nodelbrotstart", function (e) {
+        const events = e.detail;
+        events.listenTo(events.extentsUpdate, startBenchmark);
+        events.listenTo(events.maxIterationsUpdated, function (iteration) { depth = iteration; });
+        events.listenTo(events.frameComplete, onFrame);
+        events.listenTo(events.stop, function () { running = false; });
+        events.listenTo(events.restart, function () { running = true; });
+        events.listenTo(events.start, function () { running = true; });
+    });
     document.addEventListener("DOMContentLoaded", createPanel);
 }());

@@ -1,8 +1,8 @@
-namespace("jim.events");
-jim.events.create = function () {
-    "use strict";
-    var logEvents = false;
-    var listeners = {};
+// The events the parts of the explorer use to talk to each other. Each explorer has its own. listenTo
+// adds a listener for an event, and fire calls an event's listeners with arg.
+export function createEvents() {
+    const logEvents = false;
+    let listeners = {};
     return {
         listenTo: function (event, action) {
             if(!listeners[event]) {
@@ -59,9 +59,6 @@ jim.events.create = function () {
         zoomInAction: "zoomInAction",
         viewMoveAction: "viewMoveAction",
         moveSetAction: "moveSetAction",
-        examinePixelAction:    "examinePixelAction"
+        examinePixelAction: "examinePixelAction"
     };
-};
-
-var events = jim.events.create();
-var on = events.listenTo;
+}

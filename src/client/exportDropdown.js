@@ -1,19 +1,16 @@
-namespace("jim.mandelbrot.exportDropdown");
-
-jim.mandelbrot.exportDropdown.create = function (_exportSizeSelect, options) {
-    "use strict";
-    var newDimensions = function (w, h) {
+export function createExportSizes(_exportSizeSelect, options) {
+    const newDimensions = function (w, h) {
         return {width:w, height:h};
     };
-    var selectedDimension;
-    var orderedDimensions = [
+    let selectedDimension;
+    const orderedDimensions = [
         newDimensions(700, 400),
         newDimensions(2100, 1200),
         newDimensions(4200, 2400),
         newDimensions(6139, 3508),
     ];
 
-    var setExportSize = function () {
+    const setExportSize = function () {
         options.forEach(function (option, index) {
             if (option.selected) {
                 selectedDimension = orderedDimensions[index];
@@ -30,4 +27,4 @@ jim.mandelbrot.exportDropdown.create = function (_exportSizeSelect, options) {
             return selectedDimension;
         }
     };
-};
+}

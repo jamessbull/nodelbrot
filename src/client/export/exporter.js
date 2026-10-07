@@ -1,45 +1,45 @@
-namespace("jim.mandelbrot.image.exporter");
+import { renderExport } from "./exportRenderer.js";
+import { createProgressReporter, createTimeReporter } from "./progress.js";
+import { deselectButton, hide, selectButton, show } from "../dom.js";
 
 // The deepest export allowed. Every export worker holds a histogram with an entry per iteration, so
 // this keeps memory to around 8MB per worker.
-jim.mandelbrot.image.exporter.maxDepth = 2000000;
+export const maxDepth = 2000000;
 
 // Reads the export depth the user typed: a whole number of iterations from 1 to maxDepth, with
 // commas or spaces allowed between digits. Returns {depth} or {error} explaining what is wrong.
-jim.mandelbrot.image.exporter.parseDepth = function (text) {
-    "use strict";
-    var maxDepth = jim.mandelbrot.image.exporter.maxDepth;
-    var digits = String(text).replace(/[,\s]/g, "");
+export function parseDepth(text) {
+    const digits = String(text).replace(/[,\s]/g, "");
     if (!/^[0-9]+$/.test(digits)) {
         return {error: "Iterations must be a whole number, such as 1000."};
     }
-    var depth = parseInt(digits, 10);
+    const depth = parseInt(digits, 10);
     if (depth < 1 || depth > maxDepth) {
         return {error: "Iterations must be between 1 and " + maxDepth.toLocaleString("en-GB") + "."};
     }
     return {depth: depth};
-};
+}
 
-jim.mandelbrot.image.exporter.create = function (_exportDimensions, state, _dom, _events) {
-    "use strict";
-    var exporting = false;
+// The export panel: exports the current view at the chosen size and depth, with workers made by
+// newWorker(), and shows the result.
+export function createExporter(_exportDimensions, state, _events, newWorker) {
+    let exporting = false;
 
-    var exportButton = document.getElementById("export");
-    var lastExportButton = document.getElementById("openLastExportButton");
-    var exportDepth = document.getElementById("exportDepth");
-    var histogramProgress = document.getElementById("histogramProgress");
-    var imageProgress = document.getElementById("imageProgress");
-    var timeProgress = document.getElementById("elapsedTime");
-    var downloadButton = document.getElementById("export1");
-    var exportProgress = document.getElementById("exportProgress");
-    var exportMessage = document.getElementById("exportMessage");
-    var exportDimensions;
-    var palette;
-    var exportCanvas;
-    var exportUrl;
-    var timeReporter = jim.common.timeReporter.create(timeProgress);
-    var histogramReporter = jim.common.imageExportProgressReporter.create(events, "histogramExportProgress", histogramProgress);
-    var imageReporter = jim.common.imageExportProgressReporter.create(events, "imageExportProgress", imageProgress);
+    const exportButton = document.getElementById("export");
+    const lastExportButton = document.getElementById("openLastExportButton");
+    const exportDepth = document.getElementById("exportDepth");
+    const histogramProgress = document.getElementById("histogramProgress");
+    const imageProgress = document.getElementById("imageProgress");
+    const timeProgress = document.getElementById("elapsedTime");
+    const downloadButton = document.getElementById("export1");
+    const exportProgress = document.getElementById("exportProgress");
+    const exportMessage = document.getElementById("exportMessage");
+    let exportDimensions;
+    let palette;
+    let exportCanvas;
+    let exportUrl;
+    const timeReporter = createTimeReporter(timeProgress);
+    const progressReporters = {histogram: createProgressReporter(histogramProgress), image: createProgressReporter(imageProgress)};
 
     lastExportButton.onclick = function () {
         if (exportUrl) {
@@ -49,19 +49,19 @@ jim.mandelbrot.image.exporter.create = function (_exportDimensions, state, _dom,
 
     downloadButton.onclick = function () {
         if (exportCanvas) {
-            _dom.hide(exportProgress);
+            hide(exportProgress);
             window.open(exportCanvas.toDataURL("image/png"));
         }
     };
 
-    _dom.hide(exportProgress);
+    hide(exportProgress);
 
-    on(_events.paletteChanged, function (_palette) {
+    _events.listenTo(_events.paletteChanged, function (_palette) {
         palette = _palette;
     });
 
     function finish() {
-        _dom.deselectButton(exportButton);
+        deselectButton(exportButton);
         exporting = false;
         timeReporter.stop();
     }
@@ -75,7 +75,7 @@ jim.mandelbrot.image.exporter.create = function (_exportDimensions, state, _dom,
 
     // Browsers limit canvas size, some (such as Safari on phones) below the largest export, so
     // making the image can fail.
-    var tooBig = "the browser couldn't make an image this size. Try a smaller size.";
+    const tooBig = "the browser couldn't make an image this size. Try a smaller size.";
 
     function showImage(image) {
         try {
@@ -83,7 +83,7 @@ jim.mandelbrot.image.exporter.create = function (_exportDimensions, state, _dom,
             exportCanvas.width = exportDimensions.width;
             exportCanvas.height = exportDimensions.height;
             exportCanvas.getContext('2d').putImageData(new ImageData(image, exportCanvas.width, exportCanvas.height), 0, 0);
-        } catch (e) {
+        } catch {
             exportCanvas = undefined;
             fail(tooBig);
             return;
@@ -95,12 +95,12 @@ jim.mandelbrot.image.exporter.create = function (_exportDimensions, state, _dom,
                     return;
                 }
                 exportUrl  = URL.createObjectURL(blob);
-                _dom.hide(exportProgress);
-                _dom.removeClass(lastExportButton, "disabled");
+                hide(exportProgress);
+                lastExportButton.classList.remove("disabled");
                 window.open(exportUrl);
             });
         } else {
-            _dom.removeClass(lastExportButton, "disabled");
+            lastExportButton.classList.remove("disabled");
             downloadButton.href = exportCanvas.toDataURL("image/png");
         }
         finish();
@@ -113,20 +113,24 @@ jim.mandelbrot.image.exporter.create = function (_exportDimensions, state, _dom,
         }
         exportUrl = undefined;
         exportMessage.textContent = "";
-        _dom.show(exportProgress);
-        var depth = jim.mandelbrot.image.exporter.parseDepth(exportDepth.value);
+        show(exportProgress);
+        const depth = parseDepth(exportDepth.value);
         if (depth.error) {
             exportMessage.textContent = depth.error;
             return false;
         }
         exporting = true;
         exportDimensions = _exportDimensions.dimensions();
-        _dom.selectButton(exportButton);
-        imageReporter.reportOn(exportDimensions.width, exportDimensions.height);
-        histogramReporter.reportOn(Math.floor(exportDimensions.width / 10), Math.floor(exportDimensions.height / 10));
+        selectButton(exportButton);
+        progressReporters.image.reportOn(exportDimensions.width, exportDimensions.height);
+        progressReporters.histogram.reportOn(Math.floor(exportDimensions.width / 10), Math.floor(exportDimensions.height / 10));
         timeReporter.start();
         // A copy, as moving the view changes the state's extents in place.
-        jim.mandelbrot.export.render(state.getExtents().copy(), exportDimensions.width, exportDimensions.height,
-            depth.depth, palette, showImage, fail);
+        renderExport({
+            extents: state.getExtents().copy(), width: exportDimensions.width, height: exportDimensions.height,
+            depth: depth.depth, palette: palette, newWorker: newWorker,
+            onProgress: (phase, pixels) => progressReporters[phase].add(pixels),
+            onComplete: showImage, onError: fail
+        });
     };
-};
+}

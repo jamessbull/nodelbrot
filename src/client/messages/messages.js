@@ -1,13 +1,10 @@
-
-namespace("jim.messages.renderFragment2");
 // Divides a columns x rows image of the rectangle at (_mx, _my), _mw by _mh, into fragments for workers.
 // A fragment is a set of rows: firstRow, then every rowStride-th row, rows of them. Its extents give the
 // whole image's top left and the distance between pixels, plus firstRow and rowStride, so a pixel's
 // position depends only on its row and column, not on how the image was divided.
-jim.messages.renderFragment2.create = function (_offset, _mx, _my, _mw, _mh, _columns, _rows) {
-    "use strict";
-    var stepSizeX = _mw / (_columns - 1);
-    var stepSizeY = _mh / (_rows - 1);
+export function renderFragments(_mx, _my, _mw, _mh, _columns, _rows) {
+    const stepSizeX = _mw / (_columns - 1);
+    const stepSizeY = _mh / (_rows - 1);
 
     function fragment(firstRow, rowStride, rows) {
         return {
@@ -30,10 +27,10 @@ jim.messages.renderFragment2.create = function (_offset, _mx, _my, _mw, _mh, _co
     return {
         // _noOfParts blocks of consecutive rows, the last taking any left over.
         split: function (_noOfParts) {
-            var rowsInAChunk = Math.floor(_rows / _noOfParts);
-            var parts = [];
-            for (var i = 0; i < _noOfParts; i += 1) {
-                var isFinalPart = i === _noOfParts - 1;
+            const rowsInAChunk = Math.floor(_rows / _noOfParts);
+            const parts = [];
+            for (let i = 0; i < _noOfParts; i += 1) {
+                const isFinalPart = i === _noOfParts - 1;
                 parts[i] = fragment(i * rowsInAChunk, 1, isFinalPart ? _rows - (i * rowsInAChunk) : rowsInAChunk);
             }
             return parts;
@@ -41,18 +38,16 @@ jim.messages.renderFragment2.create = function (_offset, _mx, _my, _mw, _mh, _co
         // _noOfParts sets of rows, each taking every _noOfParts-th row, so expensive and cheap parts of
         // the image are shared out evenly.
         interleave: function (_noOfParts) {
-            var parts = [];
-            for (var i = 0; i < _noOfParts; i += 1) {
+            const parts = [];
+            for (let i = 0; i < _noOfParts; i += 1) {
                 parts[i] = fragment(i, _noOfParts, Math.max(0, Math.ceil((_rows - i) / _noOfParts)));
             }
             return parts;
         }
     };
-};
+}
 
-namespace(("jim.messages.export"));
-jim.messages.export.create = function (_renderFragment, _iter) {
-    "use strict";
+export function exportMessage(_renderFragment, _iter) {
     return {
         workerMessageType: "imageexportworker",
         offset: _renderFragment.offset * 4,
@@ -61,15 +56,13 @@ jim.messages.export.create = function (_renderFragment, _iter) {
         extents: _renderFragment.extents,
         maxIterations: _iter
     };
-};
+}
 
-namespace(("jim.messages.interactive"));
 // Only the first histogramFilledLength entries of the histogram are sent (all of it if not given);
 // the worker treats the rest, up to histogramLength, as zero.
-jim.messages.interactive.create = function (_fragment, histogram, currentIteration, stepSize, palette, histogramTotal, histogramFilledLength) {
-    "use strict";
-    var filledLength = histogramFilledLength === undefined ? histogram.length : histogramFilledLength;
-    var histogramData = histogram.slice(0, filledLength).buffer;
+export function interactiveMessage(_fragment, histogram, currentIteration, stepSize, palette, histogramTotal, histogramFilledLength) {
+    const filledLength = histogramFilledLength === undefined ? histogram.length : histogramFilledLength;
+    const histogramData = histogram.slice(0, filledLength).buffer;
     return {
         workerMessageType: "uiworker",
         firstRow: _fragment.firstRow,
@@ -85,4 +78,4 @@ jim.messages.interactive.create = function (_fragment, histogram, currentIterati
         histogramTotal : histogramTotal,
         transfer: [histogramData]
     };
-};
+}

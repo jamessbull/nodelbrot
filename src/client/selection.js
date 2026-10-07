@@ -1,24 +1,21 @@
-namespace("jim.selection");
-jim.selection.create = function (rect) {
-    "use strict";
-    var newRect = jim.rectangle.create,
-        area = newRect(0, 0, 0, 0),
-        proportionateHeight = function (w) {
-            return (rect.height() / rect.width()) * w;
-        };
+import { rectangle } from "./geometry.js";
+
+export function createSelection(rect) {
+    let area = rectangle(0, 0, 0, 0);
+    const proportionateHeight = (w) => (rect.height() / rect.width()) * w;
     return {
         area: function () {return area; },
         inProgress: false,
         begin: function (event) {
-            area = newRect(event.x, event.y, 0, 0);
+            area = rectangle(event.x, event.y, 0, 0);
             this.inProgress = true;
         },
         change: function (event) {
-            var xWidth = event.x - area.topLeft().x;
+            const xWidth = event.x - area.topLeft().x;
             area.resize(xWidth, proportionateHeight(xWidth));
         },
         end: function (event) {
-            var xWidth = event.x - area.topLeft().x;
+            const xWidth = event.x - area.topLeft().x;
             area.resize(xWidth, proportionateHeight(xWidth));
             this.inProgress = false;
         },
@@ -29,4 +26,4 @@ jim.selection.create = function (rect) {
             }
         }
     };
-};
+}

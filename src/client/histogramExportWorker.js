@@ -1,17 +1,17 @@
-namespace("jim.histogramexportworker");
+import { createPixelIterator } from "./pixelIterator.js";
 
 // First phase of an image export: iterates a low-resolution sample of the image to the export depth
 // and counts how many pixels escape at each iteration. histogramData[i] is the number that escaped at
 // iteration i, for i from 1 to maxIterations - 1, and histogramTotal is the number that escaped at all.
-jim.histogramexportworker.create = function () {
-    "use strict";
-    var onmessage = function (e) {
-        var msg = e.data;
-        var maxIterations = parseInt(msg.maxIterations, 10);
-        var pixels = jim.pixelIterator.create(msg.exportWidth, msg.exportHeight, msg.extents);
-        var histogramData = new Uint32Array(maxIterations + 1);
+// Replies go to postMessage.
+export function createHistogramExportWorker(postMessage) {
+    const onmessage = function (e) {
+        const msg = e.data;
+        const maxIterations = parseInt(msg.maxIterations, 10);
+        const pixels = createPixelIterator(msg.exportWidth, msg.exportHeight, msg.extents);
+        const histogramData = new Uint32Array(maxIterations + 1);
         pixels.iterate(0, maxIterations, histogramData);
-        var reply = {
+        const reply = {
             batchid: msg.batchid,
             result: {
                 histogramData: histogramData.buffer,
@@ -24,4 +24,4 @@ jim.histogramexportworker.create = function () {
     return {
         onmessage: onmessage
     };
-};
+}

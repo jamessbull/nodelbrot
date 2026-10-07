@@ -1,19 +1,17 @@
-namespace("jim.mandelbrot.ui.actions.drawSelection");
-jim.mandelbrot.ui.actions.drawSelection.create = function () {
-    "use strict";
+export function createSelectionDrawer() {
 
     function drawSelection (i, total, _canvas, _location) {
 
-        var lines = [
+        const lines = [
             line({x: _location.x , y: _location.y }, _location.width(), "right", 'white'),
             line({x:_location.topRight().x, y: _location.topRight().y}, _location.height(), "down", 'white'),
             line({x:_location.bottomRight().x , y: _location.bottomRight().y}, _location.width(), "left", 'white'),
             line({x: _location.bottomLeft().x , y: _location.bottomLeft().y }, _location.height(), "up", 'white')
         ];
 
-        var totalLength = (_location.width() + _location.height()) * 2;
-        var percentThrough = i / total;
-        var remainingLength = totalLength * percentThrough;
+        const totalLength = (_location.width() + _location.height()) * 2;
+        const percentThrough = i / total;
+        let remainingLength = totalLength * percentThrough;
 
         lines.forEach(function (line) {
             if(Math.abs(line.length) <= remainingLength) {
@@ -39,11 +37,11 @@ jim.mandelbrot.ui.actions.drawSelection.create = function () {
 
 
     function drawLine(_line, _canvas) {
-        var colours = ['black','gray','white', 'white', 'gray','black'];
-        for ( var offset = 0 ; offset < 6; offset +=1) {
+        const colours = ['black','gray','white', 'white', 'gray','black'];
+        for ( let offset = 0 ; offset < 6; offset +=1) {
 
-            var destination = {x:0, y:0};
-            var location = {x: 0, y: 0};
+            const destination = {x:0, y:0};
+            const location = {x: 0, y: 0};
             if (_line.direction === "right") {
                 location.x = _line.location.x - offset;
                 location.y = _line.location.y - offset;
@@ -75,10 +73,10 @@ jim.mandelbrot.ui.actions.drawSelection.create = function () {
 
     function drawPath(_colour, _start, _destination, _canvas) {
         _canvas.getContext('2d').fillStyle = _colour;
-        var x = _start.x;
-        var y = _start.y;
-        var width = _destination.x - (x - 1);
-        var height = _destination.y - (y - 1);
+        const x = _start.x;
+        const y = _start.y;
+        let width = _destination.x - (x - 1);
+        let height = _destination.y - (y - 1);
         if(height === 0) height = 1;
         if(width === 0) width = 1;
         _canvas.getContext('2d').fillRect(x, y, width, height);
@@ -86,4 +84,4 @@ jim.mandelbrot.ui.actions.drawSelection.create = function () {
 
 
     return { draw: drawSelection };
-};
+}

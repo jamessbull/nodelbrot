@@ -1,9 +1,7 @@
-namespace("jim.stopwatch");
-jim.stopwatch.create = function () {
-    "use strict";
-    var start = 0,
-        stop = 0,
-        marks = {};
+export function createStopwatch() {
+    let start = 0;
+    let stop = 0;
+    const marks = {};
     return {
         start: function () {
             start = Date.now();
@@ -21,4 +19,4 @@ jim.stopwatch.create = function () {
             return Date.now() - marks[mark];
         }
     };
-};
+}

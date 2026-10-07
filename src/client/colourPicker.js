@@ -1,17 +1,20 @@
-namespace("jim.colour.colourPicker");
-jim.colour.colourPicker.create = function (canvas, gradient, events) {
-    "use strict";
-    var image = jim.image.createSimpleImage(canvas);
-    var interpolate = jim.interpolator.create().interpolate;
-    var w = canvas.width;
-    var h = canvas.height;
-    var selectedHue;
+import { createSimpleImage } from "./image.js";
+import { interpolate } from "./math.js";
+import { fraction, toRgb } from "./palette.js";
+import { forwardTouchToMouse } from "./ui/touch.js";
+
+export function createColourPicker(canvas, gradient, events) {
+    const on = events.listenTo;
+    const image = createSimpleImage(canvas);
+    const w = canvas.width;
+    const h = canvas.height;
+    let selectedHue;
 
     // The top 30% of the picker is a strip of hues. Below it are shades of the selected hue: saturation
     // increases downwards and value decreases to the right. Drawing, clicking and placing markers all go
     // through these, so what is picked is what is shown.
-    var hueStripHeight = 0.3 * h;
-    var shadeHeight = h - hueStripHeight;
+    const hueStripHeight = 0.3 * h;
+    const shadeHeight = h - hueStripHeight;
 
     function isInHueStrip(y) {
         return y <= hueStripHeight;
@@ -27,19 +30,19 @@ jim.colour.colourPicker.create = function (canvas, gradient, events) {
 
     // Where a colour is among the shades.
     function shadePosition(hsv) {
-        return {x: (1 - jim.colour.fraction(hsv.v)) * w, y: hueStripHeight + (jim.colour.fraction(hsv.s) * shadeHeight)};
+        return {x: (1 - fraction(hsv.v)) * w, y: hueStripHeight + (fraction(hsv.s) * shadeHeight)};
     }
 
-    var drawColourPicker = function (x, y) {
-        return jim.colour.toRgb(isInHueStrip(y) ? {h: hueAt(x), s: 1, v: 1} : shadeAt(x, y));
+    const drawColourPicker = function (x, y) {
+        return toRgb(isInHueStrip(y) ? {h: hueAt(x), s: 1, v: 1} : shadeAt(x, y));
     };
 
-    var draw = function () {
+    const draw = function () {
         image.drawXY(drawColourPicker);
     };
 
     on(events.colourSelected, function (pos) {
-        var context = canvas.getContext('2d');
+        const context = canvas.getContext('2d');
         selectedHue = pos.hue;
         draw();
 
@@ -58,7 +61,7 @@ jim.colour.colourPicker.create = function (canvas, gradient, events) {
 
     // Sets the selected marker to the colour picked at e.
     function drawPicker(e) {
-        var colour;
+        let colour;
         if (isInHueStrip(e.offsetY)) {
             selectedHue = hueAt(e.offsetX);
             colour = {h: selectedHue, s: 1, v: 1};
@@ -75,7 +78,7 @@ jim.colour.colourPicker.create = function (canvas, gradient, events) {
     }
 
     on(events.nodeAdded, function (n) {
-        var position;
+        let position;
         if (n.doNotRandomise) {
             // A marker with a colour already (from a link): show where its colour is on the picker,
             // keeping the colour exactly as it was saved.
@@ -98,10 +101,10 @@ jim.colour.colourPicker.create = function (canvas, gradient, events) {
     };
 
     // Only the start of a touch picks a colour.
-    jim.touch.forwardToMouse(canvas, {down: drawPicker});
+    forwardTouchToMouse(canvas, {down: drawPicker});
 
     selectedHue = 120;
     return {
         draw: draw
     };
-};
+}
