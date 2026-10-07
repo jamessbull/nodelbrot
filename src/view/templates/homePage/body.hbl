@@ -194,14 +194,6 @@
         margin-bottom: 10px;
     }
 
-    .messageBox {
-        width: 750px;
-    }
-
-    .donationLink {
-        color: yellow;
-    }
-
     .topRight {
         position: absolute;
         top:10px;
@@ -271,11 +263,6 @@
 </style>
 
 <div id="allContent" class="transparent standard">
-    <div class="bottomMargin">
-        <span id="choosePaymentAmountButton1" class="button leftMargin">Donate</span>
-        <span class="border mediumRadius mediumLeftMargin messageBox smallBottomMargin"><canvas width=740, height=15, id="topMessageBox">I am hello message.</canvas></span>
-        <span id="choosePaymentAmountButton2" class="button leftMargin">Donate</span>
-    </div>
     <div id="bothColumns" style="position:relative; height:575px;">
         <div id="left" style="position: absolute;">
             <div class="bodyText panel">
@@ -435,11 +422,6 @@
 
         </div>
     </div>
-    <span id="choosePaymentAmountButton3" class="button leftMargin">Donate</span>
-    <span class="border mediumRadius mediumLeftMargin messageBox">
-        <canvas width=740, height=15, id="bottomMessageBox">I am hello message.</canvas>
-    </span>
-    <span id="choosePaymentAmountButton4" class="button leftMargin">Donate</span>
     <div class="copyright">© Copyright 2018 Bull IT Consulting</div>
 </div>
 
@@ -464,80 +446,3 @@
     <p>If popups are enabled the export will open automatically. If they are not then you can open it by clicking the 'View export' button.</p>
     <p>Once you have exported your image then you can save it locally by right clicking and selecting save as or by using ctrl-c and then pasting it into a suitable paint program.</p>
 </div>
-
-<div id="thankyoubox" class = "standard help hidden">
-    <span class = "closehelp" id="closeThankyouBoxWindow">x</span>
-    <hr class = 'tophrule'><h3>I always knew you were great</h3><hr>
-    <div>You're the best! Smart, witty, charming and above all generous. Legend.</div>
-</div>
-
-<div id = "choosePaymentAmountWindow" class="standard help hidden">
-    <span class = "closehelp" id="closePaymentAmountWindow">x</span>
-    <hr class = 'tophrule'><h3>Thinking of making a donation?</h3><hr class="hrule">
-
-    <p>You're very kind. Anything you donate will support me doing more things like this. If you change your mind and decide you don't want to donate after all then that's ok too. If you like this site please tell your friends about it!</p>
-    <p>Please enter the amount you would like to contribute. For example to donate a penny enter 0.01, to donate a pound enter 1.00</p>
-    <label>Enter an amount in gbp</label><input id="amountInput" type="text"/>
-    <hr>
-    <div id="paypal-button"></div>
-</div>
-<script src="https://www.paypalobjects.com/api/checkout.js"></script>
-<script>
-    window.amount = "2.00";
-    function donationAmount () {return window.amount}
-    paypal.Button.render({
-        env: 'production', // Or 'sandbox',
-
-        client: {
-            sandbox: "Aepz4g_aY_uRq78jT9mKq9mvH2G6ktBIv-QTxyN_2fD5-uoAmyJn74IWmHaScyVCIGegzm0LmMX0Zh9c",
-            production: "ARyOzeIQeRxaJULBP_YHl5PEbT_YjJLl-MA9zNv0WWOF1KVB7OfnPyW4WQh2TGqioD1aLaLxxMualsV_"
-        },
-
-        commit: true, // Show a 'Pay Now' button
-
-        style: {
-            color: 'gold',
-            size: 'small'
-        },
-
-        payment: function(data, actions) {
-            var amt = donationAmount();
-            if(amt.indexOf(".") === 0) {
-                amt = "0." + donationAmount();
-            }
-            if (amt.indexOf(".") === -1) {
-                amt = amt + ".00";
-            }
-            if (amt.indexOf(".") === amt.length - 1) {
-                amt = amt + "00";
-            }
-            return actions.payment.create({
-                payment: {
-                    transactions: [
-                        {
-                            amount: { total: amt, currency: 'GBP' }
-                        }
-                    ]
-                }
-            });
-        },
-
-        onAuthorize: function(data, actions) {
-            return actions.payment.execute().then(function(payment) {
-                window.fractal.showThankyouWindow();
-            });
-        },
-
-        onCancel: function(data, actions) {
-            /*
-             * Buyer cancelled the payment
-             */
-        },
-
-        onError: function(err) {
-            /*
-             * An error occurred during the transaction
-             */
-        }
-    }, '#paypal-button');
-</script>

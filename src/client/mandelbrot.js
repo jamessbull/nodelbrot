@@ -176,24 +176,6 @@ jim.init.run = function () {
     }
 
     setUpWindow("helptext", ["helptextbutton"], "closehelp");
-    var chooseAmountWindow = setUpWindow("choosePaymentAmountWindow",["choosePaymentAmountButton1", "choosePaymentAmountButton2", "choosePaymentAmountButton3", "choosePaymentAmountButton4"], "closePaymentAmountWindow");
-    var thankswindy = setUpWindow("thankyoubox", [], "closeThankyouBoxWindow");
 
-    var paymentAmountInput = dom.element("amountInput");
-    paymentAmountInput.onchange = function (e) {
-        window.amount = e.target.value;
-    };
-
-
-    return {
-        showThankyouWindow: function () {
-            thankswindy.showWindow();
-            chooseAmountWindow.showWindow();
-        }
-    };
+    return {};
 };
-
-// Things to do before trying to ge some viewers
-// automate deployment. Should be ok.
-// fix weird rendering on IOS for examine panel
-// estimate number of cpus -?

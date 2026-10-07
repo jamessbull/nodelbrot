@@ -8,7 +8,7 @@
 // to dev/bench-results.log.
 //
 // With --built, serves the output of build/build.js instead (default dir: latest) as plain static
-// files, as any web server would, adding only the HUD and the PayPal stub to the page.
+// files, as any web server would, adding only the HUD to the page.
 "use strict";
 
 const http = require("http");
@@ -41,14 +41,7 @@ const contentTypes = {
     ".map": "application/json; charset=utf-8"
 };
 
-// The live page loads PayPal's checkout script; stub it so the dev page works offline
-// and never talks to PayPal.
-const paypalStub = "<script>window.paypal = {Button: {render: function () {}}};</script>";
 const hudScript = '<script src="/dev/perfHud.js"></script>\n';
-
-function stubPaypal(html) {
-    return html.replace(/<script src="https:\/\/www\.paypalobjects\.com[^"]*"><\/script>/, paypalStub);
-}
 
 function readTemplate(name) {
     return fs.readFileSync(path.join(root, "src/view/templates", name + ".hbl"), "utf8");
@@ -63,10 +56,10 @@ function homePage() {
     if (builtDir) {
         // The HUD goes at the end of the head, after the built script it hooks into.
         const html = fs.readFileSync(path.join(builtDir, builtPage), "utf8");
-        return stubPaypal(html.replace("</head>", hudScript + "</head>"));
+        return html.replace("</head>", hudScript + "</head>");
     }
     const head = readTemplate("homePage/head") + "\n" + hudScript;
-    const body = stubPaypal(readTemplate("homePage/body"));
+    const body = readTemplate("homePage/body");
     return fill(readTemplate("html"), { head: head, body: body });
 }
 
