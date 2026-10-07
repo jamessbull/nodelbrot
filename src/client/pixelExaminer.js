@@ -1,5 +1,8 @@
-import { rectangle } from "./geometry.js";
+import { canvasPosition } from "./dom.js";
 import { round } from "./math.js";
+
+// Pixels across (and down) the area the magnifier shows.
+const areaSize = 18;
 
 // The top left of the size x size area of a width x height image centred on (x, y), moved in where
 // needed so all of it is in the image.
@@ -8,174 +11,92 @@ export function magnifiedArea(x, y, size, width, height) {
     return {x: clamp(x - Math.floor(size / 2), width - size), y: clamp(y - Math.floor(size / 2), height - size)};
 }
 
-export function createPixelExaminer(_events, _examinePixelCanvas, _imgData, _xState, _yState, _escapeValues, _imageEscapeValues, _sourceWidth, _uiCanvas, _sourceHeight, _state) {
-    const on = _events.listenTo;
-    let examiningPixels = false;
-    let myContext = _examinePixelCanvas.getContext('2d');
-    const magnifiedAreaWidth  = 18;
-    let areaHasBeenSelected = false;
-    let selectedArea;
+// Examining pixels. Until an area is chosen, the magnifier canvas shows the image around the pointer;
+// a click or tap on the image chooses the area there, and a click on the magnifier then shows that
+// pixel's values: when it escaped, the point c it is, where its orbit z had got to, and its colour.
+// hint says what to do next. The pixel data (imgData, xState, yState, escapeValues and
+// imageEscapeValues, a value or four per pixel of the width x height display) is filled in by the
+// renderer once examining starts.
+export function createPixelExaminer({events, magnifier, hint, imgData, xState, yState, escapeValues, imageEscapeValues, width, height, state}) {
+    const context = magnifier.getContext("2d");
+    const blockSize = magnifier.width / areaSize;
+    let examining = false;
+    let chosen = null;          // the centre of the area chosen, or null while following the pointer
 
-    const calculateFillStyle = function (colour) {
-        return "rgba(" + round(colour.r, 0) + "," + round(colour.g, 0) + ","  + round(colour.b, 0) + "," + round(colour.a, 0) +")";
-    };
+    const showValue = (id, value) => { document.getElementById(id).textContent = value; };
 
-    const setText = function (id, text) {
-        document.getElementById(id).textContent = text;
-    };
-
-    myContext = _examinePixelCanvas.getContext('2d');
-    myContext.strokeStyle = ("rgba(0,255,0,255)");
-    myContext.strokeRect(0,0, _examinePixelCanvas.width, _examinePixelCanvas.height);
-
-    function xyToIndex(_x, _y, _width) {
-        return (_y * _width) + _x;
-    }
-
-    function extractPointFromData(i) {
-        const imageIndex = i * 4;
-        const colour = {r: _imgData[imageIndex], g:_imgData[imageIndex + 1], b: _imgData[imageIndex + 2], a: _imgData[imageIndex +3]};
-        return {
-            colour: colour,
-            xState: _xState[i],
-            yState: _yState[i],
-            escapedAt: _escapeValues[i],
-            imageEscapedAt: _imageEscapeValues[i]
-        };
-    }
-
-    function pointSequence(_startIndex, _number, _y) {
-        const seq = [];
-        for (let i = 0; i < _number ; i +=1) {
-            const item = extractPointFromData(_startIndex + i);
-            item.x = i;
-            item.y = _y;
-            seq.push(item);
+    // Draws the area around centre, magnified, and returns its top left.
+    function drawArea(centre) {
+        const area = magnifiedArea(centre.x, centre.y, areaSize, width, height);
+        for (let row = 0; row < areaSize; row += 1) {
+            for (let column = 0; column < areaSize; column += 1) {
+                const i = (((area.y + row) * width) + area.x + column) * 4;
+                context.fillStyle = "rgb(" + imgData[i] + "," + imgData[i + 1] + "," + imgData[i + 2] + ")";
+                context.fillRect(column * blockSize, row * blockSize, blockSize, blockSize);
+            }
         }
-        return seq;
+        return area;
     }
 
-    function extractData(_x, _y, _displayWidth, _numberToTake) {
-        let points = [];
-        for (let i = 0; i < _numberToTake; i +=1) {
-            const startIndex = xyToIndex(_x, _y + i, _displayWidth);
-            const nextRow = pointSequence(startIndex, _numberToTake, i);
-            points = points.concat(nextRow);
-        }
-        return points;
+    function outlinePixel(row, column) {
+        context.lineWidth = 1;
+        context.strokeStyle = "black";
+        context.strokeRect((column * blockSize) - 0.5, (row * blockSize) - 0.5, blockSize + 1, blockSize + 1);
+        context.strokeStyle = "lime";
+        context.strokeRect((column * blockSize) + 0.5, (row * blockSize) + 0.5, blockSize - 1, blockSize - 1);
     }
 
-    function drawSelectionOutline(_rect) {
-        myContext.strokeStyle = ("rgba(0,255,0,255)");
-        myContext.strokeRect(_rect.x ,_rect.y, _rect.width(),  _rect.height());
-        myContext.strokeStyle = ("rgba(0,0,0,255)");
-        myContext.strokeRect(_rect.x - 1 ,_rect.y - 1, _rect.width() + 2,  _rect.height() + 2);
-    }
+    magnifier.onmousedown = function (e) {
+        if (!examining || !chosen) return;
+        const area = drawArea(chosen);
+        const position = canvasPosition(magnifier, e);
+        const column = Math.min(areaSize - 1, Math.floor(position.offsetX / blockSize));
+        const row = Math.min(areaSize - 1, Math.floor(position.offsetY / blockSize));
+        outlinePixel(row, column);
 
-    function selectSquare(_row, _column, _squareSize) {
-        const selectedSquare = rectangle(_column * _squareSize, _row * _squareSize, _squareSize, _squareSize);
-        drawSelectionOutline(selectedSquare);
-    }
-
-    _examinePixelCanvas.onmousedown = function (e) {
-        if (!examiningPixels || !selectedArea) return;
-
-        displayAdditionalMessage("Click main image to start examining");
-        drawMagnifiedPixels(_examinePixelCanvas, selectedArea, magnifiedAreaWidth, _sourceWidth);
-
-        const squareSize = Math.round(_examinePixelCanvas.width / magnifiedAreaWidth);
-        const row = Math.floor(e.offsetY / squareSize);
-        const column = Math.floor(e.offsetX / squareSize);
-
-        selectSquare(row, column, squareSize);
-        const topLeft = centreToTopLeft(selectedArea, magnifiedAreaWidth);
-        const points = extractData(topLeft.x, topLeft.y, _sourceWidth, magnifiedAreaWidth);
-        const pointsIndex = (row * magnifiedAreaWidth) + column;
-        const point = points[pointsIndex];
-
+        const x = area.x + column;
+        const y = area.y + row;
+        const pixel = (y * width) + x;
         // The point c that was iterated, worked out the same way as the renderer places pixels.
-        const view = _state.getExtents();
-        const cx = view.topLeft().x + ((topLeft.x + column) * (view.width() / (_sourceWidth - 1)));
-        const cy = view.topLeft().y + ((topLeft.y + row) * (view.height() / (_sourceHeight - 1)));
-
-        setText("escapedAt", point.escapedAt);
-        setText("imageEscapedAt", point.imageEscapedAt);
-        setText("cx", Number(cx.toPrecision(15)));
-        setText("cy", Number(cy.toPrecision(15)));
-        setText("zx", round(point.xState, 9));
-        setText("zy", round(point.yState, 9));
-        setText("colourInfor", "r:" + round(point.colour.r,3));
-        setText("colourInfog", "g:" + round(point.colour.g, 3));
-        setText("colourInfob", "b:" + round(point.colour.b,3));
+        const view = state.getExtents();
+        const cx = view.topLeft().x + (x * (view.width() / (width - 1)));
+        const cy = view.topLeft().y + (y * (view.height() / (height - 1)));
+        showValue("escapedAt", escapeValues[pixel]);
+        showValue("imageEscapedAt", imageEscapeValues[pixel]);
+        showValue("cx", Number(cx.toPrecision(15)));
+        showValue("cy", Number(cy.toPrecision(15)));
+        showValue("zx", round(xState[pixel], 9));
+        showValue("zy", round(yState[pixel], 9));
+        showValue("colourInfor", "r " + imgData[pixel * 4]);
+        showValue("colourInfog", "g " + imgData[(pixel * 4) + 1]);
+        showValue("colourInfob", "b " + imgData[(pixel * 4) + 2]);
     };
 
-    function centreToTopLeft(_point, _width) {
-        return magnifiedArea(_point.x, _point.y, _width, _sourceWidth, _sourceHeight);
-    }
-
-    function drawMagnifiedPixels(_canvas, _centre, _magnifiedAreaWidth, _sourceWidth) {
-        const topLeft = centreToTopLeft(_centre, _magnifiedAreaWidth);
-        const points  = extractData(topLeft.x, topLeft.y, _sourceWidth, _magnifiedAreaWidth);
-        const pixelsPerBlock = Math.round(_canvas.width / _magnifiedAreaWidth);
-
-        points.forEach(function (point) {
-            myContext.fillStyle = calculateFillStyle(point.colour);
-            myContext.fillRect(point.x * pixelsPerBlock, point.y * pixelsPerBlock, pixelsPerBlock, pixelsPerBlock);
-        });
-    }
-
-    function displayMessage(msg, x, y) {
-        const context = _uiCanvas.getContext('2d');
-        context.clearRect(x, y, _uiCanvas.width, _uiCanvas.height);
-        context.font = "14px courier";
-        context.strokeStyle = "rgba(0,0,0,255)";
-        context.fillStyle = "rgba(255,255,255,255)";
-        context.lineWidth = 3;
-        context.strokeText(msg, x, y);
-        context.fillText(msg, x, y);
-
-    }
-
-    function topLevelMessage(msg) {
-        const context = _uiCanvas.getContext('2d');
-        context.clearRect(0, 0, _uiCanvas.width, _uiCanvas.height);
-        displayMessage(msg, 15, 15);
-    }
-
-    function displayAdditionalMessage(msg) {
-        const context = _uiCanvas.getContext('2d');
-        context.clearRect(0, 20, _uiCanvas.width - 25, _uiCanvas.height - 25);
-        displayMessage(msg, 30, 30);
-    }
-
-    on(_events.pixelDataReady, function () {
-        examiningPixels = true;
-        topLevelMessage("Examine pixels mode. (Click examine button to leave)");
-        displayAdditionalMessage("Click the left button on the image to select an area");
+    events.listenTo(events.startExamining, function () {
+        chosen = null;
+        hint.textContent = "Getting the pixels…";
     });
 
-    on(_events.examinePixelAt, function (e) {
-       areaHasBeenSelected = !areaHasBeenSelected;
-       if (areaHasBeenSelected) {
-           displayAdditionalMessage("Click on magnified image to examine a pixel");
-       } else {
-           displayAdditionalMessage("Click the left button on the image to select an area");
-       }
-       selectedArea = rectangle(e.x, e.y, magnifiedAreaWidth, magnifiedAreaWidth);
+    events.listenTo(events.pixelDataReady, function () {
+        examining = true;
+        hint.textContent = "Point at the image to magnify it, then click or tap to choose that area.";
     });
 
-    on(_events.pointerMoved, function (movement) {
-        if (!examiningPixels) return;
-
-        if (areaHasBeenSelected) return;
-
-        drawMagnifiedPixels(_examinePixelCanvas, movement, magnifiedAreaWidth, _sourceWidth);
+    events.listenTo(events.examinePixelAt, function (point) {
+        if (!examining) return;
+        chosen = {x: point.x, y: point.y};
+        drawArea(chosen);
+        hint.textContent = "Click a pixel in the magnifier to see its values, or the image to choose another area.";
     });
 
-    on(_events.stopExamining, function () {
-        examiningPixels = false;
-        topLevelMessage("Leaving examine pixels mode");
-        setTimeout(function () {_uiCanvas.getContext('2d').clearRect(0,0, _uiCanvas.width, _uiCanvas.height);}, 1000);
-        _events.fire(_events.start);
+    events.listenTo(events.pointerMoved, function (point) {
+        if (examining && !chosen) {
+            drawArea(point);
+        }
+    });
+
+    events.listenTo(events.stopExamining, function () {
+        examining = false;
+        events.fire(events.start);
     });
 }

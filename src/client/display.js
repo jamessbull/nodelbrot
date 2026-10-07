@@ -13,7 +13,7 @@ import { precisionWarning } from "./precision.js";
 // renders into, drawing the image, examining pixels, stopping on its own, zooming in and the precision
 // warning. When the display changes size these are disposed of and made again at the new size, so they
 // listen through a scope of the events, which dispose() removes along with the renderer's workers.
-export function createDisplay({events, width, height, mainCanvas, uiCanvas, pixelInfoCanvas, state, notice, drawSelection, newWorker}) {
+export function createDisplay({events, width, height, mainCanvas, uiCanvas, magnifier, examineHint, state, notice, drawSelection, newWorker}) {
     const scoped = events.scope();
     const pixels = width * height;
     const imgData = new Uint8ClampedArray(pixels * 4);
@@ -30,7 +30,9 @@ export function createDisplay({events, width, height, mainCanvas, uiCanvas, pixe
         imgData: imgData, escapeValues: escapeValues, xState: xState, yState: yState, imageEscapeValues: imageEscapeValues
     });
     createImageRenderer({events: scoped, canvas: mainCanvas, imgData: imgData, width: width, height: height});
-    createPixelExaminer(scoped, pixelInfoCanvas, imgData, xState, yState, escapeValues, imageEscapeValues, width, uiCanvas, height, state);
+    createPixelExaminer({
+        events: scoped, magnifier, hint: examineHint, imgData, xState, yState, escapeValues, imageEscapeValues, width, height, state
+    });
     createAutoStop(scoped, pixels);
     createZoomIn({
         mandelbrotCanvas: mainCanvas, uiCanvas, events: scoped, selection: createSelection(rectangle(0, 0, width, height)),

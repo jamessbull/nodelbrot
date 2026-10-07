@@ -34,8 +34,8 @@ export function startApp(newWorker) {
     const viewer = element("viewer");
     const mainCanvas = element("mandelbrotCanvas");
     const uiCanvas = element("uiCanvas");
-    const pixelInfoCanvas = element("pixelInfoCanvas");
-    pixelInfoCanvas.width = pixelInfoCanvas.height = 144;
+    const magnifier = element("pixelInfoCanvas");
+    magnifier.width = magnifier.height = 144;
     // The right button drags the view, so it mustn't open the browser's menu.
     mainCanvas.oncontextmenu = uiCanvas.oncontextmenu = (e) => e.preventDefault();
 
@@ -95,7 +95,7 @@ export function startApp(newWorker) {
     // Keeps the selector right when a bookmark changes the blend.
     events.listenTo(events.paletteChanged, () => { paletteBlendSelect.value = palette.blend(); });
 
-    const notice = createNotice(uiCanvas);
+    const notice = createNotice(element("notice"));
     const bookmarks = createBookmarks({bookmarkButton: element("bookmarkButton"), state, colourGradientui: gradientEditor, events, notice});
     createColourPicker(colourPickerCanvas, gradientEditor, events);
     const exportSizes = createExportSizes(element("exportSizeSelect"),
@@ -125,7 +125,7 @@ export function startApp(newWorker) {
     });
 
     const newDisplay = (width, height) => createDisplay({
-        events: events, width: width, height: height, mainCanvas: mainCanvas, uiCanvas: uiCanvas, pixelInfoCanvas: pixelInfoCanvas,
+        events: events, width: width, height: height, mainCanvas: mainCanvas, uiCanvas: uiCanvas, magnifier: magnifier, examineHint: element("examineHint"),
         state: state, notice: notice, drawSelection: drawSelection, newWorker: newWorker
     });
     let display = newDisplay(size.width, size.height);

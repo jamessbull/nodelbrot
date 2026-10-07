@@ -230,6 +230,27 @@
             cursor: crosshair;
         }
 
+        .hint {
+            max-width: 144px;
+            margin: 0 0 6px;
+            color: var(--muted);
+        }
+
+        /* Messages over the top of the image, such as when a link can't be read. */
+        .notice {
+            position: absolute;
+            top: var(--gap);
+            left: 50%;
+            transform: translateX(-50%);
+            max-width: calc(100% - 2 * var(--gap));
+            padding: 6px 12px;
+            line-height: 1.4;
+            background: rgba(14, 13, 11, 0.92);
+            border: 1px solid var(--accent);
+            border-radius: var(--radius);
+            pointer-events: none;
+        }
+
         .examinePanel td:first-child {
             color: var(--muted);
             padding-right: 8px;
@@ -437,8 +458,10 @@
         <div class="canvasStack">
             <canvas id="mandelbrotCanvas"></canvas>
             <canvas id="uiCanvas"></canvas>
+            <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
             <section id="examinePixels" class="panel examinePanel" hidden>
                 <canvas id="pixelInfoCanvas"></canvas>
+                <p id="examineHint" class="hint"></p>
                 <table>
                     <tr><td>Escaped at</td><td class="value" id="escapedAt"></td></tr>
                     <tr><td>Coloured at</td><td class="value" id="imageEscapedAt"></td></tr>

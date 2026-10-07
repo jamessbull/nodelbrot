@@ -1,20 +1,13 @@
-// Shows short messages across the top of a canvas (the one drawn over the image) for a few seconds.
-export function createNotice(canvas) {
-    const context = canvas.getContext('2d');
-    let clearTimer;
+// Shows short messages in element, a box over the top of the image, for a few seconds. The element is
+// a status region, so screen readers announce the messages too.
+export function createNotice(element) {
+    let hideTimer;
     return {
         show: function (message) {
-            clearTimeout(clearTimer);
-            context.clearRect(0, 0, canvas.width, 30);
-            context.font = "14px courier";
-            context.strokeStyle = "rgba(0,0,0,255)";
-            context.fillStyle = "rgba(255,255,255,255)";
-            context.lineWidth = 3;
-            context.strokeText(message, 15, 20);
-            context.fillText(message, 15, 20);
-            clearTimer = setTimeout(function () {
-                context.clearRect(0, 0, canvas.width, 30);
-            }, 5000);
+            clearTimeout(hideTimer);
+            element.textContent = message;
+            element.hidden = false;
+            hideTimer = setTimeout(() => { element.hidden = true; }, 5000);
         }
     };
 }
