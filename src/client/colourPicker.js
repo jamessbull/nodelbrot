@@ -7,33 +7,31 @@ jim.colour.colourPicker.create = function (canvas, gradient, events) {
     var h = canvas.height;
     var selectedHue;
 
-    var huePicker = function (x) {
-        var hue = interpolate(0, 359, x / w);
-        return jim.colour.toRgb({h: hue, s: 1, v: 1});
-    };
+    // The top 30% of the picker is a strip of hues. Below it are shades of the selected hue: saturation
+    // increases downwards and value decreases to the right. Drawing, clicking and placing markers all go
+    // through these, so what is picked is what is shown.
+    var hueStripHeight = 0.3 * h;
+    var shadeHeight = h - hueStripHeight;
 
-    var shade = function (x, y, verticalSize) {
-        var heightOffset = h - verticalSize;
-        var translatedY = y - heightOffset;
-        var saturation = interpolate(0, 1, (translatedY / verticalSize));
+    function isInHueStrip(y) {
+        return y <= hueStripHeight;
+    }
 
-        var value = interpolate(1, 0, x / w);
-        return {h: selectedHue, s: saturation, v: value};
-    };
+    function hueAt(x) {
+        return interpolate(0, 359, x / w);
+    }
 
-    var shadePicker = function (x, y, verticalSize) {
-        var heightOffset = h - verticalSize;
-        var translatedY = y - heightOffset;
-        var saturation = interpolate(0, 1, (translatedY / verticalSize));
+    function shadeAt(x, y) {
+        return {h: selectedHue, s: interpolate(0, 1, (y - hueStripHeight) / shadeHeight), v: interpolate(1, 0, x / w)};
+    }
 
-        var value = interpolate(1, 0, x / w);
-        return jim.colour.toRgb({h: selectedHue, s: saturation, v: value});
-    };
+    // Where a colour is among the shades.
+    function shadePosition(hsv) {
+        return {x: (1 - jim.colour.fraction(hsv.v)) * w, y: hueStripHeight + (jim.colour.fraction(hsv.s) * shadeHeight)};
+    }
 
     var drawColourPicker = function (x, y) {
-        var hueProportion = 0.3 * h;
-        var shadeProportion = h - hueProportion;
-        return y <= hueProportion ? huePicker(x) : shadePicker(x, y, shadeProportion);
+        return jim.colour.toRgb(isInHueStrip(y) ? {h: hueAt(x), s: 1, v: 1} : shadeAt(x, y));
     };
 
     var draw = function () {
@@ -58,20 +56,17 @@ jim.colour.colourPicker.create = function (canvas, gradient, events) {
         context.closePath();
     });
 
+    // Sets the selected marker to the colour picked at e.
     function drawPicker(e) {
-
-        if (e.offsetY <= h / 3) {
-            selectedHue = interpolate(0, 359, e.offsetX / w);
-            //draw();
-            gradient.setSelectedNodeColour({h: selectedHue, s: 1, v: 1}, e.offsetX, e.offsetY);
-            events.fire(events.colourSelected, {x: e.offsetX, y: e.offsetY, hue: selectedHue});
-
+        var colour;
+        if (isInHueStrip(e.offsetY)) {
+            selectedHue = hueAt(e.offsetX);
+            colour = {h: selectedHue, s: 1, v: 1};
         } else {
-            var hueProportion = 0.3 * h;
-            var shadeProportion = h - hueProportion;
-            gradient.setSelectedNodeColour(shade(e.offsetX, e.offsetY, shadeProportion), e.offsetX, e.offsetY);
-            events.fire(events.colourSelected, {x: e.offsetX, y: e.offsetY, hue: selectedHue});
+            colour = shadeAt(e.offsetX, e.offsetY);
         }
+        gradient.setSelectedNodeColour(colour, e.offsetX, e.offsetY);
+        events.fire(events.colourSelected, {x: e.offsetX, y: e.offsetY, hue: selectedHue});
         events.fire(events.pulseUI);
     }
 
@@ -80,24 +75,21 @@ jim.colour.colourPicker.create = function (canvas, gradient, events) {
     }
 
     on(events.nodeAdded, function (n) {
-        var shadeVal = (Math.floor((h / 3)));
-        var hueProportion = Math.floor(0.3333333 * h);
-        var shadeProportion = h - hueProportion;
-        var shadeX = 0, shadeY = randomNumberBetween(shadeVal, h);
-        selectedHue = randomNumberBetween(0, 359);
-
+        var position;
         if (n.doNotRandomise) {
             // A marker with a colour already (from a link): show where its colour is on the picker,
             // keeping the colour exactly as it was saved.
-            shadeX = (1 - jim.colour.fraction(n.node.hsv.v)) * w;
-            shadeY = shadeVal + (jim.colour.fraction(n.node.hsv.s) * shadeProportion);
             selectedHue = parseFloat(n.node.hsv.h);
-            gradient.setSelectedNodeMarker(shadeX, shadeY);
-            events.fire(events.colourSelected, {x: shadeX, y: shadeY, hue: selectedHue});
+            position = shadePosition(n.node.hsv);
+            gradient.setSelectedNodeMarker(position.x, position.y);
+            events.fire(events.colourSelected, {x: position.x, y: position.y, hue: selectedHue});
             return;
         }
-        gradient.setSelectedNodeColour(shade(shadeX, shadeY, shadeProportion), shadeX, shadeY);
-        events.fire(events.colourSelected, {x: shadeX, y: shadeY, hue: selectedHue});
+        // A new marker: a random hue, at full value and a random saturation.
+        selectedHue = randomNumberBetween(0, 359);
+        position = {x: 0, y: randomNumberBetween(hueStripHeight, h)};
+        gradient.setSelectedNodeColour(shadeAt(position.x, position.y), position.x, position.y);
+        events.fire(events.colourSelected, {x: position.x, y: position.y, hue: selectedHue});
         events.fire(events.pulseUI, {});
     });
 
