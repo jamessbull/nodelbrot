@@ -1,14 +1,31 @@
 describe("The message splitter", function () {
     "use strict";
+    // my is the position of the fragment's first row; fragments hold the image's top and their first row.
     function checkMessage(m, mx, my, rows, columns, stepX, stepY, offset) {
         expect(m.extents.mx).toBe(mx);
-        expect(m.extents.my).toBe(my);
+        expect(m.extents.my + (m.extents.firstRow * m.extents.stepY)).toBe(my);
+        expect(m.extents.rowStride).toBe(1);
         expect(m.rows).toBe(rows);
         expect(m.columns).toBe(columns);
         expect(m.extents.stepX).toBe(stepX);
         expect(m.extents.stepY).toBe(stepY);
         expect(m.offset).toBe(offset);
     }
+
+    it("should interleave rows so each fragment takes every nth row", function () {
+        var fragments = jim.messages.renderFragment2.create(0, 0, -1.5, 10, 5, 6, 11).interleave(3);
+        expect(fragments.map(function (f) { return [f.firstRow, f.rowStride, f.rows]; })).toEqual([[0, 3, 4], [1, 3, 4], [2, 3, 3]]);
+        fragments.forEach(function (f) {
+            expect(f.extents.my).toBe(-1.5);
+            expect(f.extents.firstRow).toBe(f.firstRow);
+            expect(f.extents.rowStride).toBe(3);
+        });
+    });
+
+    it("should give fragments with no rows when there are more fragments than rows", function () {
+        var fragments = jim.messages.renderFragment2.create(0, 0, 0, 10, 5, 6, 2).interleave(4);
+        expect(fragments.map(function (f) { return f.rows; })).toEqual([1, 1, 0, 0]);
+    });
 
     it("should calculate the message for a simple example", function () {
         var renderOffset = 0, mx = 0, my = 0, mw = 10, mh = 5, numberOfRows = 6, numberOfColumns = 6;
