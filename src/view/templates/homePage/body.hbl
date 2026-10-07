@@ -1,7 +1,14 @@
 <script xmlns="http://www.w3.org/1999/html">
     var handleClickfunction
     document.addEventListener("DOMContentLoaded", function (event) {
-        window.fractal = jim.init.run();
+        try {
+            window.fractal = jim.init.run();
+        } finally {
+            // Fade the page in even if starting up failed, rather than leaving it blank.
+            var allContent = document.getElementById("allContent");
+            allContent.classList.remove("transparent");
+            allContent.classList.add("fade");
+        }
     });
     //jim.init.run();
 </script>

@@ -80,7 +80,7 @@ jim.init.run = function () {
         paletteBlendSelect.value = palette.blend();
     });
 
-    var bookmarker = newBookmarker(bookmarkButton, state, colourGradientui, events);
+    var bookmarker = newBookmarker(bookmarkButton, state, colourGradientui, events, uiCanvas);
     newColourPicker(colourPickerCanvas, colourGradientui, events);
     var exportSizeDropdown = newExportSizeDropdown(exportSizeSelect, [smallExport, mediumExport, largeExport, veryLargeExport]);
     newMiscUiElements(exportSizeDropdown, state, events);
@@ -183,9 +183,6 @@ jim.init.run = function () {
         window.amount = e.target.value;
     };
 
-    var allContent = dom.element("allContent");
-    dom.removeClass(allContent, "transparent");
-    dom.addClass(allContent, "fade");
 
     return {
         showThankyouWindow: function () {
