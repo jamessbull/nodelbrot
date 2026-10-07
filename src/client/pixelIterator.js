@@ -38,8 +38,7 @@ jim.pixelIterator.create = function (width, height, extents) {
 
     // Advances each pixel by noOfIterations iterations, numbered from startIteration + 1. Escapes past
     // histogramEscapeValue are counted in histogramUpdate, indexed by iteration - startIteration.
-    // Pixels with a non-zero entry in skip, if given, are left alone.
-    function iterate(startIteration, noOfIterations, histogramUpdate, skip) {
+    function iterate(startIteration, noOfIterations, histogramUpdate) {
         var idx = 0;
         for (var j = 0; j < height; j += 1) {
             for (var i = 0; i < width; i += 1, idx += 1) {
@@ -49,7 +48,6 @@ jim.pixelIterator.create = function (width, height, extents) {
                     histogramUpdate[0] += 1;
                 }
                 if (imageEscapeValues[idx] !== 0 || neverEscapes[idx] !== 0) continue;
-                if (skip && skip[idx] !== 0) continue;
                 var mx = extents.mx + (i * extents.stepX);
                 var my = extents.my + ((firstRow + (j * rowStride)) * extents.stepY);
                 if (inMainCardioidOrBulb(mx, my)) {

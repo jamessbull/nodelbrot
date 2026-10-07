@@ -49,12 +49,6 @@ jim.init.run = function () {
     var veryLargeExport         = dom.element("veryLargeExport");
     var exportSizeSelect        = dom.element("exportSizeSelect");
     var fps                     = dom.element("framesPerSecond");
-    var deadRegionCanvas        = dom.element("deadRegionCanvas");
-    deadRegionCanvas.width = displayWidth;
-    deadRegionCanvas.height = displayHeight;
-    deadRegionCanvas.oncontextmenu = function (e) {
-        e.preventDefault();
-    };
     uiCanvas.width = mandelCanvas.width;
     uiCanvas.height = mandelCanvas.height;
 
@@ -69,7 +63,6 @@ jim.init.run = function () {
     jim.metrics.create(jim.metrics.clock.create(), events);
     jim.fpsdisplay.create(fps, events, dom);
     jim.mandelbrot.escapeDistributionHistogram.create(events, histoData);
-    jim.mandelbrot.deadRegions.create(events, deadRegionCanvas, mainCanvas, escapeValues);
     jim.mandelbrot.imageRenderer.create(events, mainCanvas, displayWidth, displayHeight);
     jim.mandelbrot.examinePixelStateDisplay.create(events, pixelInfoCanvas, imgData, xState, yState, escapeValues, imageEscapeValues, displayWidth, uiCanvas);
     jim.mandelbrot.pixelEscapeRateTracker.create(events);

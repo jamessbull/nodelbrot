@@ -39,7 +39,6 @@ jim.events.create = function () {
         histogramUpdateReceivedFromWorker: "histogramUpdateReceivedFromWorker",
         histogramUpdated: "histogramUpdated",
         renderImage:"renderImage",
-        deadRegionsPublished: "deadRegionsPublished",
         currentFramesPerSecond: "currentFramesPerSecond",
         examinePixelState: "examinePixelState",
         publishPixelState: "publishPixelState",
@@ -55,9 +54,7 @@ jim.events.create = function () {
         zoomInAction: "zoomInAction",
         viewMoveAction: "viewMoveAction",
         moveSetAction: "moveSetAction",
-        examinePixelAction:    "examinePixelAction",
-        showDeadRegions: "showDeadRegions",
-        hideDeadRegions: "hideDeadRegions"
+        examinePixelAction:    "examinePixelAction"
     };
 };
 

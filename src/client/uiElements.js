@@ -148,27 +148,5 @@ jim.mandelbrot.ui.elements.create = function (_exportSizeDropdown, _state, _even
     dom.deselectButton(examineMenuButton);
     dom.show(examinePixelsPanel);
 
-    var ignoreDeadPixelsCheckbox = document.getElementById("ignoreDeadPixels");
-    var ignoreDeadPixelsRadius = document.getElementById("ignoreDeadPixelsRadius");
-    var ignoreChecked = false;
-    ignoreDeadPixelsCheckbox.checked = false;
-
-    on(_events.extentsUpdate, function () {
-        ignoreDeadPixelsCheckbox.checked = false;
-        ignoreChecked = false;
-    });
-
-    ignoreDeadPixelsCheckbox.onclick= function () {
-        ignoreChecked = !ignoreChecked;
-        ignoreDeadPixelsCheckbox.checked = ignoreChecked;
-        if (ignoreChecked) {
-            _events.fire("showDeadRegions", ignoreDeadPixelsRadius.value);
-            _events.fire(_events.pulseUI);
-        } else {
-            _events.fire("hideDeadRegions", ignoreDeadPixelsRadius.value);
-            _events.fire(_events.pulseUI);
-        }
-    };
-
     jim.mandelbrot.image.exporter.create(_exportSizeDropdown, _state, dom, _events);
 };

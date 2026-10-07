@@ -247,14 +247,19 @@ function exportImage(side, exp) {
     ctx.Worker = workerClass(side, scheduler);
     loadPage(ctx, side);
     ctx.exp = exp;
-    ctx.deadRegions = exp.deadRegions || [];
+    ctx.deadRegions = [];
     let image;
     ctx.done = (imageData) => { image = imageData; };
     vm.runInContext(`
         var v = exp.view;
         var source = jim.rectangle.create(v.x, v.y, v.w, v.h);
         if (jim.mandelbrot.export.render) {
-            jim.mandelbrot.export.render(source, exp.width, exp.height, exp.depth, jim.palette.create(), deadRegions, done);
+            // Revisions that still had dead regions take them as an extra argument.
+            if (jim.mandelbrot.export.render.length === 7) {
+                jim.mandelbrot.export.render(source, exp.width, exp.height, exp.depth, jim.palette.create(), deadRegions, done);
+            } else {
+                jim.mandelbrot.export.render(source, exp.width, exp.height, exp.depth, jim.palette.create(), done);
+            }
         } else {
             // Revisions before jim.mandelbrot.export.render: the same steps as their exporter.js took.
             var dest = jim.rectangle.create(0, 0, Math.floor(exp.width / 10), Math.floor(exp.height / 10));
@@ -291,17 +296,9 @@ function exportImage(side, exp) {
     };
 }
 
-// A block of dead regions, in the 700x400 layout the interactive view publishes them in.
-function deadRegionBlock() {
-    const regions = new Uint32Array(700 * 400);
-    for (let j = 100; j < 250; j += 1) for (let i = 200; i < 450; i += 1) regions[j * 700 + i] = 1;
-    return regions;
-}
-
 const exportScenarios = [
     { name: "export default view", view: defaultView, width: 1400, height: 800, depth: 1000 },
-    { name: "export period-3 bulb", view: bulbView, width: 700, height: 400, depth: 5000 },
-    { name: "export with dead regions", view: defaultView, width: 1400, height: 800, depth: 1000, deadRegions: deadRegionBlock() }
+    { name: "export period-3 bulb", view: bulbView, width: 700, height: 400, depth: 5000 }
 ];
 
 const only = (process.argv.find((a) => a.startsWith("--only=")) || "").slice(7);

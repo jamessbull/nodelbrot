@@ -51,7 +51,7 @@ jim.messages.renderFragment2.create = function (_offset, _mx, _my, _mw, _mh, _co
 };
 
 namespace(("jim.messages.export"));
-jim.messages.export.create = function exportJob (_renderFragment, _iter, _deadRegions) {
+jim.messages.export.create = function (_renderFragment, _iter) {
     "use strict";
     return {
         workerMessageType: "imageexportworker",
@@ -59,7 +59,6 @@ jim.messages.export.create = function exportJob (_renderFragment, _iter, _deadRe
         exportWidth: _renderFragment.columns,
         exportHeight: _renderFragment.rows,
         extents: _renderFragment.extents,
-        deadRegions: _deadRegions,
         maxIterations: _iter
     };
 };
@@ -78,7 +77,6 @@ jim.messages.interactive.create = function (_fragment, histogram, currentIterati
         exportWidth : _fragment.columns,
         exportHeight : _fragment.rows,
         extents: _fragment.extents,
-        deadRegions: [],
         histogramDataBuffer: histogramData,
         histogramLength: histogram.length,
         currentIteration : currentIteration,

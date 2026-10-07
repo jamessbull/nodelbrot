@@ -92,12 +92,6 @@
         border-radius: 7px;
     }
 
-    .overlay {
-        position: absolute;
-        left: 0;
-        top: 0;
-    }
-
     .bottomMargin {
         margin-bottom: 15px;
     }
@@ -339,17 +333,6 @@
                                         </select>
                                     </td>
                                 </tr>
-                                <tr>
-                                    <td class="bodyText">Ignore dead</td>
-                                    <td><input id="ignoreDeadPixels" type="checkbox"/></td>
-                                </tr>
-
-                                <tr>
-                                    <td class="bodyText">Dead radius</td>
-                                    <td><input class="input" size="8" id="ignoreDeadPixelsRadius" type="text" class="export"
-                                               value="1"/>
-                                    </td>
-                                </tr>
                                 </tbody>
                             </table>
                         </div>
@@ -423,7 +406,6 @@
             </div>
             <div class="">
                 <canvas id="mandelbrotCanvas" class="canvasRadius"></canvas>
-                <canvas id="deadRegionCanvas" class="overlay canvasRadius"></canvas>
                 <canvas id="uiCanvas" class=" canvasBorder canvasRadius"></canvas>
             </div>
             <div class="border canvasRadius topMargin shimmyLeft">
@@ -474,7 +456,6 @@
     <hr class="firsthrule"><h3>Exporting</h3><hr class="hrule">
     <p>Select the iteration depth. The current iteration is displayed in the top panel which should help pick an appropriate value</p>
     <p>Select a size. Small is the same resolution as the interactive display. Huge is, well, really quite large.</p>
-    <p>'Ignore dead' means black pixels will not be calculated as part of the export and will remain black</p>
     <p>If popups are enabled the export will open automatically. If they are not then you can open it by clicking the 'View export' button.</p>
     <p>Once you have exported your image then you can save it locally by right clicking and selecting save as or by using ctrl-c and then pasting it into a suitable paint program.</p>
 </div>

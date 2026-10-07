@@ -4,11 +4,10 @@ namespace("jim.mandelbrot.export");
 // coloured with palette, without touching the page. Two phases run on one pool of jim.worker.count()
 // workers: first a
 // histogram of how many pixels escape at each iteration, from a sample of the image at a tenth of its
-// size each way, then the image itself in strips, coloured against that histogram. Pixels in deadRegions
-// (laid out 700 wide, as the interactive view publishes them) are left black. Fires
+// size each way, then the image itself in strips, coloured against that histogram. Fires
 // "histogramExportProgress" and "imageExportProgress" with the number of pixels done, and calls
 // onComplete with the image's RGBA data.
-jim.mandelbrot.export.render = function (extents, width, height, depth, palette, deadRegions, onComplete) {
+jim.mandelbrot.export.render = function (extents, width, height, depth, palette, onComplete) {
     "use strict";
     var noOfWorkers = jim.worker.count();
     var histogramParts = 10;
@@ -57,9 +56,8 @@ jim.mandelbrot.export.render = function (extents, width, height, depth, palette,
             return {workerMessageType: "imageexportworker", updateHistogramData: true, paletteNodes: nodes, paletteBlend: blend,
                 histogramData: histogramData, histogramTotal: total, transfer: [histogramData]};
         });
-        var deadSections = jim.common.arraySplitter.create().split(deadRegions, imageParts, 700);
-        var jobs = fragments(width, height, imageParts).map(function (fragment, i) {
-            return jim.messages.export.create(fragment, depth, deadSections[i]);
+        var jobs = fragments(width, height, imageParts).map(function (fragment) {
+            return jim.messages.export.create(fragment, depth);
         });
         var image = new Uint8ClampedArray(width * height * 4);
         pool.consume(jobs, function (msg) {

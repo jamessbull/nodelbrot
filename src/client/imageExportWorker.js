@@ -10,27 +10,12 @@ jim.imageexportworker.create = function () {
     var histogramData;
     var histogramTotal;
 
-    // Dead regions are laid out 700 pixels wide, as in the interactive view, so each covers a block
-    // of width / 700 pixels each way in the export.
-    function deadRegionMask(deadRegions, width, height) {
-        var floor = Math.floor;
-        var scale = width / 700;
-        var mask = new Uint8Array(width * height);
-        for (var j = 0, idx = 0; j < height; j += 1) {
-            for (var i = 0; i < width; i += 1, idx += 1) {
-                mask[idx] = deadRegions[(floor(j / scale) * 700) + floor(i / scale)] ? 1 : 0;
-            }
-        }
-        return mask;
-    }
-
     function exportStrip(msg) {
         var width = msg.exportWidth;
         var height = msg.exportHeight;
         var maxIterations = parseInt(msg.maxIterations, 10);
         var pixels = jim.pixelIterator.create(width, height, msg.extents);
-        var skip = msg.deadRegions ? deadRegionMask(msg.deadRegions, width, height) : undefined;
-        pixels.iterate(0, maxIterations, new Uint32Array(maxIterations + 1), skip);
+        pixels.iterate(0, maxIterations, new Uint32Array(maxIterations + 1));
         var imageData = new Uint8ClampedArray(width * height * 4);
         pixels.colour(imageData, histogramData, histogramData.length, histogramTotal, colours);
         var reply = {

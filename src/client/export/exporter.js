@@ -13,7 +13,6 @@ jim.mandelbrot.image.exporter.create = function (_exportDimensions, state, _dom,
     var exportProgress = document.getElementById("exportProgress");
     var exportDimensions;
     var palette;
-    var deadRegions = [];
     var exportCanvas;
     var exportUrl;
     var timeReporter = jim.common.timeReporter.create(timeProgress);
@@ -33,10 +32,6 @@ jim.mandelbrot.image.exporter.create = function (_exportDimensions, state, _dom,
 
     on(_events.paletteChanged, function (_palette) {
         palette = _palette;
-    });
-
-    on(_events.deadRegionsPublished, function (_deadRegions) {
-        deadRegions = _deadRegions;
     });
 
     function showImage(image) {
@@ -75,6 +70,6 @@ jim.mandelbrot.image.exporter.create = function (_exportDimensions, state, _dom,
         timeReporter.start();
         // A copy, as moving the view changes the state's extents in place.
         jim.mandelbrot.export.render(state.getExtents().copy(), exportDimensions.width, exportDimensions.height,
-            parseInt(exportDepth.value, 10), palette, deadRegions, showImage);
+            parseInt(exportDepth.value, 10), palette, showImage);
     };
 };

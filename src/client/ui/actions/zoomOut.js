@@ -13,7 +13,6 @@ jim.mandelbrot.actions.zoomOut.create = function (_events, _timer, _zoomOutAnim,
         if (_timer.timeSinceMark("doubleClickBegin") < 700) {
             var from = _mandelbrotState.getExtents();
             var to = _mandelbrotState.getLastExtents();
-            _events.fire(_events.hideDeadRegions);
 
             if (_mandelbrotState.notFullyZoomedOut()) {
                 _events.fire(_events.zoomOutAction);
