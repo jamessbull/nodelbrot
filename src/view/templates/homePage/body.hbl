@@ -396,6 +396,7 @@
                     </tr>
                     </tbody>
                 </table>
+                <div class="centered bottomMargin bodyText" id="exportMessage"></div>
                 <div class="centered bottomMargin">
                     <a class="button bodyText" id="export1">Open Image</a>
                 </div>

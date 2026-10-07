@@ -83,6 +83,13 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
         }
     }
 
+    // Stops rendering, rather than retrying something that may fail every frame. Go starts it again.
+    function onWorkerError(message) {
+        console.error("Rendering stopped: a worker failed: " + message);
+        stopped = true;
+        _events.fire(_events.stop);
+    }
+
     function postMessage() {
         timer.start();
         batchGeneration = viewGeneration;
@@ -118,7 +125,7 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
         // a batch can finish after a view change without sending it, and the view mustn't be lost.)
         extents = undefined;
         palette = undefined;
-        pool.consume(jobs, onEachJob, onAllJobsComplete);
+        pool.consume(jobs, onEachJob, onAllJobsComplete, onWorkerError);
     }
 
     function extentsTransfer(x, y, w, h) {

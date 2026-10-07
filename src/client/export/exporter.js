@@ -11,6 +11,7 @@ jim.mandelbrot.image.exporter.create = function (_exportDimensions, state, _dom,
     var timeProgress = document.getElementById("elapsedTime");
     var downloadButton = document.getElementById("export1");
     var exportProgress = document.getElementById("exportProgress");
+    var exportMessage = document.getElementById("exportMessage");
     var exportDimensions;
     var palette;
     var exportCanvas;
@@ -34,12 +35,24 @@ jim.mandelbrot.image.exporter.create = function (_exportDimensions, state, _dom,
         palette = _palette;
     });
 
+    function finish() {
+        _dom.deselectButton(exportButton);
+        exporting = false;
+        timeReporter.stop();
+    }
+
+    // Leaves the progress panel open with the reason, so the next export can be started.
+    function fail(message) {
+        console.error("Export failed: " + message);
+        exportMessage.textContent = "Export failed: " + message;
+        finish();
+    }
+
     function showImage(image) {
         exportCanvas = document.createElement('canvas');
         exportCanvas.width = exportDimensions.width;
         exportCanvas.height = exportDimensions.height;
         exportCanvas.getContext('2d').putImageData(new ImageData(image, exportCanvas.width, exportCanvas.height), 0, 0);
-        _dom.deselectButton(exportButton);
         if (exportCanvas.toBlob) {
             exportCanvas.toBlob(function(blob) {
                 exportUrl  = URL.createObjectURL(blob);
@@ -51,8 +64,7 @@ jim.mandelbrot.image.exporter.create = function (_exportDimensions, state, _dom,
             _dom.removeClass(lastExportButton, "disabled");
             downloadButton.href = exportCanvas.toDataURL("image/png");
         }
-        exporting = false;
-        timeReporter.stop();
+        finish();
     }
 
     exportButton.onclick = function () {
@@ -62,6 +74,7 @@ jim.mandelbrot.image.exporter.create = function (_exportDimensions, state, _dom,
         }
         exporting = true;
         exportUrl = undefined;
+        exportMessage.textContent = "";
         exportDimensions = _exportDimensions.dimensions();
         _dom.selectButton(exportButton);
         _dom.show(exportProgress);
@@ -70,6 +83,6 @@ jim.mandelbrot.image.exporter.create = function (_exportDimensions, state, _dom,
         timeReporter.start();
         // A copy, as moving the view changes the state's extents in place.
         jim.mandelbrot.export.render(state.getExtents().copy(), exportDimensions.width, exportDimensions.height,
-            parseInt(exportDepth.value, 10), palette, showImage);
+            parseInt(exportDepth.value, 10), palette, showImage, fail);
     };
 };

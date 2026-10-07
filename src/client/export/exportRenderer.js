@@ -6,13 +6,20 @@ namespace("jim.mandelbrot.export");
 // histogram of how many pixels escape at each iteration, from a sample of the image at a tenth of its
 // size each way, then the image itself in strips, coloured against that histogram. Fires
 // "histogramExportProgress" and "imageExportProgress" with the number of pixels done, and calls
-// onComplete with the image's RGBA data.
-jim.mandelbrot.export.render = function (extents, width, height, depth, palette, onComplete) {
+// onComplete with the image's RGBA data, or onError with a message if a worker fails.
+jim.mandelbrot.export.render = function (extents, width, height, depth, palette, onComplete, onError) {
     "use strict";
     var noOfWorkers = jim.worker.count();
     var histogramParts = 10;
     var imageParts = 100;
     var pool = jim.worker.pool.create(noOfWorkers, jim.worker.url);
+
+    function fail(message) {
+        pool.terminate();
+        if (onError) {
+            onError(message);
+        }
+    }
 
     function fragments(columns, rows, parts) {
         return jim.messages.renderFragment2.create(0, extents.topLeft().x, extents.topLeft().y, extents.width(), extents.height(), columns, rows).split(parts);
@@ -45,7 +52,7 @@ jim.mandelbrot.export.render = function (extents, width, height, depth, palette,
                 histogram[i] += histogram[i - 1];
             }
             onHistogram(histogram, total);
-        });
+        }, fail);
     }
 
     function imagePhase(histogram, total) {
@@ -66,7 +73,7 @@ jim.mandelbrot.export.render = function (extents, width, height, depth, palette,
         }, function () {
             pool.terminate();
             onComplete(image);
-        });
+        }, fail);
     }
 
     histogramPhase(imagePhase);

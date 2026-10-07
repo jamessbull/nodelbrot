@@ -24,15 +24,28 @@ namespace("jim.worker.pool");
 // consume runs a batch of jobs, one per worker at a time, and calls onEachJob with each reply and
 // onAllJobsComplete after the last. A job with a workerIndex runs on that worker (e.g. because the worker
 // holds its state); other jobs go to whichever worker is free. Replies from earlier batches are ignored.
+// If a worker reports an error (it threw, or its script failed to load), the batch stops and onError is
+// called with the error's message instead; an error while no batch is running fails the next batch.
 // sendToEach posts messageFor(i) to each worker i, expecting no reply; workers handle messages in order,
 // so it can set workers up for the next batch.
 // The buffers in a job's or message's transfer list, if it has one, are transferred instead of copied.
 jim.worker.pool.create = function (noOfWorkers, workerUrl) {
     "use strict";
-    var workers = jim.common.array(noOfWorkers, function () {
-        return new Worker(workerUrl);
-    });
     var batchid = 0;
+    var failBatch = null;           // ends the running batch with an error, if one is running
+    var unreportedError = null;
+    var workers = jim.common.array(noOfWorkers, function () {
+        var worker = new Worker(workerUrl);
+        worker.onerror = function (e) {
+            var message = (e && e.message) || "A worker failed";
+            if (failBatch) {
+                failBatch(message);
+            } else {
+                unreportedError = message;
+            }
+        };
+        return worker;
+    });
 
     function post(worker, message) {
         var transfer = message.transfer || [];
@@ -41,8 +54,23 @@ jim.worker.pool.create = function (noOfWorkers, workerUrl) {
     }
 
     return {
-        consume: function (_jobs, _onEachJob, _onAllJobsComplete) {
+        consume: function (_jobs, _onEachJob, _onAllJobsComplete, _onError) {
             var jobsComplete = 0, jobsToComplete = _jobs.length, currentBatchId = batchid +=1;
+            var finished = false;
+            failBatch = function (message) {
+                if (finished) return;
+                finished = true;
+                failBatch = null;
+                if (_onError) {
+                    _onError(message);
+                }
+            };
+            if (unreportedError) {
+                var message = unreportedError;
+                unreportedError = null;
+                failBatch(message);
+                return;
+            }
             var sharedJobs = _jobs.filter(function (job) { return job.workerIndex === undefined; });
             var pinnedJobs = workers.map(function (worker, i) {
                 return _jobs.filter(function (job) { return job.workerIndex === i; });
@@ -57,13 +85,17 @@ jim.worker.pool.create = function (noOfWorkers, workerUrl) {
                 }
                 worker.onmessage = function (e) {
                     var msg = e.data;
-                    if(msg.batchid !== currentBatchId) {
+                    if(finished || msg.batchid !== currentBatchId) {
                         return;
                     }
                     jobsComplete +=1;
                     postNextJob();
                     _onEachJob(msg);
-                    if (jobsComplete === jobsToComplete) _onAllJobsComplete(msg);
+                    if (jobsComplete === jobsToComplete) {
+                        finished = true;
+                        failBatch = null;
+                        _onAllJobsComplete(msg);
+                    }
                 };
                 postNextJob();
             });
@@ -280,9 +312,13 @@ jim.common.imageExportProgressReporter.create = function (_events, _event, _targ
     });
 
     return {
+        // Starts reporting on a new w x h image, from 0%.
         reportOn: function (w,h) {
             width = w;
             height = h;
+            completedSoFar = 0;
+            currentPercentComplete = 0;
+            _target.innerText = "0%";
         }
     };
 };

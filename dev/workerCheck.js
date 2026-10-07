@@ -254,8 +254,8 @@ function exportImage(side, exp) {
         var v = exp.view;
         var source = jim.rectangle.create(v.x, v.y, v.w, v.h);
         if (jim.mandelbrot.export.render) {
-            // Revisions that still had dead regions take them as an extra argument.
-            if (jim.mandelbrot.export.render.length === 7) {
+            // Revisions that still had dead regions (and so the array splitter) take them as an extra argument.
+            if (jim.common.arraySplitter) {
                 jim.mandelbrot.export.render(source, exp.width, exp.height, exp.depth, jim.palette.create(), deadRegions, done);
             } else {
                 jim.mandelbrot.export.render(source, exp.width, exp.height, exp.depth, jim.palette.create(), done);
