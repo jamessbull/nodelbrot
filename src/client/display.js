@@ -1,5 +1,6 @@
 import { workerCount } from "./workerPool.js";
 import { createInteractiveRenderer } from "./interactiveRenderer.js";
+import { createGpuRenderer } from "./gpu/gpuRenderer.js";
 import { createAutoStop } from "./autoStop.js";
 import { createImageRenderer } from "./imageRenderer.js";
 import { createSelection } from "./selection.js";
@@ -9,9 +10,12 @@ import { createZoomIn } from "./ui/actions/zoomIn.js";
 import { createPixelExaminer } from "./pixelExaminer.js";
 
 // The parts of the explorer that depend on the size of the display: the renderer and the buffers it
-// renders into, drawing the image, examining pixels, stopping on its own and zooming in. When the display changes size these are disposed of and made again at the new size, so they
-// listen through a scope of the events, which dispose() removes along with the renderer's workers.
-export function createDisplay({events, width, height, mainCanvas, uiCanvas, magnifier, examineHint, state, drawSelection, newWorker, referenceOrbit}) {
+// renders into, drawing the image, examining pixels, stopping on its own and zooming in. When the display
+// changes size, or the renderer changes, these are disposed of and made again, so they listen through a
+// scope of the events, which dispose() removes along with the renderer. renderer is "gpu" (see
+// gpuRenderer.js) or "cpu" (see interactiveRenderer.js); if the GPU renderer can't start, this throws.
+export function createDisplay({events, width, height, mainCanvas, uiCanvas, magnifier, examineHint, state, drawSelection, newWorker,
+        referenceOrbit, renderer: kind = "cpu"}) {
     const scoped = events.scope();
     const pixels = width * height;
     const imgData = new Uint8ClampedArray(pixels * 4);
@@ -23,11 +27,15 @@ export function createDisplay({events, width, height, mainCanvas, uiCanvas, magn
     mainCanvas.width = uiCanvas.width = width;
     mainCanvas.height = uiCanvas.height = height;
 
-    const renderer = createInteractiveRenderer({
-        width: width, height: height, events: scoped, workers: workerCount(), newWorker: newWorker,
-        imgData: imgData, escapeValues: escapeValues, xState: xState, yState: yState, imageEscapeValues: imageEscapeValues,
-        referenceOrbit: referenceOrbit
-    });
+    const buffers = {width, height, events: scoped, imgData, escapeValues, xState, yState, imageEscapeValues, referenceOrbit};
+    let renderer;
+    try {
+        renderer = kind === "gpu" ? createGpuRenderer(buffers)
+            : createInteractiveRenderer(Object.assign({workers: workerCount(), newWorker: newWorker}, buffers));
+    } catch (e) {
+        scoped.dispose();
+        throw e;
+    }
     createImageRenderer({events: scoped, canvas: mainCanvas, imgData: imgData, width: width, height: height});
     createPixelExaminer({
         events: scoped, magnifier, hint: examineHint, imgData, xState, yState, escapeValues, imageEscapeValues, width, height, state
@@ -41,6 +49,7 @@ export function createDisplay({events, width, height, mainCanvas, uiCanvas, magn
     return {
         width: width,
         height: height,
+        renderer: kind,
         start: renderer.start,
         dispose: function () {
             renderer.destroy();

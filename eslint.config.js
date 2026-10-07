@@ -16,6 +16,7 @@ export default [
     },
     { files: ["src/**/*.js"], languageOptions: { globals: { ...globals.browser, ...globals.worker } } },
     { files: ["dev/perfHud.js"], languageOptions: { sourceType: "script", globals: globals.browser } },
-    { files: ["dev/**/*.js", "build/**/*.js", "eslint.config.js"], ignores: ["dev/perfHud.js"], languageOptions: { globals: globals.node } },
+    { files: ["dev/gpuCheck.js"], languageOptions: { globals: globals.browser } },
+    { files: ["dev/**/*.js", "build/**/*.js", "eslint.config.js"], ignores: ["dev/perfHud.js", "dev/gpuCheck.js"], languageOptions: { globals: globals.node } },
     { files: ["test/**/*.js"], languageOptions: { globals: { ...globals.jasmine, ...globals.node } } }
 ];

@@ -2,6 +2,7 @@ import { createWorkerPool } from "./workerPool.js";
 import { createStopwatch } from "./stopwatch.js";
 import { renderFragments, interactiveMessage } from "./workerMessages.js";
 import { initialHistogramSize } from "./escapeHistogram.js";
+import { maxRereferences, nearestUnescaped, rereferenceDue } from "./rereference.js";
 
 // Renders the interactive view with a pool of workers, a frame at a time, into the buffers it is given
 // (each a value or four per pixel of the width x height display): imgData, the image; escapeValues, the
@@ -15,7 +16,6 @@ import { initialHistogramSize } from "./escapeHistogram.js";
 // times a view.
 export function createInteractiveRenderer({width, height, events, workers, newWorker, imgData, escapeValues, xState, yState,
         imageEscapeValues, stopwatch = createStopwatch(), referenceOrbit = null}) {
-    const maxRereferences = 5;
     const on = events.listenTo;
     const pool = createWorkerPool(workers, newWorker);
     let requestExaminePixelData = false;
@@ -128,32 +128,12 @@ export function createInteractiveRenderer({width, height, events, workers, newWo
         return referenceOrbit.length() - 2 - currentIteration;
     }
 
-    // Pixels that outlast a reference orbit that escapes carry on from its start (rebasing), and checked
-    // against exact calculation they come out right. But pixels in the set, which never escape, would
-    // have to rebase again and again, and deep enough the difference between their c and the reference's
-    // is lost to rounding when they do. So if pixels are still going long after the reference escaped
-    // (twice as long, and at least 1000 iterations more), they are taken to be in the set, and rendering
-    // starts again from the orbit of the one nearest the centre, which won't escape.
+    // See rereference.js.
     function rereferenceIfNeeded() {
-        const escapedAt = referenceOrbit && referenceOrbit.escaped() ? referenceOrbit.length() - 1 : Infinity;
-        if (!perturbing || currentIteration < Math.max(2 * escapedAt, escapedAt + 1000) || rereferences >= maxRereferences) {
+        if (!perturbing || rereferences >= maxRereferences || !rereferenceDue(referenceOrbit, currentIteration)) {
             return;
         }
-        let nearest = null;
-        let nearestDistance = Infinity;
-        const middleX = (width - 1) / 2;
-        const middleY = (height - 1) / 2;
-        for (let idx = 0; idx < escapeValues.length; idx += 1) {
-            if (escapeValues[idx] === 0) {
-                const dx = (idx % width) - middleX;
-                const dy = Math.floor(idx / width) - middleY;
-                const distance = (dx * dx) + (dy * dy);
-                if (distance < nearestDistance) {
-                    nearestDistance = distance;
-                    nearest = {dx, dy};
-                }
-            }
-        }
+        const nearest = nearestUnescaped(escapeValues, width, height);
         if (nearest) {
             rereferences += 1;
             referenceOrbit.rereference(nearest.dx, nearest.dy);

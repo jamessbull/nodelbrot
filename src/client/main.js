@@ -1,6 +1,6 @@
 // The explorer's one script, for both the page and its web workers: run by a worker it starts the
 // worker, and on the page it starts the explorer, which starts workers from this same script. The
-// exports are for dev/workerCheck.js, which runs the rendering in Node.
+// exports are for dev/workerCheck.js, which runs the rendering in Node, and dev/gpuCheck.html.
 import { createWorkerHandler } from "./worker/worker.js";
 import { startApp } from "./app.js";
 
@@ -17,10 +17,14 @@ export { calculatePoint } from "./mandelbrotPoint.js";
 export { createReferenceOrbit } from "./referenceOrbit.js";
 export { createOrbitCalculator, createReferenceOrbitWorker } from "./worker/referenceOrbit.js";
 export { fromNumber } from "./fixed.js";
+export { createGpuRenderer } from "./gpu/gpuRenderer.js";
+export { gpuAvailable } from "./gpu/gl.js";
+export { workerCount } from "./workerPool.js";
 
 if (typeof WorkerGlobalScope !== "undefined" && self instanceof WorkerGlobalScope) {
     self.onmessage = createWorkerHandler((message, transfer) => self.postMessage(message, transfer));
-} else if (typeof document !== "undefined") {
+} else if (typeof document !== "undefined" && document.getElementById("allContent")) {
+    // On the explorer's page (other pages, such as dev/gpuCheck.html, only use the exports).
     const scriptUrl = import.meta.url;
     try {
         window.nodelbrot = startApp(() => new Worker(scriptUrl, { type: "module" }));

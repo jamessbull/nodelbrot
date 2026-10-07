@@ -14,6 +14,9 @@ import { createTouchGestures } from "./ui/touchGestures.js";
 import { createNotice } from "./ui/notice.js";
 import { depthWarning } from "./precision.js";
 import { createReferenceOrbit } from "./referenceOrbit.js";
+import { needsPerturbation } from "./precision.js";
+import { gpuAvailable } from "./gpu/gl.js";
+import { gpuSmallestPixel } from "./gpu/gpuRenderer.js";
 import { createPaletteEditor } from "./paletteEditor.js";
 import { createExportSizes } from "./export/exportSizes.js";
 import { createControls } from "./controls.js";
@@ -86,7 +89,13 @@ export function startApp(newWorker) {
 
     const notice = createNotice(element("notice"));
     depthWarning({events, notice, badge: element("depthBadge")});
-    const referenceOrbit = createReferenceOrbit({events, newWorker});
+    // The GPU renders views down to its smallest pixel, where it can; the CPU renders deeper ones, and
+    // all of them where it can't. ?renderer=cpu or ?renderer=gpu in the address chooses one.
+    const chosenRenderer = new URLSearchParams(window.location.search).get("renderer");
+    let gpuUsable = chosenRenderer !== "cpu" && gpuAvailable();
+    const rendererFor = (view) => gpuUsable && view.pixelSize >= gpuSmallestPixel ? "gpu" : "cpu";
+    // The GPU renders every view by perturbation, so needs a reference orbit for every view.
+    const referenceOrbit = createReferenceOrbit({events, newWorker, needed: (view) => rendererFor(view) === "gpu" || needsPerturbation(view)});
     const bookmarks = createBookmarks({bookmarkButton: element("bookmarkButton"), state, events, notice});
     const exportSizes = createExportSizes(element("exportSizeSelect"),
         ["smallExport", "mediumExport", "largeExport", "veryLargeExport"].map(element), size.width, size.height);
@@ -114,31 +123,57 @@ export function startApp(newWorker) {
         }
     });
 
-    const newDisplay = (width, height) => createDisplay({
-        events: events, width: width, height: height, mainCanvas: mainCanvas, uiCanvas: uiCanvas, magnifier: magnifier, examineHint: element("examineHint"),
-        state: state, drawSelection: drawSelection, newWorker: newWorker, referenceOrbit: referenceOrbit
-    });
-    let display = newDisplay(size.width, size.height);
-
-    // Makes the display again at the viewer's new size, keeping the view's centre and zoom. Examining
-    // pixels stops, as the image it was examining is gone.
-    function resizeDisplay() {
-        const newSize = displaySize();
-        if (newSize.width === display.width && newSize.height === display.height) {
-            return;
+    function newDisplay(width, height, renderer) {
+        const options = {
+            events: events, width: width, height: height, mainCanvas: mainCanvas, uiCanvas: uiCanvas, magnifier: magnifier,
+            examineHint: element("examineHint"), state: state, drawSelection: drawSelection, newWorker: newWorker,
+            referenceOrbit: referenceOrbit, renderer: renderer
+        };
+        try {
+            return createDisplay(options);
+        } catch (e) {
+            if (renderer !== "gpu") throw e;
+            console.warn("Rendering on the CPU, as the GPU renderer couldn't start:", e);
+            gpuUsable = false;
+            return createDisplay(Object.assign(options, {renderer: "cpu"}));
         }
+    }
+    let display = newDisplay(size.width, size.height, rendererFor(state.getView()));
+
+    // Makes the display again, at the viewer's new size or with another renderer, keeping the view's
+    // centre and zoom. Examining pixels stops, as the image it was examining is gone.
+    function remakeDisplay(newSize, renderer) {
         if (!element("examinePixels").hidden) {
             element("pixelInfoButton").click();
         }
         display.dispose();
         state.resize(newSize.width, newSize.height);
         exportSizes.setDisplaySize(newSize.width, newSize.height);
-        display = newDisplay(newSize.width, newSize.height);
-        // The new workers need the view and the palette.
+        display = newDisplay(newSize.width, newSize.height, renderer);
+        // The new renderer needs the view and the palette.
         events.fire(events.viewChanged, state.getView());
         events.fire(events.paletteChanged, palette);
         display.start();
     }
+
+    function resizeDisplay() {
+        const newSize = displaySize();
+        if (newSize.width !== display.width || newSize.height !== display.height) {
+            remakeDisplay(newSize, display.renderer);
+        }
+    }
+
+    // A view the other renderer is for gets a display with that one, once the view has been taken in.
+    events.listenTo(events.viewChanged, function (view) {
+        if (view.x !== undefined && rendererFor(view) !== display.renderer) {
+            setTimeout(function () {
+                const renderer = rendererFor(state.getView());
+                if (renderer !== display.renderer) {
+                    remakeDisplay({width: display.width, height: display.height}, renderer);
+                }
+            }, 0);
+        }
+    });
     let resizeTimer;
     new ResizeObserver(() => {
         clearTimeout(resizeTimer);

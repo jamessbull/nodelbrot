@@ -9,6 +9,10 @@ centre of the view is iterated exactly (in BigInt fixed point) as a reference or
 is iterated as a small difference from it (perturbation, with rebasing), which doubles hold precisely
 at any depth.
 
+Where the browser has WebGL2 with float render targets, the view is rendered on the GPU instead, by the
+same perturbation in 32-bit floats, down to pixels 1e-30 across; deeper views go back to the CPU.
+`?renderer=cpu` or `?renderer=gpu` in the address chooses one.
+
 ## Setup
 
 Needs Node 24 or later (see `.nvmrc`).
@@ -28,6 +32,7 @@ npm install
 | `npm run build` | Builds `latest/mandelbrotExplorer.html` and `latest/mandelbrotExplorer.min.js`. |
 | `npm run dev:built` | Builds, then serves the built files with the HUD. |
 | `npm run check:built` | Builds, then checks the bundle renders exactly as the source does. |
+| http://localhost:8090/dev/gpuCheck.html | With `npm run dev` running: renders views on the GPU and the CPU and compares their escape counts. |
 
 ## Deploying
 
@@ -41,6 +46,7 @@ so it must be served over HTTP(S) (not opened as a file), with a JavaScript cont
 - `src/client/main.js`: the entry point, for both the page and the workers.
 - `src/client/app.js`: starts the explorer. `display.js` holds the parts remade when the window changes size.
 - `src/client/worker/`: the code the web workers run. `pixelIterator.js` is the inner loop; `perturbationIterator.js` is the one for deep views, and `referenceOrbit.js` works out their reference orbits.
+- `src/client/gpu/`: the WebGL2 renderer and its shaders.
 - `src/client/view.js` and `fixed.js`: the view, held precisely enough for deep zooms.
 - `src/client/interactiveRenderer.js` and `export/exportRenderer.js`: the interactive view and image export.
 - `dev/`: the dev server, HUD and render check. `build/`: the build.

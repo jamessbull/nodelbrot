@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>GPU check</title>
+    <style>
+        body { background: #000; color: #faebd7; font: 14px/1.5 system-ui, sans-serif; margin: 20px; }
+        table { border-collapse: collapse; font-variant-numeric: tabular-nums; }
+        td, th { padding: 4px 12px; text-align: right; border-bottom: 1px solid #444; }
+        th { text-align: left; }
+        .pass { color: #9f9; }
+        .fail { color: #f88; }
+    </style>
+    <script type="module" src="gpuCheck.js"></script>
+</head>
+<body>
+<h1>GPU check</h1>
+<p>Renders each view with the GPU and the CPU renderers to the same depth and compares their escape counts, pixel by pixel.
+    The GPU has only 32-bit floats, which comes to sampling each pixel a few hundred-thousandths of a pixel away. On the
+    boundary, where escape counts vary on scales far finer than a pixel, that is enough to change a few percent of them,
+    as much as moving the pixels that far in double precision does. They pass with at least 93% within 1%.</p>
+<p id="status">Running…</p>
+<table id="results">
+    <tr><th>View</th><th>Pixel size</th><th>Depth</th><th>Escaped (GPU / CPU)</th><th>Same escape count</th><th>Within 1%</th><th>Visibly different</th><th>GPU / CPU time</th></tr>
+</table>
+</body>
+</html>
