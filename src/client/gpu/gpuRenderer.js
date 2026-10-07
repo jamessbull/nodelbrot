@@ -109,15 +109,21 @@ export function createGpuRenderer({width, height, events, imgData, escapeValues,
         return {firstRow, rows, data};
     }
 
+    // Uploads the reference orbit, or what is new of it, returning false if it's too long for a texture.
+    // A new orbit goes in the texture the last one was in, if it fits; the texture doubles as one grows.
     function uploadOrbit() {
         const length = referenceOrbit.length();
         const values = referenceOrbit.values();
-        if (orbitGeneration !== referenceOrbit.generation() || rowsFor(length) > orbitRows) {
+        if (orbitGeneration !== referenceOrbit.generation()) {
             orbitGeneration = referenceOrbit.generation();
-            orbitRows = Math.max(rowsFor(length), 2 * orbitRows, 8);
-            if (orbitRows > gl.getParameter(gl.MAX_TEXTURE_SIZE)) {
-                throw new Error("The reference orbit is too long for a texture");
+            orbitUploaded = 0;
+        }
+        if (rowsFor(length) > orbitRows) {
+            const maxRows = gl.getParameter(gl.MAX_TEXTURE_SIZE);
+            if (rowsFor(length) > maxRows) {
+                return false;
             }
+            orbitRows = Math.min(maxRows, Math.max(rowsFor(length), 2 * orbitRows, 8));
             if (orbitTexture) gl.deleteTexture(orbitTexture);
             orbitTexture = createTexture(gl, gl.RG32F, arrayTextureWidth, orbitRows, gl.RG, gl.FLOAT);
             orbitUploaded = 0;
@@ -128,6 +134,7 @@ export function createGpuRenderer({width, height, events, imgData, escapeValues,
             gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, firstRow, arrayTextureWidth, rows, gl.RG, gl.FLOAT, data);
             orbitUploaded = length;
         }
+        return true;
     }
 
     function uploadHistogram(info) {
@@ -189,6 +196,10 @@ export function createGpuRenderer({width, height, events, imgData, escapeValues,
             referenceOrbit.want(submittedIteration + stepSize + 2);
             return;
         }
+        if (!uploadOrbit()) {
+            fail("the reference orbit is too long for a texture");
+            return;
+        }
         const frame = spareFrames.pop() || newFrame();
         frame.start = submittedIteration;
         frame.stepSize = stepSize;
@@ -200,7 +211,6 @@ export function createGpuRenderer({width, height, events, imgData, escapeValues,
         requestExaminePixelData = false;
         submittedIteration += frame.iterations;
         if (resetPending) clearStates();
-        uploadOrbit();
         gl.viewport(0, 0, width, height);
 
         // Iterate, from one pair of state textures into the other.
