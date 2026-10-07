@@ -87,6 +87,10 @@ jim.mandelbrot.bookmark.create = function (bookmarkButton, state, colourGradient
         palette.setBlend(mandelbrotInfo.blend);
         colourGradientui.rebuildMarkers(true);
         state.setExtents(jim.rectangle.create(mandelbrotInfo.location));
+        // Changing the view drops any palette waiting to go to the renderer, so send it again, and
+        // restart rendering in case it had stopped (as it has if a link is opened in the same tab).
+        _events.fire(_events.paletteChanged, palette);
+        _events.fire(_events.restart);
     };
 
     window.onhashchange = function () {

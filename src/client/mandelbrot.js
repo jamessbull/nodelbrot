@@ -107,7 +107,6 @@ jim.init.run = function () {
 
     events.fire(events.paletteChanged, palette);
     bookmarker.changeLocation();
-    events.fire(events.paletteChanged, palette);
     // Start once the view and palette are set, so the first batch isn't for a placeholder view.
     mandelbrotCalculator.start();
 

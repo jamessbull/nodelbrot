@@ -81,8 +81,6 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
         } else {
             stopped = true;
         }
-        palette = undefined;
-        extents = undefined;
     }
 
     function postMessage() {
@@ -116,7 +114,10 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
             }
             return job;
         });
+        // A new view or palette only needs sending once, so clear them now they have gone. (Only here:
+        // a batch can finish after a view change without sending it, and the view mustn't be lost.)
         extents = undefined;
+        palette = undefined;
         pool.consume(jobs, onEachJob, onAllJobsComplete);
     }
 
