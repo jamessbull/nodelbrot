@@ -9,6 +9,7 @@ import { createSelectionDrawer } from "./ui/actions/drawSelection.js";
 import { createZoomOutAnimation } from "./ui/actions/zoomOutAnimation.js";
 import { createZoomOut } from "./ui/actions/zoomOut.js";
 import { createMove } from "./ui/actions/move.js";
+import { createTouchGestures } from "./ui/touchGestures.js";
 import { createNotice } from "./ui/notice.js";
 import { createGradientEditor } from "./colourGradient.js";
 import { createColourPicker } from "./colourPicker.js";
@@ -16,7 +17,7 @@ import { createExportSizes } from "./exportDropdown.js";
 import { createControls } from "./uiElements.js";
 import { createBookmarks } from "./bookMark.js";
 import { createDisplay } from "./display.js";
-import { element } from "./dom.js";
+import { deselectButton, element, selectButton } from "./dom.js";
 
 // The smallest display, in pixels.
 const minWidth = 160;
@@ -50,14 +51,37 @@ export function startApp(newWorker) {
     const state = createViewState(size.width, size.height, rectangle(-2.5, -1, 3.5, 2), events);
     createViewInteraction(uiCanvas, events);
     const drawSelection = createSelectionDrawer();
-    createZoomOut(events, createStopwatch(), createZoomOutAnimation(uiCanvas, mainCanvas, drawSelection), mainCanvas, state);
+    const zoomOut = createZoomOut(events, createStopwatch(), createZoomOutAnimation(uiCanvas, mainCanvas, drawSelection), mainCanvas, state);
+    element("zoomOutButton").onclick = zoomOut.zoomOut;
     createMove(events, mainCanvas, uiCanvas);
+    createTouchGestures(uiCanvas, mainCanvas, {
+        onTransform: (change) => events.fire(events.transformAction, change),
+        onDoubleTap: zoomOut.zoomOut,
+        enabled: () => element("examinePixels").hidden
+    });
     createMetrics(systemClock, events);
     showFps(element("framesPerSecond"), events);
     createEscapeHistogram(events, new Uint32Array(initialHistogramSize));
 
+    // The colour canvases are as wide as a narrow screen, up to their usual size, and the page scales
+    // them down further if it needs to.
+    const colourGradientCanvas = element("colourGradientCanvas");
+    const colourPickerCanvas = element("colourPickerCanvas");
+    const paletteWidth = Math.min(colourPickerCanvas.width, document.documentElement.clientWidth - 20);
+    colourPickerCanvas.width = paletteWidth;
+    colourGradientCanvas.width = Math.min(colourGradientCanvas.width, paletteWidth);
+
+    // On a narrow screen the colours are a sheet over the image, opened from the toolbar.
+    const app = element("allContent");
+    const coloursButton = element("coloursButton");
+    coloursButton.onclick = function () {
+        const open = app.classList.toggle("coloursOpen");
+        coloursButton.setAttribute("aria-expanded", String(open));
+        (open ? selectButton : deselectButton)(coloursButton);
+    };
+
     const palette = createPalette();
-    const gradientEditor = createGradientEditor(element("colourGradientCanvas"), element("addButton"), element("removeButton"), palette, events);
+    const gradientEditor = createGradientEditor(colourGradientCanvas, element("addButton"), element("removeButton"), palette, events);
     const paletteBlendSelect = element("paletteBlendSelect");
     paletteBlendSelect.onchange = function () {
         palette.setBlend(paletteBlendSelect.value);
@@ -69,7 +93,7 @@ export function startApp(newWorker) {
 
     const notice = createNotice(uiCanvas);
     const bookmarks = createBookmarks(element("bookmarkButton"), state, gradientEditor, events, notice);
-    createColourPicker(element("colourPickerCanvas"), gradientEditor, events);
+    createColourPicker(colourPickerCanvas, gradientEditor, events);
     const exportSizes = createExportSizes(element("exportSizeSelect"),
         ["smallExport", "mediumExport", "largeExport", "veryLargeExport"].map(element), size.width, size.height);
     createControls(exportSizes, state, events, newWorker);

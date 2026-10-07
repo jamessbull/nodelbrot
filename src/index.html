@@ -98,6 +98,25 @@
             box-shadow: 0 0 0 1px var(--accent), 0 0 6px var(--accent);
         }
 
+        .icon {
+            display: none;
+            width: 22px;
+            height: 22px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .icon .filled {
+            fill: currentColor;
+        }
+
+        .narrowOnly {
+            display: none;
+        }
+
         .button.disabled, .button:disabled {
             color: var(--muted);
             cursor: default;
@@ -182,6 +201,8 @@
         #uiCanvas {
             position: absolute;
             inset: 0;
+            /* Touches on the image are gestures, not the browser's own scrolling and zooming. */
+            touch-action: none;
         }
 
         .magnifyCursor {
@@ -225,7 +246,10 @@
 
         .palettePanel canvas {
             display: block;
+            max-width: 100%;
+            height: auto;
             border-radius: 6px;
+            touch-action: none;
         }
 
         footer {
@@ -261,6 +285,95 @@
             float: right;
             margin-top: 12px;
         }
+
+        /* Narrow screens, such as phones: icon buttons big enough to tap, the export panel across the
+           screen, and the colours in a sheet over the bottom of the image, opened from the toolbar. */
+        @media (max-width: 700px) {
+            :root {
+                --gap: 6px;
+            }
+
+            .app {
+                grid-template-rows: auto minmax(0, 1fr) auto;
+            }
+
+            .toolbar {
+                position: relative;
+                gap: 6px;
+            }
+
+            .button {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                min-width: 44px;
+                min-height: 44px;
+                padding: 0 8px;
+            }
+
+            .toolbar .icon {
+                display: block;
+            }
+
+            .toolbar .label {
+                position: absolute;
+                width: 1px;
+                height: 1px;
+                overflow: hidden;
+                clip-path: inset(50%);
+                white-space: nowrap;
+            }
+
+            .narrowOnly {
+                display: inline-flex;
+            }
+
+            .stats {
+                flex-basis: 100%;
+                margin-left: 0;
+                font-size: 12px;
+            }
+
+            .menu {
+                position: static;
+            }
+
+            .popover {
+                left: 0;
+                right: 0;
+                width: auto;
+            }
+
+            .palettePanel {
+                position: fixed;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                z-index: 5;
+                justify-items: center;
+                padding: var(--gap) var(--gap) calc(var(--gap) + env(safe-area-inset-bottom));
+                background: var(--panel);
+                border-top: 1px solid var(--border);
+                box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.8);
+                transform: translateY(100%);
+                visibility: hidden;
+                transition: transform 0.2s ease-out, visibility 0.2s;
+            }
+
+            .coloursOpen .palettePanel {
+                transform: none;
+                visibility: visible;
+            }
+
+            .paletteControls {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            footer {
+                display: none;
+            }
+        }
     </style>
     <script type="module" src="client/main.js"></script>
 </head>
@@ -268,13 +381,14 @@
 <div id="allContent" class="app transparent">
     <header class="toolbar">
         <div class="group">
-            <button id="stop" class="button" title="Stop rendering">Stop</button>
-            <button id="start" class="button" title="Carry on rendering">Go</button>
+            <button id="stop" class="button" title="Stop rendering"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="1"/></svg><span class="label">Stop</span></button>
+            <button id="start" class="button" title="Carry on rendering"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path class="filled" d="M8 5l11 7-11 7z"/></svg><span class="label">Go</span></button>
+            <button id="zoomOutButton" class="button" title="Zoom back out (or double-click)"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M8 11h6M16.5 16.5L21 21"/></svg><span class="label">Zoom out</span></button>
         </div>
         <div class="group">
-            <button id="bookmarkButton" class="button" title="Put this view and its colours in the address bar, to save or share">Link</button>
+            <button id="bookmarkButton" class="button" title="Put this view and its colours in the address bar, to save or share"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1"/></svg><span class="label">Link</span></button>
             <div class="menu">
-                <button id="exportMenuButton" class="button" aria-haspopup="true" aria-expanded="false" aria-controls="exportImagePanel">Export</button>
+                <button id="exportMenuButton" class="button" aria-haspopup="true" aria-expanded="false" aria-controls="exportImagePanel"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg><span class="label">Export</span></button>
                 <div id="exportImagePanel" class="panel popover" hidden>
                     <div class="form">
                         <label for="exportDepth">Iterations</label>
@@ -304,8 +418,9 @@
                     </div>
                 </div>
             </div>
-            <button id="pixelInfoButton" class="button" title="Look at the pixels close up">Examine</button>
-            <button id="helptextbutton" class="button">Help</button>
+            <button id="pixelInfoButton" class="button" title="Look at the pixels close up"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M11 8v6M8 11h6M16.5 16.5L21 21"/></svg><span class="label">Examine</span></button>
+            <button id="coloursButton" class="button narrowOnly" aria-expanded="false" title="Change the colours"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.9 1.2-1.7-.4-1 .3-2.3 1.6-2.3H17a4 4 0 0 0 4-4c0-5-4-10-9-10z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7" r="1"/><circle cx="15" cy="7.5" r="1"/></svg><span class="label">Colours</span></button>
+            <button id="helptextbutton" class="button" title="How to use it"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5V14M12 17h.01"/></svg><span class="label">Help</span></button>
         </div>
         <div class="stats">
             Depth <span class="value" id="maxIteration">0</span>
@@ -352,14 +467,14 @@
 <dialog id="helptext">
     <button class="button closeButton" id="closehelp" aria-label="Close">×</button>
     <h3>Exploring</h3>
-    <p>Click and drag to zoom in on an area.</p>
-    <p>Double-click to zoom back out.</p>
-    <p>Right-click and drag to move around.</p>
+    <p>With a mouse: click and drag to zoom in on an area, double-click to zoom back out, and right-click and drag to move around.</p>
+    <p>On a touch screen: pinch to zoom, drag to move around, and double-tap to zoom back out.</p>
+    <p>The zoom out button goes back to the view you zoomed in from.</p>
 
     <h3>Changing colours</h3>
     <p>Drag the markers on the bar to change how the colours are spread across the image.</p>
     <p>Add and remove markers with the + and − buttons.</p>
-    <p>To change a marker's colour, click it, then click a colour in the picker below.</p>
+    <p>To change a marker's colour, click it, then click a colour in the picker below. On a phone, the colours open from the palette button.</p>
     <p>RGB and HSV choose how the colours blend between markers.</p>
 
     <h3>Links</h3>

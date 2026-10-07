@@ -2,6 +2,7 @@ import { createSimpleImage } from "./image.js";
 import { interpolate } from "./math.js";
 import { fraction, toRgb } from "./palette.js";
 import { forwardTouchToMouse } from "./ui/touch.js";
+import { canvasPosition } from "./dom.js";
 
 export function createColourPicker(canvas, gradient, events) {
     const on = events.listenTo;
@@ -59,8 +60,9 @@ export function createColourPicker(canvas, gradient, events) {
         context.closePath();
     });
 
-    // Sets the selected marker to the colour picked at e.
-    function drawPicker(e) {
+    // Sets the selected marker to the colour picked at the mouse event or touch.
+    function drawPicker(event) {
+        const e = canvasPosition(canvas, event);
         let colour;
         if (isInHueStrip(e.offsetY)) {
             selectedHue = hueAt(e.offsetX);

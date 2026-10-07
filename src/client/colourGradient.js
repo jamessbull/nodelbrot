@@ -1,5 +1,6 @@
 import { interpolate } from "./math.js";
 import { forwardTouchToMouse } from "./ui/touch.js";
+import { canvasPosition } from "./dom.js";
 
 export function createGradientEditor(gradientCanvas, addButton, removeButton, palette, _events) {
     const on = _events.listenTo;
@@ -183,7 +184,7 @@ export function createGradientEditor(gradientCanvas, addButton, removeButton, pa
     };
 
     gradientCanvas.onmousedown = function (e) {
-        markers.select(e.offsetX);
+        markers.select(canvasPosition(gradientCanvas, e).offsetX);
         leftMouseDown = true;
         draw();
     };
@@ -202,7 +203,7 @@ export function createGradientEditor(gradientCanvas, addButton, removeButton, pa
     };
 
     gradientCanvas.onmousemove = function (e) {
-        markers.updatePosition(e.offsetX);
+        markers.updatePosition(canvasPosition(gradientCanvas, e).offsetX);
         if(leftMouseDown) {
             _events.fire(_events.start);
             _events.fire(_events.paletteChanged, palette);

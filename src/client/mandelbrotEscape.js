@@ -66,6 +66,17 @@ export function createViewState(sizeX, sizeY, startingExtent, _events) {
             if (previousExtents.length === 0) return currentExtents;
             return previousExtents[previousExtents.length - 1];
         },
+        // Changes the view as a pinch or drag changed the image: a point that was at screen position p is
+        // now at scale * p + (translateX, translateY). Zooming out goes back to before a pinch, but not a
+        // drag, as with moving by mouse.
+        transform: function ({scale, translateX, translateY}) {
+            if (scale !== 1) {
+                previousExtents.push(currentExtents.copy());
+            }
+            const topLeft = fromScreen(-translateX / scale, -translateY / scale);
+            currentExtents = rectangle(topLeft.x, topLeft.y, currentExtents.width() / scale, currentExtents.height() / scale);
+            _events.fire(_events.extentsUpdate, currentExtents);
+        },
         // Shows all of extents, centred, with more around it in whichever direction the display's shape needs.
         showView: function (extents) {
             currentExtents = fitView(extents, sizeX, sizeY);
@@ -83,6 +94,10 @@ export function createViewState(sizeX, sizeY, startingExtent, _events) {
 
     on(_events.moveSetAction, function (_location) {
        theState.move(_location.x, _location.y);
+    });
+
+    on(_events.transformAction, function (transform) {
+        theState.transform(transform);
     });
     return theState;
 }
@@ -159,6 +174,10 @@ export function createAutoStop(events, pixelCount) {
     });
 
     on(events.moveSetAction, function () {
+        restart();
+    });
+
+    on(events.transformAction, function () {
         restart();
     });
 

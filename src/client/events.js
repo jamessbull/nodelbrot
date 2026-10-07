@@ -30,6 +30,7 @@ const names = {
     zoomInAction: "zoomInAction",
     viewMoveAction: "viewMoveAction",
     moveSetAction: "moveSetAction",
+    transformAction: "transformAction",
     examinePixelAction: "examinePixelAction"
 };
 

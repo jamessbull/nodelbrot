@@ -58,24 +58,20 @@ export function createViewInteraction(_mainCanvas, _events) {
     _mainCanvas.addEventListener("mouseup", mouseUp);
     _mainCanvas.addEventListener("mousemove", mouseMove);
 
-    // A touch only starts a selection or move when exploring; when examining, the pixel is picked
-    // where the touch ends.
+    // Touches while exploring are gestures (see touchGestures.js). While examining, a finger moves the
+    // magnifier, and the pixel is picked where it lifts.
     forwardTouchToMouse(_mainCanvas, {
-        down: function (e) {
-            if (exploring) {
-                mouseDown(e);
+        move: function (e) {
+            if (!exploring) {
+                mouseMove(e);
             }
         },
-        move: mouseMove,
         up: function (e) {
-            if (exploring) {
-                mouseUp(e);
-            } else {
+            if (!exploring) {
                 _events.fire(_events.examinePixelAction, {x: e.offsetX, y: e.offsetY});
             }
-        },
-        cancel: mouseUp
-    });
+        }
+    }, () => !exploring);
 
     return { };
 }
