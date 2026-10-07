@@ -64,7 +64,7 @@ describe("reference orbits", function () {
     describe("worker", function () {
         function startWorker() {
             const replies = [];
-            const worker = createReferenceOrbitWorker((message) => replies.push(message.referenceOrbit), 5);
+            const worker = createReferenceOrbitWorker((message) => replies.push(message.referenceOrbit), {sliceMs: 5});
             return {replies, send: (data) => worker.onmessage({data})};
         }
 
@@ -107,7 +107,7 @@ describe("reference orbits", function () {
         // A worker in this process, replying as a real one would.
         function localWorker() {
             const worker = {terminate: () => {}};
-            const handler = createReferenceOrbitWorker((message) => worker.onmessage({data: message}), 5);
+            const handler = createReferenceOrbitWorker((message) => worker.onmessage({data: message}), {sliceMs: 5});
             worker.postMessage = (message) => handler.onmessage({data: structuredClone(message)});
             return worker;
         }
@@ -122,6 +122,15 @@ describe("reference orbits", function () {
             for (let i = 0; i < 200 && orbit.length() < 3000; i += 1) await pause(5);
             expect(orbit.length()).toBe(3000);
             expect(orbit.values().length).toBe(6000);
+        });
+
+        it("should work more out when asked", async function () {
+            const events = createEvents();
+            const orbit = createReferenceOrbit({events, newWorker: localWorker, needed: () => true, initialLength: 1000});
+            events.fire(events.viewChanged, viewAt("-0.1", "0.1", 1e-20));
+            orbit.want(1500);
+            for (let i = 0; i < 200 && orbit.length() < 2000; i += 1) await pause(5);
+            expect(orbit.length()).toBe(2000);
         });
 
         it("should only work one out where it's needed, and keep it for the same view", async function () {

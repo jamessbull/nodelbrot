@@ -1,6 +1,7 @@
 import { renderExport } from "./exportRenderer.js";
 import { createProgressReporter, createTimeReporter } from "./progress.js";
 import { deselectButton, hide, selectButton, show } from "../dom.js";
+import { rectangle } from "../geometry.js";
 
 // The deepest export allowed. Every export worker holds a histogram with an entry per iteration, so
 // this keeps memory to around 8MB per worker.
@@ -22,7 +23,8 @@ export function parseDepth(text) {
 
 // The export panel: exports the current view at the chosen size and depth, with workers made by
 // newWorker(), and shows the result.
-export function createExporter({exportSizes, state, events, newWorker}) {
+// Deep views wait for referenceOrbit to be worked out to the export's depth.
+export function createExporter({exportSizes, state, events, newWorker, referenceOrbit}) {
     let exporting = false;
 
     const exportButton = document.getElementById("export");
@@ -116,11 +118,32 @@ export function createExporter({exportSizes, state, events, newWorker}) {
         progressReporters.image.reportOn(exportDimensions.width, exportDimensions.height);
         progressReporters.histogram.reportOn(Math.floor(exportDimensions.width / 10), Math.floor(exportDimensions.height / 10));
         timeReporter.start();
+        const area = state.getArea();
+        const pixelSize = state.getView().pixelSize;
+        if (!referenceOrbit || !referenceOrbit.active()) {
+            startExport(area, null, depth.depth);
+            return;
+        }
+        // Deep: the area relative to the reference orbit's point, once the orbit is long enough.
+        exportMessage.textContent = "Working out the reference orbit…";
+        referenceOrbit.whenLength(depth.depth + 2).then(function (orbit) {
+            if (!orbit) {
+                fail("the view changed before it could start. Try again.");
+                return;
+            }
+            exportMessage.textContent = "";
+            startExport(rectangle(-(area.width() / 2) - (orbit.offset.x * pixelSize), -(area.height() / 2) - (orbit.offset.y * pixelSize),
+                area.width(), area.height()), orbit, depth.depth);
+        });
+    };
+
+    function startExport(extents, orbit, depth) {
         renderExport({
-            extents: state.getArea(), width: exportDimensions.width, height: exportDimensions.height,
-            depth: depth.depth, palette: palette, newWorker: newWorker,
+            orbit: orbit && {generation: orbit.generation, values: orbit.values, escaped: orbit.escaped},
+            extents: extents, width: exportDimensions.width, height: exportDimensions.height,
+            depth: depth, palette: palette, newWorker: newWorker,
             onProgress: (phase, pixels) => progressReporters[phase].add(pixels),
             onComplete: showImage, onError: fail
         });
-    };
+    }
 }

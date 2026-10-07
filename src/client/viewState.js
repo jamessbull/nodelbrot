@@ -1,4 +1,5 @@
 import { shiftView, viewShowing } from "./view.js";
+import { smallestPixel } from "./precision.js";
 
 // The view shown on a width x height display (see view.js), and the views zoomed in from, for zooming out
 // again. Fires viewChanged with the view whenever it changes.
@@ -6,6 +7,9 @@ export function createViewState(width, height, startingView, events) {
     const on = events.listenTo;
     let view = startingView;
     const previousViews = [];
+
+    // Zooming in stops at the smallest pixel.
+    const zoomed = (newPixelSize) => Math.max(smallestPixel, newPixelSize);
 
     function show(newView) {
         view = newView;
@@ -22,7 +26,7 @@ export function createViewState(width, height, startingView, events) {
             const shrink = area.width() / (width - 1);
             previousViews.push(view);
             show(shiftView(view, area.x + (area.width() / 2) - middleX(), area.y + (middleY() * shrink) - middleY(),
-                view.pixelSize * shrink));
+                zoomed(view.pixelSize * shrink)));
         },
         // For a display that is now newWidth x newHeight. Views keep their centre and zoom, so a bigger
         // display shows more.
@@ -62,12 +66,13 @@ export function createViewState(width, height, startingView, events) {
             // The new centre is where the point now at the middle of the display used to be.
             const dx = ((middleX() - translateX) / scale) - middleX();
             const dy = ((middleY() - translateY) / scale) - middleY();
-            show(shiftView(view, dx, dy, view.pixelSize / scale));
+            show(shiftView(view, dx, dy, zoomed(view.pixelSize / scale)));
         },
         // Shows all of a w x h area centred on (x, y) (doubles or decimal strings), centred, with more
         // around it in whichever direction the display's shape needs.
         showArea: function ({x, y, w, h}) {
-            show(viewShowing(x, y, w, h, width, height));
+            const fitted = viewShowing(x, y, w, h, width, height);
+            show(fitted.pixelSize < smallestPixel ? shiftView(fitted, 0, 0, smallestPixel) : fitted);
         }
     };
 

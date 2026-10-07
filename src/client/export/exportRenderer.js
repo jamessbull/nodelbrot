@@ -7,7 +7,11 @@ import { renderFragments, exportMessage } from "../workerMessages.js";
 // at a tenth of its size each way, then the image itself in strips, coloured against that histogram.
 // Calls onProgress("histogram" or "image", pixels) as each part of a phase is done, then onComplete with
 // the image's RGBA data, or onError with a message if a worker fails.
-export function renderExport({extents, width, height, depth, palette, newWorker, workers = workerCount(),
+//
+// For a view too deep for doubles, orbit is the reference orbit {generation, values, escaped}, worked out
+// to at least depth + 2 values (or until it escapes), and extents is the area relative to its point:
+// pixels are iterated by perturbation (see perturbationIterator.js).
+export function renderExport({extents, width, height, depth, palette, newWorker, workers = workerCount(), orbit = null,
         onProgress = () => {}, onComplete, onError}) {
     const histogramParts = 10;
     const imageParts = 100;
@@ -24,6 +28,10 @@ export function renderExport({extents, width, height, depth, palette, newWorker,
         return renderFragments(extents.topLeft().x, extents.topLeft().y, extents.width(), extents.height(), columns, rows).split(parts);
     }
 
+    if (orbit) {
+        pool.sendToEach(() => ({workerMessageType: "exportorbit", orbit}));
+    }
+
     function histogramPhase(onHistogram) {
         const sampleWidth = Math.floor(width / 10);
         const sampleHeight = Math.floor(height / 10);
@@ -34,7 +42,8 @@ export function renderExport({extents, width, height, depth, palette, newWorker,
             maxIterations: depth,
             exportWidth: fragment.columns,
             exportHeight: fragment.rows,
-            extents: fragment.extents
+            extents: fragment.extents,
+            perturbation: Boolean(orbit)
         }));
         pool.consume(jobs, function (msg) {
             const counts = new Uint32Array(msg.result.histogramData);
@@ -60,7 +69,7 @@ export function renderExport({extents, width, height, depth, palette, newWorker,
             return {workerMessageType: "imageexportworker", updateHistogramData: true, paletteNodes: nodes, paletteBlend: blend,
                 histogramData: histogramData, histogramTotal: total, transfer: [histogramData]};
         });
-        const jobs = fragments(width, height, imageParts).map((fragment) => exportMessage(fragment, depth));
+        const jobs = fragments(width, height, imageParts).map((fragment) => Object.assign(exportMessage(fragment, depth), {perturbation: Boolean(orbit)}));
         const image = new Uint8ClampedArray(width * height * 4);
         pool.consume(jobs, function (msg) {
             image.set(new Uint8ClampedArray(msg.result.imgData), msg.result.offset);

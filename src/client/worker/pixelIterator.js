@@ -9,13 +9,52 @@ export const lookupTableSize = 16384;
 // between pixels. Iteration can be done in steps: each call to
 // iterate carries on from where the last one stopped. The per-pixel state lives in typed arrays
 // and the loop works on them directly, without creating objects per pixel.
+const black = new Uint32Array(new Uint8ClampedArray([0, 0, 0, 255]).buffer)[0];
+
+// Colours escaped pixels (those with imageEscapeValues) into imageData by the position of their smooth
+// iteration count in the cumulative escape histogram, and the rest black. histogramData holds only the
+// filled part of a histogram of histogramLength entries. colours is a palette lookup table from
+// palette.toLookupTable; the nearest entry is used.
+export function colourPixels(imageData, smoothIterations, imageEscapeValues, histogramData, histogramLength, histogramTotal, colours) {
+    function percentEscapedBy(iteration) {
+        const no = histogramData[iteration];
+        if (no === undefined) {
+            // Unfilled entries are zero; past the end of the histogram everything has escaped.
+            return iteration >= histogramData.length && iteration < histogramLength ? 0 : 1;
+        }
+        return no === 0 ? 0 : no / histogramTotal;
+    }
+
+    const noOfPixels = imageEscapeValues.length;
+    const pixels = new Uint32Array(imageData.buffer, imageData.byteOffset, noOfPixels);
+    const lastColour = colours.length - 1;
+    for (let idx = 0; idx < noOfPixels; idx += 1) {
+        if (imageEscapeValues[idx] === 0) {
+            pixels[idx] = black;
+        } else {
+            const iteration = smoothIterations[idx];
+            const iterationFloor = Math.floor(iteration);
+            const lower = percentEscapedBy(iterationFloor);
+            const higher = percentEscapedBy(iterationFloor + 1);
+            pixels[idx] = colours[(((lower + ((higher - lower) * (iteration % 1))) * lastColour) + 0.5) | 0];
+        }
+    }
+}
+
+// How many of escapeValues are set: how many pixels have escaped.
+export function countEscaped(escapeValues) {
+    let count = 0;
+    for (let idx = 0; idx < escapeValues.length; idx += 1) {
+        if (escapeValues[idx] !== 0) count += 1;
+    }
+    return count;
+}
+
 export function createPixelIterator(width, height, extents) {
     const histogramEscapeValue = 16;
     const imageEscapeValue = 9007199254740991;
     const log = Math.log;
     const LN2 = Math.LN2;
-    const floor = Math.floor;
-    const black = new Uint32Array(new Uint8ClampedArray([0, 0, 0, 255]).buffer)[0];
     const noOfPixels = width * height;
     const firstRow = extents.firstRow;
     const rowStride = extents.rowStride;
@@ -105,46 +144,11 @@ export function createPixelIterator(width, height, extents) {
         }
     }
 
-    // Colours escaped pixels by their position in the cumulative escape histogram, and the rest black.
-    // histogramData holds only the filled part of a histogram of histogramLength entries.
-    // colours is a palette lookup table from palette.toLookupTable; the nearest entry is used.
-    function colour(imageData, histogramData, histogramLength, histogramTotal, colours) {
-        function percentEscapedBy(iteration) {
-            const no = histogramData[iteration];
-            if (no === undefined) {
-                // Unfilled entries are zero; past the end of the histogram everything has escaped.
-                return iteration >= histogramData.length && iteration < histogramLength ? 0 : 1;
-            }
-            return no === 0 ? 0 : no / histogramTotal;
-        }
-
-        const pixels = new Uint32Array(imageData.buffer, imageData.byteOffset, noOfPixels);
-        const lastColour = colours.length - 1;
-        for (let idx = 0; idx < noOfPixels; idx += 1) {
-            if (imageEscapeValues[idx] === 0) {
-                pixels[idx] = black;
-            } else {
-                const iteration = smoothIterations[idx];
-                const iterationFloor = floor(iteration);
-                const lower = percentEscapedBy(iterationFloor);
-                const higher = percentEscapedBy(iterationFloor + 1);
-                pixels[idx] = colours[(((lower + ((higher - lower) * (iteration % 1))) * lastColour) + 0.5) | 0];
-            }
-        }
-    }
-
-    function escapedCount() {
-        let count = 0;
-        for (let idx = 0; idx < noOfPixels; idx += 1) {
-            if (escapeValues[idx] !== 0) count += 1;
-        }
-        return count;
-    }
-
     return {
         iterate: iterate,
-        colour: colour,
-        escapedCount: escapedCount,
+        colour: (imageData, histogramData, histogramLength, histogramTotal, colours) =>
+            colourPixels(imageData, smoothIterations, imageEscapeValues, histogramData, histogramLength, histogramTotal, colours),
+        escapedCount: () => countEscaped(escapeValues),
         xState: xState,
         yState: yState,
         escapeValues: escapeValues,

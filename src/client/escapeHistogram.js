@@ -40,11 +40,14 @@ export function createEscapeHistogram(events, histogram) {
         events.fire(events.histogramChanged, info);
     });
 
-    on(events.viewChanged, function () {
+    // Rendering starts again for a new view, or a new reference orbit for it.
+    const restart = function () {
         histogram = new Uint32Array(initialHistogramSize);
         currentTotal = 0;
         lastTimeRound = 0;
         filledLength = 0;
-    });
+    };
+    on(events.viewChanged, restart);
+    on(events.referenceChanged, restart);
     return {};
 }

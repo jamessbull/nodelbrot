@@ -1,26 +1,31 @@
-// The renderer works in doubles, which hold about 16 significant digits. Rounding in the iteration grows
-// along each orbit, and measured against exact calculation, escape counts start coming out visibly wrong
-// (more than 2% out) for one pixel in eight once pixels are about 1e-14 across, and around one in four
-// by 3e-15, looking like banding and noise. The orbit, not the point c, sets this: it spends its time
-// about 1 to 2 from the origin wherever c is, so it is the pixel size that matters, against |c| only
-// where that is bigger. This warns just before errors start to show.
-export const precisionLimit = 5e-14;
+// How deep the explorer can go.
+//
+// Iterating in doubles, which hold about 16 significant digits, rounding grows along each orbit, and
+// measured against exact calculation escape counts start coming out visibly wrong (more than 2% out) for
+// one pixel in eight once pixels are about 1e-14 across. The orbit, not the point c, sets this: it
+// spends its time about 1 to 2 from the origin wherever c is, so it is the pixel size that matters,
+// against |c| only where that is bigger. Past perturbationLimit, views are rendered by perturbation
+// instead (see perturbationIterator.js), which iterates only small differences, precise at any depth.
+export const perturbationLimit = 5e-14;
 
-// Whether a view (see view.js) is past that limit.
-export function isNearLimit(view) {
+export function needsPerturbation(view) {
     const centre = view.centre();
-    return view.pixelSize < precisionLimit * Math.max(1, Math.abs(centre.x), Math.abs(centre.y));
+    return view.pixelSize < perturbationLimit * Math.max(1, Math.abs(centre.x), Math.abs(centre.y));
 }
 
-// While the view is past the limit, badge shows, and notice says so once each time it goes past.
-export function precisionWarning({events, notice, badge}) {
-    let nearLimit = false;
+// Perturbation holds pixels' differences as doubles too, which can't be much smaller than 1e-308, so
+// zooming stops when pixels are this small.
+export const smallestPixel = 1e-300;
+
+// At the smallest pixel, badge shows, and notice says so when it is reached.
+export function depthWarning({events, notice, badge}) {
+    let deepest = false;
     events.listenTo(events.viewChanged, function (view) {
-        const wasNearLimit = nearLimit;
-        nearLimit = isNearLimit(view);
-        badge.hidden = !nearLimit;
-        if (nearLimit && !wasNearLimit) {
-            notice.show("This is about as far in as the numbers can go: deeper will show banding and noise.");
+        const wasDeepest = deepest;
+        deepest = view.pixelSize <= smallestPixel;
+        badge.hidden = !deepest;
+        if (deepest && !wasDeepest) {
+            notice.show("This is as far in as the explorer can go.");
         }
     });
 }

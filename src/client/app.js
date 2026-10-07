@@ -12,7 +12,7 @@ import { createZoomOut } from "./ui/actions/zoomOut.js";
 import { createMove } from "./ui/actions/move.js";
 import { createTouchGestures } from "./ui/touchGestures.js";
 import { createNotice } from "./ui/notice.js";
-import { precisionWarning } from "./precision.js";
+import { depthWarning } from "./precision.js";
 import { createReferenceOrbit } from "./referenceOrbit.js";
 import { createPaletteEditor } from "./paletteEditor.js";
 import { createExportSizes } from "./export/exportSizes.js";
@@ -85,12 +85,12 @@ export function startApp(newWorker) {
     });
 
     const notice = createNotice(element("notice"));
-    precisionWarning({events, notice, badge: element("precisionBadge")});
-    createReferenceOrbit({events, newWorker});
+    depthWarning({events, notice, badge: element("depthBadge")});
+    const referenceOrbit = createReferenceOrbit({events, newWorker});
     const bookmarks = createBookmarks({bookmarkButton: element("bookmarkButton"), state, events, notice});
     const exportSizes = createExportSizes(element("exportSizeSelect"),
         ["smallExport", "mediumExport", "largeExport", "veryLargeExport"].map(element), size.width, size.height);
-    createControls({exportSizes, state, events, newWorker});
+    createControls({exportSizes, state, events, newWorker, referenceOrbit});
 
     const maxIteration = element("maxIteration");
     const lastEscapedOn = element("lastPointEscapedAt");
@@ -116,7 +116,7 @@ export function startApp(newWorker) {
 
     const newDisplay = (width, height) => createDisplay({
         events: events, width: width, height: height, mainCanvas: mainCanvas, uiCanvas: uiCanvas, magnifier: magnifier, examineHint: element("examineHint"),
-        state: state, drawSelection: drawSelection, newWorker: newWorker
+        state: state, drawSelection: drawSelection, newWorker: newWorker, referenceOrbit: referenceOrbit
     });
     let display = newDisplay(size.width, size.height);
 

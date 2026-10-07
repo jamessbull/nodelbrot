@@ -14,6 +14,9 @@ export { viewAt } from "./view.js";
 export { renderExport } from "./export/exportRenderer.js";
 export { renderFragments } from "./workerMessages.js";
 export { calculatePoint } from "./mandelbrotPoint.js";
+export { createReferenceOrbit } from "./referenceOrbit.js";
+export { createOrbitCalculator, createReferenceOrbitWorker } from "./worker/referenceOrbit.js";
+export { fromNumber } from "./fixed.js";
 
 if (typeof WorkerGlobalScope !== "undefined" && self instanceof WorkerGlobalScope) {
     self.onmessage = createWorkerHandler((message, transfer) => self.postMessage(message, transfer));

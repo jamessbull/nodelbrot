@@ -47,8 +47,9 @@ export function createOrbitCalculator(x, y, bits) {
 // to at least that length. The orbit is worked out a slice at a time, so new messages are read between
 // slices, and each slice goes back to postMessage as {referenceOrbit: {generation, from, values, escaped}}
 // (values transferred), from being the index of its first value. Messages for an older generation than
-// the latest are ignored.
-export function createReferenceOrbitWorker(postMessage, sliceMs = 20) {
+// the latest are ignored. Slices are about sliceMs long, and schedule(next) runs the next one after any
+// waiting messages (the render check passes its own, to be deterministic).
+export function createReferenceOrbitWorker(postMessage, {sliceMs = 20, schedule = (next) => setTimeout(next, 0)} = {}) {
     let calculator = null;
     let generation = -1;
     let target = 0;
@@ -73,14 +74,13 @@ export function createReferenceOrbitWorker(postMessage, sliceMs = 20) {
         let at = 0;
         slices.forEach((slice) => { values.set(slice, at); at += slice.length; });
         postMessage({referenceOrbit: {generation, from, values, escaped: calculator.escaped()}}, [values.buffer]);
-        schedule();
+        scheduleWork();
     }
 
-    // The next slice comes after any waiting messages.
-    function schedule() {
+    function scheduleWork() {
         if (!working) {
             working = true;
-            setTimeout(work, 0);
+            schedule(work);
         }
     }
 
@@ -96,7 +96,7 @@ export function createReferenceOrbitWorker(postMessage, sliceMs = 20) {
                 target = 0;
             }
             target = Math.max(target, msg.length);
-            schedule();
+            scheduleWork();
         }
     };
 }

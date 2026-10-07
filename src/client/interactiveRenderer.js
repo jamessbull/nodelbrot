@@ -7,8 +7,15 @@ import { initialHistogramSize } from "./escapeHistogram.js";
 // (each a value or four per pixel of the width x height display): imgData, the image; escapeValues, the
 // iteration each pixel escaped at; and, when examining pixels, xState, yState and imageEscapeValues.
 // workers is how many workers to use, made by newWorker(); stopwatch times frames (for tests to fake).
+//
+// Views too deep for doubles are rendered by perturbation, from referenceOrbit (see referenceOrbit.js),
+// when it is active for the view: its chunks are passed on to the workers, frames never take pixels past
+// the end of the orbit worked out so far (waiting for more if need be), and if the orbit escapes and
+// pixels are still going long after, it starts again from one of those pixels, up to maxRereferences
+// times a view.
 export function createInteractiveRenderer({width, height, events, workers, newWorker, imgData, escapeValues, xState, yState,
-        imageEscapeValues, stopwatch = createStopwatch()}) {
+        imageEscapeValues, stopwatch = createStopwatch(), referenceOrbit = null}) {
+    const maxRereferences = 5;
     const on = events.listenTo;
     const pool = createWorkerPool(workers, newWorker);
     let requestExaminePixelData = false;
@@ -32,6 +39,11 @@ export function createInteractiveRenderer({width, height, events, workers, newWo
     let destroyed = false;      // once destroyed, nothing more is sent to the workers
     let batchSendsData = false; // whether the batch out asked for the examine data
     let fragments;
+    let view = null;            // the view being rendered
+    let perturbing = false;     // whether it is rendered by perturbation
+    let waitingForOrbit = false;
+    let rereferences = 0;
+    let frameIterations = 0;    // the iterations the batch out with the workers is doing
     const timer = stopwatch;
     // Bumped whenever the view changes. A batch posted before then is for the old view, so its
     // results are discarded instead of being mixed into the new view's state.
@@ -74,13 +86,14 @@ export function createInteractiveRenderer({width, height, events, workers, newWo
         timer.stop();
         if (batchGeneration === viewGeneration) {
             events.fire(events.depthReached, currentIteration);
-            currentIteration += stepSize;
+            currentIteration += frameIterations;
             if (batchSendsData) {
                 events.fire(events.pixelDataReady);
             }
             events.fire(events.frameComplete);
 
             updateStepSize(timer.elapsed());
+            rereferenceIfNeeded();
         }
 
         inFlight = false;
@@ -99,10 +112,51 @@ export function createInteractiveRenderer({width, height, events, workers, newWo
 
     // Sends the next batch now, or once the one out with the workers is done.
     function requestFrame() {
-        if (inFlight) {
+        if (inFlight || waitingForOrbit) {
             frameWanted = true;
         } else {
             postMessage();
+        }
+    }
+
+    // The iterations there is reference orbit for, after the depth reached, if rendering by perturbation:
+    // pixels can get up to two values from the end of an orbit still being worked out.
+    function orbitRoom() {
+        if (!perturbing || referenceOrbit.escaped()) {
+            return Infinity;
+        }
+        return referenceOrbit.length() - 2 - currentIteration;
+    }
+
+    // Pixels that outlast a reference orbit that escapes carry on from its start (rebasing), and checked
+    // against exact calculation they come out right. But pixels in the set, which never escape, would
+    // have to rebase again and again, and deep enough the difference between their c and the reference's
+    // is lost to rounding when they do. So if pixels are still going long after the reference escaped
+    // (twice as long, and at least 1000 iterations more), they are taken to be in the set, and rendering
+    // starts again from the orbit of the one nearest the centre, which won't escape.
+    function rereferenceIfNeeded() {
+        const escapedAt = referenceOrbit && referenceOrbit.escaped() ? referenceOrbit.length() - 1 : Infinity;
+        if (!perturbing || currentIteration < Math.max(2 * escapedAt, escapedAt + 1000) || rereferences >= maxRereferences) {
+            return;
+        }
+        let nearest = null;
+        let nearestDistance = Infinity;
+        const middleX = (width - 1) / 2;
+        const middleY = (height - 1) / 2;
+        for (let idx = 0; idx < escapeValues.length; idx += 1) {
+            if (escapeValues[idx] === 0) {
+                const dx = (idx % width) - middleX;
+                const dy = Math.floor(idx / width) - middleY;
+                const distance = (dx * dx) + (dy * dy);
+                if (distance < nearestDistance) {
+                    nearestDistance = distance;
+                    nearest = {dx, dy};
+                }
+            }
+        }
+        if (nearest) {
+            rereferences += 1;
+            referenceOrbit.rereference(nearest.dx, nearest.dy);
         }
     }
 
@@ -110,6 +164,13 @@ export function createInteractiveRenderer({width, height, events, workers, newWo
         if (destroyed) {
             return;
         }
+        const room = orbitRoom();
+        if (room < 1) {
+            waitingForOrbit = true;
+            referenceOrbit.want(currentIteration + stepSize + 2);
+            return;
+        }
+        frameIterations = Math.min(stepSize, room);
         inFlight = true;
         frameWanted = false;
         batchSendsData = requestExaminePixelData;
@@ -131,7 +192,8 @@ export function createInteractiveRenderer({width, height, events, workers, newWo
             if (!extents) {
                 message.extents = undefined;
             }
-            const job = interactiveMessage(message, histogram, currentIteration, stepSize, palette, histogramTotal, histogramFilledLength);
+            const job = interactiveMessage(message, histogram, currentIteration, frameIterations, palette, histogramTotal, histogramFilledLength);
+            job.perturbation = perturbing;
             if (palette) {
                 job.paletteBlend = paletteBlend;
             }
@@ -159,18 +221,56 @@ export function createInteractiveRenderer({width, height, events, workers, newWo
         paletteBlend = newPalette.blend();
     });
 
-    // The view (see view.js), or anything else with an area(width, height) rectangle, as the render check
-    // gives it.
-    on(events.viewChanged, function (view) {
+    // Starts rendering the view again from the beginning: pixels' positions (extents) are sent with the
+    // next batch. By perturbation, they are the differences dc from the reference orbit's point.
+    function restartView() {
         viewGeneration += 1;
         histogram = new Uint32Array(initialHistogramSize);
         histogramFilledLength = 0;
         currentIteration = 0;
         stepSize = initialStepSize;
         // A palette waiting to be sent is kept: the new view needs it as much as the old one did.
-        const area = view.area(width, height);
-        extents = extentsTransfer(area.topLeft().x, area.topLeft().y, area.width(), area.height());
+        if (perturbing) {
+            const offset = referenceOrbit.offset();
+            const pixelSize = view.pixelSize;
+            extents = extentsTransfer((-((width - 1) / 2) - offset.x) * pixelSize, (-((height - 1) / 2) - offset.y) * pixelSize,
+                (width - 1) * pixelSize, (height - 1) * pixelSize);
+        } else {
+            const area = view.area(width, height);
+            extents = extentsTransfer(area.topLeft().x, area.topLeft().y, area.width(), area.height());
+        }
+    }
+
+    // The view (see view.js), or anything else with an area(width, height) rectangle, as the render check
+    // gives it.
+    on(events.viewChanged, function (newView) {
+        view = newView;
+        perturbing = Boolean(referenceOrbit && referenceOrbit.active());
+        rereferences = 0;
+        restartView();
     });
+
+    on(events.referenceChanged, restartView);
+
+    // Each worker keeps its own copy of the reference orbit.
+    function sendOrbit(generation, from, values, escaped) {
+        pool.sendToEach(() => ({workerMessageType: "uiworker", orbit: {generation, from, values, escaped}}));
+    }
+
+    on(events.referenceOrbitGrew, function (chunk) {
+        sendOrbit(chunk.generation, chunk.from, chunk.values, chunk.escaped);
+        if (waitingForOrbit && orbitRoom() >= 1) {
+            waitingForOrbit = false;
+            if (running || frameWanted) {
+                postMessage();
+            }
+        }
+    });
+
+    // A display made again (at a new size) carries on with the orbit there is.
+    if (referenceOrbit && referenceOrbit.active() && referenceOrbit.length() > 0) {
+        sendOrbit(referenceOrbit.generation(), 0, referenceOrbit.values().slice(), referenceOrbit.escaped());
+    }
 
     on(events.histogramChanged, function (info) {
         histogram = info.array;
@@ -181,7 +281,7 @@ export function createInteractiveRenderer({width, height, events, workers, newWo
     // Carries on rendering: now, or after the batch out with the workers, which a stop before then cancels.
     function start() {
         running = true;
-        if (!inFlight) {
+        if (!inFlight && !waitingForOrbit) {
             postMessage();
         }
     }

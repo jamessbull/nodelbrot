@@ -1,10 +1,12 @@
 import { createPalette } from "../palette.js";
 import { createPixelIterator, lookupTableSize } from "./pixelIterator.js";
+import { createPerturbationIterator } from "./perturbationIterator.js";
 
 // Second phase of an image export: iterates one strip of the full-size image to the export depth and
 // colours it against the histogram from the first phase. The histogram and palette arrive in a message
 // with updateHistogramData set, sent once to each worker before any strips. Replies go to postMessage.
-export function createImageExportWorker(postMessage) {
+// Deep views are iterated by perturbation from orbit, an orbit store.
+export function createImageExportWorker(postMessage, orbit) {
     const palette = createPalette();
     let colours;
     let histogramData;
@@ -27,7 +29,7 @@ export function createImageExportWorker(postMessage) {
         const rowBytes = width * 4;
         for (let j = 0; j < height; j += 1) {
             const rowExtents = Object.assign({}, msg.extents, {firstRow: msg.extents.firstRow + (j * msg.extents.rowStride)});
-            const row = createPixelIterator(width, 1, rowExtents);
+            const row = msg.perturbation ? createPerturbationIterator(width, 1, rowExtents, orbit) : createPixelIterator(width, 1, rowExtents);
             row.iterate(0, maxIterations, escapeCounts);
             row.colour(imageData.subarray(j * rowBytes, (j + 1) * rowBytes), histogramData, histogramData.length, histogramTotal, colours);
         }

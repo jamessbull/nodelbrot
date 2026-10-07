@@ -4,6 +4,11 @@ Explore the Mandelbrot set in the browser: zoom in by dragging a box (or pinchin
 colours, share a view as a link, and export large PNGs. Rendering runs on web workers, one per CPU
 thread less one.
 
+Zooming goes down to pixels 1e-300 across. Past about 1e-13, where doubles run out, the point at the
+centre of the view is iterated exactly (in BigInt fixed point) as a reference orbit, and every pixel
+is iterated as a small difference from it (perturbation, with rebasing), which doubles hold precisely
+at any depth.
+
 ## Setup
 
 Needs Node 24 or later (see `.nvmrc`).
@@ -35,6 +40,7 @@ so it must be served over HTTP(S) (not opened as a file), with a JavaScript cont
 - `src/index.html`: the page.
 - `src/client/main.js`: the entry point, for both the page and the workers.
 - `src/client/app.js`: starts the explorer. `display.js` holds the parts remade when the window changes size.
-- `src/client/worker/`: the code the web workers run. `pixelIterator.js` is the inner loop.
+- `src/client/worker/`: the code the web workers run. `pixelIterator.js` is the inner loop; `perturbationIterator.js` is the one for deep views, and `referenceOrbit.js` works out their reference orbits.
+- `src/client/view.js` and `fixed.js`: the view, held precisely enough for deep zooms.
 - `src/client/interactiveRenderer.js` and `export/exportRenderer.js`: the interactive view and image export.
 - `dev/`: the dev server, HUD and render check. `build/`: the build.

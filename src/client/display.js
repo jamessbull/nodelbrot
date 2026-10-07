@@ -11,7 +11,7 @@ import { createPixelExaminer } from "./pixelExaminer.js";
 // The parts of the explorer that depend on the size of the display: the renderer and the buffers it
 // renders into, drawing the image, examining pixels, stopping on its own and zooming in. When the display changes size these are disposed of and made again at the new size, so they
 // listen through a scope of the events, which dispose() removes along with the renderer's workers.
-export function createDisplay({events, width, height, mainCanvas, uiCanvas, magnifier, examineHint, state, drawSelection, newWorker}) {
+export function createDisplay({events, width, height, mainCanvas, uiCanvas, magnifier, examineHint, state, drawSelection, newWorker, referenceOrbit}) {
     const scoped = events.scope();
     const pixels = width * height;
     const imgData = new Uint8ClampedArray(pixels * 4);
@@ -25,7 +25,8 @@ export function createDisplay({events, width, height, mainCanvas, uiCanvas, magn
 
     const renderer = createInteractiveRenderer({
         width: width, height: height, events: scoped, workers: workerCount(), newWorker: newWorker,
-        imgData: imgData, escapeValues: escapeValues, xState: xState, yState: yState, imageEscapeValues: imageEscapeValues
+        imgData: imgData, escapeValues: escapeValues, xState: xState, yState: yState, imageEscapeValues: imageEscapeValues,
+        referenceOrbit: referenceOrbit
     });
     createImageRenderer({events: scoped, canvas: mainCanvas, imgData: imgData, width: width, height: height});
     createPixelExaminer({
