@@ -15,9 +15,14 @@ jim.events.create = function () {
                 if (logEvents) {
                     console.log(event);
                 }
+                // A listener that fails is logged and skipped, so the others still hear the event (one
+                // failing during a frame would otherwise stop the rendering).
                 listeners[event].forEach(function (action) {
-
-                    action(arg);
+                    try {
+                        action(arg);
+                    } catch (e) {
+                        console.error("Error handling " + event + ":", e);
+                    }
                 });
             }
         },

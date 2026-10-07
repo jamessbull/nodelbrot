@@ -23,4 +23,17 @@ describe("events", function () {
         expect(fired).toBe("Yep");
         expect(fired2).toBe("Yep");
     });
+
+    it("should still tell later listeners when one fails", function () {
+        var events = jim.events.create();
+        var heard = false;
+        spyOn(console, "error");
+        events.listenTo("frame", function () { throw new Error("broken listener"); });
+        events.listenTo("frame", function () { heard = true; });
+
+        events.fire("frame");
+
+        expect(heard).toBe(true);
+        expect(console.error).toHaveBeenCalled();
+    });
 });
