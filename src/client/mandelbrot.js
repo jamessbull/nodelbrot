@@ -65,7 +65,7 @@ jim.init.run = function () {
     jim.mandelbrot.escapeDistributionHistogram.create(events, histoData);
     jim.mandelbrot.imageRenderer.create(events, mainCanvas, displayWidth, displayHeight);
     jim.mandelbrot.examinePixelStateDisplay.create(events, pixelInfoCanvas, imgData, xState, yState, escapeValues, imageEscapeValues, displayWidth, uiCanvas, displayHeight, state);
-    jim.mandelbrot.pixelEscapeRateTracker.create(events);
+    jim.mandelbrot.pixelEscapeRateTracker.create(events, displayWidth * displayHeight);
     var palette = jim.palette.create();
     var colourGradientui = newColourGradientUI(colourGradientCanvas, addButton, removeButton, palette, events);
 

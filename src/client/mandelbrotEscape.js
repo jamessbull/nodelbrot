@@ -106,9 +106,10 @@ jim.mandelbrot.escapeDistributionHistogram.create = function (_events, _histoDat
 };
 
 namespace("jim.mandelbrot.pixelEscapeRateTracker");
-jim.mandelbrot.pixelEscapeRateTracker.create = function (events) {
+jim.mandelbrot.pixelEscapeRateTracker.create = function (events, pixelCount) {
     "use strict";
-    var target = 700 * 40;
+    // A tenth of the image must have escaped before rendering can stop on its own.
+    var target = pixelCount / 10;
     var totalEscaped = 0;
     var totalAtLastFrame = 0;
     var framesWithoutEscapes = 0;
