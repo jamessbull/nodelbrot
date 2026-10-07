@@ -125,8 +125,9 @@ export function createReferenceOrbit({events, newWorker, needed = needsPerturbat
     const sameView = (newView) => view !== null && newView.x === view.x && newView.y === view.y && newView.bits === view.bits;
 
     events.listenTo(events.viewChanged, function (newView) {
-        // Views from the render check have no centre, and a resize keeps the same one.
-        if (newView.x === undefined || sameView(newView)) {
+        // Views from the render check have no centre, and a resize keeps the same one, unless the orbit is
+        // needed for it now and wasn't before (the GPU renderer has taken it over).
+        if (newView.x === undefined || (sameView(newView) && active === needed(newView))) {
             return;
         }
         view = newView;

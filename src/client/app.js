@@ -16,7 +16,8 @@ import { depthWarning } from "./precision.js";
 import { createReferenceOrbit } from "./referenceOrbit.js";
 import { needsPerturbation } from "./precision.js";
 import { gpuAvailable } from "./gpu/gl.js";
-import { gpuSmallestPixel } from "./gpu/gpuRenderer.js";
+import { createRendererChoice } from "./rendererChoice.js";
+import { createDepthGauge } from "./depthGauge.js";
 import { createPaletteEditor } from "./paletteEditor.js";
 import { createExportSizes } from "./export/exportSizes.js";
 import { createControls } from "./controls.js";
@@ -89,11 +90,18 @@ export function startApp(newWorker) {
 
     const notice = createNotice(element("notice"));
     depthWarning({events, notice, badge: element("depthBadge")});
-    // The GPU renders views down to its smallest pixel, where it can; the CPU renders deeper ones, and
-    // all of them where it can't. ?renderer=cpu or ?renderer=gpu in the address chooses one.
-    const chosenRenderer = new URLSearchParams(window.location.search).get("renderer");
-    let gpuUsable = chosenRenderer !== "cpu" && gpuAvailable();
-    const rendererFor = (view) => gpuUsable && view.pixelSize >= gpuSmallestPixel ? "gpu" : "cpu";
+    createDepthGauge({events, element: element("depthGauge")});
+    // The GPU renders views down to its smallest pixel, where it can, unless the CPU is chosen; the CPU
+    // renders the rest. See rendererChoice.js.
+    let storage = null;
+    try {
+        storage = window.localStorage;
+    } catch {
+        // Kept for this visit only, then.
+    }
+    const rendererChoice = createRendererChoice({select: element("rendererSelect"), gpuAvailable: gpuAvailable(),
+        requested: new URLSearchParams(window.location.search).get("renderer"), storage});
+    const rendererFor = rendererChoice.rendererFor;
     // The GPU renders every view by perturbation, so needs a reference orbit for every view.
     // It looks for a nucleus about as far from the centre as the corners of a big display.
     const referenceOrbit = createReferenceOrbit({events, newWorker, needed: (view) => rendererFor(view) === "gpu" || needsPerturbation(view),
@@ -136,11 +144,12 @@ export function startApp(newWorker) {
         } catch (e) {
             if (renderer !== "gpu") throw e;
             console.warn("Rendering on the CPU, as the GPU renderer couldn't start:", e);
-            gpuUsable = false;
+            rendererChoice.unavailable();
             return createDisplay(Object.assign(options, {renderer: "cpu"}));
         }
     }
     let display = newDisplay(size.width, size.height, rendererFor(state.getView()));
+    rendererChoice.showInUse(display.renderer, state.getView());
 
     // Makes the display again, at the viewer's new size or with another renderer, keeping the view's
     // centre and zoom. Examining pixels stops, as the image it was examining is gone.
@@ -152,6 +161,7 @@ export function startApp(newWorker) {
         state.resize(newSize.width, newSize.height);
         exportSizes.setDisplaySize(newSize.width, newSize.height);
         display = newDisplay(newSize.width, newSize.height, renderer);
+        rendererChoice.showInUse(display.renderer, state.getView());
         // The new renderer needs the view and the palette.
         events.fire(events.viewChanged, state.getView());
         events.fire(events.paletteChanged, palette);
@@ -166,15 +176,33 @@ export function startApp(newWorker) {
     }
 
     // A view the other renderer is for gets a display with that one, once the view has been taken in.
-    events.listenTo(events.viewChanged, function (view) {
-        if (view.x !== undefined && rendererFor(view) !== display.renderer) {
-            setTimeout(function () {
-                const renderer = rendererFor(state.getView());
-                if (renderer !== display.renderer) {
-                    remakeDisplay({width: display.width, height: display.height}, renderer);
-                }
-            }, 0);
+    function matchRenderer() {
+        if (rendererFor(state.getView()) === display.renderer) {
+            rendererChoice.showInUse(display.renderer, state.getView());
+            return;
         }
+        setTimeout(function () {
+            const renderer = rendererFor(state.getView());
+            if (renderer !== display.renderer) {
+                remakeDisplay({width: display.width, height: display.height}, renderer);
+            }
+        }, 0);
+    }
+    events.listenTo(events.viewChanged, function (view) {
+        if (view.x !== undefined) {
+            matchRenderer();
+        }
+    });
+    rendererChoice.onChange(matchRenderer);
+    // The GPU gets another go when the user next moves the view (see rendererChoice.js).
+    [events.zoomToSelection, events.zoomOut, events.moveBy, events.transformView].forEach((event) => events.listenTo(event, function () {
+        rendererChoice.moved();
+        matchRenderer();
+    }));
+    events.listenTo(events.rendererLost, function () {
+        rendererChoice.lost();
+        notice.show("The GPU stopped working, so the CPU is drawing the view for now.");
+        setTimeout(() => remakeDisplay({width: display.width, height: display.height}, "cpu"), 0);
     });
     let resizeTimer;
     new ResizeObserver(() => {

@@ -7,15 +7,17 @@ const names = {
     start: "",
     stop: "",
     restart: "",
-    // Render one more frame, even if stopped, so a change such as to the colours shows.
+    // Show a change, such as to the colours, even if stopped.
     showChanges: "",
     // The palette has changed; carries the palette.
     paletteChanged: "",
+    // The GPU renderer has stopped working (the browser took its WebGL context away).
+    rendererLost: "",
     // A frame is done: depthReached (carrying its depth) then frameComplete.
     depthReached: "",
     frameComplete: "",
     // More of the reference orbit for the view has been worked out: {generation, from, values, length,
-    // escaped}, values being the new x, y pairs from index from on.
+    // escaped, complete, period}, values being the new x, y pairs from index from on.
     referenceOrbitGrew: "",
     // The reference orbit has started again from another point, {generation, offsetX, offsetY} pixels
     // from the view's centre, so rendering must start again too.

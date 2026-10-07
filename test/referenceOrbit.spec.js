@@ -147,5 +147,20 @@ describe("reference orbits", function () {
             expect(orbit.length()).toBe(100);
             expect(made).toBe(1);
         });
+
+        it("should start one for the same view when it comes to need one", async function () {
+            // As when the GPU renderer, which needs one for every view, takes over a view from the CPU.
+            const events = createEvents();
+            let gpu = false;
+            const orbit = createReferenceOrbit({events, newWorker: localWorker, needed: () => gpu, initialLength: 100});
+            const view = viewAt("-0.1", "0.1", 1e-6);
+            events.fire(events.viewChanged, view);
+            expect(orbit.active()).toBe(false);
+            gpu = true;
+            events.fire(events.viewChanged, view);
+            expect(orbit.active()).toBe(true);
+            for (let i = 0; i < 200 && orbit.length() < 100; i += 1) await pause(5);
+            expect(orbit.length()).toBe(100);
+        });
     });
 });

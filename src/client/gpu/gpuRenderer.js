@@ -23,6 +23,14 @@ export function createGpuRenderer({width, height, events, imgData, escapeValues,
         throw new Error("WebGL2 with float textures isn't available");
     }
     const on = events.listenTo;
+    // The browser can take the context away (the GPU was reset, say): rendering stops, and rendererLost
+    // says so, for the CPU renderer to take over. (Not when it goes because the renderer is done with.)
+    gl.canvas.addEventListener("webglcontextlost", function () {
+        if (!destroyed) {
+            destroyed = true;
+            events.fire(events.rendererLost);
+        }
+    });
     const iterate = createProgram(gl, fullScreenVertexShader, iterateShader);
     const count = createProgram(gl, countEscapesVertexShader, countEscapesShader);
     const colour = createProgram(gl, fullScreenVertexShader, colourShader);

@@ -14,7 +14,12 @@ pixels still going long after the reference escaped start again from one of them
 
 Where the browser has WebGL2 with float render targets (and blending into them), the view is rendered on the GPU instead, by the
 same perturbation in 32-bit floats, down to pixels 1e-30 across; deeper views go back to the CPU.
-`?renderer=cpu` or `?renderer=gpu` in the address chooses one.
+The menu at the end of the toolbar says which is drawing the view, and can have the CPU draw them all
+(remembered for next time; `?renderer=cpu` or `?renderer=gpu` in the address overrides it). If the
+browser takes the GPU away, the CPU takes over until the view next moves.
+
+When a new view is slow to appear, a gauge down the left of the image shows how deep rendering has
+gone, coming down to meet the depth the view before had reached.
 
 ## Setup
 
