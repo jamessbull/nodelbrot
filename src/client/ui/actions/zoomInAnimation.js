@@ -83,7 +83,7 @@ jim.mandelbrot.ui.actions.zoomInAnimation.create = function (_uiCanvas, _mandelb
     function getDrawSelectionFunction(_selection, _existingMandelbrot) {
 
         function drawFullSetTo(uiContext) {
-            uiContext.drawImage(_existingMandelbrot, 0,0, mandelbrotCanvas.width, mandelbrotCanvas.height);
+            uiContext.drawImage(_existingMandelbrot, 0,0, _mandelbrotCanvas.width, _mandelbrotCanvas.height);
         }
 
         function dim(uiContext) {

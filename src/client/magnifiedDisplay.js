@@ -122,7 +122,7 @@ jim.mandelbrot.examinePixelStateDisplay.create = function (_events, _examinePixe
     }
 
     function displayMessage(msg, x, y) {
-        var context = uiCanvas.getContext('2d');
+        var context = _uiCanvas.getContext('2d');
         context.clearRect(x, y, _uiCanvas.width, _uiCanvas.height);
         context.font = "14px courier";
         context.strokeStyle = "rgba(0,0,0,255)";
@@ -134,13 +134,13 @@ jim.mandelbrot.examinePixelStateDisplay.create = function (_events, _examinePixe
     }
 
     function topLevelMessage(msg) {
-        var context = uiCanvas.getContext('2d');
+        var context = _uiCanvas.getContext('2d');
         context.clearRect(0, 0, _uiCanvas.width, _uiCanvas.height);
         displayMessage(msg, 15, 15);
     }
 
     function displayAdditionalMessage(msg) {
-        var context = uiCanvas.getContext('2d');
+        var context = _uiCanvas.getContext('2d');
         context.clearRect(0, 20, _uiCanvas.width - 25, _uiCanvas.height - 25);
         displayMessage(msg, 30, 30);
     }
