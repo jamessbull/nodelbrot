@@ -7,15 +7,9 @@ jim.colour.colourPicker.create = function (canvas, gradient, events) {
     var h = canvas.height;
     var selectedHue;
 
-    var toRgb = function (h, s, v) {
-        var colour = jim.tinycolor({h: h, s: s, v: v}).toRgb();
-        colour.a = 255;
-        return colour;
-    };
-
     var huePicker = function (x) {
         var hue = interpolate(0, 359, x / w);
-        return toRgb(hue, 100, 100);
+        return jim.colour.toRgb({h: hue, s: 1, v: 1});
     };
 
     var shade = function (x, y, verticalSize) {
@@ -33,7 +27,7 @@ jim.colour.colourPicker.create = function (canvas, gradient, events) {
         var saturation = interpolate(0, 1, (translatedY / verticalSize));
 
         var value = interpolate(1, 0, x / w);
-        return toRgb(selectedHue, saturation, value);
+        return jim.colour.toRgb({h: selectedHue, s: saturation, v: value});
     };
 
     var drawColourPicker = function (x, y) {
@@ -69,15 +63,13 @@ jim.colour.colourPicker.create = function (canvas, gradient, events) {
         if (e.offsetY <= h / 3) {
             selectedHue = interpolate(0, 359, e.offsetX / w);
             //draw();
-            var tc = jim.tinycolor({h: selectedHue, s: 1, v: 1});
-            gradient.setSelectedNodeColour(tc, e.offsetX, e.offsetY);
+            gradient.setSelectedNodeColour({h: selectedHue, s: 1, v: 1}, e.offsetX, e.offsetY);
             events.fire(events.colourSelected, {x: e.offsetX, y: e.offsetY, hue: selectedHue});
 
         } else {
             var hueProportion = 0.3 * h;
             var shadeProportion = h - hueProportion;
-            var colour = jim.tinycolor(shade(e.offsetX, e.offsetY, shadeProportion));
-            gradient.setSelectedNodeColour(colour, e.offsetX, e.offsetY);
+            gradient.setSelectedNodeColour(shade(e.offsetX, e.offsetY, shadeProportion), e.offsetX, e.offsetY);
             events.fire(events.colourSelected, {x: e.offsetX, y: e.offsetY, hue: selectedHue});
         }
         events.fire(events.pulseUI);
@@ -87,8 +79,12 @@ jim.colour.colourPicker.create = function (canvas, gradient, events) {
         return interpolate(x, y, Math.random());
     }
 
-    function percentFromString (s) {
-        return parseInt(s.substring(0, s.length - 1))/100;
+    // A saved saturation or value, rounded down to a whole percentage, as the picker has always read
+    // them. Fractions count as percentages, as they did when tinycolor turned them into strings.
+    function wholePercent(value) {
+        var isPercentString = typeof value === "string" && value.indexOf("%") !== -1;
+        var percent = isPercentString ? value : (parseFloat(value) <= 1 ? (parseFloat(value) * 100) + "%" : String(value));
+        return parseInt(percent, 10) / 100;
     }
 
     on(events.nodeAdded, function (n) {
@@ -99,12 +95,12 @@ jim.colour.colourPicker.create = function (canvas, gradient, events) {
         selectedHue = randomNumberBetween(0, 359);
 
         if (n.doNotRandomise) {
-            var percentageS = percentFromString(n.node.hsv.s);
-            shadeX = (1 - percentFromString(n.node.hsv.v)) * w;
+            var percentageS = wholePercent(n.node.hsv.s);
+            shadeX = (1 - wholePercent(n.node.hsv.v)) * w;
             shadeY = shadeVal + (percentageS * shadeProportion);
             selectedHue = n.node.hsv.h;
         }
-        gradient.setSelectedNodeColour(jim.tinycolor(shade(shadeX, shadeY, shadeProportion)), shadeX, shadeY);
+        gradient.setSelectedNodeColour(shade(shadeX, shadeY, shadeProportion), shadeX, shadeY);
         events.fire(events.colourSelected, {x: shadeX, y: shadeY, hue: selectedHue});
         events.fire(events.pulseUI, {});
     });

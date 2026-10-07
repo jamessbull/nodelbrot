@@ -1,24 +1,79 @@
+// Colours in palettes are hue, saturation and value: {h, s, v}. Until 2026 they were converted with the
+// tinycolor library, and saved palettes (in bookmark links) hold whatever form it accepted, so these read
+// them exactly as tinycolor did and saved palettes keep their colours.
+
+// A saturation or value as a fraction from 0 to 1. Accepts fractions from 0 to 1, larger numbers as
+// percentages, and percentage strings such as "88.9%". Percentages count only to two decimal places,
+// and fractions are treated as percentages, as tinycolor did.
+jim.colour.fraction = function (value) {
+    "use strict";
+    var n = parseFloat(value);
+    var percentage = (typeof value === "string" && value.indexOf("%") !== -1) || n <= 1;
+    if (percentage && !(typeof value === "string" && value.indexOf("%") !== -1)) {
+        n = n * 100;
+    }
+    n = Math.min(100, Math.max(0, n));
+    if (percentage) {
+        n = Math.floor(n * 100) / 100;
+    }
+    return Math.abs(n - 100) < 0.000001 ? 1 : (n % 100) / 100;
+};
+
+// Hue (h, in degrees), saturation and value (s and v, fractions from 0 to 1) to red, green and blue from
+// 0 to 255, unrounded, written to out.
+jim.colour.hsvToRgb = function (h, s, v, out) {
+    "use strict";
+    var hue = Math.min(360, Math.max(0, h));
+    var sector = (Math.abs(hue - 360) < 0.000001 ? 1 : (hue % 360) / 360) * 6;
+    var i = Math.floor(sector);
+    var f = sector - i;
+    var p = v * (1 - s);
+    var q = v * (1 - f * s);
+    var t = v * (1 - (1 - f) * s);
+    var r, g, b;
+    switch (i % 6) {
+        case 0: r = v; g = t; b = p; break;
+        case 1: r = q; g = v; b = p; break;
+        case 2: r = p; g = v; b = t; break;
+        case 3: r = p; g = q; b = v; break;
+        case 4: r = t; g = p; b = v; break;
+        default: r = v; g = p; b = q;
+    }
+    out.r = r * 255;
+    out.g = g * 255;
+    out.b = b * 255;
+    out.a = 255;
+    return out;
+};
+
+// A palette colour {h, s, v}, in any form jim.colour.fraction accepts, as whole-number red, green and blue.
+jim.colour.toRgb = function (hsv) {
+    "use strict";
+    var c = jim.colour.hsvToRgb(parseFloat(hsv.h), jim.colour.fraction(hsv.s), jim.colour.fraction(hsv.v), {});
+    return {
+        r: Math.round(Math.min(255, Math.max(0, c.r))),
+        g: Math.round(Math.min(255, Math.max(0, c.g))),
+        b: Math.round(Math.min(255, Math.max(0, c.b))),
+        a: 255
+    };
+};
+
 namespace("jim.palette.colourNode");
 var nodeid = 0;
 jim.palette.colourNode.create = function(hsv, position) {
     "use strict";
     nodeid +=1;
-    var tc = jim.tinycolor(hsv);
-    var rgb = tc.toRgb();
-    rgb.a = 255;
     return {
         id:nodeid,
         hsv:hsv,
-        rgb:rgb,
+        rgb:jim.colour.toRgb(hsv),
         position:position,
         setPosition: function (p) {
             this.position = p;
         },
-        setColour: function (tc) {
-            this.colour = tc;
-            this.hsv = this.colour.toHsv();
-            this.rgb = this.colour.toRgb();
-            this.rgb.a = 255;
+        setColour: function (_hsv) {
+            this.hsv = _hsv;
+            this.rgb = jim.colour.toRgb(_hsv);
         }
     };
 };
@@ -28,7 +83,7 @@ jim.palette.create = function () {
     "use strict";
     var colourNode = jim.palette.colourNode.create;
     var hsv = function (h, s, v){ return { h: h, s: s, v: v }; };
-    var orange = jim.tinycolor({r: 243, g:193, b:27, a: 255}).toHsv();
+    var orange = hsv(46.111111111111114, 0.888888888888889, 0.9529411764705882);   // rgb(243, 193, 27)
     var black = hsv(100,"0%","0%");
     var white = hsv(10, "0%", "100%");
     var defaultFromNode = colourNode(black, 0);
@@ -85,25 +140,6 @@ jim.palette.create = function () {
         return {h: h, s: max === 0 ? 0 : delta / max, v: max};
     }
 
-    function hsvToRgb(h, s, v, out) {
-        var chroma = v * s;
-        var sector = h / 60;
-        var x = chroma * (1 - Math.abs((sector % 2) - 1));
-        var m = v - chroma;
-        var r = 0, g = 0, b = 0;
-        if (sector < 1) { r = chroma; g = x; }
-        else if (sector < 2) { r = x; g = chroma; }
-        else if (sector < 3) { g = chroma; b = x; }
-        else if (sector < 4) { g = x; b = chroma; }
-        else if (sector < 5) { r = x; b = chroma; }
-        else { r = chroma; b = x; }
-        out.r = (r + m) * 255;
-        out.g = (g + m) * 255;
-        out.b = (b + m) * 255;
-        out.a = 255;
-        return out;
-    }
-
     function hsvBlend(fromRgb, toRgb, fraction, out) {
         var from = rgbToHsv(fromRgb);
         var to = rgbToHsv(toRgb);
@@ -117,7 +153,7 @@ jim.palette.create = function () {
         if (hueChange > 180) hueChange -= 360;
         if (hueChange < -180) hueChange += 360;
         var h = (from.h + (hueChange * fraction) + 360) % 360;
-        return hsvToRgb(h, interpolate(from.s, to.s, fraction), interpolate(from.v, to.v, fraction), out);
+        return jim.colour.hsvToRgb(h, interpolate(from.s, to.s, fraction), interpolate(from.v, to.v, fraction), out);
     }
 
     function randomColour () {

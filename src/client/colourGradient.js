@@ -73,11 +73,11 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
         nodes: [],
         selectionTolerance: 0.025,
 
-        setColour:function (tc, x, y) {
+        setColour:function (hsv, x, y) {
             if (selectedNode.selected) {
                 selectedNode.markerX = x;
                 selectedNode.markerY = y;
-                selectedNode.node.setColour(tc);
+                selectedNode.node.setColour(hsv);
             }
         },
         drawMarkers: function () {
@@ -220,8 +220,8 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
         draw: function () {
             draw();
         },
-        setSelectedNodeColour: function(tc, x, y) {
-            markers.setColour(tc, x, y);
+        setSelectedNodeColour: function(hsv, x, y) {
+            markers.setColour(hsv, x, y);
             _events.fire(_events.paletteChanged, palette);
         },
         rebuildMarkers: function (doNotRandomise) {

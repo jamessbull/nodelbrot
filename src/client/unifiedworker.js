@@ -1,7 +1,6 @@
 importScripts(
     '/js/common.js',
     '/js/mandelbrotPoint.js',
-    '/js/tinycolor.js',
     '/js/palette.js',
     '/js/pixelIterator.js',
     '/js/uiWorker.js',
