@@ -28,17 +28,26 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
     var viewGeneration = 0;
     var batchGeneration = 0;
 
+    // Copies a fragment's rows, which arrive one after another in source, to their places in target,
+    // which has valuesPerPixel values for each pixel of the whole image.
+    function placeRows(target, source, _msg, valuesPerPixel) {
+        var rowLength = _width * valuesPerPixel;
+        for (var k = 0, row = _msg.firstRow; (k * rowLength) < source.length; k += 1, row += _msg.rowStride) {
+            target.set(source.subarray(k * rowLength, (k + 1) * rowLength), row * rowLength);
+        }
+    }
+
     function onEachJob(_msg) {
         if (batchGeneration !== viewGeneration) {
             return;
         }
         _events.fire(_events.histogramUpdateReceivedFromWorker, {update: new Uint32Array(_msg.histogramUpdate), currentIteration: currentIteration});
-        escapeValues.set(new Uint32Array(_msg.escapeValues), (_msg.offset / 4));
-        _imgData.set(new Uint8ClampedArray(_msg.imageDataBuffer), _msg.offset);
+        placeRows(escapeValues, new Uint32Array(_msg.escapeValues), _msg, 1);
+        placeRows(_imgData, new Uint8ClampedArray(_msg.imageDataBuffer), _msg, 4);
         if (_msg.extraDataSent) {
-            _xState.set(_msg.xState, (_msg.offset / 4));
-            _yState.set(_msg.yState, (_msg.offset / 4));
-            _imageEscapeValues.set(_msg.imageEscapeValues, (_msg.offset / 4));
+            placeRows(_xState, _msg.xState, _msg, 1);
+            placeRows(_yState, _msg.yState, _msg, 1);
+            placeRows(_imageEscapeValues, _msg.imageEscapeValues, _msg, 1);
         }
     }
 
@@ -86,7 +95,8 @@ jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events,
         var initialRenderDefinition = jim.messages.renderFragment2.create(0, mx, my, mw, mh, _width, _height);
 
         if(extents) {
-            fragments = initialRenderDefinition.split(_parallelism);
+            // Every worker gets every _parallelism-th row, so each has a fair share of the costly pixels.
+            fragments = initialRenderDefinition.interleave(_parallelism);
         }
 
         var jobs = array(fragments.length, function (i) {

@@ -8,8 +8,7 @@ jim.histogramexportworker.create = function () {
     var onmessage = function (e) {
         var msg = e.data;
         var maxIterations = parseInt(msg.maxIterations, 10);
-        var extents = {mx: msg.mx, my: msg.my, stepX: msg.mw, stepY: msg.mh};
-        var pixels = jim.pixelIterator.create(msg.exportWidth, msg.exportHeight, extents);
+        var pixels = jim.pixelIterator.create(msg.exportWidth, msg.exportHeight, msg.extents);
         var histogramData = new Uint32Array(maxIterations + 1);
         pixels.iterate(0, maxIterations, histogramData);
         var reply = {

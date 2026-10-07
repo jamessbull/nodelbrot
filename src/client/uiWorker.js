@@ -30,7 +30,8 @@ jim.uiWorker.create = function () {
 
         var escapeValuesToTransfer = new Uint32Array(pixels.escapeValues);
         var reply = {
-            offset: msg.offset,
+            firstRow: msg.firstRow,
+            rowStride: msg.rowStride,
             batchid: msg.batchid,
             histogramUpdate: histogramUpdate.buffer,
             imageDataBuffer: imageData.buffer,

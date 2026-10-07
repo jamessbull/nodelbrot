@@ -18,7 +18,7 @@ jim.init.run = function () {
     var xState = new Float64Array(displayWidth * displayHeight);
     var yState = new Float64Array(displayWidth * displayHeight);
 
-    var mandelbrotCalculator = jim.mandelbrot.webworkerInteractive.create(displayWidth, displayHeight, events, 30, 3, imgData, escapeValues, xState, yState, imageEscapeValues, startingExtent);
+    var mandelbrotCalculator = jim.mandelbrot.webworkerInteractive.create(displayWidth, displayHeight, events, 30, jim.worker.count(), imgData, escapeValues, xState, yState, imageEscapeValues, startingExtent);
 
 
     mainCanvas.width = displayWidth;

@@ -121,7 +121,7 @@ function workerClass(side, scheduler) {
     };
 }
 
-function render(side, view) {
+function render(side, view, workers) {
     const scheduler = newScheduler();
     const ctx = newContext();
     ctx.Worker = workerClass(side, scheduler);
@@ -177,7 +177,7 @@ function render(side, view) {
         var lastIteration = 0;
         events.listenTo(events.maxIterationsUpdated, function (i) { lastIteration = i; });
         jim.mandelbrot.escapeDistributionHistogram.create(events, new Uint32Array(jim.mandelbrot.initialHistogramSize));
-        var calculator = jim.mandelbrot.webworkerInteractive.create(${width}, ${height}, events, 30, ${parallelism}, imgData,
+        var calculator = jim.mandelbrot.webworkerInteractive.create(${width}, ${height}, events, 30, ${workers || parallelism}, imgData,
             escapeValues, new Float64Array(pixels), new Float64Array(pixels), new Uint32Array(pixels), startingExtent);
         events.listenTo(events.frameComplete, function () {
             if (onFrame(imgData, escapeValues, lastIteration)) calculator.stop();
@@ -215,8 +215,12 @@ function checkEscapes(ctx, read) {
             for (var p = 0; p < fragment.rows * fragment.columns; p += 13) {
                 var i = p % fragment.columns;
                 var j = Math.floor(p / fragment.columns);
-                var expected = point.calculate(e.mx + (i * e.stepX), e.my + (j * e.stepY), limit, 0, 0, 0, 0).histogramEscapedAt;
-                var actual = escapeValues[fragment.offset + p];
+                // Revisions with firstRow place every pixel from the top of the image; older ones from
+                // the top of its fragment.
+                var row = fragment.firstRow === undefined ? null : fragment.firstRow + (j * fragment.rowStride);
+                var my = row === null ? e.my + (j * e.stepY) : e.my + (row * e.stepY);
+                var expected = point.calculate(e.mx + (i * e.stepX), my, limit, 0, 0, 0, 0).histogramEscapedAt;
+                var actual = escapeValues[row === null ? fragment.offset + p : (row * fragment.columns) + i];
                 var ok = actual !== 0 ? actual === expected : (expected === 0 || expected > lastIteration);
                 result.checked += 1;
                 if (!ok) {
@@ -309,17 +313,19 @@ const tolerance = toleranceArg ? Number(toleranceArg.slice(12)) : null;
 function compareImages(a, b) {
     let maxDiff = 0;
     let pixelsDiffering = 0;
+    let pixelsDifferingByMoreThan3 = 0;
     let pixels = 0;
     for (let f = 0; f < Math.min(a.length, b.length); f += 1) {
         for (let p = 0; p < a[f].length; p += 4) {
             let pixelDiff = 0;
             for (let c = 0; c < 4; c += 1) pixelDiff = Math.max(pixelDiff, Math.abs(a[f][p + c] - b[f][p + c]));
             if (pixelDiff) pixelsDiffering += 1;
+            if (pixelDiff > 3) pixelsDifferingByMoreThan3 += 1;
             maxDiff = Math.max(maxDiff, pixelDiff);
             pixels += 1;
         }
     }
-    return { maxDiff: maxDiff, percentDiffering: 100 * pixelsDiffering / pixels };
+    return { maxDiff: maxDiff, percentDiffering: 100 * pixelsDiffering / pixels, percentDifferingByMoreThan3: 100 * pixelsDifferingByMoreThan3 / pixels };
 }
 
 // SAME, CLOSE (within tolerance) or DIFFER, and whether that counts as a pass.
@@ -327,7 +333,8 @@ function verdict(results, escapesMatch) {
     if (results[0].hash === results[1].hash && results[0].frames === results[1].frames) return { label: "SAME   ", pass: true };
     if (tolerance === null || !escapesMatch || results[0].frames !== results[1].frames) return { label: "DIFFER ", pass: false };
     const c = compareImages(results[0].images, results[1].images);
-    const detail = " [max channel difference " + c.maxDiff + ", " + c.percentDiffering.toFixed(3) + "% of pixels differ]";
+    const detail = " [max channel difference " + c.maxDiff + ", " + c.percentDiffering.toFixed(3) + "% of pixels differ, " +
+        c.percentDifferingByMoreThan3.toFixed(3) + "% by more than 3]";
     return c.maxDiff <= tolerance ? { label: "CLOSE  ", pass: true, detail: detail } : { label: "DIFFER ", pass: false, detail: detail };
 }
 // With --built[=dir], compares the working tree's source with the bundle built from it (default
@@ -351,6 +358,17 @@ let failures = 0;
         "  depth " + String(r.depth).padStart(6) + "  model depth/s " + String(Math.round(r.depth / (r.modelMs / 1000))).padStart(7) +
         "  workers " + (r.workerMs / r.frames).toFixed(2).padStart(6) + " ms/frame" +
         "  main thread " + (r.mainMs / r.frames).toFixed(2).padStart(6) + " ms/frame  " + describeEscapes(r.escapes)));
+});
+// The number of workers depends on the machine, so the output must not: render the same views with 3
+// and with 16 workers and require identical frames.
+(only === "export" ? [] : views.slice(0, 2)).forEach((view) => {
+    const side = sides[1];
+    const few = render(side, view, 3);
+    const many = render(side, view, 16);
+    const same = few.hash === many.hash && few.frames === many.frames;
+    if (!same) failures += 1;
+    console.log((same ? "SAME   " : "DIFFER ") + view.name + " with 3 and 16 workers (" + side.label + ")");
+    [few, many].forEach((r, i) => console.log("    " + (i === 0 ? "3 workers" : "16 workers").padEnd(14) + r.hash));
 });
 (only === "interactive" ? [] : exportScenarios).forEach((exp) => {
     const results = sides.map((side) => exportImage(side, exp));

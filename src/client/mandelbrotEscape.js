@@ -108,13 +108,16 @@ jim.mandelbrot.escapeDistributionHistogram.create = function (_events, _histoDat
 namespace("jim.mandelbrot.pixelEscapeRateTracker");
 jim.mandelbrot.pixelEscapeRateTracker.create = function (events) {
     "use strict";
-    var lastCheckpoint = 0;
-    var counter = 0;
+    var target = 700 * 40;
+    var totalEscaped = 0;
+    var totalAtLastFrame = 0;
+    var framesWithoutEscapes = 0;
 
     function restart() {
         events.fire(events.restart);
-        counter = 0;
-        lastCheckpoint = 0;
+        totalEscaped = 0;
+        totalAtLastFrame = 0;
+        framesWithoutEscapes = 0;
     }
 
     on(events.zoomInAction, function () {
@@ -129,21 +132,19 @@ jim.mandelbrot.pixelEscapeRateTracker.create = function (events) {
         restart();
     });
 
-    var target = 700 * 40;
-
     on(events.morePixelsEscaped, function (_totalEscaped) {
-        counter +=1;
+        totalEscaped = _totalEscaped;
+    });
 
-        if (lastCheckpoint !== _totalEscaped) {
-            counter = 0;
-        }
-
-        if (lastCheckpoint === _totalEscaped && counter > 30 && _totalEscaped > target) {
+    // Stops rendering once no more pixels have escaped for 10 frames, if a fair amount of the image has.
+    // This counts frames rather than worker replies, so it doesn't depend on how many workers there are.
+    on(events.frameComplete, function () {
+        framesWithoutEscapes = totalEscaped === totalAtLastFrame ? framesWithoutEscapes + 1 : 0;
+        totalAtLastFrame = totalEscaped;
+        if (framesWithoutEscapes > 10 && totalEscaped > target) {
             events.fire(events.stop);
-            counter = 0;
-            lastCheckpoint = 0;
+            framesWithoutEscapes = 0;
         }
-        lastCheckpoint = _totalEscaped;
     });
 };
 

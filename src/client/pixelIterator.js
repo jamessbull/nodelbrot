@@ -4,8 +4,9 @@ namespace("jim.pixelIterator");
 // at most one shade out on palettes whose colours are at least about 1% apart.
 jim.pixelIterator.lookupTableSize = 16384;
 
-// Iterates and colours a block of width x height pixels starting at extents.mx, extents.my, with
-// extents.stepX and extents.stepY between pixels. Iteration can be done in steps: each call to
+// Iterates and colours width x height pixels: rows extents.firstRow, then every extents.rowStride-th row,
+// of an image whose top left pixel is at extents.mx, extents.my, with extents.stepX and extents.stepY
+// between pixels. Iteration can be done in steps: each call to
 // iterate carries on from where the last one stopped. The per-pixel state lives in typed arrays
 // and the loop works on them directly, without creating objects per pixel.
 jim.pixelIterator.create = function (width, height, extents) {
@@ -18,6 +19,8 @@ jim.pixelIterator.create = function (width, height, extents) {
     var black = new Uint32Array(new Uint8ClampedArray([0, 0, 0, 255]).buffer)[0];
     var inMainCardioidOrBulb = jim.newMandelbrotPoint.create().inMainCardioidOrBulb;
     var noOfPixels = width * height;
+    var firstRow = extents.firstRow;
+    var rowStride = extents.rowStride;
     var xState = new Float64Array(noOfPixels);
     var yState = new Float64Array(noOfPixels);
     var escapeValues = new Uint32Array(noOfPixels);        // iteration at which |z|^2 passed histogramEscapeValue, or 0
@@ -48,7 +51,7 @@ jim.pixelIterator.create = function (width, height, extents) {
                 if (imageEscapeValues[idx] !== 0 || neverEscapes[idx] !== 0) continue;
                 if (skip && skip[idx] !== 0) continue;
                 var mx = extents.mx + (i * extents.stepX);
-                var my = extents.my + (j * extents.stepY);
+                var my = extents.my + ((firstRow + (j * rowStride)) * extents.stepY);
                 if (inMainCardioidOrBulb(mx, my)) {
                     neverEscapes[idx] = 1;
                     continue;

@@ -85,6 +85,15 @@ jim.worker.pool.create = function (noOfWorkers, workerUrl) {
 // and it points this at itself.
 jim.worker.url = "/js/unifiedworker.js";
 
+// How many workers to run at once: one per hardware thread, less one for the page itself. Browsers that
+// don't say how many threads there are get 3, and very large machines are capped at 32, as each worker
+// adds a little work for the page every frame.
+jim.worker.count = function () {
+    "use strict";
+    var threads = (typeof navigator !== "undefined" && navigator.hardwareConcurrency) || 4;
+    return Math.max(1, Math.min(32, threads - 1));
+};
+
 namespace("jim.mandelbrot");
 // Starting size of the escape histogram. It grows when deeper iterations are reached.
 jim.mandelbrot.initialHistogramSize = 250000;

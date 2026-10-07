@@ -1,7 +1,8 @@
 namespace("jim.mandelbrot.export");
 
 // Renders extents (a rectangle in the complex plane) as a width x height image, iterating to depth and
-// coloured with palette, without touching the page. Two phases run on one pool of workers: first a
+// coloured with palette, without touching the page. Two phases run on one pool of jim.worker.count()
+// workers: first a
 // histogram of how many pixels escape at each iteration, from a sample of the image at a tenth of its
 // size each way, then the image itself in strips, coloured against that histogram. Pixels in deadRegions
 // (laid out 700 wide, as the interactive view publishes them) are left black. Fires
@@ -9,7 +10,7 @@ namespace("jim.mandelbrot.export");
 // onComplete with the image's RGBA data.
 jim.mandelbrot.export.render = function (extents, width, height, depth, palette, deadRegions, onComplete) {
     "use strict";
-    var noOfWorkers = 8;
+    var noOfWorkers = jim.worker.count();
     var histogramParts = 10;
     var imageParts = 100;
     var pool = jim.worker.pool.create(noOfWorkers, jim.worker.url);
@@ -29,10 +30,7 @@ jim.mandelbrot.export.render = function (extents, width, height, depth, palette,
                 maxIterations: depth,
                 exportWidth: fragment.columns,
                 exportHeight: fragment.rows,
-                mx: fragment.extents.mx,
-                my: fragment.extents.my,
-                mw: fragment.extents.stepX,
-                mh: fragment.extents.stepY
+                extents: fragment.extents
             };
         });
         pool.consume(jobs, function (msg) {

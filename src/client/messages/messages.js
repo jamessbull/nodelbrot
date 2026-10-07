@@ -1,37 +1,51 @@
 
 namespace("jim.messages.renderFragment2");
+// Divides a columns x rows image of the rectangle at (_mx, _my), _mw by _mh, into fragments for workers.
+// A fragment is a set of rows: firstRow, then every rowStride-th row, rows of them. Its extents give the
+// whole image's top left and the distance between pixels, plus firstRow and rowStride, so a pixel's
+// position depends only on its row and column, not on how the image was divided.
 jim.messages.renderFragment2.create = function (_offset, _mx, _my, _mw, _mh, _columns, _rows) {
     "use strict";
+    var stepSizeX = _mw / (_columns - 1);
+    var stepSizeY = _mh / (_rows - 1);
 
-    function newMessage(_currentChunk, _noOfChunks) {
-        var isFinalPart = _currentChunk === (_noOfChunks - 1);
-        var numberOfRowsInAChunk = Math.floor(_rows / _noOfChunks);
-        var numberOfRowsInFinalChunk = _rows - ((_noOfChunks - 1) * numberOfRowsInAChunk);
-        var stepSizeY = _mh / (_rows - 1);
-        var stepSizeX = _mw / (_columns - 1);
+    function fragment(firstRow, rowStride, rows) {
         return {
-            rows: isFinalPart ? numberOfRowsInFinalChunk : numberOfRowsInAChunk,
-            columns:_columns,
+            rows: rows,
+            columns: _columns,
+            firstRow: firstRow,
+            rowStride: rowStride,
             extents: {
                 mx: _mx,
-                my: _my + (numberOfRowsInAChunk * _currentChunk * stepSizeY),
+                my: _my,
                 stepX: stepSizeX,
-                stepY: stepSizeY
+                stepY: stepSizeY,
+                firstRow: firstRow,
+                rowStride: rowStride
             },
-
-            offset: numberOfRowsInAChunk * _currentChunk * _columns
+            offset: firstRow * _columns
         };
     }
 
     return {
-        split: function( _noOfParts ) {
-            var messages = [];
-
-            for (var i  = 0; i < _noOfParts; i +=1) {
-                messages[i] = newMessage(i, _noOfParts);
+        // _noOfParts blocks of consecutive rows, the last taking any left over.
+        split: function (_noOfParts) {
+            var rowsInAChunk = Math.floor(_rows / _noOfParts);
+            var parts = [];
+            for (var i = 0; i < _noOfParts; i += 1) {
+                var isFinalPart = i === _noOfParts - 1;
+                parts[i] = fragment(i * rowsInAChunk, 1, isFinalPart ? _rows - (i * rowsInAChunk) : rowsInAChunk);
             }
-
-            return messages;
+            return parts;
+        },
+        // _noOfParts sets of rows, each taking every _noOfParts-th row, so expensive and cheap parts of
+        // the image are shared out evenly.
+        interleave: function (_noOfParts) {
+            var parts = [];
+            for (var i = 0; i < _noOfParts; i += 1) {
+                parts[i] = fragment(i, _noOfParts, Math.max(0, Math.ceil((_rows - i) / _noOfParts)));
+            }
+            return parts;
         }
     };
 };
@@ -59,7 +73,8 @@ jim.messages.interactive.create = function (_fragment, histogram, currentIterati
     var histogramData = histogram.slice(0, filledLength).buffer;
     return {
         workerMessageType: "uiworker",
-        offset: _fragment.offset * 4,
+        firstRow: _fragment.firstRow,
+        rowStride: _fragment.rowStride,
         exportWidth : _fragment.columns,
         exportHeight : _fragment.rows,
         extents: _fragment.extents,
