@@ -12,8 +12,7 @@ import { createZoomOut } from "./ui/actions/zoomOut.js";
 import { createMove } from "./ui/actions/move.js";
 import { createTouchGestures } from "./ui/touchGestures.js";
 import { createNotice } from "./ui/notice.js";
-import { createGradientEditor } from "./colourGradient.js";
-import { createColourPicker } from "./colourPicker.js";
+import { createPaletteEditor } from "./paletteEditor.js";
 import { createExportSizes } from "./export/exportSizes.js";
 import { createControls } from "./controls.js";
 import { createBookmarks } from "./bookmarks.js";
@@ -67,14 +66,6 @@ export function startApp(newWorker) {
     showFps(element("framesPerSecond"), events);
     createEscapeHistogram(events, new Uint32Array(initialHistogramSize));
 
-    // The colour canvases are as wide as a narrow screen, up to their usual size, and the page scales
-    // them down further if it needs to.
-    const colourGradientCanvas = element("colourGradientCanvas");
-    const colourPickerCanvas = element("colourPickerCanvas");
-    const paletteWidth = Math.min(colourPickerCanvas.width, document.documentElement.clientWidth - 20);
-    colourPickerCanvas.width = paletteWidth;
-    colourGradientCanvas.width = Math.min(colourGradientCanvas.width, paletteWidth);
-
     // On a narrow screen the colours are a sheet over the image, opened from the toolbar.
     const app = element("allContent");
     const coloursButton = element("coloursButton");
@@ -85,19 +76,14 @@ export function startApp(newWorker) {
     };
 
     const palette = createPalette();
-    const gradientEditor = createGradientEditor(colourGradientCanvas, element("addButton"), element("removeButton"), palette, events);
-    const paletteBlendSelect = element("paletteBlendSelect");
-    paletteBlendSelect.onchange = function () {
-        palette.setBlend(paletteBlendSelect.value);
-        events.fire(events.paletteChanged, palette);
-        events.fire(events.showChanges);
-    };
-    // Keeps the selector right when a bookmark changes the blend.
-    events.listenTo(events.paletteChanged, () => { paletteBlendSelect.value = palette.blend(); });
+    createPaletteEditor({
+        events, palette, bar: element("paletteBar"), markerTrack: element("paletteMarkers"), shades: element("paletteShades"),
+        hues: element("paletteHues"), addButton: element("addButton"), removeButton: element("removeButton"),
+        blendSelect: element("paletteBlendSelect")
+    });
 
     const notice = createNotice(element("notice"));
-    const bookmarks = createBookmarks({bookmarkButton: element("bookmarkButton"), state, colourGradientui: gradientEditor, events, notice});
-    createColourPicker(colourPickerCanvas, gradientEditor, events);
+    const bookmarks = createBookmarks({bookmarkButton: element("bookmarkButton"), state, events, notice});
     const exportSizes = createExportSizes(element("exportSizeSelect"),
         ["smallExport", "mediumExport", "largeExport", "veryLargeExport"].map(element), size.width, size.height);
     createControls({exportSizes, state, events, newWorker});

@@ -32,7 +32,7 @@ export function parseBookmark(text) {
     return {location: {x: location.x, y: location.y, w: location.w, h: location.h}, nodes: info.nodes, blend: info.blend};
 }
 
-export function createBookmarks({bookmarkButton, state, colourGradientui, events, notice}) {
+export function createBookmarks({bookmarkButton, state, events, notice}) {
     const on = events.listenTo;
     let justBookmarked = false;
     let palette;
@@ -69,7 +69,6 @@ export function createBookmarks({bookmarkButton, state, colourGradientui, events
         const mandelbrotInfo = currentMandelbrotInfo();
         palette.fromNodeList(mandelbrotInfo.nodes);
         palette.setBlend(mandelbrotInfo.blend);
-        colourGradientui.rebuildMarkers(true);
         state.showView(rectangle(mandelbrotInfo.location));
         // Tell everything about the link's palette, and restart rendering in case it had stopped (as it
         // has if a link is opened in the same tab).

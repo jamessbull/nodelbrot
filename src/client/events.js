@@ -11,10 +11,6 @@ const names = {
     showChanges: "",
     // The palette has changed; carries the palette.
     paletteChanged: "",
-    // A colour marker was added to the palette editor; carries {node, selected, doNotRandomise}.
-    nodeAdded: "",
-    // A colour was chosen in the colour picker; carries {x, y, hue} of where it is shown.
-    colourSelected: "",
     // A frame is done: depthReached (carrying its depth) then frameComplete.
     depthReached: "",
     frameComplete: "",

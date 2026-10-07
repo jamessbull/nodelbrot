@@ -131,7 +131,7 @@
     function createPanel() {
         panel = document.createElement("div");
         panel.id = "perfHud";
-        panel.style.cssText = "position:fixed;bottom:8px;right:8px;z-index:10000;padding:6px 10px;" +
+        panel.style.cssText = "position:fixed;top:64px;right:20px;z-index:10000;padding:6px 10px;" +
             "background:rgba(0,0,0,0.75);color:#9f9;font:12px/1.4 monospace;border-radius:4px;pointer-events:none;";
         document.body.appendChild(panel);
         render();
