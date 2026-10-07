@@ -11,9 +11,9 @@ export function magnifiedArea(x, y, size, width, height) {
     return {x: clamp(x - Math.floor(size / 2), width - size), y: clamp(y - Math.floor(size / 2), height - size)};
 }
 
-// Examining pixels. Until an area is chosen, the magnifier canvas shows the image around the pointer;
-// a click or tap on the image chooses the area there, and a click on the magnifier then shows that
-// pixel's values: when it escaped, the point c it is, where its orbit z had got to, and its colour.
+// Examining pixels. The magnifier canvas follows the pointer over the image, showing the area around it,
+// until a click or tap on the image stops it there, so the pointer can go to the magnifier; another
+// click on the image sets it following again. A click on the magnifier shows that pixel's values: when it escaped, the point c it is, where its orbit z had got to, and its colour.
 // hint says what to do next. The pixel data (imgData, xState, yState, escapeValues and
 // imageEscapeValues, a value or four per pixel of the width x height display) is filled in by the
 // renderer once examining starts.
@@ -21,7 +21,7 @@ export function createPixelExaminer({events, magnifier, hint, imgData, xState, y
     const context = magnifier.getContext("2d");
     const blockSize = magnifier.width / areaSize;
     let examining = false;
-    let chosen = null;          // the centre of the area chosen, or null while following the pointer
+    let chosen = null;          // the centre of the area the magnifier was stopped at, or null while following
 
     const showValue = (id, value) => { document.getElementById(id).textContent = value; };
 
@@ -79,14 +79,19 @@ export function createPixelExaminer({events, magnifier, hint, imgData, xState, y
 
     events.listenTo(events.pixelDataReady, function () {
         examining = true;
-        hint.textContent = "Point at the image to magnify it, then click or tap to choose that area.";
+        hint.textContent = "Move over the image and the magnifier follows. Click or tap to stop it there.";
     });
 
     events.listenTo(events.examinePixelAt, function (point) {
         if (!examining) return;
-        chosen = {x: point.x, y: point.y};
-        drawArea(chosen);
-        hint.textContent = "Click a pixel in the magnifier to see its values, or the image to choose another area.";
+        drawArea(point);
+        if (chosen) {
+            chosen = null;
+            hint.textContent = "Move over the image and the magnifier follows. Click or tap to stop it there.";
+        } else {
+            chosen = {x: point.x, y: point.y};
+            hint.textContent = "Click a pixel in the magnifier to see its values. Click the image again to carry on magnifying.";
+        }
     });
 
     events.listenTo(events.pointerMoved, function (point) {
