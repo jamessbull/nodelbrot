@@ -2,7 +2,7 @@ namespace("jim.mandelbrot.webworkerInteractive");
 jim.mandelbrot.webworkerInteractive.create = function (_width, _height, _events, _stepSize, _parallelism, _imgData, _escapeValues, _xState, _yState, _imageEscapeValues, _extents) {
     "use strict";
 
-    var pool = jim.worker.pool.create(_parallelism, jim.worker.url, [], "none", "histogramDataBuffer");
+    var pool = jim.worker.pool.create(_parallelism, jim.worker.url);
     var array = jim.common.array;
     var requestExaminePixelData = false;
     var histogram = new Uint32Array(jim.mandelbrot.initialHistogramSize);

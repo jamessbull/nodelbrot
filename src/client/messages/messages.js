@@ -56,6 +56,7 @@ namespace(("jim.messages.interactive"));
 jim.messages.interactive.create = function (_fragment, histogram, currentIteration, stepSize, palette, histogramTotal, histogramFilledLength) {
     "use strict";
     var filledLength = histogramFilledLength === undefined ? histogram.length : histogramFilledLength;
+    var histogramData = histogram.slice(0, filledLength).buffer;
     return {
         workerMessageType: "uiworker",
         offset: _fragment.offset * 4,
@@ -63,11 +64,12 @@ jim.messages.interactive.create = function (_fragment, histogram, currentIterati
         exportHeight : _fragment.rows,
         extents: _fragment.extents,
         deadRegions: [],
-        histogramDataBuffer: histogram.slice(0, filledLength).buffer,
+        histogramDataBuffer: histogramData,
         histogramLength: histogram.length,
         currentIteration : currentIteration,
         iterations : stepSize,
         paletteNodes: palette,
-        histogramTotal : histogramTotal
+        histogramTotal : histogramTotal,
+        transfer: [histogramData]
     };
 };

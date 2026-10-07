@@ -20,51 +20,40 @@ jim.common.array = function (x, f) {
 };
 
 namespace("jim.worker.pool");
-jim.worker.pool.create = function (noOfWorkers, workerUrl, initialJobs, toTransfer, _nameOfStandardTransferList) {
+// A fixed set of web workers, all running workerUrl.
+// consume runs a batch of jobs, one per worker at a time, and calls onEachJob with each reply and
+// onAllJobsComplete after the last. A job with a workerIndex runs on that worker (e.g. because the worker
+// holds its state); other jobs go to whichever worker is free. Replies from earlier batches are ignored.
+// sendToEach posts messageFor(i) to each worker i, expecting no reply; workers handle messages in order,
+// so it can set workers up for the next batch.
+// The buffers in a job's or message's transfer list, if it has one, are transferred instead of copied.
+jim.worker.pool.create = function (noOfWorkers, workerUrl) {
     "use strict";
-    function array(x, f) {
-        var a = [];
-        for (var i = 0 ; i < x; i += 1) {
-            a[i] = f(i);
-        }
-        return a;
-    }
-
-    function initWorkers(parallelism, workerName) {
-        return array(parallelism, function (i) {
-            var worker = new Worker(workerName);
-            if (initialJobs.length === parallelism)
-                worker.postMessage(initialJobs[i], [initialJobs[i][toTransfer]]);
-            return worker;
-        });
-    }
-
-    function postNextJob(job, _worker, _currentBatchId) {
-        if (job) {
-            job.batchid = _currentBatchId;
-            var transferList = job[_nameOfStandardTransferList];
-            if(transferList) {
-                _worker.postMessage(job, [transferList]);
-            } else {
-                _worker.postMessage(job);
-            }
-        }
-    }
-
-    var workers = initWorkers(noOfWorkers, workerUrl);
+    var workers = jim.common.array(noOfWorkers, function () {
+        return new Worker(workerUrl);
+    });
     var batchid = 0;
+
+    function post(worker, message) {
+        var transfer = message.transfer || [];
+        delete message.transfer;
+        worker.postMessage(message, transfer);
+    }
+
     return {
         consume: function (_jobs, _onEachJob, _onAllJobsComplete) {
             var jobsComplete = 0, jobsToComplete = _jobs.length, currentBatchId = batchid +=1;
-            // A job with a workerIndex must run on that worker (e.g. because the worker holds its state);
-            // other jobs go to whichever worker is free.
             var sharedJobs = _jobs.filter(function (job) { return job.workerIndex === undefined; });
             var pinnedJobs = workers.map(function (worker, i) {
                 return _jobs.filter(function (job) { return job.workerIndex === i; });
             });
             workers.forEach(function (worker, i) {
-                function nextJob() {
-                    return pinnedJobs[i].shift() || sharedJobs.shift();
+                function postNextJob() {
+                    var job = pinnedJobs[i].shift() || sharedJobs.shift();
+                    if (job) {
+                        job.batchid = currentBatchId;
+                        post(worker, job);
+                    }
                 }
                 worker.onmessage = function (e) {
                     var msg = e.data;
@@ -72,11 +61,16 @@ jim.worker.pool.create = function (noOfWorkers, workerUrl, initialJobs, toTransf
                         return;
                     }
                     jobsComplete +=1;
-                    postNextJob(nextJob(), this, currentBatchId);
+                    postNextJob();
                     _onEachJob(msg);
                     if (jobsComplete === jobsToComplete) _onAllJobsComplete(msg);
                 };
-                postNextJob(nextJob(), worker, currentBatchId);
+                postNextJob();
+            });
+        },
+        sendToEach: function (messageFor) {
+            workers.forEach(function (worker, i) {
+                post(worker, messageFor(i));
             });
         },
         terminate: function () {

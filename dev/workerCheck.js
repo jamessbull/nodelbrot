@@ -235,9 +235,8 @@ function describeEscapes(e) {
         e.firstWrong.expected + ", got " + e.firstWrong.actual + ")";
 }
 
-// Image export: the real histogram phase (escapeHistogramCalculator) followed by the image phase
-// as set up by exportImage in export/exporter.js, which is mirrored here since the rest of that
-// file is DOM handling. Returns a hash of the exported image.
+// Image export with the default palette, through jim.mandelbrot.export.render (the whole export apart
+// from showing the image). Returns a hash of the exported image.
 function exportImage(side, exp) {
     const scheduler = newScheduler();
     const ctx = newContext();
@@ -250,29 +249,34 @@ function exportImage(side, exp) {
     vm.runInContext(`
         var v = exp.view;
         var source = jim.rectangle.create(v.x, v.y, v.w, v.h);
-        var dest = jim.rectangle.create(0, 0, Math.floor(exp.width / 10), Math.floor(exp.height / 10));
-        jim.mandelbrot.export.escapeHistogramCalculator.create().calculate(source, dest, exp.depth, 10, 8, function (histogramData, histogramTotal) {
-            var nodeList = jim.palette.create().toNodeList();
-            var initialJobs = [];
-            for (var i = 0; i < 8; i += 1) {
-                var histoCopy = new Uint32Array(histogramData);
-                initialJobs.push({workerMessageType: "imageexportworker", updateHistogramData: true, paletteNodes: nodeList,
-                    histogramData: histoCopy.buffer, histogramSize: histoCopy.length, histogramTotal: histogramTotal});
-            }
-            var fragments = jim.messages.renderFragment2.create(0, v.x, v.y, v.w, v.h, exp.width, exp.height).split(100);
-            var deadSections = jim.common.arraySplitter.create().split(deadRegions, 100, 700);
-            var jobs = fragments.map(function (fragment, i) {
-                // exporter.js passes the depth input's value, which is a string.
-                return jim.messages.export.create(fragment, String(exp.depth), deadSections[i]);
+        if (jim.mandelbrot.export.render) {
+            jim.mandelbrot.export.render(source, exp.width, exp.height, exp.depth, jim.palette.create(), deadRegions, done);
+        } else {
+            // Revisions before jim.mandelbrot.export.render: the same steps as their exporter.js took.
+            var dest = jim.rectangle.create(0, 0, Math.floor(exp.width / 10), Math.floor(exp.height / 10));
+            jim.mandelbrot.export.escapeHistogramCalculator.create().calculate(source, dest, exp.depth, 10, 8, function (histogramData, histogramTotal) {
+                var nodeList = jim.palette.create().toNodeList();
+                var initialJobs = [];
+                for (var i = 0; i < 8; i += 1) {
+                    var histoCopy = new Uint32Array(histogramData);
+                    initialJobs.push({workerMessageType: "imageexportworker", updateHistogramData: true, paletteNodes: nodeList,
+                        histogramData: histoCopy.buffer, histogramSize: histoCopy.length, histogramTotal: histogramTotal});
+                }
+                var fragments = jim.messages.renderFragment2.create(0, v.x, v.y, v.w, v.h, exp.width, exp.height).split(100);
+                var deadSections = jim.common.arraySplitter.create().split(deadRegions, 100, 700);
+                var jobs = fragments.map(function (fragment, i) {
+                    // exporter.js passed the depth input's value, which is a string.
+                    return jim.messages.export.create(fragment, String(exp.depth), deadSections[i]);
+                });
+                var pool = jim.worker.pool.create(8, jim.worker.url || "/js/unifiedworker.js", initialJobs, "histogramData", "none");
+                var imageData = new Uint8ClampedArray(exp.width * exp.height * 4);
+                pool.consume(jobs, function (msg) {
+                    imageData.set(new Uint8ClampedArray(msg.result.imgData), msg.result.offset);
+                }, function () {
+                    done(imageData);
+                });
             });
-            var pool = jim.worker.pool.create(8, jim.worker.url || "/js/unifiedworker.js", initialJobs, "histogramData", "none");
-            var imageData = new Uint8ClampedArray(exp.width * exp.height * 4);
-            pool.consume(jobs, function (msg) {
-                imageData.set(new Uint8ClampedArray(msg.result.imgData), msg.result.offset);
-            }, function () {
-                done(imageData);
-            });
-        });
+        }
     `, ctx);
     const start = process.hrtime.bigint();
     scheduler.drain();
