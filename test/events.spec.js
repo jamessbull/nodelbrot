@@ -38,3 +38,26 @@ describe("events", function () {
         expect(console.error).toHaveBeenCalled();
     });
 });
+
+describe("scoped events", function () {
+    it("should hear events like the rest, until disposed", function () {
+        const events = createEvents();
+        const scoped = events.scope();
+        const heard = [];
+        events.listenTo("frame", () => heard.push("main"));
+        scoped.listenTo("frame", () => heard.push("scoped"));
+
+        events.fire("frame");
+        scoped.fire("frame");
+        expect(heard).toEqual(["main", "scoped", "main", "scoped"]);
+
+        scoped.dispose();
+        events.fire("frame");
+        expect(heard).toEqual(["main", "scoped", "main", "scoped", "main"]);
+    });
+
+    it("should share the event names", function () {
+        const events = createEvents();
+        expect(events.scope().extentsUpdate).toBe(events.extentsUpdate);
+    });
+});

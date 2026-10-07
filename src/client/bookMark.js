@@ -70,7 +70,7 @@ export function createBookmarks(bookmarkButton, state, colourGradientui, _events
         palette.fromNodeList(mandelbrotInfo.nodes);
         palette.setBlend(mandelbrotInfo.blend);
         colourGradientui.rebuildMarkers(true);
-        state.setExtents(rectangle(mandelbrotInfo.location));
+        state.showView(rectangle(mandelbrotInfo.location));
         // Changing the view drops any palette waiting to go to the renderer, so send it again, and
         // restart rendering in case it had stopped (as it has if a link is opened in the same tab).
         _events.fire(_events.paletteChanged, palette);

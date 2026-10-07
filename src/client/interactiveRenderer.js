@@ -29,6 +29,7 @@ export function createInteractiveRenderer({width: _width, height: _height, event
     const escapeValues = _escapeValues;
     let running = true;
     let stopped = false;
+    let destroyed = false;      // once destroyed, nothing more is sent to the workers
     let fragments;
     const timer = stopwatch;
     // Bumped whenever the view changes. A batch posted before then is for the old view, so its
@@ -99,6 +100,9 @@ export function createInteractiveRenderer({width: _width, height: _height, event
     }
 
     function postMessage() {
+        if (destroyed) {
+            return;
+        }
         timer.start();
         batchGeneration = viewGeneration;
         const mx = extents ? extents.mx : undefined;
@@ -175,6 +179,9 @@ export function createInteractiveRenderer({width: _width, height: _height, event
     });
 
     function isStopped() {
+        if (destroyed) {
+            return;
+        }
         if (stopped) {
             running = true;
             stopped = false;
@@ -214,6 +221,7 @@ export function createInteractiveRenderer({width: _width, height: _height, event
             postMessage();
         },
         destroy: function () {
+            destroyed = true;
             pool.terminate();
         }
     };

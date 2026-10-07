@@ -29,11 +29,12 @@
             font: 14px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
         }
 
+        /* The page fills the window, and the image fills what the toolbar and colours leave. */
         .app {
             display: grid;
-            grid-template-rows: auto 1fr auto auto;
+            grid-template-rows: auto minmax(0, 1fr) auto auto;
             gap: var(--gap);
-            min-height: 100%;
+            height: 100dvh;
             padding: var(--gap);
         }
 
@@ -160,8 +161,10 @@
         .viewer {
             display: flex;
             justify-content: center;
-            align-items: flex-start;
+            align-items: center;
             min-width: 0;
+            min-height: 0;
+            overflow: hidden;
         }
 
         .canvasStack {
@@ -311,7 +314,7 @@
         </div>
     </header>
 
-    <main class="viewer">
+    <main id="viewer" class="viewer">
         <div class="canvasStack">
             <canvas id="mandelbrotCanvas"></canvas>
             <canvas id="uiCanvas"></canvas>

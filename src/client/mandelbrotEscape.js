@@ -3,12 +3,29 @@ import { rectangle } from "./geometry.js";
 // Starting size of the escape histogram. It grows when deeper iterations are reached.
 export const initialHistogramSize = 250000;
 
+// The view at the same centre and pixel size on a display newWidth x newHeight pixels instead of
+// oldWidth x oldHeight, so a bigger display shows more around it, at the same zoom.
+export function refitView(view, oldWidth, oldHeight, newWidth, newHeight) {
+    const width = (view.width() / (oldWidth - 1)) * (newWidth - 1);
+    const height = (view.height() / (oldHeight - 1)) * (newHeight - 1);
+    return rectangle(view.x + ((view.width() - width) / 2), view.y + ((view.height() - height) / 2), width, height);
+}
+
+// The smallest view with the same centre as view that shows all of it on a width x height display, with
+// square pixels.
+export function fitView(view, width, height) {
+    const pixelSize = Math.max(view.width() / (width - 1), view.height() / (height - 1));
+    const fittedWidth = pixelSize * (width - 1);
+    const fittedHeight = pixelSize * (height - 1);
+    return rectangle(view.x + ((view.width() - fittedWidth) / 2), view.y + ((view.height() - fittedHeight) / 2), fittedWidth, fittedHeight);
+}
+
 // The view: the rectangle of the complex plane shown on a sizeX x sizeY display, and the views zoomed
 // in from, for zooming out again.
 export function createViewState(sizeX, sizeY, startingExtent, _events) {
     const on = _events.listenTo;
     let currentExtents = startingExtent;
-    const previousExtents = [];
+    let previousExtents = [];
     let screen = rectangle(0, 0, sizeX - 1, sizeY - 1);
     const fromScreen = (x, y) => screen.at(x, y).translateTo(currentExtents);
 
@@ -18,7 +35,14 @@ export function createViewState(sizeX, sizeY, startingExtent, _events) {
             currentExtents = selection.area().translateFrom(screen).to(currentExtents);
             _events.fire(_events.extentsUpdate, currentExtents);
         },
-        resize: function (sizeX, sizeY) {
+        // For a display that is now newX x newY: keeps the view, and the views zoomed in from, at the
+        // same centre and zoom.
+        resize: function (newX, newY) {
+            const refit = (view) => refitView(view, sizeX, sizeY, newX, newY);
+            currentExtents = refit(currentExtents);
+            previousExtents = previousExtents.map(refit);
+            sizeX = newX;
+            sizeY = newY;
             screen = rectangle(0, 0, sizeX - 1, sizeY - 1);
         },
         zoomOut: function () {
@@ -42,8 +66,9 @@ export function createViewState(sizeX, sizeY, startingExtent, _events) {
             if (previousExtents.length === 0) return currentExtents;
             return previousExtents[previousExtents.length - 1];
         },
-        setExtents: function (extents) {
-            currentExtents = extents;
+        // Shows all of extents, centred, with more around it in whichever direction the display's shape needs.
+        showView: function (extents) {
+            currentExtents = fitView(extents, sizeX, sizeY);
             _events.fire(_events.extentsUpdate, currentExtents);
         }
     };
