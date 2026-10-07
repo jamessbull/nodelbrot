@@ -43,6 +43,7 @@ export function createInteractiveRenderer({width, height, events, workers, newWo
     let perturbing = false;     // whether it is rendered by perturbation
     let waitingForOrbit = false;
     let rereferences = 0;
+    let catchUpTo = 0;          // the depth the image is shown again from, after re-referencing (see rereference.js)
     let frameIterations = 0;    // the iterations the batch out with the workers is doing
     const timer = stopwatch;
     // Bumped whenever the view changes. A batch posted before then is for the old view, so its
@@ -90,7 +91,9 @@ export function createInteractiveRenderer({width, height, events, workers, newWo
             if (batchSendsData) {
                 events.fire(events.pixelDataReady);
             }
-            events.fire(events.frameComplete);
+            if (currentIteration >= catchUpTo) {
+                events.fire(events.frameComplete);
+            }
 
             updateStepSize(timer.elapsed());
             rereferenceIfNeeded();
@@ -227,10 +230,14 @@ export function createInteractiveRenderer({width, height, events, workers, newWo
         view = newView;
         perturbing = Boolean(referenceOrbit && referenceOrbit.active());
         rereferences = 0;
+        catchUpTo = 0;
         restartView();
     });
 
-    on(events.referenceChanged, restartView);
+    on(events.referenceChanged, function () {
+        catchUpTo = Math.max(catchUpTo, currentIteration);
+        restartView();
+    });
 
     // Each worker keeps its own copy of the reference orbit.
     function sendOrbit(generation, from, values, escaped) {

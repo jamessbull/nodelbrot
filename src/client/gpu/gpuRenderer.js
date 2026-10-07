@@ -34,12 +34,10 @@ export function createGpuRenderer({width, height, events, imgData, escapeValues,
     let current = 0;                // which of states holds the pixels as they are
     const colourFramebuffer = createFramebuffer(gl, [createTexture(gl, gl.RGBA8, width, height, gl.RGBA, gl.UNSIGNED_BYTE)]);
 
-    // Iterations per frame, adjusted so the GPU spends about frameTarget milliseconds on each. With the
-    // frames overlapping, that is about how often they finish.
+    // Iterations per frame, adjusted so the GPU spends about workAim() milliseconds on each.
     const initialStepSize = 95;
     const minStepSize = 5;
     const maxStepSize = 20000;
-    const frameTarget = {low: 22, aim: 26, high: 30};
 
     // The counts of escapes in a frame, by iteration from its start.
     const countRows = Math.ceil(maxStepSize / arrayTextureWidth);
@@ -67,6 +65,7 @@ export function createGpuRenderer({width, height, events, imgData, escapeValues,
     let requestExaminePixelData = false;
     let examining = false;
     let rereferences = 0;
+    let catchUpTo = 0;              // the depth the image is shown again from, after re-referencing
     // Iterations per frame follow how long the GPU spends on them. Finding out a frame has finished can
     // take far longer than the work (tens of milliseconds, in a hidden page), so the GPU's own timer is
     // used where there is one, and otherwise the time since the frame before finished (or since this one
@@ -178,10 +177,47 @@ export function createGpuRenderer({width, height, events, imgData, escapeValues,
     // that frame leaves it.
     const canSubmit = () => framesInFlight.length < maxFramesInFlight && !framesInFlight.some((frame) => frame.sendsData);
 
-    // Puts frames in, as many as can be in flight, while rendering or a frame is wanted.
-    function submitFrames() {
-        while (!destroyed && !waitingForOrbit && (running || frameWanted) && canSubmit()) {
+    // Frames go in one per animation frame, each with about half an animation frame's work, so the GPU
+    // has time left to draw the page (the zoom animations, say) and the image updates as often as the
+    // display does. A hidden page has no animation frames, so there they go in as fast as they can, with
+    // as much work as a frame of the CPU renderer.
+    const animationFrames = typeof requestAnimationFrame === "function";
+    let submitScheduled = 0;            // the pending request to put in a frame, if any
+    let lastAnimationFrame = 0;
+    let animationFrameTime = 1000 / 60; // the time between animation frames, averaged
+
+    const workAim = () => (document.hidden ? 26 : Math.min(26, Math.max(5, animationFrameTime / 2)));
+
+    function scheduleSubmit() {
+        if (submitScheduled || destroyed) {
+            return;
+        }
+        const request = submitScheduled = {};
+        const go = function (time) {
+            if (submitScheduled === request) {
+                submitScheduled = 0;
+                submitNext(time);
+            }
+        };
+        if (animationFrames && !document.hidden) {
+            requestAnimationFrame(go);
+            // In case the page is hidden before the animation frame comes.
+            setTimeout(go, 250);
+        } else {
+            setTimeout(go, 0);
+        }
+    }
+
+    function submitNext(time) {
+        if (typeof time === "number" && time > lastAnimationFrame) {
+            if (time - lastAnimationFrame < 100) {
+                animationFrameTime = (0.9 * animationFrameTime) + (0.1 * (time - lastAnimationFrame));
+            }
+            lastAnimationFrame = time;
+        }
+        if (!destroyed && !waitingForOrbit && (running || frameWanted) && canSubmit()) {
             submitFrame();
+            scheduleSubmit();
         }
         if (framesInFlight.length > 0 && !polling) {
             polling = true;
@@ -279,7 +315,11 @@ export function createGpuRenderer({width, height, events, imgData, escapeValues,
             gl.deleteSync(frame.fence);
             spareFrames.push(frame);
         }
-        submitFrames();
+        scheduleSubmit();
+        if (framesInFlight.length > 0 && !polling) {
+            polling = true;
+            setTimeout(poll, 1);
+        }
     }
 
     function finishFrame(frame) {
@@ -298,12 +338,18 @@ export function createGpuRenderer({width, height, events, imgData, escapeValues,
         events.fire(events.escapesFromWorkers, {update, currentIteration: frame.start});
         events.fire(events.depthReached, frame.start);
         currentIteration = frame.start + frame.iterations;
-        drawImage();
+        // After re-referencing, the image isn't shown again until it has caught up (see rereference.js).
+        const showing = currentIteration >= catchUpTo;
+        if (showing || frame.sendsData) {
+            drawImage();
+        }
         if (frame.sendsData) {
             readExamineData();
             events.fire(events.pixelDataReady);
         }
-        events.fire(events.frameComplete);
+        if (showing) {
+            events.fire(events.frameComplete);
+        }
         updateStepSize(frame, work);
         if (running && rereferences < maxRereferences && rereferenceDue(referenceOrbit, currentIteration)) {
             readEscapeValues();
@@ -398,10 +444,11 @@ export function createGpuRenderer({width, height, events, imgData, escapeValues,
     // short by the reference orbit are counted as if they had been the full size.
     function updateStepSize(frame, work) {
         const fullWork = work * frame.stepSize / frame.iterations;
-        if (fullWork >= frameTarget.low && fullWork <= frameTarget.high) {
+        const aim = workAim();
+        if (fullWork >= 0.85 * aim && fullWork <= 1.15 * aim) {
             return;
         }
-        const scale = Math.min(2, Math.max(0.5, frameTarget.aim / Math.max(fullWork, 1)));
+        const scale = Math.min(2, Math.max(0.5, aim / Math.max(fullWork, 0.1)));
         stepSize = Math.min(maxStepSize, Math.max(minStepSize, Math.round(frame.stepSize * scale)));
     }
 
@@ -416,7 +463,7 @@ export function createGpuRenderer({width, height, events, imgData, escapeValues,
 
     function requestFrame() {
         frameWanted = true;
-        submitFrames();
+        scheduleSubmit();
     }
 
     function restartView() {
@@ -433,15 +480,19 @@ export function createGpuRenderer({width, height, events, imgData, escapeValues,
         }
         view = newView;
         rereferences = 0;
+        catchUpTo = 0;
         restartView();
     });
 
-    on(events.referenceChanged, restartView);
+    on(events.referenceChanged, function () {
+        catchUpTo = Math.max(catchUpTo, currentIteration);
+        restartView();
+    });
 
     on(events.referenceOrbitGrew, function () {
         if (waitingForOrbit && orbitRoom() >= 1) {
             waitingForOrbit = false;
-            submitFrames();
+            scheduleSubmit();
         }
     });
 
@@ -455,7 +506,7 @@ export function createGpuRenderer({width, height, events, imgData, escapeValues,
 
     function start() {
         running = true;
-        submitFrames();
+        scheduleSubmit();
     }
 
     function stop() {
