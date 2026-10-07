@@ -19,8 +19,8 @@ export function fitView(view, width, height) {
 
 // The view: the rectangle of the complex plane shown on a sizeX x sizeY display, and the views zoomed
 // in from, for zooming out again.
-export function createViewState(sizeX, sizeY, startingExtent, _events) {
-    const on = _events.listenTo;
+export function createViewState(sizeX, sizeY, startingExtent, events) {
+    const on = events.listenTo;
     let currentExtents = startingExtent;
     let previousExtents = [];
     let screen = rectangle(0, 0, sizeX - 1, sizeY - 1);
@@ -30,7 +30,7 @@ export function createViewState(sizeX, sizeY, startingExtent, _events) {
         zoomTo: function (selection) {
             previousExtents.push(currentExtents.copy());
             currentExtents = selection.area().translateFrom(screen).to(currentExtents);
-            _events.fire(_events.viewChanged, currentExtents);
+            events.fire(events.viewChanged, currentExtents);
         },
         // For a display that is now newX x newY: keeps the view, and the views zoomed in from, at the
         // same centre and zoom.
@@ -45,7 +45,7 @@ export function createViewState(sizeX, sizeY, startingExtent, _events) {
         zoomOut: function () {
             if (previousExtents.length > 0) {
                 currentExtents = previousExtents.pop();
-                _events.fire(_events.viewChanged, currentExtents);
+                events.fire(events.viewChanged, currentExtents);
             }
         },
         notFullyZoomedOut: function () {
@@ -54,7 +54,7 @@ export function createViewState(sizeX, sizeY, startingExtent, _events) {
         move: function (moveX, moveY) {
             const distance = fromScreen(moveX, moveY).distanceTo(currentExtents.topLeft());
             currentExtents.move(0 - distance.x, 0 - distance.y);
-            _events.fire(_events.viewChanged, currentExtents);
+            events.fire(events.viewChanged, currentExtents);
         },
         getExtents: function () {
             return currentExtents;
@@ -72,28 +72,28 @@ export function createViewState(sizeX, sizeY, startingExtent, _events) {
             }
             const topLeft = fromScreen(-translateX / scale, -translateY / scale);
             currentExtents = rectangle(topLeft.x, topLeft.y, currentExtents.width() / scale, currentExtents.height() / scale);
-            _events.fire(_events.viewChanged, currentExtents);
+            events.fire(events.viewChanged, currentExtents);
         },
         // Shows all of extents, centred, with more around it in whichever direction the display's shape needs.
         showView: function (extents) {
             currentExtents = fitView(extents, sizeX, sizeY);
-            _events.fire(_events.viewChanged, currentExtents);
+            events.fire(events.viewChanged, currentExtents);
         }
     };
 
-    on(_events.zoomOut, function () {
+    on(events.zoomOut, function () {
         theState.zoomOut();
     });
 
-    on(_events.zoomToSelection, function (_selection) {
-        theState.zoomTo(_selection);
+    on(events.zoomToSelection, function (selection) {
+        theState.zoomTo(selection);
     });
 
-    on(_events.moveBy, function (_location) {
-       theState.move(_location.x, _location.y);
+    on(events.moveBy, function (location) {
+       theState.move(location.x, location.y);
     });
 
-    on(_events.transformView, function (transform) {
+    on(events.transformView, function (transform) {
         theState.transform(transform);
     });
     return theState;

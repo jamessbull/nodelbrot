@@ -7,11 +7,10 @@ import { initialHistogramSize } from "./escapeHistogram.js";
 // (each a value or four per pixel of the width x height display): imgData, the image; escapeValues, the
 // iteration each pixel escaped at; and, when examining pixels, xState, yState and imageEscapeValues.
 // workers is how many workers to use, made by newWorker(); stopwatch times frames (for tests to fake).
-export function createInteractiveRenderer({width: _width, height: _height, events: _events, workers: _parallelism, newWorker,
-        imgData: _imgData, escapeValues: _escapeValues, xState: _xState, yState: _yState, imageEscapeValues: _imageEscapeValues,
-        stopwatch = createStopwatch()}) {
-    const on = _events.listenTo;
-    const pool = createWorkerPool(_parallelism, newWorker);
+export function createInteractiveRenderer({width, height, events, workers, newWorker, imgData, escapeValues, xState, yState,
+        imageEscapeValues, stopwatch = createStopwatch()}) {
+    const on = events.listenTo;
+    const pool = createWorkerPool(workers, newWorker);
     let requestExaminePixelData = false;
     let histogram = new Uint32Array(initialHistogramSize);
     let histogramFilledLength = 0;
@@ -26,7 +25,6 @@ export function createInteractiveRenderer({width: _width, height: _height, event
     let extents;                // the view to send with the next batch, if it has changed
     let palette = null;         // palette nodes to send with the next batch, if they've changed
     let paletteBlend = "rgb";
-    const escapeValues = _escapeValues;
     // Rendering goes a batch (a frame) at a time, with at most one batch out with the workers.
     let running = true;         // whether to carry on with another frame after each one
     let inFlight = false;       // whether a batch is out with the workers
@@ -42,24 +40,24 @@ export function createInteractiveRenderer({width: _width, height: _height, event
 
     // Copies a fragment's rows, which arrive one after another in source, to their places in target,
     // which has valuesPerPixel values for each pixel of the whole image.
-    function placeRows(target, source, _msg, valuesPerPixel) {
-        const rowLength = _width * valuesPerPixel;
-        for (let k = 0, row = _msg.firstRow; (k * rowLength) < source.length; k += 1, row += _msg.rowStride) {
+    function placeRows(target, source, msg, valuesPerPixel) {
+        const rowLength = width * valuesPerPixel;
+        for (let k = 0, row = msg.firstRow; (k * rowLength) < source.length; k += 1, row += msg.rowStride) {
             target.set(source.subarray(k * rowLength, (k + 1) * rowLength), row * rowLength);
         }
     }
 
-    function onEachJob(_msg) {
+    function onEachJob(msg) {
         if (batchGeneration !== viewGeneration) {
             return;
         }
-        _events.fire(_events.escapesFromWorkers, {update: new Uint32Array(_msg.histogramUpdate), currentIteration: currentIteration});
-        placeRows(escapeValues, new Uint32Array(_msg.escapeValues), _msg, 1);
-        placeRows(_imgData, new Uint8ClampedArray(_msg.imageDataBuffer), _msg, 4);
-        if (_msg.extraDataSent) {
-            placeRows(_xState, _msg.xState, _msg, 1);
-            placeRows(_yState, _msg.yState, _msg, 1);
-            placeRows(_imageEscapeValues, _msg.imageEscapeValues, _msg, 1);
+        events.fire(events.escapesFromWorkers, {update: new Uint32Array(msg.histogramUpdate), currentIteration: currentIteration});
+        placeRows(escapeValues, new Uint32Array(msg.escapeValues), msg, 1);
+        placeRows(imgData, new Uint8ClampedArray(msg.imageDataBuffer), msg, 4);
+        if (msg.extraDataSent) {
+            placeRows(xState, msg.xState, msg, 1);
+            placeRows(yState, msg.yState, msg, 1);
+            placeRows(imageEscapeValues, msg.imageEscapeValues, msg, 1);
         }
     }
 
@@ -75,12 +73,12 @@ export function createInteractiveRenderer({width: _width, height: _height, event
     function onAllJobsComplete() {
         timer.stop();
         if (batchGeneration === viewGeneration) {
-            _events.fire(_events.depthReached, currentIteration);
+            events.fire(events.depthReached, currentIteration);
             currentIteration += stepSize;
             if (batchSendsData) {
-                _events.fire(_events.pixelDataReady);
+                events.fire(events.pixelDataReady);
             }
-            _events.fire(_events.frameComplete);
+            events.fire(events.frameComplete);
 
             updateStepSize(timer.elapsed());
         }
@@ -96,7 +94,7 @@ export function createInteractiveRenderer({width: _width, height: _height, event
         console.error("Rendering stopped: a worker failed: " + message);
         inFlight = false;
         frameWanted = false;
-        _events.fire(_events.stop);
+        events.fire(events.stop);
     }
 
     // Sends the next batch now, or once the one out with the workers is done.
@@ -122,11 +120,11 @@ export function createInteractiveRenderer({width: _width, height: _height, event
         const my = extents ? extents.my : undefined;
         const mw = extents ? extents.mw : undefined;
         const mh = extents ? extents.mh : undefined;
-        const initialRenderDefinition = renderFragments(mx, my, mw, mh, _width, _height);
+        const initialRenderDefinition = renderFragments(mx, my, mw, mh, width, height);
 
         if(extents) {
-            // Every worker gets every _parallelism-th row, so each has a fair share of the costly pixels.
-            fragments = initialRenderDefinition.interleave(_parallelism);
+            // Every worker gets every workers-th row, so each has a fair share of the costly pixels.
+            fragments = initialRenderDefinition.interleave(workers);
         }
 
         const jobs = fragments.map(function (message, i) {
@@ -138,7 +136,7 @@ export function createInteractiveRenderer({width: _width, height: _height, event
                 job.paletteBlend = paletteBlend;
             }
             // The worker keeps the per-pixel state of its fragment between frames.
-            job.workerIndex = i % _parallelism;
+            job.workerIndex = i % workers;
 
             if (batchSendsData) {
                 job.sendData = true;
@@ -156,22 +154,22 @@ export function createInteractiveRenderer({width: _width, height: _height, event
         return {mx: x, my: y, mw: w, mh: h};
     }
 
-    on(_events.paletteChanged, function (_palette) {
-        palette = _palette.toNodeList();
-        paletteBlend = _palette.blend();
+    on(events.paletteChanged, function (newPalette) {
+        palette = newPalette.toNodeList();
+        paletteBlend = newPalette.blend();
     });
 
-    on(_events.viewChanged, function (_extents) {
+    on(events.viewChanged, function (view) {
         viewGeneration += 1;
         histogram = new Uint32Array(initialHistogramSize);
         histogramFilledLength = 0;
         currentIteration = 0;
         stepSize = initialStepSize;
         // A palette waiting to be sent is kept: the new view needs it as much as the old one did.
-        extents = extentsTransfer(_extents.topLeft().x, _extents.topLeft().y, _extents.width(), _extents.height());
+        extents = extentsTransfer(view.topLeft().x, view.topLeft().y, view.width(), view.height());
     });
 
-    on(_events.histogramChanged, function (info) {
+    on(events.histogramChanged, function (info) {
         histogram = info.array;
         histogramFilledLength = info.filledLength;
         histogramTotal = info.total;
@@ -189,18 +187,18 @@ export function createInteractiveRenderer({width: _width, height: _height, event
         running = false;
     }
 
-    on(_events.start, start);
-    on(_events.restart, start);
-    on(_events.stop, stop);
+    on(events.start, start);
+    on(events.restart, start);
+    on(events.stop, stop);
 
     // One more frame while stopped, so a change (such as to the colours) shows.
-    on(_events.showChanges, function () {
+    on(events.showChanges, function () {
         if (!running) {
             requestFrame();
         }
     });
 
-    on(_events.startExamining, function () {
+    on(events.startExamining, function () {
         requestExaminePixelData = true;
         requestFrame();
     });

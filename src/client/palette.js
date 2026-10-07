@@ -68,9 +68,9 @@ function colourNode(hsv, position) {
         setPosition: function (p) {
             this.position = p;
         },
-        setColour: function (_hsv) {
-            this.hsv = _hsv;
-            this.rgb = toRgb(_hsv);
+        setColour: function (newHsv) {
+            this.hsv = newHsv;
+            this.rgb = toRgb(newHsv);
         }
     };
 }
@@ -133,9 +133,9 @@ export function createPalette() {
         return {h: h, s: max === 0 ? 0 : delta / max, v: max};
     }
 
-    function hsvBlend(fromRgb, toRgb, fraction, out) {
+    function hsvBlend(fromRgb, toRgbColour, amount, out) {
         const from = rgbToHsv(fromRgb);
-        const to = rgbToHsv(toRgb);
+        const to = rgbToHsv(toRgbColour);
         // White and greys have no hue of their own, so they take the hue of the other end. Black has
         // no saturation either, so it takes both, and blending a colour with black just darkens it.
         if (from.v === 0) from.s = to.s;
@@ -145,8 +145,8 @@ export function createPalette() {
         let hueChange = to.h - from.h;
         if (hueChange > 180) hueChange -= 360;
         if (hueChange < -180) hueChange += 360;
-        const h = (from.h + (hueChange * fraction) + 360) % 360;
-        return hsvToRgb(h, interpolate(from.s, to.s, fraction), interpolate(from.v, to.v, fraction), out);
+        const h = (from.h + (hueChange * amount) + 360) % 360;
+        return hsvToRgb(h, interpolate(from.s, to.s, amount), interpolate(from.v, to.v, amount), out);
     }
 
     function randomColour () {
@@ -179,14 +179,14 @@ export function createPalette() {
 
             const fromColour = from.rgb;
             const toColour = to.rgb;
-            const fraction = (n - from.position) / (to.position - from.position);
+            const amount = (n - from.position) / (to.position - from.position);
 
             if (blend === "hsv") {
-                return hsvBlend(fromColour, toColour, fraction, actualColour);
+                return hsvBlend(fromColour, toColour, amount, actualColour);
             }
-            actualColour.r = interpolate(fromColour.r, toColour.r, fraction);
-            actualColour.g = interpolate(fromColour.g, toColour.g, fraction);
-            actualColour.b = interpolate(fromColour.b, toColour.b, fraction);
+            actualColour.r = interpolate(fromColour.r, toColour.r, amount);
+            actualColour.g = interpolate(fromColour.g, toColour.g, amount);
+            actualColour.b = interpolate(fromColour.b, toColour.b, amount);
             actualColour.a = 255;
             return actualColour;
         },
@@ -200,11 +200,11 @@ export function createPalette() {
             this.sort();
             return retVal;
         },
-        removeNode: function (_node) {
-            nodes = nodes.filter(function (node) { return _node.id !== node.id; });
+        removeNode: function (removed) {
+            nodes = nodes.filter(function (node) { return removed.id !== node.id; });
         },
-        setNodes: function (_nodes) {
-            nodes = _nodes;
+        setNodes: function (newNodes) {
+            nodes = newNodes;
         },
         getNodes: function () {
             return nodes;
@@ -214,8 +214,8 @@ export function createPalette() {
                 return a.position - b.position;
             });
         },
-        fromNodeList:function (_nodes) {
-            nodes = _nodes.map(function (node) { return colourNode(node.colourDesc, node.position); });
+        fromNodeList:function (newNodes) {
+            nodes = newNodes.map(function (node) { return colourNode(node.colourDesc, node.position); });
             colourNodes.sort();
         },
         toNodeList: function () {
@@ -225,8 +225,8 @@ export function createPalette() {
             return blend;
         },
         // Anything other than "hsv" means "rgb", so palettes saved before there was a choice stay RGB.
-        setBlend: function (_blend) {
-            blend = _blend === "hsv" ? "hsv" : "rgb";
+        setBlend: function (newBlend) {
+            blend = newBlend === "hsv" ? "hsv" : "rgb";
         },
         // The colours at size evenly spaced positions from 0 to 1, each packed as RGBA bytes in the
         // order canvas image data uses, so an entry can be written to a Uint32Array view of image data.

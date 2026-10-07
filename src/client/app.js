@@ -52,9 +52,12 @@ export function startApp(newWorker) {
     const state = createViewState(size.width, size.height, rectangle(-2.5, -1, 3.5, 2), events);
     createViewInteraction(uiCanvas, events);
     const drawSelection = createSelectionDrawer();
-    const zoomOut = createZoomOut(events, createStopwatch(), createZoomOutAnimation(uiCanvas, mainCanvas, drawSelection), mainCanvas, state);
+    const zoomOut = createZoomOut({
+        events, timer: createStopwatch(), zoomOutAnim: createZoomOutAnimation(uiCanvas, mainCanvas, drawSelection),
+        mandelbrotCanvas: mainCanvas, mandelbrotState: state
+    });
     element("zoomOutButton").onclick = zoomOut.zoomOut;
-    createMove(events, mainCanvas, uiCanvas);
+    createMove({events, mandelbrotCanvas: mainCanvas, uiCanvas});
     createTouchGestures(uiCanvas, mainCanvas, {
         onTransform: (change) => events.fire(events.transformView, change),
         onDoubleTap: zoomOut.zoomOut,
@@ -93,11 +96,11 @@ export function startApp(newWorker) {
     events.listenTo(events.paletteChanged, () => { paletteBlendSelect.value = palette.blend(); });
 
     const notice = createNotice(uiCanvas);
-    const bookmarks = createBookmarks(element("bookmarkButton"), state, gradientEditor, events, notice);
+    const bookmarks = createBookmarks({bookmarkButton: element("bookmarkButton"), state, colourGradientui: gradientEditor, events, notice});
     createColourPicker(colourPickerCanvas, gradientEditor, events);
     const exportSizes = createExportSizes(element("exportSizeSelect"),
         ["smallExport", "mediumExport", "largeExport", "veryLargeExport"].map(element), size.width, size.height);
-    createControls(exportSizes, state, events, newWorker);
+    createControls({exportSizes, state, events, newWorker});
 
     const maxIteration = element("maxIteration");
     const lastEscapedOn = element("lastPointEscapedAt");

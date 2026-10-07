@@ -32,8 +32,8 @@ export function parseBookmark(text) {
     return {location: {x: location.x, y: location.y, w: location.w, h: location.h}, nodes: info.nodes, blend: info.blend};
 }
 
-export function createBookmarks(bookmarkButton, state, colourGradientui, _events, notice) {
-    const on = _events.listenTo;
+export function createBookmarks({bookmarkButton, state, colourGradientui, events, notice}) {
+    const on = events.listenTo;
     let justBookmarked = false;
     let palette;
     const newLocation = function (pos, nodes, blend) {
@@ -44,8 +44,8 @@ export function createBookmarks(bookmarkButton, state, colourGradientui, _events
         };
     };
 
-    on(_events.paletteChanged, function (_palette) {
-        palette = _palette;
+    on(events.paletteChanged, function (newPalette) {
+        palette = newPalette;
     });
 
     const defaultMandelbrotInfo = function () {
@@ -73,8 +73,8 @@ export function createBookmarks(bookmarkButton, state, colourGradientui, _events
         state.showView(rectangle(mandelbrotInfo.location));
         // Tell everything about the link's palette, and restart rendering in case it had stopped (as it
         // has if a link is opened in the same tab).
-        _events.fire(_events.paletteChanged, palette);
-        _events.fire(_events.restart);
+        events.fire(events.paletteChanged, palette);
+        events.fire(events.restart);
     };
 
     window.onhashchange = function () {

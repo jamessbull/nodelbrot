@@ -31,8 +31,8 @@ export function createAutoStop(events, pixelCount) {
         restart();
     });
 
-    on(events.escapedTotal, function (_totalEscaped) {
-        totalEscaped = _totalEscaped;
+    on(events.escapedTotal, function (count) {
+        totalEscaped = count;
     });
 
     // Stops rendering once no more pixels have escaped for 10 frames, if a fair amount of the image has.

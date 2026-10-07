@@ -8,6 +8,7 @@ export default [
         rules: {
             "no-var": "error",
             "prefer-const": "error",
+            "no-shadow": "error",
             // Leading underscores mark parameters in much of this code, and unused ones document what a
             // caller passes; only unused variables are errors.
             "no-unused-vars": ["error", { args: "none" }]

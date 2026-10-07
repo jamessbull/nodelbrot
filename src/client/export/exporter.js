@@ -22,7 +22,7 @@ export function parseDepth(text) {
 
 // The export panel: exports the current view at the chosen size and depth, with workers made by
 // newWorker(), and shows the result.
-export function createExporter(_exportDimensions, state, _events, newWorker) {
+export function createExporter({exportSizes, state, events, newWorker}) {
     let exporting = false;
 
     const exportButton = document.getElementById("export");
@@ -43,8 +43,8 @@ export function createExporter(_exportDimensions, state, _events, newWorker) {
 
     hide(exportProgress);
 
-    _events.listenTo(_events.paletteChanged, function (_palette) {
-        palette = _palette;
+    events.listenTo(events.paletteChanged, function (newPalette) {
+        palette = newPalette;
     });
 
     function finish() {
@@ -111,7 +111,7 @@ export function createExporter(_exportDimensions, state, _events, newWorker) {
             return false;
         }
         exporting = true;
-        exportDimensions = _exportDimensions.dimensions();
+        exportDimensions = exportSizes.dimensions();
         selectButton(exportButton);
         progressReporters.image.reportOn(exportDimensions.width, exportDimensions.height);
         progressReporters.histogram.reportOn(Math.floor(exportDimensions.width / 10), Math.floor(exportDimensions.height / 10));

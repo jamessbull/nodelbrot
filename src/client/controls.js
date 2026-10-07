@@ -24,8 +24,8 @@ function popover(button, panel) {
 }
 
 // The Stop, Go, Examine and Export buttons. The export makes workers with newWorker().
-export function createControls(_exportSizeDropdown, _state, _events, newWorker) {
-    const on = _events.listenTo;
+export function createControls({exportSizes, state, events, newWorker}) {
+    const on = events.listenTo;
 
     const stopButton = element("stop");
     const startButton = element("start");
@@ -35,11 +35,11 @@ export function createControls(_exportSizeDropdown, _state, _events, newWorker) 
         (running ? deselectButton : selectButton)(stopButton);
     }
     showRunning(true);
-    on(_events.start, () => showRunning(true));
-    on(_events.restart, () => showRunning(true));
-    on(_events.stop, () => showRunning(false));
-    startButton.onclick = () => _events.fire(_events.start);
-    stopButton.onclick = () => _events.fire(_events.stop);
+    on(events.start, () => showRunning(true));
+    on(events.restart, () => showRunning(true));
+    on(events.stop, () => showRunning(false));
+    startButton.onclick = () => events.fire(events.start);
+    stopButton.onclick = () => events.fire(events.stop);
 
     // Examining pixels stops rendering, so the pixels stay put, and shows the examine panel over the
     // image until it is turned off.
@@ -52,14 +52,14 @@ export function createControls(_exportSizeDropdown, _state, _events, newWorker) 
         uiCanvas.classList.toggle("magnifyCursor", examining);
         if (examining) {
             selectButton(examineButton);
-            _events.fire(_events.stop);
-            _events.fire(_events.startExamining);
+            events.fire(events.stop);
+            events.fire(events.startExamining);
         } else {
             deselectButton(examineButton);
-            _events.fire(_events.stopExamining);
+            events.fire(events.stopExamining);
         }
     };
 
     popover(element("exportMenuButton"), element("exportImagePanel"));
-    createExporter(_exportSizeDropdown, _state, _events, newWorker);
+    createExporter({exportSizes, state, events, newWorker});
 }

@@ -1,36 +1,36 @@
 import { matchingCanvas } from "../../dom.js";
 
-export function createZoomIn(_mandelbrotCanvas, _uiCanvas, _events, _selection, _zoomAnim) {
-    const on = _events.listenTo;
+export function createZoomIn({mandelbrotCanvas, uiCanvas, events, selection, zoomAnim}) {
+    const on = events.listenTo;
     let selecting = false;
-    const ctx = _uiCanvas.getContext('2d');
+    const ctx = uiCanvas.getContext('2d');
 
-    on(_events.selectionStart, function (e) {
+    on(events.selectionStart, function (e) {
         selecting = true;
-        _selection.begin(e);
+        selection.begin(e);
         ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
-        ctx.fillRect(0,0, _uiCanvas.width,_uiCanvas.height);
+        ctx.fillRect(0,0, uiCanvas.width,uiCanvas.height);
     });
 
-    on(_events.selectionEnd, function (e) {
-        _selection.end(e);
-        if (_selection.area().width() > 10) {
-            const existingRender = matchingCanvas(_uiCanvas);
-            existingRender.getContext('2d').drawImage(_mandelbrotCanvas, 0,0);
-            _events.fire(_events.zoomToSelection, _selection);
-            _zoomAnim.play(_selection, existingRender);
+    on(events.selectionEnd, function (e) {
+        selection.end(e);
+        if (selection.area().width() > 10) {
+            const existingRender = matchingCanvas(uiCanvas);
+            existingRender.getContext('2d').drawImage(mandelbrotCanvas, 0,0);
+            events.fire(events.zoomToSelection, selection);
+            zoomAnim.play(selection, existingRender);
         }
         selecting = false;
-        ctx.clearRect(0, 0, _uiCanvas.width, _uiCanvas.height);
+        ctx.clearRect(0, 0, uiCanvas.width, uiCanvas.height);
     });
 
-    on(_events.selectionMove, function (e) {
+    on(events.selectionMove, function (e) {
         if (selecting) {
-            _selection.change(e);
-            ctx.clearRect(0, 0, _uiCanvas.width, _uiCanvas.height);
+            selection.change(e);
+            ctx.clearRect(0, 0, uiCanvas.width, uiCanvas.height);
             ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
-            ctx.fillRect(0,0, _uiCanvas.width,_uiCanvas.height);
-            _selection.show(ctx);
+            ctx.fillRect(0,0, uiCanvas.width,uiCanvas.height);
+            selection.show(ctx);
         }
     });
 

@@ -1,5 +1,5 @@
 // Fires currentFramesPerSecond after each frame, averaged over the last two frames.
-export function createMetrics(_clock, _events) {
+export function createMetrics(clock, events) {
     const times = new Uint32Array(3);
     let currentIndex = -1;
     function nextIndex(i) { return currentIndex > 1 ? 0 : i + 1; }
@@ -14,10 +14,10 @@ export function createMetrics(_clock, _events) {
         return (1000 / avgFrameTime).toFixed(2);
     }
 
-    _events.listenTo(_events.frameComplete, function () {
+    events.listenTo(events.frameComplete, function () {
         currentIndex = nextIndex(currentIndex);
-        times[currentIndex] = _clock.time();
-        _events.fire(_events.framesPerSecond, fps());
+        times[currentIndex] = clock.time();
+        events.fire(events.framesPerSecond, fps());
     });
 }
 
@@ -25,8 +25,8 @@ export const systemClock = {
     time: () => Date.now()
 };
 
-export function showFps(_displayElement, _events) {
-    _events.listenTo(_events.framesPerSecond, function (fps) {
-        _displayElement.innerHTML = fps;
+export function showFps(displayElement, events) {
+    events.listenTo(events.framesPerSecond, function (fps) {
+        displayElement.innerHTML = fps;
     });
 }

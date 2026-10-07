@@ -1,62 +1,62 @@
 import { drawFrames } from "../../animation.js";
 import { rectangle } from "../../geometry.js";
 
-export function createZoomOutAnimation(_uiCanvas, _mandelbrotCanvas, _selectionBox ) {
+export function createZoomOutAnimation(uiCanvas, mandelbrotCanvas, selectionBox ) {
     const duration = 60;
     const selectionLength = 30;
 
-    const uiCtx = _uiCanvas.getContext('2d');
+    const uiCtx = uiCanvas.getContext('2d');
 
-    function currentPosition(x, _currentStep, _totalSteps) {
-        return ((x / _totalSteps) * _currentStep);
+    function currentPosition(x, currentStep, totalSteps) {
+        return ((x / totalSteps) * currentStep);
     }
 
-    function targetDimensions(_start, _diff, _currentStep, _totalSteps) {
-        const x = _start.x + currentPosition(_diff.x, _currentStep, _totalSteps);
-        const y = _start.y + currentPosition(_diff.y, _currentStep, _totalSteps);
-        const w = _start.width() + currentPosition(_diff.width(), _currentStep, _totalSteps);
-        const h = _start.height() + currentPosition(_diff.height(), _currentStep, _totalSteps);
+    function targetDimensions(start, change, currentStep, totalSteps) {
+        const x = start.x + currentPosition(change.x, currentStep, totalSteps);
+        const y = start.y + currentPosition(change.y, currentStep, totalSteps);
+        const w = start.width() + currentPosition(change.width(), currentStep, totalSteps);
+        const h = start.height() + currentPosition(change.height(), currentStep, totalSteps);
         return rectangle(x, y, w, h);
     }
 
-    function drawSelectionOutline(i, _uiCanvas, _selectionLength) {
-        _selectionBox.draw(i, _selectionLength, _uiCanvas, rectangle(6, 6, _uiCanvas.width - 12, _uiCanvas.height - 12));
+    function drawSelectionOutline(i) {
+        selectionBox.draw(i, selectionLength, uiCanvas, rectangle(6, 6, uiCanvas.width - 12, uiCanvas.height - 12));
     }
 
     return {
-        play: function (_oldMandelCanvas, _from, _to) {
-            const drawFunc = drawSelectionFun(_oldMandelCanvas, _uiCanvas);
+        play: function (oldMandelCanvas, fromView, to) {
+            const drawFunc = drawSelectionFun(oldMandelCanvas);
             drawFrames(duration, drawFunc).then(function (result) {
-                const screenSize = rectangle(0, 0, _uiCanvas.width, _uiCanvas.height);
-                const currentExpanded = _to.translateFrom(_from).to(screenSize);
+                const screenSize = rectangle(0, 0, uiCanvas.width, uiCanvas.height);
+                const currentExpanded = to.translateFrom(fromView).to(screenSize);
                 const diff = screenSize.difference(currentExpanded);
 
                 const currentShrunk = screenSize.translateFrom(currentExpanded).to(screenSize);
                 const oldShrunkDiff = currentShrunk.difference(screenSize);
 
-                const drawZoomOutFrameFunction = drawZoomOutFrame(duration, _oldMandelCanvas, diff, currentExpanded, oldShrunkDiff, screenSize);
+                const drawZoomOutFrameFunction = drawZoomOutFrame(duration, oldMandelCanvas, diff, currentExpanded, oldShrunkDiff, screenSize);
                 drawFrames(duration, drawZoomOutFrameFunction);
             });
         }
     };
 
-    function drawSelectionFun (_oldCanvas, _uiCanvas) {
+    function drawSelectionFun(oldCanvas) {
         return function (i) {
-            uiCtx.drawImage(_oldCanvas, 0, 0);
-            drawSelectionOutline(i, _uiCanvas, selectionLength);
+            uiCtx.drawImage(oldCanvas, 0, 0);
+            drawSelectionOutline(i);
         };
     }
 
-    function drawZoomOutFrame (_duration, _oldCanvas, _newDiff, _newFrom, _oldDiff, _oldFrom) {
+    function drawZoomOutFrame (frames, oldCanvas, newDiff, newFrom, oldDiff, oldFrom) {
         return function (i) {
-            const target = targetDimensions(_newFrom, _newDiff, i, _duration);
-            const oldTarget = targetDimensions(_oldFrom, _oldDiff, i, _duration);
+            const target = targetDimensions(newFrom, newDiff, i, frames);
+            const oldTarget = targetDimensions(oldFrom, oldDiff, i, frames);
 
-            uiCtx.drawImage(_mandelbrotCanvas, target.x, target.y, target.width(), target.height());
-            uiCtx.drawImage(_oldCanvas, oldTarget.x, oldTarget.y, oldTarget.width(), oldTarget.height());
-            _selectionBox.draw(1, 1, _uiCanvas, rectangle(oldTarget.x, oldTarget.y, oldTarget.width(), oldTarget.height() - 12));
+            uiCtx.drawImage(mandelbrotCanvas, target.x, target.y, target.width(), target.height());
+            uiCtx.drawImage(oldCanvas, oldTarget.x, oldTarget.y, oldTarget.width(), oldTarget.height());
+            selectionBox.draw(1, 1, uiCanvas, rectangle(oldTarget.x, oldTarget.y, oldTarget.width(), oldTarget.height() - 12));
             if(i>= duration) {
-                uiCtx.clearRect(0, 0, _uiCanvas.width, _uiCanvas.height);
+                uiCtx.clearRect(0, 0, uiCanvas.width, uiCanvas.height);
             }
         };
     }
