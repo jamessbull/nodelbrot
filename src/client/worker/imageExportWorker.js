@@ -1,4 +1,4 @@
-import { createPalette } from "./palette.js";
+import { createPalette } from "../palette.js";
 import { createPixelIterator, lookupTableSize } from "./pixelIterator.js";
 
 // Second phase of an image export: iterates one strip of the full-size image to the export depth and

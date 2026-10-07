@@ -1,4 +1,4 @@
-import { parseBookmark } from "../src/client/bookMark.js";
+import { parseBookmark } from "../src/client/bookmarks.js";
 
 describe("reading bookmark links", function () {
     const parse = parseBookmark;

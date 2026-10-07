@@ -35,6 +35,6 @@ so it must be served over HTTP(S) (not opened as a file), with a JavaScript cont
 - `src/index.html`: the page.
 - `src/client/main.js`: the entry point, for both the page and the workers.
 - `src/client/app.js`: starts the explorer. `display.js` holds the parts remade when the window changes size.
-- `src/client/pixelIterator.js`: the inner loop.
+- `src/client/worker/`: the code the web workers run. `pixelIterator.js` is the inner loop.
 - `src/client/interactiveRenderer.js` and `export/exportRenderer.js`: the interactive view and image export.
 - `dev/`: the dev server, HUD and render check. `build/`: the build.

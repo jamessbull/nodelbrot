@@ -1,7 +1,7 @@
 import { createWorkerPool } from "./workerPool.js";
-import { createStopwatch } from "./stopWatch.js";
-import { renderFragments, interactiveMessage } from "./messages/messages.js";
-import { initialHistogramSize } from "./mandelbrotEscape.js";
+import { createStopwatch } from "./stopwatch.js";
+import { renderFragments, interactiveMessage } from "./workerMessages.js";
+import { initialHistogramSize } from "./escapeHistogram.js";
 
 // Renders the interactive view with a pool of workers, a frame at a time, into the buffers it is given
 // (each a value or four per pixel of the width x height display): imgData, the image; escapeValues, the

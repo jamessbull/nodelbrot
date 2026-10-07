@@ -1,4 +1,4 @@
-import { renderFragments } from "../src/client/messages/messages.js";
+import { renderFragments } from "../src/client/workerMessages.js";
 
 describe("The message splitter", function () {
     // my is the position of the fragment's first row; fragments hold the image's top and their first row.

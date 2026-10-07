@@ -1,6 +1,6 @@
 import { createEvents } from "../src/client/events.js";
 import { rectangle } from "../src/client/geometry.js";
-import { createViewState, fitView, refitView } from "../src/client/mandelbrotEscape.js";
+import { createViewState, fitView, refitView } from "../src/client/viewState.js";
 
 describe("the view", function () {
     function expectView(view, x, y, w, h) {

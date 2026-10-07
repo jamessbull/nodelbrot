@@ -1,4 +1,4 @@
-import { exportSizes, maxExportPixels } from "../src/client/exportDropdown.js";
+import { exportSizes, maxExportPixels } from "../src/client/export/exportSizes.js";
 
 describe("export sizes", function () {
     it("should be the display's size and 3 and 6 times it", function () {

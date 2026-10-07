@@ -1,10 +1,10 @@
-import { createPalette } from "./palette.js";
+import { createPalette } from "../palette.js";
 import { createPixelIterator, lookupTableSize } from "./pixelIterator.js";
 
 // Computes the interactive view. Each message advances every pixel of this worker's fragment by
 // msg.iterations iterations, then recolours the whole fragment against the latest histogram. Replies
 // go to postMessage.
-export function createUiWorker(postMessage) {
+export function createInteractiveWorker(postMessage) {
     const palette = createPalette();
     let colours;
     let pixels;

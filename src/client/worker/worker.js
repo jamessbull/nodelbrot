@@ -1,4 +1,4 @@
-import { createUiWorker } from "./uiWorker.js";
+import { createInteractiveWorker } from "./interactiveWorker.js";
 import { createHistogramExportWorker } from "./histogramExportWorker.js";
 import { createImageExportWorker } from "./imageExportWorker.js";
 
@@ -7,7 +7,7 @@ import { createImageExportWorker } from "./imageExportWorker.js";
 // to postMessage(message, transfer).
 export function createWorkerHandler(postMessage) {
     const handlers = {
-        uiworker: createUiWorker(postMessage),
+        uiworker: createInteractiveWorker(postMessage),
         histogramexportworker: createHistogramExportWorker(postMessage),
         imageexportworker: createImageExportWorker(postMessage)
     };

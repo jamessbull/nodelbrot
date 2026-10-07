@@ -1,10 +1,11 @@
 import { createEvents } from "./events.js";
 import { rectangle } from "./geometry.js";
-import { createEscapeHistogram, createViewState, initialHistogramSize } from "./mandelbrotEscape.js";
+import { createEscapeHistogram, initialHistogramSize } from "./escapeHistogram.js";
+import { createViewState } from "./viewState.js";
 import { createPalette } from "./palette.js";
-import { createStopwatch } from "./stopWatch.js";
+import { createStopwatch } from "./stopwatch.js";
 import { createMetrics, showFps, systemClock } from "./metrics.js";
-import { createViewInteraction } from "./ui/mandelbrotViewUIPolicy.js";
+import { createViewInteraction } from "./ui/viewInteraction.js";
 import { createSelectionDrawer } from "./ui/actions/drawSelection.js";
 import { createZoomOutAnimation } from "./ui/actions/zoomOutAnimation.js";
 import { createZoomOut } from "./ui/actions/zoomOut.js";
@@ -13,9 +14,9 @@ import { createTouchGestures } from "./ui/touchGestures.js";
 import { createNotice } from "./ui/notice.js";
 import { createGradientEditor } from "./colourGradient.js";
 import { createColourPicker } from "./colourPicker.js";
-import { createExportSizes } from "./exportDropdown.js";
-import { createControls } from "./uiElements.js";
-import { createBookmarks } from "./bookMark.js";
+import { createExportSizes } from "./export/exportSizes.js";
+import { createControls } from "./controls.js";
+import { createBookmarks } from "./bookmarks.js";
 import { createDisplay } from "./display.js";
 import { deselectButton, element, selectButton } from "./dom.js";
 

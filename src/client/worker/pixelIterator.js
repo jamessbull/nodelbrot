@@ -1,4 +1,4 @@
-import { inMainCardioidOrBulb } from "./mandelbrotPoint.js";
+import { inMainCardioidOrBulb } from "../mandelbrotPoint.js";
 
 // Number of entries in the palette lookup table used for colouring. With 16384 entries a colour is
 // at most one shade out on palettes whose colours are at least about 1% apart.

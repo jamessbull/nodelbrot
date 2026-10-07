@@ -1,11 +1,12 @@
 import { workerCount } from "./workerPool.js";
 import { createInteractiveRenderer } from "./interactiveRenderer.js";
-import { createAutoStop, createImageRenderer } from "./mandelbrotEscape.js";
+import { createAutoStop } from "./autoStop.js";
+import { createImageRenderer } from "./imageRenderer.js";
 import { createSelection } from "./selection.js";
 import { rectangle } from "./geometry.js";
 import { createZoomInAnimation } from "./ui/actions/zoomInAnimation.js";
 import { createZoomIn } from "./ui/actions/zoomIn.js";
-import { createPixelExaminer } from "./magnifiedDisplay.js";
+import { createPixelExaminer } from "./pixelExaminer.js";
 import { precisionWarning } from "./precision.js";
 
 // The parts of the explorer that depend on the size of the display: the renderer and the buffers it

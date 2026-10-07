@@ -1,5 +1,5 @@
 import { createWorkerPool, workerCount } from "../workerPool.js";
-import { renderFragments, exportMessage } from "../messages/messages.js";
+import { renderFragments, exportMessage } from "../workerMessages.js";
 
 // Renders extents (a rectangle in the complex plane) as a width x height image, iterating to depth and
 // coloured with palette, without touching the page. Two phases run on one pool of workers, made by

@@ -1,17 +1,17 @@
 // The explorer's one script, for both the page and its web workers: run by a worker it starts the
 // worker, and on the page it starts the explorer, which starts workers from this same script. The
 // exports are for dev/workerCheck.js, which runs the rendering in Node.
-import { createWorkerHandler } from "./worker.js";
+import { createWorkerHandler } from "./worker/worker.js";
 import { startApp } from "./app.js";
 
 export { createWorkerHandler };
 export { createEvents } from "./events.js";
 export { createInteractiveRenderer } from "./interactiveRenderer.js";
-export { createEscapeHistogram, initialHistogramSize } from "./mandelbrotEscape.js";
+export { createEscapeHistogram, initialHistogramSize } from "./escapeHistogram.js";
 export { createPalette } from "./palette.js";
 export { rectangle } from "./geometry.js";
 export { renderExport } from "./export/exportRenderer.js";
-export { renderFragments } from "./messages/messages.js";
+export { renderFragments } from "./workerMessages.js";
 export { calculatePoint } from "./mandelbrotPoint.js";
 
 if (typeof WorkerGlobalScope !== "undefined" && self instanceof WorkerGlobalScope) {

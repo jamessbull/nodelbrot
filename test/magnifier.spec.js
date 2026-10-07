@@ -1,4 +1,4 @@
-import { magnifiedArea } from "../src/client/magnifiedDisplay.js";
+import { magnifiedArea } from "../src/client/pixelExaminer.js";
 
 describe("the magnified area", function () {
     it("should be centred on the point", function () {
