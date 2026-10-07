@@ -142,7 +142,10 @@ function render(api, view, workers) {
         imgData: imgData, escapeValues: escapeValues, xState: new Float64Array(pixels), yState: new Float64Array(pixels),
         imageEscapeValues: new Uint32Array(pixels), stopwatch: stopwatch
     });
-    const viewRectangle = (v) => api.rectangle(v.x, v.y, v.w, v.h);
+    // Views are given to the renderer as exact rectangles, so revisions that place pixels from the
+    // view's centre and those that took rectangles render the same pixels. Revisions with views ask
+    // for the view's area.
+    const viewRectangle = (v) => api.viewAt ? {area: () => api.rectangle(v.x, v.y, v.w, v.h)} : api.rectangle(v.x, v.y, v.w, v.h);
     events.listenTo(named.frameComplete, function () {
         const recordStart = process.hrtime.bigint();
         hash.update(Buffer.from(imgData.buffer, imgData.byteOffset, imgData.byteLength));

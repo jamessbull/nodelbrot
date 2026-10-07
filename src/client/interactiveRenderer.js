@@ -159,6 +159,8 @@ export function createInteractiveRenderer({width, height, events, workers, newWo
         paletteBlend = newPalette.blend();
     });
 
+    // The view (see view.js), or anything else with an area(width, height) rectangle, as the render check
+    // gives it.
     on(events.viewChanged, function (view) {
         viewGeneration += 1;
         histogram = new Uint32Array(initialHistogramSize);
@@ -166,7 +168,8 @@ export function createInteractiveRenderer({width, height, events, workers, newWo
         currentIteration = 0;
         stepSize = initialStepSize;
         // A palette waiting to be sent is kept: the new view needs it as much as the old one did.
-        extents = extentsTransfer(view.topLeft().x, view.topLeft().y, view.width(), view.height());
+        const area = view.area(width, height);
+        extents = extentsTransfer(area.topLeft().x, area.topLeft().y, area.width(), area.height());
     });
 
     on(events.histogramChanged, function (info) {

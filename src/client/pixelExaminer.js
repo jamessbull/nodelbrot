@@ -1,5 +1,6 @@
 import { canvasPosition } from "./dom.js";
 import { round } from "./math.js";
+import { pointAt } from "./view.js";
 
 // Pixels across (and down) the area the magnifier shows.
 const areaSize = 18;
@@ -57,14 +58,12 @@ export function createPixelExaminer({events, magnifier, hint, imgData, xState, y
         const x = area.x + column;
         const y = area.y + row;
         const pixel = (y * width) + x;
-        // The point c that was iterated, worked out the same way as the renderer places pixels.
-        const view = state.getExtents();
-        const cx = view.topLeft().x + (x * (view.width() / (width - 1)));
-        const cy = view.topLeft().y + (y * (view.height() / (height - 1)));
+        // The point c that was iterated, to as many places as tell it from the next pixel's.
+        const c = pointAt(state.getView(), x - ((width - 1) / 2), y - ((height - 1) / 2));
         showValue("escapedAt", escapeValues[pixel]);
         showValue("imageEscapedAt", imageEscapeValues[pixel]);
-        showValue("cx", Number(cx.toPrecision(15)));
-        showValue("cy", Number(cy.toPrecision(15)));
+        showValue("cx", c.x);
+        showValue("cy", c.y);
         showValue("zx", round(xState[pixel], 9));
         showValue("zy", round(yState[pixel], 9));
         showValue("colourInfor", "r " + imgData[pixel * 4]);

@@ -10,6 +10,7 @@ export { createInteractiveRenderer } from "./interactiveRenderer.js";
 export { createEscapeHistogram, initialHistogramSize } from "./escapeHistogram.js";
 export { createPalette } from "./palette.js";
 export { rectangle } from "./geometry.js";
+export { viewAt } from "./view.js";
 export { renderExport } from "./export/exportRenderer.js";
 export { renderFragments } from "./workerMessages.js";
 export { calculatePoint } from "./mandelbrotPoint.js";

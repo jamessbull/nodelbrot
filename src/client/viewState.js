@@ -1,83 +1,73 @@
-import { rectangle } from "./geometry.js";
+import { shiftView, viewShowing } from "./view.js";
 
-// The view at the same centre and pixel size on a display newWidth x newHeight pixels instead of
-// oldWidth x oldHeight, so a bigger display shows more around it, at the same zoom.
-export function refitView(view, oldWidth, oldHeight, newWidth, newHeight) {
-    const width = (view.width() / (oldWidth - 1)) * (newWidth - 1);
-    const height = (view.height() / (oldHeight - 1)) * (newHeight - 1);
-    return rectangle(view.x + ((view.width() - width) / 2), view.y + ((view.height() - height) / 2), width, height);
-}
-
-// The smallest view with the same centre as view that shows all of it on a width x height display, with
-// square pixels.
-export function fitView(view, width, height) {
-    const pixelSize = Math.max(view.width() / (width - 1), view.height() / (height - 1));
-    const fittedWidth = pixelSize * (width - 1);
-    const fittedHeight = pixelSize * (height - 1);
-    return rectangle(view.x + ((view.width() - fittedWidth) / 2), view.y + ((view.height() - fittedHeight) / 2), fittedWidth, fittedHeight);
-}
-
-// The view: the rectangle of the complex plane shown on a sizeX x sizeY display, and the views zoomed
-// in from, for zooming out again.
-export function createViewState(sizeX, sizeY, startingExtent, events) {
+// The view shown on a width x height display (see view.js), and the views zoomed in from, for zooming out
+// again. Fires viewChanged with the view whenever it changes.
+export function createViewState(width, height, startingView, events) {
     const on = events.listenTo;
-    let currentExtents = startingExtent;
-    let previousExtents = [];
-    let screen = rectangle(0, 0, sizeX - 1, sizeY - 1);
-    const fromScreen = (x, y) => screen.at(x, y).translateTo(currentExtents);
+    let view = startingView;
+    const previousViews = [];
+
+    function show(newView) {
+        view = newView;
+        events.fire(events.viewChanged, view);
+    }
+
+    const middleX = () => (width - 1) / 2;
+    const middleY = () => (height - 1) / 2;
 
     const theState = {
+        // Zooms in to the area of a selection on the display, a rectangle in pixels the display's shape.
         zoomTo: function (selection) {
-            previousExtents.push(currentExtents.copy());
-            currentExtents = selection.area().translateFrom(screen).to(currentExtents);
-            events.fire(events.viewChanged, currentExtents);
+            const area = selection.area();
+            const shrink = area.width() / (width - 1);
+            previousViews.push(view);
+            show(shiftView(view, area.x + (area.width() / 2) - middleX(), area.y + (middleY() * shrink) - middleY(),
+                view.pixelSize * shrink));
         },
-        // For a display that is now newX x newY: keeps the view, and the views zoomed in from, at the
-        // same centre and zoom.
-        resize: function (newX, newY) {
-            const refit = (view) => refitView(view, sizeX, sizeY, newX, newY);
-            currentExtents = refit(currentExtents);
-            previousExtents = previousExtents.map(refit);
-            sizeX = newX;
-            sizeY = newY;
-            screen = rectangle(0, 0, sizeX - 1, sizeY - 1);
+        // For a display that is now newWidth x newHeight. Views keep their centre and zoom, so a bigger
+        // display shows more.
+        resize: function (newWidth, newHeight) {
+            width = newWidth;
+            height = newHeight;
         },
         zoomOut: function () {
-            if (previousExtents.length > 0) {
-                currentExtents = previousExtents.pop();
-                events.fire(events.viewChanged, currentExtents);
+            if (previousViews.length > 0) {
+                show(previousViews.pop());
             }
         },
         notFullyZoomedOut: function () {
-            return previousExtents.length > 0;
+            return previousViews.length > 0;
         },
+        // Moves the image by (moveX, moveY) pixels, so the view moves the other way.
         move: function (moveX, moveY) {
-            const distance = fromScreen(moveX, moveY).distanceTo(currentExtents.topLeft());
-            currentExtents.move(0 - distance.x, 0 - distance.y);
-            events.fire(events.viewChanged, currentExtents);
+            show(shiftView(view, -moveX, -moveY));
         },
-        getExtents: function () {
-            return currentExtents;
+        getView: function () {
+            return view;
         },
-        getLastExtents: function () {
-            if (previousExtents.length === 0) return currentExtents;
-            return previousExtents[previousExtents.length - 1];
+        getLastView: function () {
+            return previousViews.length === 0 ? view : previousViews[previousViews.length - 1];
+        },
+        // The area of the complex plane the display shows, in doubles.
+        getArea: function () {
+            return view.area(width, height);
         },
         // Changes the view as a pinch or drag changed the image: a point that was at screen position p is
         // now at scale * p + (translateX, translateY). Zooming out goes back to before a pinch, but not a
         // drag, as with moving by mouse.
         transform: function ({scale, translateX, translateY}) {
             if (scale !== 1) {
-                previousExtents.push(currentExtents.copy());
+                previousViews.push(view);
             }
-            const topLeft = fromScreen(-translateX / scale, -translateY / scale);
-            currentExtents = rectangle(topLeft.x, topLeft.y, currentExtents.width() / scale, currentExtents.height() / scale);
-            events.fire(events.viewChanged, currentExtents);
+            // The new centre is where the point now at the middle of the display used to be.
+            const dx = ((middleX() - translateX) / scale) - middleX();
+            const dy = ((middleY() - translateY) / scale) - middleY();
+            show(shiftView(view, dx, dy, view.pixelSize / scale));
         },
-        // Shows all of extents, centred, with more around it in whichever direction the display's shape needs.
-        showView: function (extents) {
-            currentExtents = fitView(extents, sizeX, sizeY);
-            events.fire(events.viewChanged, currentExtents);
+        // Shows all of a w x h area centred on (x, y) (doubles or decimal strings), centred, with more
+        // around it in whichever direction the display's shape needs.
+        showArea: function ({x, y, w, h}) {
+            show(viewShowing(x, y, w, h, width, height));
         }
     };
 

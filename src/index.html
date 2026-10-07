@@ -217,6 +217,8 @@
             position: absolute;
             top: var(--gap);
             right: var(--gap);
+            max-height: calc(100% - 2 * var(--gap));
+            overflow-y: auto;
             line-height: 1.4;
             background: rgba(14, 13, 11, 0.92);
             font-size: 12px;
@@ -249,6 +251,15 @@
             border: 1px solid var(--accent);
             border-radius: var(--radius);
             pointer-events: none;
+        }
+
+        /* Deep in, points have many digits, so they wrap rather than widen the panel. */
+        .examinePanel table {
+            max-width: 16em;
+        }
+
+        .examinePanel .value {
+            word-break: break-all;
         }
 
         .examinePanel td:first-child {

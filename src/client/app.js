@@ -1,7 +1,7 @@
 import { createEvents } from "./events.js";
-import { rectangle } from "./geometry.js";
 import { createEscapeHistogram, initialHistogramSize } from "./escapeHistogram.js";
 import { createViewState } from "./viewState.js";
+import { viewShowing } from "./view.js";
 import { createPalette } from "./palette.js";
 import { createStopwatch } from "./stopwatch.js";
 import { createMetrics, showFps, systemClock } from "./metrics.js";
@@ -48,7 +48,7 @@ export function startApp(newWorker) {
     }
     const size = displaySize();
 
-    const state = createViewState(size.width, size.height, rectangle(-2.5, -1, 3.5, 2), events);
+    const state = createViewState(size.width, size.height, viewShowing(-0.75, 0, 3.5, 2, size.width, size.height), events);
     createViewInteraction(uiCanvas, events);
     const drawSelection = createSelectionDrawer();
     const zoomOut = createZoomOut({
@@ -131,7 +131,7 @@ export function startApp(newWorker) {
         exportSizes.setDisplaySize(newSize.width, newSize.height);
         display = newDisplay(newSize.width, newSize.height);
         // The new workers need the view and the palette.
-        events.fire(events.viewChanged, state.getExtents());
+        events.fire(events.viewChanged, state.getView());
         events.fire(events.paletteChanged, palette);
         display.start();
     }

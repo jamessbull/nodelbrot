@@ -24,11 +24,12 @@ export function createZoomOutAnimation(uiCanvas, mandelbrotCanvas, selectionBox 
     }
 
     return {
-        play: function (oldMandelCanvas, fromView, to) {
+        // Animates zooming out to the view whose area on the display (in pixels) is outer.
+        play: function (oldMandelCanvas, outer) {
             const drawFunc = drawSelectionFun(oldMandelCanvas);
             drawFrames(duration, drawFunc).then(function (result) {
                 const screenSize = rectangle(0, 0, uiCanvas.width, uiCanvas.height);
-                const currentExpanded = to.translateFrom(fromView).to(screenSize);
+                const currentExpanded = outer;
                 const diff = screenSize.difference(currentExpanded);
 
                 const currentShrunk = screenSize.translateFrom(currentExpanded).to(screenSize);

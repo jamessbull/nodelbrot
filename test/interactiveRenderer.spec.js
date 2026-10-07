@@ -1,5 +1,5 @@
 import { createEvents } from "../src/client/events.js";
-import { rectangle } from "../src/client/geometry.js";
+import { viewAt } from "../src/client/view.js";
 import { createPalette } from "../src/client/palette.js";
 import { createInteractiveRenderer } from "../src/client/interactiveRenderer.js";
 
@@ -23,7 +23,7 @@ describe("the interactive renderer", function () {
         const posted = [];
         const render = renderer(events, posted);
         events.fire(events.paletteChanged, createPalette());
-        events.fire(events.viewChanged, rectangle(-2, -1, 3, 2));
+        events.fire(events.viewChanged, viewAt(-0.5, 0, 0.15));
         render.start();
         expect(posted.length).toBe(2);
         expect(posted.every((job) => job.paletteNodes)).toBe(true);
@@ -68,7 +68,7 @@ describe("the interactive renderer", function () {
             xState: new Float64Array(pixels), yState: new Float64Array(pixels), imageEscapeValues: new Uint32Array(pixels)
         });
         events.fire(events.paletteChanged, createPalette());
-        events.fire(events.viewChanged, rectangle(-2, -1, 3, 2));
+        events.fire(events.viewChanged, viewAt(-0.5, 0, 0.15));
         render.start();
         return render;
     }

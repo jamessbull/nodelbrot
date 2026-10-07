@@ -38,7 +38,7 @@ export function createDisplay({events, width, height, mainCanvas, uiCanvas, magn
         mandelbrotCanvas: mainCanvas, uiCanvas, events: scoped, selection: createSelection(rectangle(0, 0, width, height)),
         zoomAnim: createZoomInAnimation(uiCanvas, mainCanvas, drawSelection)
     });
-    precisionWarning(scoped, notice, width);
+    precisionWarning(scoped, notice);
 
     return {
         width: width,

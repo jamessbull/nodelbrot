@@ -116,9 +116,8 @@ export function createExporter({exportSizes, state, events, newWorker}) {
         progressReporters.image.reportOn(exportDimensions.width, exportDimensions.height);
         progressReporters.histogram.reportOn(Math.floor(exportDimensions.width / 10), Math.floor(exportDimensions.height / 10));
         timeReporter.start();
-        // A copy, as moving the view changes the state's extents in place.
         renderExport({
-            extents: state.getExtents().copy(), width: exportDimensions.width, height: exportDimensions.height,
+            extents: state.getArea(), width: exportDimensions.width, height: exportDimensions.height,
             depth: depth.depth, palette: palette, newWorker: newWorker,
             onProgress: (phase, pixels) => progressReporters[phase].add(pixels),
             onComplete: showImage, onError: fail

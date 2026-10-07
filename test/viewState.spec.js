@@ -1,69 +1,84 @@
 import { createEvents } from "../src/client/events.js";
 import { rectangle } from "../src/client/geometry.js";
-import { createViewState, fitView, refitView } from "../src/client/viewState.js";
+import { createViewState } from "../src/client/viewState.js";
+import { viewAt } from "../src/client/view.js";
 
-describe("the view", function () {
-    function expectView(view, x, y, w, h) {
-        expect(view.x).toBeCloseTo(x, 12);
-        expect(view.y).toBeCloseTo(y, 12);
-        expect(view.width()).toBeCloseTo(w, 12);
-        expect(view.height()).toBeCloseTo(h, 12);
+describe("the view state", function () {
+    // An 11 x 5 pixel display, centred on (5, 2) with pixels a unit apart, so pixel (i, j) is at (i, j).
+    function state(events) {
+        return createViewState(11, 5, viewAt(5, 2, 1), events);
     }
 
-    it("should keep its centre and pixel size on a different size of display", function () {
-        // 11 x 5 pixels a unit apart, then 21 x 3.
-        expectView(refitView(rectangle(0, 0, 10, 4), 11, 5, 21, 3), -5, 1, 20, 2);
-    });
+    function expectCentre(view, x, y, pixelSize) {
+        const centre = view.centre();
+        expect(centre.x).toBeCloseTo(x, 12);
+        expect(centre.y).toBeCloseTo(y, 12);
+        expect(view.pixelSize).toBeCloseTo(pixelSize, 12);
+    }
 
-    it("should be fitted inside a display of a different shape, centred", function () {
-        // A 10 x 4 view on a square display shows 10 x 10.
-        expectView(fitView(rectangle(0, 0, 10, 4), 101, 101), 0, -3, 10, 10);
-        // and on a very wide one, 40 x 4.
-        expectView(fitView(rectangle(0, 0, 10, 4), 401, 41), -15, 0, 40, 4);
-    });
-
-    it("should refit the views zoomed in from when the display is resized", function () {
+    it("should zoom in to a selection, and back out", function () {
         const events = createEvents();
-        const state = createViewState(11, 5, rectangle(0, 0, 10, 4), events);
-        state.zoomTo({area: () => rectangle(0, 0, 5, 2)});
-        state.resize(21, 5);
-        expectView(state.getExtents(), -2.5, 0, 10, 2);
-        state.zoomOut();
-        expectView(state.getExtents(), -5, 0, 20, 4);
+        const views = state(events);
+        // A selection half the display's width, from pixel (0, 0).
+        events.fire(events.zoomToSelection, {area: () => rectangle(0, 0, 5, 2)});
+        expectCentre(views.getView(), 2.5, 1, 0.5);
+        events.fire(events.zoomOut);
+        expectCentre(views.getView(), 5, 2, 1);
+        expect(views.notFullyZoomedOut()).toBe(false);
     });
 
-    it("should show a view fitted to the display", function () {
+    it("should move the other way to the image", function () {
+        const events = createEvents();
+        const views = state(events);
+        events.fire(events.moveBy, {x: 3, y: -1});
+        expectCentre(views.getView(), 2, 3, 1);
+    });
+
+    it("should zoom in about a pinch and move with it", function () {
+        const events = createEvents();
+        const views = state(events);
+        // Twice the size, about pixel (4, 2), which moves to (6, 2).
+        events.fire(events.transformView, {scale: 2, translateX: 6 - 8, translateY: 2 - 4});
+        expect(views.getArea().x).toBeCloseTo(1, 12);
+        expect(views.getArea().y).toBeCloseTo(1, 12);
+        expect(views.getArea().width()).toBeCloseTo(5, 12);
+        events.fire(events.zoomOut);
+        expectCentre(views.getView(), 5, 2, 1);
+    });
+
+    it("should not keep a drag to zoom back out to", function () {
+        const events = createEvents();
+        const views = state(events);
+        events.fire(events.transformView, {scale: 1, translateX: 3, translateY: -1});
+        expect(views.getArea().x).toBeCloseTo(-3, 12);
+        expect(views.notFullyZoomedOut()).toBe(false);
+    });
+
+    it("should show more at the same zoom on a bigger display", function () {
+        const events = createEvents();
+        const views = state(events);
+        views.resize(21, 5);
+        expect(views.getArea().x).toBeCloseTo(-5, 12);
+        expect(views.getArea().width()).toBeCloseTo(20, 12);
+    });
+
+    it("should show all of an area, centred, whatever the display's shape", function () {
         const events = createEvents();
         const shown = [];
         events.listenTo(events.viewChanged, (view) => shown.push(view));
-        const state = createViewState(101, 101, rectangle(0, 0, 1, 1), events);
-        state.showView(rectangle(0, 0, 10, 4));
-        expectView(shown[0], 0, -3, 10, 10);
-    });
-});
-
-describe("pinching and dragging the view", function () {
-    it("should zoom in about the pinch and move with it", function () {
-        const events = createEvents();
-        // 11 x 5 pixels a unit apart.
-        const state = createViewState(11, 5, rectangle(0, 0, 10, 4), events);
-        // Twice the size, about pixel (4, 2), which moves to (6, 2).
-        events.fire(events.transformView, {scale: 2, translateX: 6 - 8, translateY: 2 - 4});
-        const view = state.getExtents();
-        expect(view.x).toBeCloseTo(1, 12);
-        expect(view.y).toBeCloseTo(1, 12);
-        expect(view.width()).toBeCloseTo(5, 12);
-        expect(view.height()).toBeCloseTo(2, 12);
-        state.zoomOut();
-        expect(state.getExtents().width()).toBe(10);
+        const views = createViewState(101, 101, viewAt(0, 0, 1), events);
+        views.showArea({x: 5, y: 2, w: 10, h: 4});
+        expectCentre(shown[0], 5, 2, 0.1);
     });
 
-    it("should move the view the other way to a drag", function () {
+    it("should zoom far past where doubles can tell pixels apart", function () {
         const events = createEvents();
-        const state = createViewState(11, 5, rectangle(0, 0, 10, 4), events);
-        events.fire(events.transformView, {scale: 1, translateX: 3, translateY: -1});
-        expect(state.getExtents().x).toBeCloseTo(-3, 12);
-        expect(state.getExtents().y).toBeCloseTo(1, 12);
-        expect(state.notFullyZoomedOut()).toBe(false);
+        const views = createViewState(101, 101, viewAt("-0.75", "0.1", 1e-200), events);
+        events.fire(events.moveBy, {x: -1, y: 0});
+        events.fire(events.moveBy, {x: -1, y: 0});
+        const view = views.getView();
+        // Two pixels right of -0.75 is still -0.75 to a double, but not in the view.
+        expect(view.centre().x).toBe(-0.75);
+        expect(view.x - viewAt("-0.75", "0.1", 1e-200).x).toBeGreaterThan(0n);
     });
 });

@@ -1,8 +1,16 @@
-import { rectangle } from "./geometry.js";
+import { describeCentre } from "./view.js";
 
-// Reads a bookmark link's data, the text after "#": {location: {x, y, w, h}, nodes, blend}, where nodes
-// are palette nodes {position, colourDesc: {h, s, v}}. Returns null if it can't be read or doesn't make
-// sense, as links get cut short or edited. Links saved before the blend was added have none (so rgb).
+// A decimal, such as the centre of a view in a link.
+const decimal = /^[+-]?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?$/;
+
+// Reads a bookmark link's data, the text after "#", as {area: {x, y, w, h}, nodes, blend}: the area of
+// the complex plane shown, w x h centred on (x, y), and the palette, nodes {position, colourDesc: {h, s,
+// v}} and blend. Returns null if it can't be read or doesn't make sense, as links get cut short or
+// edited.
+//
+// Links hold the area as view: {x, y, w, h}, with the centre as decimal strings, precise enough for deep
+// zooms. Links saved before that hold it as location: {x, y, w, h} with x, y the top left, in doubles.
+// Links saved before the blend was added have none (so rgb).
 export function parseBookmark(text) {
     let info;
     try {
@@ -16,9 +24,18 @@ export function parseBookmark(text) {
     function isColourValue(n) {
         return n !== undefined && n !== null && isFinite(parseFloat(n));
     }
+    let area = null;
+    const view = info && info.view;
     const location = info && info.location;
-    if (!location || !isNumber(location.x) || !isNumber(location.y) || !isNumber(location.w) || !isNumber(location.h) ||
-            location.w <= 0 || location.h <= 0) {
+    if (view) {
+        if (decimal.test(view.x) && decimal.test(view.y) && isNumber(view.w) && isNumber(view.h) && view.w > 0 && view.h > 0) {
+            area = {x: view.x, y: view.y, w: view.w, h: view.h};
+        }
+    } else if (location && isNumber(location.x) && isNumber(location.y) && isNumber(location.w) && isNumber(location.h) &&
+            location.w > 0 && location.h > 0) {
+        area = {x: location.x + (location.w / 2), y: location.y + (location.h / 2), w: location.w, h: location.h};
+    }
+    if (!area) {
         return null;
     }
     const nodesMakeSense = Array.isArray(info.nodes) && info.nodes.every(function (node) {
@@ -29,27 +46,19 @@ export function parseBookmark(text) {
     if (!nodesMakeSense) {
         return null;
     }
-    return {location: {x: location.x, y: location.y, w: location.w, h: location.h}, nodes: info.nodes, blend: info.blend};
+    return {area: area, nodes: info.nodes, blend: info.blend};
 }
 
 export function createBookmarks({bookmarkButton, state, events, notice}) {
     const on = events.listenTo;
     let justBookmarked = false;
     let palette;
-    const newLocation = function (pos, nodes, blend) {
-        return {
-            location: pos,
-            nodes: nodes,
-            blend: blend
-        };
-    };
-
     on(events.paletteChanged, function (newPalette) {
         palette = newPalette;
     });
 
     const defaultMandelbrotInfo = function () {
-        return newLocation({x:-2.5,y:-1, w:3.5, h: 2}, palette.toNodeList(), palette.blend());
+        return {area: {x: -0.75, y: 0, w: 3.5, h: 2}, nodes: palette.toNodeList(), blend: palette.blend()};
     };
 
     const currentMandelbrotInfo = function() {
@@ -69,7 +78,7 @@ export function createBookmarks({bookmarkButton, state, events, notice}) {
         const mandelbrotInfo = currentMandelbrotInfo();
         palette.fromNodeList(mandelbrotInfo.nodes);
         palette.setBlend(mandelbrotInfo.blend);
-        state.showView(rectangle(mandelbrotInfo.location));
+        state.showArea(mandelbrotInfo.area);
         // Tell everything about the link's palette, and restart rendering in case it had stopped (as it
         // has if a link is opened in the same tab).
         events.fire(events.paletteChanged, palette);
@@ -84,15 +93,13 @@ export function createBookmarks({bookmarkButton, state, events, notice}) {
     };
 
     const currentMandelbrotInfoToUrl = function () {
-        const a = state.getExtents();
-        const x = a.topLeft().x;
-        const y = a.topLeft().y;
-        const w = a.width();
-        const h = a.height();
-        const pos = {x:x, y:y, w:w, h:h};
-        const nodes = palette.toNodeList();
-
-        const mandelbrotInfo = newLocation(pos, nodes, palette.blend());
+        const centre = describeCentre(state.getView());
+        const area = state.getArea();
+        const mandelbrotInfo = {
+            view: {x: centre.x, y: centre.y, w: area.width(), h: area.height()},
+            nodes: palette.toNodeList(),
+            blend: palette.blend()
+        };
         const hash = encodeURI(JSON.stringify(mandelbrotInfo));
         return window.location.origin + window.location.pathname + "#" + hash;
     };

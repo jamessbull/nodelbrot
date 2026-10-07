@@ -12,8 +12,20 @@ describe("reading bookmark links", function () {
         return JSON.parse(JSON.stringify(Object.assign({}, valid, changes)));
     }
 
-    it("should read a valid link", function () {
-        expect(parse(link(valid))).toEqual(valid);
+    it("should read a link saved with the top left of the area", function () {
+        expect(parse(link(valid))).toEqual({area: {x: -0.75, y: 0, w: 3.5, h: 2}, nodes: valid.nodes, blend: "hsv"});
+    });
+
+    it("should read a link saved with the centre of the area as decimals", function () {
+        const deep = {view: {x: "-0.743643887037158704752191506114774", y: "0.1318259042053119704931", w: 1e-30, h: 5e-31},
+            nodes: valid.nodes, blend: "rgb"};
+        expect(parse(link(deep))).toEqual({area: deep.view, nodes: valid.nodes, blend: "rgb"});
+    });
+
+    it("should not read a link whose centre isn't a number", function () {
+        const bad = {view: {x: "-0.74abc", y: "0", w: 1, h: 1}, nodes: valid.nodes};
+        expect(parse(link(bad))).toBeNull();
+        expect(parse(link({view: {x: "1", y: "0", w: -1, h: 1}, nodes: valid.nodes}))).toBeNull();
     });
 
     it("should read a link saved before the blend was added", function () {
