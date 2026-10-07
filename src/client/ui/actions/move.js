@@ -30,13 +30,15 @@ export function createMove({events, mandelbrotCanvas, uiCanvas}) {
         uiCanvas.getContext('2d').clearRect(0, 0, uiCanvas.width, uiCanvas.height);
     });
 
+    // The image goes with the pointer, as if picking the fractal up and moving it, as the view does once
+    // the drag ends (see viewState.js).
     function show() {
         const ctx = uiCanvas.getContext('2d'), w = uiCanvas.width, h = uiCanvas.height;
 
         ctx.clearRect(0, 0, w, h);
         ctx.fillStyle = "rgba(0, 0, 0, 1.0)";
         ctx.fillRect(0, 0, w, h);
-        ctx.drawImage(mandelbrotCanvas, -totalXMovement, -totalYMovement, w, h);
+        ctx.drawImage(mandelbrotCanvas, totalXMovement, totalYMovement, w, h);
     }
 
     return {};
