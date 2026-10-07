@@ -131,6 +131,22 @@ describe("Common utilities", function () {
 
         expect(rect.bottomLeft().x).toBe(105);
         expect(rect.bottomLeft().y).toBe(131);
+
+        expect(rect.x).toBe(105);
+        expect(rect.y).toBe(106);
+    });
+
+    it("should keep x, y and the corners in step after placing and resizing", function () {
+        var rect = jim.rectangle.create(100, 100, 50, 25);
+        rect.place(10, 20);
+        rect.resize(30, 40);
+
+        expect(rect.x).toBe(10);
+        expect(rect.y).toBe(20);
+        expect(rect.topLeft().x).toBe(10);
+        expect(rect.bottomRight().x).toBe(40);
+        expect(rect.bottomRight().y).toBe(60);
+        expect(rect.copy().x).toBe(10);
     });
 
     it("a coordinate should be able to give the distance between itself and another coordinate", function () {

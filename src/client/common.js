@@ -164,7 +164,7 @@ jim.coord.translator.create = function (fromRect, fromPoint) {
 namespace("jim.rectangle");
 jim.rectangle.create = function (one, two, width, height) {
     "use strict";
-    var coord = jim.coord.create, x, y, w, h, topLeft, topRight, bottomLeft, bottomRight,
+    var coord = jim.coord.create, x, y, w, h,
         present = function (x) {
             return x !== undefined;
         };
@@ -187,39 +187,35 @@ jim.rectangle.create = function (one, two, width, height) {
         }
     }
 
-
-    topLeft = coord(x, y);
-    topRight = coord(x + w, y);
-    bottomLeft = coord(x, y + h);
-    bottomRight = coord(x + w, y + h);
-
+    // Only the position and size are stored; x, y and the corners are worked out from them each time,
+    // so they stay right after the rectangle is moved, placed or resized.
     return {
-        x: topLeft.x,
-        y: topLeft.y,
+        get x() {
+            return x;
+        },
+        get y() {
+            return y;
+        },
         topLeft: function () {
-            return topLeft;
+            return coord(x, y);
         },
         topRight: function () {
-            return topRight;
+            return coord(x + w, y);
         },
         bottomRight: function () {
-            return bottomRight;
+            return coord(x + w, y + h);
         },
         bottomLeft: function () {
-            return bottomLeft;
+            return coord(x, y + h);
         },
         width: function (val) {
             if (present(val)) {
-                topRight.x = topLeft.x + val;
-                bottomRight.x = topLeft.x + val;
                 w = val;
             }
             return w;
         },
         height: function (val) {
             if (present(val)) {
-                bottomLeft.y = topLeft.y + val;
-                bottomRight.y = topLeft.y + val;
                 h = val;
             }
             return h;
@@ -244,34 +240,17 @@ jim.rectangle.create = function (one, two, width, height) {
         place: function (_x, _y) {
             x = _x;
             y = _y;
-            topLeft.x = _x;
-            topLeft.y = _y;
-            topRight.x = w + _x;
-            topRight.y = _y;
-            bottomRight.x = _x + w;
-            bottomRight.y = _y + h;
-            bottomLeft.x = _x;
-            bottomLeft.y = _y + h;
         },
         move: function (ex, wy) {
             x += ex;
             y += wy;
-            topLeft.x += ex;
-            topLeft.y += wy;
-            topRight.x += ex;
-            topRight.y += wy;
-            bottomRight.x += ex;
-            bottomRight.y += wy;
-            bottomLeft.x += ex;
-            bottomLeft.y += wy;
         },
         split: function (numberOfRows) {
             var split = [];
             var newHeight = h / numberOfRows;
 
             for (var i = 0 ; i < numberOfRows; i +=1) {
-                var y = topLeft.y + (i * newHeight);
-                split.push(jim.rectangle.create(topLeft.x, y, w, newHeight));
+                split.push(jim.rectangle.create(x, y + (i * newHeight), w, newHeight));
             }
             return split;
         },
