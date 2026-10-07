@@ -1,5 +1,5 @@
 namespace("jim.mandelbrot.examinePixelStateDisplay");
-jim.mandelbrot.examinePixelStateDisplay.create = function (_events, _examinePixelCanvas, _imgData, _xState, _yState, _escapeValues, _imageEscapeValues, _sourceWidth, _uiCanvas) {
+jim.mandelbrot.examinePixelStateDisplay.create = function (_events, _examinePixelCanvas, _imgData, _xState, _yState, _escapeValues, _imageEscapeValues, _sourceWidth, _uiCanvas, _sourceHeight, _state) {
     "use strict";
     var examiningPixels = false;
     var myContext = _examinePixelCanvas.getContext('2d');
@@ -85,10 +85,17 @@ jim.mandelbrot.examinePixelStateDisplay.create = function (_events, _examinePixe
         var pointsIndex = (row * magnifiedAreaWidth) + column;
         var point = points[pointsIndex];
 
+        // The point c that was iterated, worked out the same way as the renderer places pixels.
+        var view = _state.getExtents();
+        var cx = view.topLeft().x + ((topLeft.x + column) * (view.width() / (_sourceWidth - 1)));
+        var cy = view.topLeft().y + ((topLeft.y + row) * (view.height() / (_sourceHeight - 1)));
+
         setText("escapedAt", point.escapedAt);
         setText("imageEscapedAt", point.imageEscapedAt);
-        setText("mx", round(point.xState, 9));
-        setText("my", round(point.yState, 9));
+        setText("cx", Number(cx.toPrecision(15)));
+        setText("cy", Number(cy.toPrecision(15)));
+        setText("zx", round(point.xState, 9));
+        setText("zy", round(point.yState, 9));
         setText("colourInfor", "r:" + round(point.colour.r,3));
         setText("colourInfog", "g:" + round(point.colour.g, 3));
         setText("colourInfob", "b:" + round(point.colour.b,3));
