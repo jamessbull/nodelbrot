@@ -71,8 +71,8 @@ export function createBookmarks(bookmarkButton, state, colourGradientui, _events
         palette.setBlend(mandelbrotInfo.blend);
         colourGradientui.rebuildMarkers(true);
         state.showView(rectangle(mandelbrotInfo.location));
-        // Changing the view drops any palette waiting to go to the renderer, so send it again, and
-        // restart rendering in case it had stopped (as it has if a link is opened in the same tab).
+        // Tell everything about the link's palette, and restart rendering in case it had stopped (as it
+        // has if a link is opened in the same tab).
         _events.fire(_events.paletteChanged, palette);
         _events.fire(_events.restart);
     };

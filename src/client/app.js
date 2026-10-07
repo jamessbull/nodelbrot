@@ -140,8 +140,7 @@ export function startApp(newWorker) {
         state.resize(newSize.width, newSize.height);
         exportSizes.setDisplaySize(newSize.width, newSize.height);
         display = newDisplay(newSize.width, newSize.height);
-        // The new workers need the palette as well as the view. A new view drops any palette waiting
-        // to be sent, so the palette goes second.
+        // The new workers need the view and the palette.
         events.fire(events.extentsUpdate, state.getExtents());
         events.fire(events.paletteChanged, palette);
         display.start();

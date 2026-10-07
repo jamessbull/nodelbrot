@@ -154,8 +154,8 @@ export function createInteractiveRenderer({width: _width, height: _height, event
         histogramFilledLength = 0;
         currentIteration = 0;
         stepSize = initialStepSize;
+        // A palette waiting to be sent is kept: the new view needs it as much as the old one did.
         extents = extentsTransfer(_extents.topLeft().x, _extents.topLeft().y, _extents.width(), _extents.height());
-        palette = undefined;
     });
 
     on(_events.histogramUpdated, function (info) {
