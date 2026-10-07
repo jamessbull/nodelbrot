@@ -79,14 +79,6 @@ jim.colour.colourPicker.create = function (canvas, gradient, events) {
         return interpolate(x, y, Math.random());
     }
 
-    // A saved saturation or value, rounded down to a whole percentage, as the picker has always read
-    // them. Fractions count as percentages, as they did when tinycolor turned them into strings.
-    function wholePercent(value) {
-        var isPercentString = typeof value === "string" && value.indexOf("%") !== -1;
-        var percent = isPercentString ? value : (parseFloat(value) <= 1 ? (parseFloat(value) * 100) + "%" : String(value));
-        return parseInt(percent, 10) / 100;
-    }
-
     on(events.nodeAdded, function (n) {
         var shadeVal = (Math.floor((h / 3)));
         var hueProportion = Math.floor(0.3333333 * h);
@@ -95,10 +87,14 @@ jim.colour.colourPicker.create = function (canvas, gradient, events) {
         selectedHue = randomNumberBetween(0, 359);
 
         if (n.doNotRandomise) {
-            var percentageS = wholePercent(n.node.hsv.s);
-            shadeX = (1 - wholePercent(n.node.hsv.v)) * w;
-            shadeY = shadeVal + (percentageS * shadeProportion);
-            selectedHue = n.node.hsv.h;
+            // A marker with a colour already (from a link): show where its colour is on the picker,
+            // keeping the colour exactly as it was saved.
+            shadeX = (1 - jim.colour.fraction(n.node.hsv.v)) * w;
+            shadeY = shadeVal + (jim.colour.fraction(n.node.hsv.s) * shadeProportion);
+            selectedHue = parseFloat(n.node.hsv.h);
+            gradient.setSelectedNodeMarker(shadeX, shadeY);
+            events.fire(events.colourSelected, {x: shadeX, y: shadeY, hue: selectedHue});
+            return;
         }
         gradient.setSelectedNodeColour(shade(shadeX, shadeY, shadeProportion), shadeX, shadeY);
         events.fire(events.colourSelected, {x: shadeX, y: shadeY, hue: selectedHue});
