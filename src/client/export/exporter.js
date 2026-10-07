@@ -21,8 +21,17 @@ export function parseDepth(text) {
     return {depth: depth};
 }
 
+// The depth to suggest for exporting a view whose last pixel to escape on screen did so at lastEscape:
+// a little past it, at two significant figures, and at least 1000.
+export function suggestedDepth(lastEscape) {
+    const wanted = Math.max(1000, Math.ceil(lastEscape * 1.05));
+    const unit = 10 ** (Math.floor(Math.log10(wanted)) - 1);
+    return Math.min(maxDepth, Math.ceil(wanted / unit) * unit);
+}
+
 // The export panel: exports the current view at the chosen size and depth, with workers made by
-// newWorker(), and shows the result.
+// newWorker(), and shows the result. The depth follows the one the view needs, as it renders (see
+// suggestedDepth), until the user types one, which holds until the view changes.
 // Deep views wait for referenceOrbit to be worked out to the export's depth.
 export function createExporter({exportSizes, state, events, newWorker, referenceOrbit}) {
     let exporting = false;
@@ -47,6 +56,21 @@ export function createExporter({exportSizes, state, events, newWorker, reference
 
     events.listenTo(events.paletteChanged, function (newPalette) {
         palette = newPalette;
+    });
+
+    let depthTyped = false;
+    let escapedSoFar = 0;
+    exportDepth.addEventListener("input", () => { depthTyped = true; });
+    events.listenTo(events.viewChanged, function () {
+        depthTyped = false;
+        escapedSoFar = 0;
+    });
+    events.listenTo(events.histogramChanged, function (info) {
+        if (info.total > escapedSoFar && !depthTyped) {
+            // Pixels escaped in the iterations up to filledLength.
+            exportDepth.value = suggestedDepth(info.filledLength);
+        }
+        escapedSoFar = info.total;
     });
 
     function finish() {
