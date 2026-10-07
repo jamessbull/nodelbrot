@@ -80,14 +80,35 @@ void main() {
     next0 = vec4(d, float(m), escapedAt);
 }`;
 
-// Each pixel's escapedAt as bytes, low byte first, so it can be read back as ordinary 8-bit RGBA.
-export const packEscapesShader = `#version 300 es
+// Counts the pixels that escaped in a frame by the iteration they escaped at, from its start, for the
+// histogram: drawn as a point per pixel, each added (by blending) to the texel of its iteration in an
+// array texture `rows` high, and pixels that didn't escape in the frame left out of the picture.
+export const countEscapesVertexShader = `#version 300 es
 precision highp float;
+precision highp int;
 uniform highp sampler2D state0;
-out vec4 packed;
+uniform int stateWidth;
+uniform float startIteration;
+uniform int iterations;
+uniform int rows;
+${fetchArray}
 void main() {
-    uint at = uint(texelFetch(state0, ivec2(gl_FragCoord.xy), 0).w);
-    packed = vec4(float(at & 255u), float((at >> 8) & 255u), float((at >> 16) & 255u), 255.0) / 255.0;
+    gl_PointSize = 1.0;
+    float at = texelFetch(state0, ivec2(gl_VertexID % stateWidth, gl_VertexID / stateWidth), 0).w;
+    int n = int(at - startIteration);
+    if (at == 0.0 || at < startIteration || n >= iterations) {
+        gl_Position = vec4(2.0, 2.0, 0.0, 1.0);
+        return;
+    }
+    vec2 texel = vec2(arrayTexel(n)) + 0.5;
+    gl_Position = vec4(texel / vec2(arrayWidth, rows) * 2.0 - 1.0, 0.0, 1.0);
+}`;
+
+export const countEscapesShader = `#version 300 es
+precision highp float;
+out vec4 count;
+void main() {
+    count = vec4(1.0);
 }`;
 
 // Colours escaped pixels by where their smoothed escape iteration falls in the cumulative histogram,
@@ -96,6 +117,7 @@ export const colourShader = `#version 300 es
 precision highp float;
 precision highp int;
 uniform highp sampler2D state1;
+uniform float depth;
 uniform highp sampler2D histogram;
 uniform float histogramFilled;
 uniform float histogramCapacity;
@@ -117,7 +139,7 @@ float escapedBy(float iteration) {
 
 void main() {
     vec4 s1 = texelFetch(state1, ivec2(gl_FragCoord.xy), 0);
-    if (s1.x == 0.0) {
+    if (s1.x == 0.0 || s1.x > depth) {
         colour = vec4(0.0, 0.0, 0.0, 1.0);
         return;
     }

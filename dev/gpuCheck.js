@@ -33,14 +33,21 @@ function render(kind, view) {
             : api.createInteractiveRenderer(Object.assign({ workers: api.workerCount(), newWorker }, options));
         const started = performance.now();
         let reached = 0;
+        let examining = false;
         events.listenTo(events.depthReached, (d) => { reached = d; });
+        // Once deep enough, stops and fetches the pixels as the examine panel does (the GPU renderer only
+        // copies them back for that), which takes one more frame.
         events.listenTo(events.frameComplete, function () {
-            if (reached >= depth) {
+            if (reached >= depth && !examining) {
+                examining = true;
                 renderer.stop();
-                renderer.destroy();
-                referenceOrbit.dispose();
-                resolve({ escapeValues, imgData, depth: reached, seconds: (performance.now() - started) / 1000 });
+                events.fire(events.startExamining);
             }
+        });
+        events.listenTo(events.pixelDataReady, function () {
+            renderer.destroy();
+            referenceOrbit.dispose();
+            resolve({ escapeValues, imgData, depth: reached, seconds: (performance.now() - started) / 1000 });
         });
         events.listenTo(events.stop, () => reached < depth && reject(new Error(kind + " renderer stopped")));
         events.fire(events.paletteChanged, api.createPalette());

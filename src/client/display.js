@@ -36,7 +36,7 @@ export function createDisplay({events, width, height, mainCanvas, uiCanvas, magn
         scoped.dispose();
         throw e;
     }
-    createImageRenderer({events: scoped, canvas: mainCanvas, imgData: imgData, width: width, height: height});
+    createImageRenderer({events: scoped, canvas: mainCanvas, imgData: imgData, width: width, height: height, source: renderer.canvas});
     createPixelExaminer({
         events: scoped, magnifier, hint: examineHint, imgData, xState, yState, escapeValues, imageEscapeValues, width, height, state
     });

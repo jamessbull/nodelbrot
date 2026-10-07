@@ -5,7 +5,8 @@
 // rebase again and again, and deep enough the difference between their c and the reference's is lost to
 // rounding when they do. So if pixels are still going long after the reference escaped (twice as long,
 // and at least 1000 iterations more), they are taken to be in the set, and rendering starts again from
-// the orbit of the one nearest the centre, which won't escape.
+// the orbit of the one nearest the centre, which won't escape. Not once rendering has stopped, though, as
+// that would leave the image blank: it waits for rendering to go on.
 export const maxRereferences = 5;
 
 export function rereferenceDue(referenceOrbit, depth) {

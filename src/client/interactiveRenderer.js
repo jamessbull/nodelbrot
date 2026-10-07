@@ -130,7 +130,7 @@ export function createInteractiveRenderer({width, height, events, workers, newWo
 
     // See rereference.js.
     function rereferenceIfNeeded() {
-        if (!perturbing || rereferences >= maxRereferences || !rereferenceDue(referenceOrbit, currentIteration)) {
+        if (!perturbing || !running || rereferences >= maxRereferences || !rereferenceDue(referenceOrbit, currentIteration)) {
             return;
         }
         const nearest = nearestUnescaped(escapeValues, width, height);

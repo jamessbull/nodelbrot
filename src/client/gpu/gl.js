@@ -1,7 +1,8 @@
 // Small helpers for WebGL2.
 
 // A WebGL2 context on a new canvas that can render to 32-bit float textures, which the GPU renderer
-// keeps its pixels' state in, or null if the browser can't.
+// keeps its pixels' state in, and blend into them, which it counts escapes with, or null if the browser
+// can't.
 export function createFloatContext(width = 1, height = 1) {
     if (typeof document === "undefined") {
         return null;
@@ -11,7 +12,7 @@ export function createFloatContext(width = 1, height = 1) {
     canvas.height = height;
     const gl = canvas.getContext("webgl2", {antialias: false, depth: false, stencil: false, preserveDrawingBuffer: false,
         powerPreference: "high-performance"});
-    if (!gl || !gl.getExtension("EXT_color_buffer_float")) {
+    if (!gl || !gl.getExtension("EXT_color_buffer_float") || !gl.getExtension("EXT_float_blend")) {
         return null;
     }
     return gl;

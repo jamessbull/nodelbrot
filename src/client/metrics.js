@@ -1,23 +1,17 @@
-// Fires currentFramesPerSecond after each frame, averaged over the last two frames.
+// Fires framesPerSecond after each frame, averaged over the last few frames (the GPU renderer can
+// finish two at once).
 export function createMetrics(clock, events) {
-    const times = new Uint32Array(3);
-    let currentIndex = -1;
-    function nextIndex(i) { return currentIndex > 1 ? 0 : i + 1; }
-    function previousIndex(i) { return i < 1 ? 2 : i - 1; }
-    function frameTime(i) { return times[i] - times[previousIndex(i)]; }
-
-    function fps() {
-        const frame1 = frameTime(currentIndex);
-        const frame2 = frameTime(previousIndex(currentIndex));
-        if (frame1 === 0 || frame2 === 0) return 0;
-        const avgFrameTime = (frame1 + frame2) / 2;
-        return (1000 / avgFrameTime).toFixed(2);
-    }
+    const framesAveraged = 8;
+    const times = [];
 
     events.listenTo(events.frameComplete, function () {
-        currentIndex = nextIndex(currentIndex);
-        times[currentIndex] = clock.time();
-        events.fire(events.framesPerSecond, fps());
+        times.push(clock.time());
+        if (times.length > framesAveraged + 1) {
+            times.shift();
+        }
+        const elapsed = times[times.length - 1] - times[0];
+        const fps = times.length < 3 || elapsed === 0 ? 0 : (1000 * (times.length - 1) / elapsed);
+        events.fire(events.framesPerSecond, fps.toFixed(2));
     });
 }
 
