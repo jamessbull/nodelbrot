@@ -22,7 +22,7 @@ import { createColourPicker } from "./colourPicker.js";
 import { createExportSizes } from "./exportDropdown.js";
 import { createControls } from "./uiElements.js";
 import { createBookmarks } from "./bookMark.js";
-import { deselectButton, element, selectButton } from "./dom.js";
+import { element } from "./dom.js";
 
 // Starts the explorer on the page, rendering with workers made by newWorker(). Its events go out in a
 // "nodelbrotstart" event on window before anything happens, and are returned, for development tools.
@@ -100,13 +100,15 @@ export function startApp(newWorker) {
     });
 
     const help = element("helptext");
-    const helpButton = element("helptextbutton");
-    function showHelp(showing) {
-        help.classList.toggle("hidden", !showing);
-        (showing ? selectButton : deselectButton)(helpButton);
-    }
-    helpButton.onclick = () => showHelp(help.classList.contains("hidden"));
-    element("closehelp").onclick = () => showHelp(false);
+    element("helptextbutton").onclick = () => help.showModal();
+    element("closehelp").onclick = () => help.close();
+    // A click on the backdrop, outside the dialog's box, closes it too.
+    help.addEventListener("click", (e) => {
+        const box = help.getBoundingClientRect();
+        if (e.clientX < box.left || e.clientX > box.right || e.clientY < box.top || e.clientY > box.bottom) {
+            help.close();
+        }
+    });
 
     events.fire(events.paletteChanged, palette);
     bookmarks.changeLocation();

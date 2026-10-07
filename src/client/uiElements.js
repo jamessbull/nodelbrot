@@ -1,60 +1,65 @@
 import { createExporter } from "./export/exporter.js";
-import { deselectButton, selectButton, show } from "./dom.js";
+import { deselectButton, element, selectButton } from "./dom.js";
 
-// The Stop, Go and Examine buttons, and the export panel, which makes workers with newWorker().
+// Opens and closes a pop-over panel from its button. It closes on a second click of the button, a
+// click anywhere outside it, or Escape.
+function popover(button, panel) {
+    function setOpen(open) {
+        panel.hidden = !open;
+        button.setAttribute("aria-expanded", String(open));
+        (open ? selectButton : deselectButton)(button);
+    }
+    button.addEventListener("click", () => setOpen(panel.hidden));
+    document.addEventListener("pointerdown", (e) => {
+        if (!panel.hidden && !panel.contains(e.target) && !button.contains(e.target)) {
+            setOpen(false);
+        }
+    });
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && !panel.hidden) {
+            setOpen(false);
+            button.focus();
+        }
+    });
+}
+
+// The Stop, Go, Examine and Export buttons. The export makes workers with newWorker().
 export function createControls(_exportSizeDropdown, _state, _events, newWorker) {
     const on = _events.listenTo;
 
-    const stopButton         = document.getElementById("stop");
-    const startButton        = document.getElementById("start");
+    const stopButton = element("stop");
+    const startButton = element("start");
 
-    selectButton(startButton);
+    function showRunning(running) {
+        (running ? selectButton : deselectButton)(startButton);
+        (running ? deselectButton : selectButton)(stopButton);
+    }
+    showRunning(true);
+    on(_events.start, () => showRunning(true));
+    on(_events.restart, () => showRunning(true));
+    on(_events.stop, () => showRunning(false));
+    startButton.onclick = () => _events.fire(_events.start);
+    stopButton.onclick = () => _events.fire(_events.stop);
 
-    on(_events.start, function () {
-        selectButton(startButton);
-        deselectButton(stopButton);
-    });
-
-    on(_events.restart, function () {
-        selectButton(startButton);
-        deselectButton(stopButton);
-    });
-
-    on(_events.stop, function () {
-        selectButton(stopButton);
-        deselectButton(startButton);
-    });
-
-    startButton.onclick = function () {
-        _events.fire(_events.start);
-    };
-
-    stopButton.onclick = function () {
-        _events.fire(_events.stop);
-    };
-
-    const examineMenuButton  = document.getElementById("pixelInfoButton");
-    const examinePixelsPanel = document.getElementById("examinePixels");
-    const exportPanel        = document.getElementById("exportImagePanel");
-    const mandelCanvas       = document.getElementById("mandelbrotCanvas");
-
-    examineMenuButton.onclick = function () {
-        if (examineMenuButton.classList.contains("buttonSelected")) {
-            deselectButton(examineMenuButton);
-            mandelCanvas.classList.remove("magnifyCursor");
-            _events.fire(_events.stopExaminingPixelState);
-
-        } else{
-            selectButton(examineMenuButton);
-            mandelCanvas.classList.add("magnifyCursor");
+    // Examining pixels stops rendering, so the pixels stay put, and shows the examine panel over the
+    // image until it is turned off.
+    const examineButton = element("pixelInfoButton");
+    const examinePanel = element("examinePixels");
+    const uiCanvas = element("uiCanvas");
+    examineButton.onclick = function () {
+        const examining = examinePanel.hidden;
+        examinePanel.hidden = !examining;
+        uiCanvas.classList.toggle("magnifyCursor", examining);
+        if (examining) {
+            selectButton(examineButton);
             _events.fire(_events.stop);
             _events.fire(_events.examinePixelState);
+        } else {
+            deselectButton(examineButton);
+            _events.fire(_events.stopExaminingPixelState);
         }
     };
 
-    show(exportPanel);
-    deselectButton(examineMenuButton);
-    show(examinePixelsPanel);
-
+    popover(element("exportMenuButton"), element("exportImagePanel"));
     createExporter(_exportSizeDropdown, _state, _events, newWorker);
 }
