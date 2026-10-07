@@ -14,7 +14,7 @@ describe("Performance metrics", function () {
                 setTimeout(waitThenFire, 100);
             }
         }
-        events.listenTo(events.currentFramesPerSecond, function (fps) {
+        events.listenTo(events.framesPerSecond, function (fps) {
             if(fired < 5 && fired > 2) {
                 expect(fps).toBeGreaterThan(9);
                 expect(fps).toBeLessThan(11);

@@ -7,11 +7,11 @@ export function createViewInteraction(_mainCanvas, _events) {
     const leftMouseButton = 0;
     const rightMouseButton = 2;
 
-    on(_events.examinePixelState, function () {
+    on(_events.startExamining, function () {
         exploring = false;
     });
 
-    on(_events.stopExaminingPixelState, function () {
+    on(_events.stopExamining, function () {
         exploring = true;
     });
 
@@ -20,14 +20,14 @@ export function createViewInteraction(_mainCanvas, _events) {
         e.preventDefault();
         if (exploring) {
             if (e.button === leftMouseButton) {
-                _events.fire(_events.beginSelectionAction, {x: e.offsetX, y: e.offsetY});
-                _events.fire(_events.leftMouseDown, {x: e.layerX, y: e.offsetY});
+                _events.fire(_events.selectionStart, {x: e.offsetX, y: e.offsetY});
+                _events.fire(_events.leftButtonDown, {x: e.layerX, y: e.offsetY});
             }
             if (e.button === rightMouseButton) {
-                _events.fire(_events.beginMoveAction, {x: e.offsetX, y: e.offsetY});
+                _events.fire(_events.dragStart, {x: e.offsetX, y: e.offsetY});
             }
         } else {
-            _events.fire(_events.examinePixelAction, {x: e.offsetX, y: e.offsetY});
+            _events.fire(_events.examinePixelAt, {x: e.offsetX, y: e.offsetY});
         }
     }
 
@@ -36,10 +36,10 @@ export function createViewInteraction(_mainCanvas, _events) {
         e.preventDefault();
         if (exploring) {
             if (e.button === leftMouseButton) {
-                _events.fire(_events.endSelectionAction, {x: e.offsetX, y: e.offsetY});
+                _events.fire(_events.selectionEnd, {x: e.offsetX, y: e.offsetY});
             }
             if (e.button === rightMouseButton) {
-                _events.fire(_events.endMoveAction, {x: e.offsetX, y: e.offsetY});
+                _events.fire(_events.dragEnd, {x: e.offsetX, y: e.offsetY});
             }
         }
     }
@@ -47,10 +47,10 @@ export function createViewInteraction(_mainCanvas, _events) {
     function mouseMove(e) {
         e.preventDefault();
         if (exploring && selectingArea) {
-            _events.fire(_events.selectionChanged, {x: e.offsetX, y: e.offsetY});
-            _events.fire(_events.viewMoveAction, {x: e.offsetX, y: e.offsetY});
+            _events.fire(_events.selectionMove, {x: e.offsetX, y: e.offsetY});
+            _events.fire(_events.dragMove, {x: e.offsetX, y: e.offsetY});
         } else {
-            _events.fire(_events.mouseMoved, {x: e.offsetX, y: e.offsetY});
+            _events.fire(_events.pointerMoved, {x: e.offsetX, y: e.offsetY});
         }
     }
 
@@ -68,7 +68,7 @@ export function createViewInteraction(_mainCanvas, _events) {
         },
         up: function (e) {
             if (!exploring) {
-                _events.fire(_events.examinePixelAction, {x: e.offsetX, y: e.offsetY});
+                _events.fire(_events.examinePixelAt, {x: e.offsetX, y: e.offsetY});
             }
         }
     }, () => !exploring);

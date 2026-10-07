@@ -29,18 +29,18 @@ export function createEscapeHistogram(_events, _histoData) {
         currentTotal += runningTotal;
         lastTimeRound = lastIterationCalculated;
         filledLength = Math.max(filledLength, lastIterationCalculated + updates.length);
-        _events.fire(_events.morePixelsEscaped, currentTotal);
+        _events.fire(_events.escapedTotal, currentTotal);
     }
 
     // Listeners get the live histogram rather than a copy, so they must not modify it, and must copy
     // it if they need it to stay unchanged.
-    on(_events.histogramUpdateReceivedFromWorker, function (updateInfo) {
+    on(_events.escapesFromWorkers, function (updateInfo) {
         processHistogramUpdates(updateInfo);
         const histoData = {array: _histoData, filledLength: filledLength, total: currentTotal, currentIteration: updateInfo.currentIteration};
-        _events.fire(_events.histogramUpdated, histoData);
+        _events.fire(_events.histogramChanged, histoData);
     });
 
-    on(_events.extentsUpdate, function () {
+    on(_events.viewChanged, function () {
         _histoData = new Uint32Array(initialHistogramSize);
         currentTotal = 0;
         lastTimeRound = 0;

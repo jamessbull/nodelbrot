@@ -29,7 +29,7 @@ export function createDisplay({events, width, height, mainCanvas, uiCanvas, pixe
         width: width, height: height, events: scoped, workers: workerCount(), newWorker: newWorker,
         imgData: imgData, escapeValues: escapeValues, xState: xState, yState: yState, imageEscapeValues: imageEscapeValues
     });
-    createImageRenderer(scoped, mainCanvas, width, height);
+    createImageRenderer({events: scoped, canvas: mainCanvas, imgData: imgData, width: width, height: height});
     createPixelExaminer(scoped, pixelInfoCanvas, imgData, xState, yState, escapeValues, imageEscapeValues, width, uiCanvas, height, state);
     createAutoStop(scoped, pixels);
     createZoomIn(mainCanvas, uiCanvas, scoped, createSelection(rectangle(0, 0, width, height)),

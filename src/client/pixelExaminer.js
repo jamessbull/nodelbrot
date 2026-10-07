@@ -148,13 +148,13 @@ export function createPixelExaminer(_events, _examinePixelCanvas, _imgData, _xSt
         displayMessage(msg, 30, 30);
     }
 
-    on(_events.publishPixelState, function () {
+    on(_events.pixelDataReady, function () {
         examiningPixels = true;
         topLevelMessage("Examine pixels mode. (Click examine button to leave)");
         displayAdditionalMessage("Click the left button on the image to select an area");
     });
 
-    on(_events.examinePixelAction, function (e) {
+    on(_events.examinePixelAt, function (e) {
        areaHasBeenSelected = !areaHasBeenSelected;
        if (areaHasBeenSelected) {
            displayAdditionalMessage("Click on magnified image to examine a pixel");
@@ -164,7 +164,7 @@ export function createPixelExaminer(_events, _examinePixelCanvas, _imgData, _xSt
        selectedArea = rectangle(e.x, e.y, magnifiedAreaWidth, magnifiedAreaWidth);
     });
 
-    on(_events.mouseMoved, function (movement) {
+    on(_events.pointerMoved, function (movement) {
         if (!examiningPixels) return;
 
         if (areaHasBeenSelected) return;
@@ -172,7 +172,7 @@ export function createPixelExaminer(_events, _examinePixelCanvas, _imgData, _xSt
         drawMagnifiedPixels(_examinePixelCanvas, movement, magnifiedAreaWidth, _sourceWidth);
     });
 
-    on(_events.stopExaminingPixelState, function () {
+    on(_events.stopExamining, function () {
         examiningPixels = false;
         topLevelMessage("Leaving examine pixels mode");
         setTimeout(function () {_uiCanvas.getContext('2d').clearRect(0,0, _uiCanvas.width, _uiCanvas.height);}, 1000);

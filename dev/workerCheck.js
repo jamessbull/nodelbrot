@@ -95,9 +95,23 @@ function workerFactory(api, scheduler) {
     };
 }
 
+// The events this uses, under their current names, from a revision that may use the names they had
+// before they were renamed.
+function eventNames(events) {
+    const either = (name, oldName) => events[name] || events[oldName];
+    return {
+        viewChanged: either("viewChanged", "extentsUpdate"),
+        escapesFromWorkers: either("escapesFromWorkers", "histogramUpdateReceivedFromWorker"),
+        depthReached: either("depthReached", "maxIterationsUpdated"),
+        frameComplete: events.frameComplete,
+        paletteChanged: events.paletteChanged
+    };
+}
+
 function render(api, view, workers) {
     const scheduler = newScheduler();
     const events = api.createEvents();
+    const named = eventNames(events);
     const pixels = width * height;
     const imgData = new Uint8ClampedArray(pixels * 4);
     const escapeValues = new Uint32Array(pixels);
@@ -111,7 +125,7 @@ function render(api, view, workers) {
     let lastIteration = 0;
     let harnessMs = 0;   // time spent here recording frames, left out of the main thread figure
 
-    events.listenTo(events.histogramUpdateReceivedFromWorker, (u) => { lastStep = u.update.length; });
+    events.listenTo(named.escapesFromWorkers, (u) => { lastStep = u.update.length; });
     const stopwatch = {
         start: function () {}, stop: function () {}, elapsed: function () {
             let active = 0;
@@ -121,7 +135,7 @@ function render(api, view, workers) {
             return ms;
         }
     };
-    events.listenTo(events.maxIterationsUpdated, (i) => { lastIteration = i; });
+    events.listenTo(named.depthReached, (i) => { lastIteration = i; });
     api.createEscapeHistogram(events, new Uint32Array(api.initialHistogramSize));
     const calculator = api.createInteractiveRenderer({
         width: width, height: height, events: events, workers: workers || parallelism, newWorker: workerFactory(api, scheduler),
@@ -129,7 +143,7 @@ function render(api, view, workers) {
         imageEscapeValues: new Uint32Array(pixels), stopwatch: stopwatch
     });
     const viewRectangle = (v) => api.rectangle(v.x, v.y, v.w, v.h);
-    events.listenTo(events.frameComplete, function () {
+    events.listenTo(named.frameComplete, function () {
         const recordStart = process.hrtime.bigint();
         hash.update(Buffer.from(imgData.buffer, imgData.byteOffset, imgData.byteLength));
         hash.update(Buffer.from(escapeValues.buffer, escapeValues.byteOffset, escapeValues.byteLength));
@@ -139,14 +153,14 @@ function render(api, view, workers) {
         frames += 1;
         if (frames === view.switchAfter) {
             // Runs after the renderer has posted its next batch, before the workers handle it.
-            scheduler.post(() => events.fire(events.extentsUpdate, viewRectangle(view.switchTo)));
+            scheduler.post(() => events.fire(named.viewChanged, viewRectangle(view.switchTo)));
         }
         if (frames >= view.frames) calculator.stop();
     });
     const palette = api.createPalette();
-    events.fire(events.paletteChanged, palette);
-    events.fire(events.extentsUpdate, viewRectangle(view.view));
-    events.fire(events.paletteChanged, palette);
+    events.fire(named.paletteChanged, palette);
+    events.fire(named.viewChanged, viewRectangle(view.view));
+    events.fire(named.paletteChanged, palette);
     calculator.start();
 
     const start = process.hrtime.bigint();

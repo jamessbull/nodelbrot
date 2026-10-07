@@ -58,6 +58,6 @@ describe("scoped events", function () {
 
     it("should share the event names", function () {
         const events = createEvents();
-        expect(events.scope().extentsUpdate).toBe(events.extentsUpdate);
+        expect(events.scope().viewChanged).toBe(events.viewChanged);
     });
 });

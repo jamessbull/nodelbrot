@@ -141,8 +141,8 @@
     // The explorer sends out its events as it starts, before it sets the first view.
     window.addEventListener("nodelbrotstart", function (e) {
         const events = e.detail;
-        events.listenTo(events.extentsUpdate, startBenchmark);
-        events.listenTo(events.maxIterationsUpdated, function (iteration) { depth = iteration; });
+        events.listenTo(events.viewChanged, startBenchmark);
+        events.listenTo(events.depthReached, function (iteration) { depth = iteration; });
         events.listenTo(events.frameComplete, onFrame);
         events.listenTo(events.stop, function () { running = false; });
         events.listenTo(events.restart, function () { running = true; });

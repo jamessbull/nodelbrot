@@ -53,10 +53,10 @@ export function createControls(_exportSizeDropdown, _state, _events, newWorker) 
         if (examining) {
             selectButton(examineButton);
             _events.fire(_events.stop);
-            _events.fire(_events.examinePixelState);
+            _events.fire(_events.startExamining);
         } else {
             deselectButton(examineButton);
-            _events.fire(_events.stopExaminingPixelState);
+            _events.fire(_events.stopExamining);
         }
     };
 

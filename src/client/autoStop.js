@@ -15,23 +15,23 @@ export function createAutoStop(events, pixelCount) {
         framesWithoutEscapes = 0;
     }
 
-    on(events.zoomInAction, function () {
+    on(events.zoomToSelection, function () {
         restart();
     });
 
-    on(events.zoomOutAction, function () {
+    on(events.zoomOut, function () {
         restart();
     });
 
-    on(events.moveSetAction, function () {
+    on(events.moveBy, function () {
         restart();
     });
 
-    on(events.transformAction, function () {
+    on(events.transformView, function () {
         restart();
     });
 
-    on(events.morePixelsEscaped, function (_totalEscaped) {
+    on(events.escapedTotal, function (_totalEscaped) {
         totalEscaped = _totalEscaped;
     });
 

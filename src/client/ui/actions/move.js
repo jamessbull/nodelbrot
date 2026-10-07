@@ -8,7 +8,7 @@ export function createMove(_events, _mandelbrotCanvas, _uiCanvas) {
     let totalYMovement;
     const start = coord();
 
-    on(_events.beginMoveAction, function (e) {
+    on(_events.dragStart, function (e) {
         moving = true;
         start.x = e.x;
         start.y = e.y;
@@ -16,16 +16,16 @@ export function createMove(_events, _mandelbrotCanvas, _uiCanvas) {
         totalYMovement = 0;
     });
 
-    on(_events.viewMoveAction, function (e) {
+    on(_events.dragMove, function (e) {
         if(!moving) return;
         totalXMovement = e.x - start.x;
         totalYMovement = e.y - start.y;
         show();
     });
 
-    on(_events.endMoveAction, function (e) {
+    on(_events.dragEnd, function (e) {
         moving = false;
-        _events.fire(_events.moveSetAction, {x: e.x - start.x, y: e.y - start.y});
+        _events.fire(_events.moveBy, {x: e.x - start.x, y: e.y - start.y});
         _mandelbrotCanvas.getContext('2d').drawImage(_uiCanvas, 0, 0, _uiCanvas.width, _uiCanvas.height);
         _uiCanvas.getContext('2d').clearRect(0, 0, _uiCanvas.width, _uiCanvas.height);
     });

@@ -30,7 +30,7 @@ export function createViewState(sizeX, sizeY, startingExtent, _events) {
         zoomTo: function (selection) {
             previousExtents.push(currentExtents.copy());
             currentExtents = selection.area().translateFrom(screen).to(currentExtents);
-            _events.fire(_events.extentsUpdate, currentExtents);
+            _events.fire(_events.viewChanged, currentExtents);
         },
         // For a display that is now newX x newY: keeps the view, and the views zoomed in from, at the
         // same centre and zoom.
@@ -45,7 +45,7 @@ export function createViewState(sizeX, sizeY, startingExtent, _events) {
         zoomOut: function () {
             if (previousExtents.length > 0) {
                 currentExtents = previousExtents.pop();
-                _events.fire(_events.extentsUpdate, currentExtents);
+                _events.fire(_events.viewChanged, currentExtents);
             }
         },
         notFullyZoomedOut: function () {
@@ -54,7 +54,7 @@ export function createViewState(sizeX, sizeY, startingExtent, _events) {
         move: function (moveX, moveY) {
             const distance = fromScreen(moveX, moveY).distanceTo(currentExtents.topLeft());
             currentExtents.move(0 - distance.x, 0 - distance.y);
-            _events.fire(_events.extentsUpdate, currentExtents);
+            _events.fire(_events.viewChanged, currentExtents);
         },
         getExtents: function () {
             return currentExtents;
@@ -72,28 +72,28 @@ export function createViewState(sizeX, sizeY, startingExtent, _events) {
             }
             const topLeft = fromScreen(-translateX / scale, -translateY / scale);
             currentExtents = rectangle(topLeft.x, topLeft.y, currentExtents.width() / scale, currentExtents.height() / scale);
-            _events.fire(_events.extentsUpdate, currentExtents);
+            _events.fire(_events.viewChanged, currentExtents);
         },
         // Shows all of extents, centred, with more around it in whichever direction the display's shape needs.
         showView: function (extents) {
             currentExtents = fitView(extents, sizeX, sizeY);
-            _events.fire(_events.extentsUpdate, currentExtents);
+            _events.fire(_events.viewChanged, currentExtents);
         }
     };
 
-    on(_events.zoomOutAction, function () {
+    on(_events.zoomOut, function () {
         theState.zoomOut();
     });
 
-    on(_events.zoomInAction, function (_selection) {
+    on(_events.zoomToSelection, function (_selection) {
         theState.zoomTo(_selection);
     });
 
-    on(_events.moveSetAction, function (_location) {
+    on(_events.moveBy, function (_location) {
        theState.move(_location.x, _location.y);
     });
 
-    on(_events.transformAction, function (transform) {
+    on(_events.transformView, function (transform) {
         theState.transform(transform);
     });
     return theState;

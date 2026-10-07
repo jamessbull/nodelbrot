@@ -1,38 +1,57 @@
-// The names of the events the parts of the explorer use to talk to each other.
+// The events the parts of the explorer use to tell each other what has happened, and what each one
+// carries. Each event's name is its key.
 const names = {
-    extentsUpdate: "extentsUpdate",
-    start : "start",
-    stop : "stop",
-    restart: "restart",
-    nodeAdded: "nodeAdded",
-    pulseUI:"pulseUI",
-    morePixelsEscaped: "morePixelsEscaped",
-    paletteChanged: "paletteUpdate",
-    colourSelected: "colourSelected",
-    maxIterationsUpdated: "maxIterationsUpdated",
-    frameComplete: "frameComplete",
-    andFinally: "andFinally",
-    histogramUpdateReceivedFromWorker: "histogramUpdateReceivedFromWorker",
-    histogramUpdated: "histogramUpdated",
-    renderImage:"renderImage",
-    currentFramesPerSecond: "currentFramesPerSecond",
-    examinePixelState: "examinePixelState",
-    publishPixelState: "publishPixelState",
-    stopExaminingPixelState: "stopExaminingPixelState",
-    mouseMoved: "mouseMoved",
-    selectionChanged: "selectionChanged",
-    leftMouseDown: "leftMouseDown",
-    zoomOutAction: "zoomOut",
-    beginSelectionAction: "beginSelectionAction",
-    beginMoveAction: "beginMoveAction",
-    endMoveAction: "endMoveAction",
-    endSelectionAction: "endSelectionAction",
-    zoomInAction: "zoomInAction",
-    viewMoveAction: "viewMoveAction",
-    moveSetAction: "moveSetAction",
-    transformAction: "transformAction",
-    examinePixelAction: "examinePixelAction"
+    // The view (the rectangle of the complex plane shown) has changed, to the rectangle given.
+    viewChanged: "",
+    // Rendering: start (carry on), stop, and restart after a zoom, move or new view.
+    start: "",
+    stop: "",
+    restart: "",
+    // Render one more frame, even if stopped, so a change such as to the colours shows.
+    showChanges: "",
+    // The palette has changed; carries the palette.
+    paletteChanged: "",
+    // A colour marker was added to the palette editor; carries {node, selected, doNotRandomise}.
+    nodeAdded: "",
+    // A colour was chosen in the colour picker; carries {x, y, hue} of where it is shown.
+    colourSelected: "",
+    // A frame is done: depthReached (carrying its depth) then frameComplete.
+    depthReached: "",
+    frameComplete: "",
+    // A frame's escape counts from the workers: {update, currentIteration}.
+    escapesFromWorkers: "",
+    // The escape histogram has taken those in: {array, filledLength, total, currentIteration}.
+    histogramChanged: "",
+    // How many pixels have escaped in all, so far.
+    escapedTotal: "",
+    framesPerSecond: "",
+    // Examining pixels: startExamining and stopExamining as the mode changes, pixelDataReady once a
+    // frame has fetched the pixel data, and examinePixelAt {x, y} for a click or tap on the image.
+    startExamining: "",
+    stopExamining: "",
+    pixelDataReady: "",
+    examinePixelAt: "",
+    // The pointer, in pixels on the image {x, y}: moving, and the left button pressed.
+    pointerMoved: "",
+    leftButtonDown: "",
+    // Dragging out an area to zoom into, {x, y} each.
+    selectionStart: "",
+    selectionMove: "",
+    selectionEnd: "",
+    // Dragging the image along (with the right button), {x, y} each.
+    dragStart: "",
+    dragMove: "",
+    dragEnd: "",
+    // Changes to the view, asked for by the user: to the selection given, back out, by {x, y} pixels,
+    // or by a pinch or drag {scale, translateX, translateY}.
+    zoomToSelection: "",
+    zoomOut: "",
+    moveBy: "",
+    transformView: ""
 };
+for (const key of Object.keys(names)) {
+    names[key] = key;
+}
 
 // The explorer's events. listenTo adds a listener for an event, and fire calls an event's listeners with
 // arg. Each explorer has its own. scope() gives the same events, but remembers the listeners added

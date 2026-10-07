@@ -56,7 +56,7 @@ export function startApp(newWorker) {
     element("zoomOutButton").onclick = zoomOut.zoomOut;
     createMove(events, mainCanvas, uiCanvas);
     createTouchGestures(uiCanvas, mainCanvas, {
-        onTransform: (change) => events.fire(events.transformAction, change),
+        onTransform: (change) => events.fire(events.transformView, change),
         onDoubleTap: zoomOut.zoomOut,
         enabled: () => element("examinePixels").hidden
     });
@@ -87,7 +87,7 @@ export function startApp(newWorker) {
     paletteBlendSelect.onchange = function () {
         palette.setBlend(paletteBlendSelect.value);
         events.fire(events.paletteChanged, palette);
-        events.fire(events.pulseUI);
+        events.fire(events.showChanges);
     };
     // Keeps the selector right when a bookmark changes the blend.
     events.listenTo(events.paletteChanged, () => { paletteBlendSelect.value = palette.blend(); });
@@ -102,7 +102,7 @@ export function startApp(newWorker) {
     const maxIteration = element("maxIteration");
     const lastEscapedOn = element("lastPointEscapedAt");
     let lastTotal = 0;
-    events.listenTo(events.histogramUpdated, function (histoInfo) {
+    events.listenTo(events.histogramChanged, function (histoInfo) {
         maxIteration.innerText = histoInfo.currentIteration;
         if (histoInfo.total > lastTotal) {
             lastEscapedOn.innerText = histoInfo.currentIteration;
@@ -142,7 +142,7 @@ export function startApp(newWorker) {
         exportSizes.setDisplaySize(newSize.width, newSize.height);
         display = newDisplay(newSize.width, newSize.height);
         // The new workers need the view and the palette.
-        events.fire(events.extentsUpdate, state.getExtents());
+        events.fire(events.viewChanged, state.getExtents());
         events.fire(events.paletteChanged, palette);
         display.start();
     }

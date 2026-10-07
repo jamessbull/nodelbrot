@@ -11,14 +11,14 @@ export function createZoomOut(_events, _timer, _zoomOutAnim, _mandelbrotCanvas, 
         }
         const from = _mandelbrotState.getExtents();
         const to = _mandelbrotState.getLastExtents();
-        _events.fire(_events.zoomOutAction);
+        _events.fire(_events.zoomOut);
 
         const oldCanvas = matchingCanvas(_mandelbrotCanvas);
         oldCanvas.getContext('2d').drawImage(_mandelbrotCanvas, 0, 0);
         _zoomOutAnim.play(oldCanvas, from, to);
     }
 
-    on(_events.leftMouseDown, function () {
+    on(_events.leftButtonDown, function () {
         if (_timer.timeSinceMark("doubleClickBegin") < 700) {
             zoomOut();
         }

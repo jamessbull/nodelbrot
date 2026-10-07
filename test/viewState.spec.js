@@ -35,7 +35,7 @@ describe("the view", function () {
     it("should show a view fitted to the display", function () {
         const events = createEvents();
         const shown = [];
-        events.listenTo(events.extentsUpdate, (view) => shown.push(view));
+        events.listenTo(events.viewChanged, (view) => shown.push(view));
         const state = createViewState(101, 101, rectangle(0, 0, 1, 1), events);
         state.showView(rectangle(0, 0, 10, 4));
         expectView(shown[0], 0, -3, 10, 10);
@@ -48,7 +48,7 @@ describe("pinching and dragging the view", function () {
         // 11 x 5 pixels a unit apart.
         const state = createViewState(11, 5, rectangle(0, 0, 10, 4), events);
         // Twice the size, about pixel (4, 2), which moves to (6, 2).
-        events.fire(events.transformAction, {scale: 2, translateX: 6 - 8, translateY: 2 - 4});
+        events.fire(events.transformView, {scale: 2, translateX: 6 - 8, translateY: 2 - 4});
         const view = state.getExtents();
         expect(view.x).toBeCloseTo(1, 12);
         expect(view.y).toBeCloseTo(1, 12);
@@ -61,7 +61,7 @@ describe("pinching and dragging the view", function () {
     it("should move the view the other way to a drag", function () {
         const events = createEvents();
         const state = createViewState(11, 5, rectangle(0, 0, 10, 4), events);
-        events.fire(events.transformAction, {scale: 1, translateX: 3, translateY: -1});
+        events.fire(events.transformView, {scale: 1, translateX: 3, translateY: -1});
         expect(state.getExtents().x).toBeCloseTo(-3, 12);
         expect(state.getExtents().y).toBeCloseTo(1, 12);
         expect(state.notFullyZoomedOut()).toBe(false);

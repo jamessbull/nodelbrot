@@ -72,7 +72,7 @@ export function createColourPicker(canvas, gradient, events) {
         }
         gradient.setSelectedNodeColour(colour, e.offsetX, e.offsetY);
         events.fire(events.colourSelected, {x: e.offsetX, y: e.offsetY, hue: selectedHue});
-        events.fire(events.pulseUI);
+        events.fire(events.showChanges);
     }
 
     function randomNumberBetween(x, y) {
@@ -95,7 +95,7 @@ export function createColourPicker(canvas, gradient, events) {
         position = {x: 0, y: randomNumberBetween(hueStripHeight, h)};
         gradient.setSelectedNodeColour(shadeAt(position.x, position.y), position.x, position.y);
         events.fire(events.colourSelected, {x: position.x, y: position.y, hue: selectedHue});
-        events.fire(events.pulseUI, {});
+        events.fire(events.showChanges, {});
     });
 
     canvas.onclick = function (e) {

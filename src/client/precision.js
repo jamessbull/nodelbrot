@@ -14,7 +14,7 @@ export function isNearLimit(extents, pixelsAcross) {
 // Says so, once, each time the view goes past the limit.
 export function precisionWarning(events, notice, pixelsAcross) {
     let nearLimit = false;
-    events.listenTo(events.extentsUpdate, function (extents) {
+    events.listenTo(events.viewChanged, function (extents) {
         const wasNearLimit = nearLimit;
         nearLimit = isNearLimit(extents, pixelsAcross);
         if (nearLimit && !wasNearLimit) {

@@ -53,7 +53,7 @@ export function createInteractiveRenderer({width: _width, height: _height, event
         if (batchGeneration !== viewGeneration) {
             return;
         }
-        _events.fire(_events.histogramUpdateReceivedFromWorker, {update: new Uint32Array(_msg.histogramUpdate), currentIteration: currentIteration});
+        _events.fire(_events.escapesFromWorkers, {update: new Uint32Array(_msg.histogramUpdate), currentIteration: currentIteration});
         placeRows(escapeValues, new Uint32Array(_msg.escapeValues), _msg, 1);
         placeRows(_imgData, new Uint8ClampedArray(_msg.imageDataBuffer), _msg, 4);
         if (_msg.extraDataSent) {
@@ -75,13 +75,11 @@ export function createInteractiveRenderer({width: _width, height: _height, event
     function onAllJobsComplete() {
         timer.stop();
         if (batchGeneration === viewGeneration) {
-            _events.fire(_events.maxIterationsUpdated, currentIteration);
+            _events.fire(_events.depthReached, currentIteration);
             currentIteration += stepSize;
             if (batchSendsData) {
-                _events.fire(_events.publishPixelState);
+                _events.fire(_events.pixelDataReady);
             }
-            _events.fire(_events.renderImage, {imgData: _imgData, offset: 0});
-            _events.fire(_events.andFinally);
             _events.fire(_events.frameComplete);
 
             updateStepSize(timer.elapsed());
@@ -163,7 +161,7 @@ export function createInteractiveRenderer({width: _width, height: _height, event
         paletteBlend = _palette.blend();
     });
 
-    on(_events.extentsUpdate, function (_extents) {
+    on(_events.viewChanged, function (_extents) {
         viewGeneration += 1;
         histogram = new Uint32Array(initialHistogramSize);
         histogramFilledLength = 0;
@@ -173,7 +171,7 @@ export function createInteractiveRenderer({width: _width, height: _height, event
         extents = extentsTransfer(_extents.topLeft().x, _extents.topLeft().y, _extents.width(), _extents.height());
     });
 
-    on(_events.histogramUpdated, function (info) {
+    on(_events.histogramChanged, function (info) {
         histogram = info.array;
         histogramFilledLength = info.filledLength;
         histogramTotal = info.total;
@@ -196,13 +194,13 @@ export function createInteractiveRenderer({width: _width, height: _height, event
     on(_events.stop, stop);
 
     // One more frame while stopped, so a change (such as to the colours) shows.
-    on(_events.pulseUI, function () {
+    on(_events.showChanges, function () {
         if (!running) {
             requestFrame();
         }
     });
 
-    on(_events.examinePixelState, function () {
+    on(_events.startExamining, function () {
         requestExaminePixelData = true;
         requestFrame();
     });

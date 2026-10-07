@@ -23,7 +23,7 @@ describe("the interactive renderer", function () {
         const posted = [];
         const render = renderer(events, posted);
         events.fire(events.paletteChanged, createPalette());
-        events.fire(events.extentsUpdate, rectangle(-2, -1, 3, 2));
+        events.fire(events.viewChanged, rectangle(-2, -1, 3, 2));
         render.start();
         expect(posted.length).toBe(2);
         expect(posted.every((job) => job.paletteNodes)).toBe(true);
@@ -68,7 +68,7 @@ describe("the interactive renderer", function () {
             xState: new Float64Array(pixels), yState: new Float64Array(pixels), imageEscapeValues: new Uint32Array(pixels)
         });
         events.fire(events.paletteChanged, createPalette());
-        events.fire(events.extentsUpdate, rectangle(-2, -1, 3, 2));
+        events.fire(events.viewChanged, rectangle(-2, -1, 3, 2));
         render.start();
         return render;
     }
@@ -100,8 +100,8 @@ describe("the interactive renderer", function () {
         const workers = heldWorkers();
         startedRenderer(events, workers);
         events.fire(events.stop);
-        events.fire(events.pulseUI);
-        events.fire(events.pulseUI);
+        events.fire(events.showChanges);
+        events.fire(events.showChanges);
         expect(workers.waiting()).toBe(2);
         workers.replyAll();
         expect(workers.waiting()).toBe(2);
@@ -113,10 +113,10 @@ describe("the interactive renderer", function () {
         const events = createEvents();
         const workers = heldWorkers();
         let published = 0;
-        events.listenTo(events.publishPixelState, () => { published += 1; });
+        events.listenTo(events.pixelDataReady, () => { published += 1; });
         startedRenderer(events, workers);
         events.fire(events.stop);
-        events.fire(events.examinePixelState);
+        events.fire(events.startExamining);
         workers.replyAll();
         expect(published).toBe(0);
         workers.replyAll();

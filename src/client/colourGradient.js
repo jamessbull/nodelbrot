@@ -173,13 +173,13 @@ export function createGradientEditor(gradientCanvas, addButton, removeButton, pa
     addButton.onclick = function () {
         markers.placeNewMarker();
         _events.fire(_events.paletteChanged, palette);
-        _events.fire(_events.pulseUI);
+        _events.fire(_events.showChanges);
      };
 
     removeButton.onclick = function () {
         markers.removeSelectedNode();
         _events.fire(_events.paletteChanged, palette);
-        _events.fire(_events.pulseUI);
+        _events.fire(_events.showChanges);
 
     };
 
@@ -192,14 +192,14 @@ export function createGradientEditor(gradientCanvas, addButton, removeButton, pa
     gradientCanvas.onmouseup = function (e) {
         markers.stopMoving();
         leftMouseDown = false;
-        _events.fire(_events.pulseUI);
+        _events.fire(_events.showChanges);
 
     };
 
     gradientCanvas.onmouseout = function () {
        markers.stopMoving();
         leftMouseDown = false;
-        _events.fire(_events.pulseUI);
+        _events.fire(_events.showChanges);
     };
 
     gradientCanvas.onmousemove = function (e) {

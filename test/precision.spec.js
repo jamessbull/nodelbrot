@@ -25,12 +25,12 @@ describe("precision limit", function () {
         const events = createEvents();
         const shown = [];
         precisionWarning(events, {show: function (m) { shown.push(m); }}, 700);
-        events.fire(events.extentsUpdate, view(-0.74364, 0.13182, 1e-10));
-        events.fire(events.extentsUpdate, view(-0.74364, 0.13182, 5e-13));
-        events.fire(events.extentsUpdate, view(-0.74364, 0.13182, 4e-13));
+        events.fire(events.viewChanged, view(-0.74364, 0.13182, 1e-10));
+        events.fire(events.viewChanged, view(-0.74364, 0.13182, 5e-13));
+        events.fire(events.viewChanged, view(-0.74364, 0.13182, 4e-13));
         expect(shown.length).toBe(1);
-        events.fire(events.extentsUpdate, view(-0.74364, 0.13182, 1e-10));
-        events.fire(events.extentsUpdate, view(-0.74364, 0.13182, 5e-13));
+        events.fire(events.viewChanged, view(-0.74364, 0.13182, 1e-10));
+        events.fire(events.viewChanged, view(-0.74364, 0.13182, 5e-13));
         expect(shown.length).toBe(2);
     });
 });

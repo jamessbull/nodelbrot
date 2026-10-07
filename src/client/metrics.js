@@ -17,7 +17,7 @@ export function createMetrics(_clock, _events) {
     _events.listenTo(_events.frameComplete, function () {
         currentIndex = nextIndex(currentIndex);
         times[currentIndex] = _clock.time();
-        _events.fire(_events.currentFramesPerSecond, fps());
+        _events.fire(_events.framesPerSecond, fps());
     });
 }
 
@@ -26,7 +26,7 @@ export const systemClock = {
 };
 
 export function showFps(_displayElement, _events) {
-    _events.listenTo(_events.currentFramesPerSecond, function (fps) {
+    _events.listenTo(_events.framesPerSecond, function (fps) {
         _displayElement.innerHTML = fps;
     });
 }
