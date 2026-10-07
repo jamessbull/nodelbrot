@@ -10,6 +10,8 @@
 <script src="/js/WebworkerBasedMandelbrotSet.js"></script>
 <script src="/js/selection.js"></script>
 <script src="/js/ui/touch.js"></script>
+<script src="/js/ui/notice.js"></script>
+<script src="/js/precision.js"></script>
 <script src="/js/ui/mandelbrotViewUIPolicy.js"></script>
 <script src="/js/actions/drawSelection.js"></script>
 <script src="/js/actions/zoomInAnimation.js"></script>

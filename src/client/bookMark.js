@@ -33,7 +33,7 @@ jim.mandelbrot.bookmark.parse = function (text) {
     return {location: {x: location.x, y: location.y, w: location.w, h: location.h}, nodes: info.nodes, blend: info.blend};
 };
 
-jim.mandelbrot.bookmark.create = function (bookmarkButton, state, colourGradientui, _events, uiCanvas) {
+jim.mandelbrot.bookmark.create = function (bookmarkButton, state, colourGradientui, _events, notice) {
 
     "use strict";
     var justBookmarked = false;
@@ -54,20 +54,6 @@ jim.mandelbrot.bookmark.create = function (bookmarkButton, state, colourGradient
         return newLocation({x:-2.5,y:-1, w:3.5, h: 2}, palette.toNodeList(), palette.blend());
     };
 
-    // Shows a message across the top of the image for a few seconds.
-    function showNotice(message) {
-        var context = uiCanvas.getContext('2d');
-        context.font = "14px courier";
-        context.strokeStyle = "rgba(0,0,0,255)";
-        context.fillStyle = "rgba(255,255,255,255)";
-        context.lineWidth = 3;
-        context.strokeText(message, 15, 20);
-        context.fillText(message, 15, 20);
-        setTimeout(function () {
-            context.clearRect(0, 0, uiCanvas.width, 30);
-        }, 5000);
-    }
-
     var currentMandelbrotInfo = function() {
         var text = window.location.hash.substring(1);
         if (text.length === 0) {
@@ -75,7 +61,7 @@ jim.mandelbrot.bookmark.create = function (bookmarkButton, state, colourGradient
         }
         var info = jim.mandelbrot.bookmark.parse(text);
         if (!info) {
-            showNotice("That link couldn't be read, so this is the starting view.");
+            notice.show("That link couldn't be read, so this is the starting view.");
             return defaultMandelbrotInfo();
         }
         return info;

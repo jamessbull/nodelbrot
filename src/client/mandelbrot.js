@@ -80,7 +80,9 @@ jim.init.run = function () {
         paletteBlendSelect.value = palette.blend();
     });
 
-    var bookmarker = newBookmarker(bookmarkButton, state, colourGradientui, events, uiCanvas);
+    var notice = jim.ui.notice.create(uiCanvas);
+    jim.mandelbrot.precision.warning(events, notice, displayWidth);
+    var bookmarker = newBookmarker(bookmarkButton, state, colourGradientui, events, notice);
     newColourPicker(colourPickerCanvas, colourGradientui, events);
     var exportSizeDropdown = newExportSizeDropdown(exportSizeSelect, [smallExport, mediumExport, largeExport, veryLargeExport]);
     newMiscUiElements(exportSizeDropdown, state, events);
