@@ -2,6 +2,7 @@ import { renderExport } from "./exportRenderer.js";
 import { createProgressReporter, createTimeReporter } from "./progress.js";
 import { deselectButton, hide, selectButton, show } from "../dom.js";
 import { rectangle } from "../geometry.js";
+import { needsPerturbation } from "../precision.js";
 
 // The deepest export allowed. Every export worker holds a histogram with an entry per iteration, so
 // this keeps memory to around 8MB per worker.
@@ -32,7 +33,10 @@ export function suggestedDepth(lastEscape) {
 // The export panel: exports the current view at the chosen size and depth, with workers made by
 // newWorker(), and shows the result. The depth follows the one the view needs, as it renders (see
 // suggestedDepth), until the user types one, which holds until the view changes.
-// Deep views wait for referenceOrbit to be worked out to the export's depth.
+// Deep views (past the precision of doubles) wait for referenceOrbit to be worked out to the export's
+// depth. Others are iterated directly, even if the GPU renderer has an orbit for them, as that can tell
+// pixels in the main cardioid and bulb, and orbits that settle into a cycle, without iterating them to
+// the export's depth.
 export function createExporter({exportSizes, state, events, newWorker, referenceOrbit}) {
     let exporting = false;
 
@@ -144,7 +148,7 @@ export function createExporter({exportSizes, state, events, newWorker, reference
         timeReporter.start();
         const area = state.getArea();
         const pixelSize = state.getView().pixelSize;
-        if (!referenceOrbit || !referenceOrbit.active()) {
+        if (!referenceOrbit || !referenceOrbit.active() || !needsPerturbation(state.getView())) {
             startExport(area, null, depth.depth);
             return;
         }
