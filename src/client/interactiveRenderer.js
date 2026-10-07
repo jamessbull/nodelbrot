@@ -2,7 +2,7 @@ import { createWorkerPool } from "./workerPool.js";
 import { createStopwatch } from "./stopwatch.js";
 import { renderFragments, interactiveMessage } from "./workerMessages.js";
 import { initialHistogramSize } from "./escapeHistogram.js";
-import { maxRereferences, nearestUnescaped, rereferenceDue } from "./rereference.js";
+import { escapesPast, maxRereferences, nearestUnescaped, rereferenceDue } from "./rereference.js";
 
 // Renders the interactive view with a pool of workers, a frame at a time, into the buffers it is given
 // (each a value or four per pixel of the width x height display): imgData, the image; escapeValues, the
@@ -30,6 +30,7 @@ export function createInteractiveRenderer({width, height, events, workers, newWo
     let stepSize = initialStepSize;
     let currentIteration = 0;
     let extents;                // the view to send with the next batch, if it has changed
+    let keepEscaped = false;    // whether the workers keep the pixels that have escaped, with extents
     let palette = null;         // palette nodes to send with the next batch, if they've changed
     let paletteBlend = "rgb";
     // Rendering goes a batch (a frame) at a time, with at most one batch out with the workers.
@@ -64,7 +65,10 @@ export function createInteractiveRenderer({width, height, events, workers, newWo
         if (batchGeneration !== viewGeneration) {
             return;
         }
-        events.fire(events.escapesFromWorkers, {update: new Uint32Array(msg.histogramUpdate), currentIteration: currentIteration});
+        const escapes = escapesPast(new Uint32Array(msg.histogramUpdate), currentIteration, catchUpTo);
+        if (escapes) {
+            events.fire(events.escapesFromWorkers, escapes);
+        }
         placeRows(escapeValues, new Uint32Array(msg.escapeValues), msg, 1);
         placeRows(imgData, new Uint8ClampedArray(msg.imageDataBuffer), msg, 4);
         if (msg.extraDataSent) {
@@ -86,7 +90,7 @@ export function createInteractiveRenderer({width, height, events, workers, newWo
     function onAllJobsComplete() {
         timer.stop();
         if (batchGeneration === viewGeneration) {
-            events.fire(events.depthReached, currentIteration);
+            events.fire(events.depthReached, Math.max(currentIteration, catchUpTo));
             currentIteration += frameIterations;
             if (batchSendsData) {
                 events.fire(events.pixelDataReady);
@@ -177,6 +181,7 @@ export function createInteractiveRenderer({width, height, events, workers, newWo
             }
             const job = interactiveMessage(message, histogram, currentIteration, frameIterations, palette, histogramTotal, histogramFilledLength);
             job.perturbation = perturbing;
+            job.keepEscaped = keepEscaped;
             if (palette) {
                 job.paletteBlend = paletteBlend;
             }
@@ -191,6 +196,7 @@ export function createInteractiveRenderer({width, height, events, workers, newWo
         // A new view or palette only needs sending once, so clear them now they have gone. (Only here:
         // a batch can finish after a view change without sending it, and the view mustn't be lost.)
         extents = undefined;
+        keepEscaped = false;
         palette = undefined;
         pool.consume(jobs, onEachJob, onAllJobsComplete, onWorkerError);
     }
@@ -206,10 +212,15 @@ export function createInteractiveRenderer({width, height, events, workers, newWo
 
     // Starts rendering the view again from the beginning: pixels' positions (extents) are sent with the
     // next batch. By perturbation, they are the differences dc from the reference orbit's point.
-    function restartView() {
+    // With keepEscaped, only the pixels still going start again, and the histogram is kept (see
+    // rereference.js).
+    function restartView(keepEscapedPixels) {
         viewGeneration += 1;
-        histogram = new Uint32Array(initialHistogramSize);
-        histogramFilledLength = 0;
+        keepEscaped = keepEscapedPixels;
+        if (!keepEscapedPixels) {
+            histogram = new Uint32Array(initialHistogramSize);
+            histogramFilledLength = 0;
+        }
         currentIteration = 0;
         stepSize = initialStepSize;
         // A palette waiting to be sent is kept: the new view needs it as much as the old one did.
@@ -231,12 +242,12 @@ export function createInteractiveRenderer({width, height, events, workers, newWo
         perturbing = Boolean(referenceOrbit && referenceOrbit.active());
         rereferences = 0;
         catchUpTo = 0;
-        restartView();
+        restartView(false);
     });
 
     on(events.referenceChanged, function () {
         catchUpTo = Math.max(catchUpTo, currentIteration);
-        restartView();
+        restartView(true);
     });
 
     // Each worker keeps its own copy of the reference orbit.

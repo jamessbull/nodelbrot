@@ -80,6 +80,27 @@ void main() {
     next0 = vec4(d, float(m), escapedAt);
 }`;
 
+// Starts the pixels still going again from the start of a new reference orbit (see rereference.js),
+// keeping those that have escaped, and when any passed the histogram's escape value.
+export const restartSurvivorsShader = `#version 300 es
+precision highp float;
+uniform highp sampler2D state0;
+uniform highp sampler2D state1;
+layout(location = 0) out vec4 next0;
+layout(location = 1) out vec4 next1;
+void main() {
+    ivec2 pixel = ivec2(gl_FragCoord.xy);
+    vec4 s0 = texelFetch(state0, pixel, 0);
+    vec4 s1 = texelFetch(state1, pixel, 0);
+    if (s1.x != 0.0) {
+        next0 = s0;
+        next1 = s1;
+    } else {
+        next0 = vec4(0.0, 0.0, 0.0, s0.w);
+        next1 = vec4(0.0);
+    }
+}`;
+
 // Counts the pixels that escaped in a frame by the iteration they escaped at, from its start, for the
 // histogram: drawn as a point per pixel, each added (by blending) to the texel of its iteration in an
 // array texture `rows` high, and pixels that didn't escape in the frame left out of the picture.

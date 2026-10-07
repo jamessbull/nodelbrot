@@ -1,7 +1,7 @@
 import { createFloatContext, createFramebuffer, createProgram, createTexture, fullScreenVertexShader } from "./gl.js";
-import { arrayTextureWidth, colourShader, countEscapesShader, countEscapesVertexShader, iterateShader } from "./shaders.js";
+import { arrayTextureWidth, colourShader, countEscapesShader, countEscapesVertexShader, iterateShader, restartSurvivorsShader } from "./shaders.js";
 import { lookupTableSize } from "../worker/pixelIterator.js";
-import { maxRereferences, nearestUnescaped, rereferenceDue } from "../rereference.js";
+import { escapesPast, maxRereferences, nearestUnescaped, rereferenceDue } from "../rereference.js";
 
 // Pixels can't be smaller than this on the GPU: it has only 32-bit floats, and their exponents run out
 // soon after (about 1e-38). Deeper views are rendered on the CPU.
@@ -26,6 +26,7 @@ export function createGpuRenderer({width, height, events, imgData, escapeValues,
     const iterate = createProgram(gl, fullScreenVertexShader, iterateShader);
     const count = createProgram(gl, countEscapesVertexShader, countEscapesShader);
     const colour = createProgram(gl, fullScreenVertexShader, colourShader);
+    const restartSurvivors = createProgram(gl, fullScreenVertexShader, restartSurvivorsShader);
     gl.bindVertexArray(gl.createVertexArray());
 
     const floatTexture = () => createTexture(gl, gl.RGBA32F, width, height, gl.RGBA, gl.FLOAT);
@@ -56,6 +57,7 @@ export function createGpuRenderer({width, height, events, imgData, escapeValues,
     let submittedIteration = 0;     // the depth the frames in flight will reach
     let view = null;
     let resetPending = false;       // the pixels must start again before the next frame
+    let survivorsRestartPending = false;    // or just those still going (see rereference.js)
     let viewGeneration = 0;
     let running = true;
     let frameWanted = false;
@@ -160,6 +162,18 @@ export function createGpuRenderer({width, height, events, imgData, escapeValues,
             gl.clear(gl.COLOR_BUFFER_BIT);
         });
         resetPending = false;
+        survivorsRestartPending = false;
+    }
+
+    function restartSurvivingPixels() {
+        gl.viewport(0, 0, width, height);
+        gl.useProgram(restartSurvivors.program);
+        bindTexture(0, states[current][0], restartSurvivors, "state0");
+        bindTexture(1, states[current][1], restartSurvivors, "state1");
+        gl.bindFramebuffer(gl.FRAMEBUFFER, stateFramebuffers[1 - current]);
+        gl.drawArrays(gl.TRIANGLES, 0, 3);
+        current = 1 - current;
+        survivorsRestartPending = false;
     }
 
     function bindTexture(unit, texture, program, name) {
@@ -246,7 +260,11 @@ export function createGpuRenderer({width, height, events, imgData, escapeValues,
         frameWanted = false;
         requestExaminePixelData = false;
         submittedIteration += frame.iterations;
-        if (resetPending) clearStates();
+        if (resetPending) {
+            clearStates();
+        } else if (survivorsRestartPending) {
+            restartSurvivingPixels();
+        }
         gl.viewport(0, 0, width, height);
 
         // Iterate, from one pair of state textures into the other.
@@ -335,8 +353,11 @@ export function createGpuRenderer({width, height, events, imgData, escapeValues,
         for (let n = 0; n < frame.iterations; n += 1) {
             update[n] = counts[4 * n];
         }
-        events.fire(events.escapesFromWorkers, {update, currentIteration: frame.start});
-        events.fire(events.depthReached, frame.start);
+        const escapes = escapesPast(update, frame.start, catchUpTo);
+        if (escapes) {
+            events.fire(events.escapesFromWorkers, escapes);
+        }
+        events.fire(events.depthReached, Math.max(frame.start, catchUpTo));
         currentIteration = frame.start + frame.iterations;
         // After re-referencing, the image isn't shown again until it has caught up (see rereference.js).
         const showing = currentIteration >= catchUpTo;
@@ -387,7 +408,7 @@ export function createGpuRenderer({width, height, events, imgData, escapeValues,
         bindTexture(0, states[current][1], colour, "state1");
         bindTexture(1, histogramTexture, colour, "histogram");
         bindTexture(2, paletteTexture, colour, "palette");
-        gl.uniform1f(colour.uniforms.depth, currentIteration);
+        gl.uniform1f(colour.uniforms.depth, shownDepth());
         gl.uniform1f(colour.uniforms.histogramFilled, histogramFilled);
         gl.uniform1f(colour.uniforms.histogramCapacity, histogramArray ? histogramArray.length : 0);
         gl.uniform1f(colour.uniforms.histogramTotal, histogramTotal);
@@ -401,13 +422,17 @@ export function createGpuRenderer({width, height, events, imgData, escapeValues,
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     }
 
+    // The depth the image is of: the frames finished, or while catching up after re-referencing, the depth
+    // reached before.
+    const shownDepth = () => Math.max(currentIteration, catchUpTo);
+
     // Each pixel's escape iteration (or 0), as of the frames finished, waiting for the GPU. Only the
     // examine panel and re-referencing need them, so they aren't copied back every frame.
     function readEscapeValues() {
         const state = readState(stateFramebuffers[current], gl.COLOR_ATTACHMENT0);
         for (let idx = 0; idx < width * height; idx += 1) {
             const at = state[(idx * 4) + 3];
-            escapeValues[idx] = at <= currentIteration ? at : 0;
+            escapeValues[idx] = at <= shownDepth() ? at : 0;
         }
         return state;
     }
@@ -466,12 +491,17 @@ export function createGpuRenderer({width, height, events, imgData, escapeValues,
         scheduleSubmit();
     }
 
-    function restartView() {
+    // Starts the view again: every pixel, or (keepEscaped) just those still going.
+    function restartView(keepEscaped) {
         viewGeneration += 1;
         currentIteration = 0;
         submittedIteration = 0;
         stepSize = initialStepSize;
-        resetPending = true;
+        if (keepEscaped) {
+            survivorsRestartPending = true;
+        } else {
+            resetPending = true;
+        }
     }
 
     on(events.viewChanged, function (newView) {
@@ -481,12 +511,12 @@ export function createGpuRenderer({width, height, events, imgData, escapeValues,
         view = newView;
         rereferences = 0;
         catchUpTo = 0;
-        restartView();
+        restartView(false);
     });
 
     on(events.referenceChanged, function () {
         catchUpTo = Math.max(catchUpTo, currentIteration);
-        restartView();
+        restartView(true);
     });
 
     on(events.referenceOrbitGrew, function () {

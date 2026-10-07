@@ -5,7 +5,8 @@ import { createOrbitStore, createPerturbationIterator } from "./perturbationIter
 // Computes the interactive view. Each message advances every pixel of this worker's fragment by
 // msg.iterations iterations, then recolours the whole fragment against the latest histogram. Replies
 // go to postMessage. A message with a new view (extents) starts the pixels again: by perturbation from
-// the reference orbit if msg.perturbation is set, otherwise directly. Messages with orbit, a chunk of
+// the reference orbit if msg.perturbation is set, otherwise directly, or with msg.keepEscaped only the
+// pixels still going, for a new reference orbit (see rereference.js). Messages with orbit, a chunk of
 // the reference orbit, add to this worker's copy of it, and get no reply.
 export function createInteractiveWorker(postMessage) {
     const palette = createPalette();
@@ -23,7 +24,9 @@ export function createInteractiveWorker(postMessage) {
         const histogramUpdate = new Uint32Array(msg.iterations);
         const imageData = new Uint8ClampedArray(4 * noOfPixels);
 
-        if (msg.extents) {
+        if (msg.extents && msg.keepEscaped && pixels && pixels.restartSurvivors) {
+            pixels.restartSurvivors(msg.extents);
+        } else if (msg.extents) {
             pixels = msg.perturbation ? createPerturbationIterator(msg.exportWidth, msg.exportHeight, msg.extents, orbit)
                 : createPixelIterator(msg.exportWidth, msg.exportHeight, msg.extents);
         }

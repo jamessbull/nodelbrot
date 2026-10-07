@@ -54,10 +54,14 @@ export function createOrbitStore() {
 //
 // Escapes are counted and coloured exactly as createPixelIterator's are. Points in the set iterate to
 // the depth asked for, as the checks for the main cardioid and for cycles assume c is known precisely.
-export function createPerturbationIterator(width, height, extents, orbit) {
+//
+// restartSurvivors(extents) starts the pixels still going again with the new extents, from the start of
+// a new reference orbit, keeping those that have escaped (see rereference.js).
+export function createPerturbationIterator(width, height, startExtents, orbit) {
     const log = Math.log;
     const LN2 = Math.LN2;
     const noOfPixels = width * height;
+    let extents = startExtents;
     const firstRow = extents.firstRow;
     const rowStride = extents.rowStride;
     const dxs = new Float64Array(noOfPixels);
@@ -137,8 +141,20 @@ export function createPerturbationIterator(width, height, extents, orbit) {
         return {xs, ys};
     }
 
+    function restartSurvivors(newExtents) {
+        extents = newExtents;
+        for (let idx = 0; idx < noOfPixels; idx += 1) {
+            if (imageEscapeValues[idx] === 0) {
+                dxs[idx] = 0;
+                dys[idx] = 0;
+                ms[idx] = 0;
+            }
+        }
+    }
+
     return {
         iterate: iterate,
+        restartSurvivors: restartSurvivors,
         colour: (imageData, histogramData, histogramLength, histogramTotal, colours) =>
             colourPixels(imageData, smoothIterations, imageEscapeValues, histogramData, histogramLength, histogramTotal, colours),
         escapedCount: () => countEscaped(escapeValues),

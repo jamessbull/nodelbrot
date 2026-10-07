@@ -6,9 +6,25 @@
 // rounding when they do. So if pixels are still going long after the reference escaped (twice as long,
 // and at least 1000 iterations more), they are taken to be in the set, and rendering starts again from
 // the orbit of the one nearest the centre, which won't escape. Not once rendering has stopped, though, as
-// that would leave the image blank: it waits for rendering to go on. The image up to then was right, so
-// it stays up (frameComplete isn't fired) until rendering has caught up with the depth it had reached.
+// that would leave the image blank: it waits for rendering to go on.
+//
+// The pixels that had escaped by then were right, so they are kept, along with the histogram, and only
+// those still going start again, from the new orbit. While they catch up with the depth reached, the
+// image doesn't change (frameComplete isn't fired, so rendering doesn't stop for want of escapes), and
+// only escapes past that depth go in the histogram (see escapesPast), as those before it are there.
 export const maxRereferences = 5;
+
+// The part of a frame's escape counts (update, from iteration start) past from, as escapesFromWorkers
+// carries it, or null if there's none.
+export function escapesPast(update, start, from) {
+    if (start >= from) {
+        return {update, currentIteration: start};
+    }
+    if (start + update.length <= from) {
+        return null;
+    }
+    return {update: update.subarray(from - start), currentIteration: from};
+}
 
 export function rereferenceDue(referenceOrbit, depth) {
     const escapedAt = referenceOrbit && referenceOrbit.escaped() ? referenceOrbit.length() - 1 : Infinity;

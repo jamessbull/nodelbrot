@@ -1,6 +1,7 @@
 import { bitsFor, fromDecimal, fromNumber } from "../src/client/fixed.js";
 import { createOrbitCalculator } from "../src/client/worker/referenceOrbit.js";
 import { createOrbitStore, createPerturbationIterator } from "../src/client/worker/perturbationIterator.js";
+import { escapesPast } from "../src/client/rereference.js";
 import { createPixelIterator } from "../src/client/worker/pixelIterator.js";
 
 // The iteration at which |z|^2 first passes 16, counted as the renderer counts (n where z(n-1) passed),
@@ -91,5 +92,48 @@ describe("perturbation", function () {
             const exact = exactEscape(cx + fromNumber((i - 10) * pixelSize, bits), cy, bits, maxIterations);
             expect(Math.abs(pixels.escapeValues[i] - exact)).withContext("pixel " + i).toBeLessThanOrEqual(1);
         }
+    });
+
+    it("should carry on right from a new reference orbit, keeping the pixels that had escaped", function () {
+        const x = "-0.75", y = "0.0001";
+        const pixelSize = 1e-6, width = 21, switchAt = 5000, maxIterations = 30000;
+        const bits = bitsFor(pixelSize);
+        const cx = fromDecimal(x, bits), cy = fromDecimal(y, bits);
+        // Rendered from the centre's orbit, which escapes early, to switchAt.
+        const store = createOrbitStore();
+        const centre = createOrbitCalculator(cx, cy, bits);
+        store.add(0, 0, centre.next(switchAt + 2), centre.escaped());
+        const extents = {mx: -((width - 1) / 2) * pixelSize, my: 0, stepX: pixelSize, stepY: pixelSize, firstRow: 0, rowStride: 1};
+        const pixels = createPerturbationIterator(width, 1, extents, store);
+        for (let start = 0; start < switchAt; start += 1000) {
+            pixels.iterate(start, 1000, new Uint32Array(1000));
+        }
+        const before = Array.from(pixels.escapeValues);
+        // Then from the orbit of a point 7 pixels left of the centre, as re-referencing would choose, back
+        // from the start for the pixels still going, as the renderers do.
+        const offset = -7;
+        const next = createOrbitCalculator(cx + fromNumber(offset * pixelSize, bits), cy, bits);
+        store.add(1, 0, next.next(maxIterations + 2), next.escaped());
+        pixels.restartSurvivors(Object.assign({}, extents, {mx: (-((width - 1) / 2) - offset) * pixelSize}));
+        for (let start = 0; start < maxIterations; start += 1000) {
+            pixels.iterate(start, 1000, new Uint32Array(1000));
+        }
+        for (let i = 0; i < width; i += 1) {
+            if (before[i] !== 0) {
+                expect(pixels.escapeValues[i]).withContext("pixel " + i + " had escaped").toBe(before[i]);
+            }
+            const exact = exactEscape(cx + fromNumber((i - 10) * pixelSize, bits), cy, bits, maxIterations);
+            expect(Math.abs(pixels.escapeValues[i] - exact)).withContext("pixel " + i).toBeLessThanOrEqual(1);
+        }
+        expect(before.filter((at) => at === 0).length).withContext("pixels still going at the switch").toBeGreaterThan(3);
+    });
+
+    it("should pass on only the escapes past the depth caught up to", function () {
+        const update = Uint32Array.from([1, 2, 3, 4]);
+        expect(escapesPast(update, 10, 0)).toEqual({update, currentIteration: 10});
+        expect(escapesPast(update, 10, 14)).toBeNull();
+        const part = escapesPast(update, 10, 12);
+        expect(Array.from(part.update)).toEqual([3, 4]);
+        expect(part.currentIteration).toBe(12);
     });
 });

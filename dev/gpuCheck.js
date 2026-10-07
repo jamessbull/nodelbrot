@@ -7,6 +7,8 @@ const height = 240;
 const depth = 20000;
 const views = [
     ["whole set", "-0.75", "0", 0.0125],
+    // The centre escapes early but much of the view is in the set, so the GPU renderer re-references.
+    ["cardioid cusp", "0.2501", "0", 1e-5],
     ["seahorse valley 1e-6", "-0.743643887037158704752191506114774", "0.131825904205311970493132056385139", 1e-6],
     ["seahorse valley 1e-12", "-0.743643887037158704752191506114774", "0.131825904205311970493132056385139", 1e-12],
     ["seahorse valley 1e-20", "-0.743643887037158704752191506114774", "0.131825904205311970493132056385139", 1e-20],
