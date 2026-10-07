@@ -202,60 +202,11 @@ jim.colour.gradientui.create = function (gradientCanvas, addButton, removeButton
         }
     };
 
-    function getMouseEventForTouchEvent(ev) {
-        var touches = ev.touches;
-        var pageX = touches[0].clientX;
-        var pageY = touches[0].clientY;
-        var canvasX = pageX - gradientCanvas.getBoundingClientRect().x;
-        var canvasY = pageY - gradientCanvas.getBoundingClientRect().y;
-        return {offsetX: canvasX, offsetY: canvasY, button : 0, preventDefault: function () { } };
-    }
-
-    var lasttouchLocationX = 0;
-    var lasttouchLocationY = 0;
-
-    function handleStart(ev) {
-        ev.preventDefault();
-        var touchEvent = getMouseEventForTouchEvent(ev);
-        lasttouchLocationX = touchEvent.offsetX;
-        lasttouchLocationY = touchEvent.offsetY;
-        gradientCanvas.onmousedown(touchEvent);
-    }
-
-    function handleEnd(ev) {
-        ev.preventDefault();
-        var event = {
-            button : 0,
-            offsetX: lasttouchLocationX,
-            offsetY: lasttouchLocationY,
-            preventDefault: function () {
-            }};
-
-        gradientCanvas.onmouseup(event);
-    }
-
-    function handleCancel(ev) {
-        ev.preventDefault();
-        var event = {
-            button : 0,
-            offsetX: lasttouchLocationX,
-            offsetY: lasttouchLocationY,
-            preventDefault: function () {
-            }};
-        gradientCanvas.onmouseup(event);
-    }
-
-    function handleMove(ev) {
-        ev.preventDefault();
-        var event = getMouseEventForTouchEvent(ev);
-
-        gradientCanvas.onmousemove(event);
-    }
-
-    gradientCanvas.addEventListener("touchstart", handleStart);
-    gradientCanvas.addEventListener("touchend", handleEnd);
-    gradientCanvas.addEventListener("touchcancel", handleCancel);
-    gradientCanvas.addEventListener("touchmove", handleMove);
+    jim.touch.forwardToMouse(gradientCanvas, {
+        down: gradientCanvas.onmousedown,
+        move: gradientCanvas.onmousemove,
+        up: gradientCanvas.onmouseup
+    });
 
     on(events.paletteChanged, function () {
         draw();

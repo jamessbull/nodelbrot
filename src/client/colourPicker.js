@@ -113,29 +113,8 @@ jim.colour.colourPicker.create = function (canvas, gradient, events) {
         drawPicker(e);
     };
 
-    function getMouseEventForTouchEvent(ev) {
-        var touches = ev.touches;
-        var pageX = touches[0].clientX;
-        var pageY = touches[0].clientY;
-        var canvasX = pageX - canvas.getBoundingClientRect().x;
-        var canvasY = pageY - canvas.getBoundingClientRect().y;
-        return {offsetX: canvasX, offsetY: canvasY, button : 0, preventDefault: function () { } };
-    }
-
-    function handleStart(ev) {
-        ev.preventDefault();
-        drawPicker(getMouseEventForTouchEvent(ev));
-    }
-
-    // Only the start of a touch picks a colour; the rest just mustn't scroll the page.
-    function ignoreTouch(ev) {
-        ev.preventDefault();
-    }
-
-    canvas.addEventListener("touchstart", handleStart);
-    canvas.addEventListener("touchend", ignoreTouch);
-    canvas.addEventListener("touchcancel", ignoreTouch);
-    canvas.addEventListener("touchmove", ignoreTouch);
+    // Only the start of a touch picks a colour.
+    jim.touch.forwardToMouse(canvas, {down: drawPicker});
 
     selectedHue = 120;
     return {
