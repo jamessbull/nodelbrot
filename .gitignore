@@ -1,9 +1,4 @@
-toolchain/*
-.idea/workspace.xml
-.idea/.name
-.idea/misc.xml
-.idea/tasks.xml
-.idea/misc.xml
-.idea/jsLibraryMappings.xml
-dev/bench-results.log
 node_modules/
+dev/bench-results.log
+.idea/
+*.iml

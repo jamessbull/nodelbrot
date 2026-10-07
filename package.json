@@ -13,5 +13,8 @@
   "devDependencies": {
     "jasmine": "^7.0.0",
     "uglify-js": "^3.19.3"
+  },
+  "engines": {
+    "node": ">=24"
   }
 }
