@@ -14,6 +14,8 @@ const names = {
     // A frame is done: depthReached (carrying its depth) then frameComplete.
     depthReached: "",
     frameComplete: "",
+    // More of the reference orbit for the view has been worked out: {length, escaped}.
+    referenceOrbitGrew: "",
     // A frame's escape counts from the workers: {update, currentIteration}.
     escapesFromWorkers: "",
     // The escape histogram has taken those in: {array, filledLength, total, currentIteration}.

@@ -14,6 +14,7 @@
     let bench;
     const history = loadHistory();
     let panel;
+    let orbit = null;          // {length, escaped} of the view's reference orbit, if it has one
 
     function now() { return performance.now(); }
 
@@ -125,6 +126,7 @@
             row("step", running ? Math.round(r.step) : "-") +
             row("bench→" + target, benchText) +
             (previous ? row("previous", previous) : "") +
+            (orbit ? row("orbit", orbit.length + (orbit.escaped ? " (escaped)" : "")) : "") +
             "</table>";
     }
 
@@ -142,6 +144,9 @@
     window.addEventListener("nodelbrotstart", function (e) {
         const events = e.detail;
         events.listenTo(events.viewChanged, startBenchmark);
+        events.listenTo(events.viewChanged, function () { orbit = null; });
+        // It grows as rendering goes deeper, so how fast it grows says nothing about how fast it is made.
+        events.listenTo(events.referenceOrbitGrew, function (grew) { orbit = grew; });
         events.listenTo(events.depthReached, function (iteration) { depth = iteration; });
         events.listenTo(events.frameComplete, onFrame);
         events.listenTo(events.stop, function () { running = false; });

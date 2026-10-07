@@ -55,9 +55,34 @@ function bitLength(n) {
 }
 
 // The fixed-point number n, with bits binary places, as the nearest double (to within a rounding or
-// two). Numbers too small for a double come out as 0.
+// two), as precise relative to its size however small it is. Numbers too small for a double come out
+// as 0. This is called for every point of a reference orbit, so it is quick for the usual case.
 export function toNumber(n, bits) {
     if (n === 0n) return 0;
+    // Number() rounds a BigInt to the nearest double, then scaling by a power of two is exact.
+    if (n < quickLimit && n > -quickLimit) {
+        return timesPowerOfTwo(Number(n), -bits);
+    }
+    // Too big a whole number for a double: with this many places, the ones past 960 don't matter.
+    if (bits > 960) {
+        return timesPowerOfTwo(Number(n >> BigInt(bits - 960)), -960);
+    }
+    return toNumberSlowly(n, bits);
+}
+
+const quickLimit = 1n << 1000n;
+
+// d * 2^power, in steps, as 2^power alone may be outside a double's range.
+function timesPowerOfTwo(d, power) {
+    while (power < -1000) {
+        d *= 2 ** -1000;
+        power += 1000;
+    }
+    return d * 2 ** power;
+}
+
+// toNumber for numbers too big for the quick way.
+function toNumberSlowly(n, bits) {
     const negative = n < 0n;
     const magnitude = negative ? -n : n;
     // Keep the top 64 bits, which a double holds to its full precision, and scale by the rest.

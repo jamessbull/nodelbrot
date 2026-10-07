@@ -7,6 +7,14 @@ describe("fixed-point numbers", function () {
         });
     });
 
+    it("should give small numbers as precisely as big ones, and huge ones too", function () {
+        const bits = 1100;
+        [3.7e-30, -1.234567890123e-250, 2 ** -900].forEach(function (d) {
+            expect(toNumber(fromNumber(d, bits), bits)).toBe(d);
+        });
+        expect(toNumber(fromNumber(1e300, 64), 64)).toBe(1e300);
+    });
+
     it("should round doubles that need more places than it has", function () {
         expect(fromNumber(0.75, 1)).toBe(2n);      // 1.5, rounded up from 0.75 * 2
         expect(fromNumber(0.25, 1)).toBe(1n);

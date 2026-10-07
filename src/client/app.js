@@ -13,6 +13,7 @@ import { createMove } from "./ui/actions/move.js";
 import { createTouchGestures } from "./ui/touchGestures.js";
 import { createNotice } from "./ui/notice.js";
 import { precisionWarning } from "./precision.js";
+import { createReferenceOrbit } from "./referenceOrbit.js";
 import { createPaletteEditor } from "./paletteEditor.js";
 import { createExportSizes } from "./export/exportSizes.js";
 import { createControls } from "./controls.js";
@@ -85,6 +86,7 @@ export function startApp(newWorker) {
 
     const notice = createNotice(element("notice"));
     precisionWarning({events, notice, badge: element("precisionBadge")});
+    createReferenceOrbit({events, newWorker});
     const bookmarks = createBookmarks({bookmarkButton: element("bookmarkButton"), state, events, notice});
     const exportSizes = createExportSizes(element("exportSizeSelect"),
         ["smallExport", "mediumExport", "largeExport", "veryLargeExport"].map(element), size.width, size.height);
