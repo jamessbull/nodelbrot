@@ -139,7 +139,7 @@ export function createExporter({exportSizes, state, events, newWorker, reference
 
     function startExport(extents, orbit, depth) {
         renderExport({
-            orbit: orbit && {generation: orbit.generation, values: orbit.values, escaped: orbit.escaped},
+            orbit: orbit && {generation: orbit.generation, values: orbit.values, complete: orbit.complete},
             extents: extents, width: exportDimensions.width, height: exportDimensions.height,
             depth: depth, palette: palette, newWorker: newWorker,
             onProgress: (phase, pixels) => progressReporters[phase].add(pixels),

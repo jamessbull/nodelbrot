@@ -24,8 +24,10 @@ function render(kind, view) {
         const pixels = width * height;
         const escapeValues = new Uint32Array(pixels);
         const imgData = new Uint8ClampedArray(pixels * 4);
-        // The CPU renderer only uses a reference orbit where doubles run out; the GPU always does.
-        const referenceOrbit = api.createReferenceOrbit({ events, newWorker, needed: kind === "gpu" ? () => true : undefined });
+        // The CPU renderer only uses a reference orbit where doubles run out, from the view's centre; the GPU
+        // always does, from a nucleus where there is one, as in the explorer. So each checks the other.
+        const referenceOrbit = kind === "gpu" ? api.createReferenceOrbit({ events, newWorker, needed: () => true, searchRadius: 1000 })
+            : api.createReferenceOrbit({ events, newWorker });
         api.createEscapeHistogram(events, new Uint32Array(api.initialHistogramSize));
         const options = {
             width, height, events, imgData, escapeValues, xState: new Float64Array(pixels),

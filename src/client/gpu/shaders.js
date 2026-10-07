@@ -19,7 +19,8 @@ ivec2 arrayTexel(int i) {
 
 // Advances every pixel by up to `iterations` iterations, by perturbation from the reference orbit (see
 // perturbationIterator.js, which this follows step for step, in 32-bit floats). orbitEnd is the index of
-// the reference orbit's last value if it has escaped, so pixels rebase on reaching it, otherwise -1.
+// the reference orbit's last value if it is complete (escaped, or a nucleus's whole period), so pixels
+// rebase on reaching it, otherwise -1.
 export const iterateShader = `#version 300 es
 precision highp float;
 precision highp int;

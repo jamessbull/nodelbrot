@@ -7,9 +7,12 @@ thread less one.
 Zooming goes down to pixels 1e-300 across. Past about 1e-13, where doubles run out, the point at the
 centre of the view is iterated exactly (in BigInt fixed point) as a reference orbit, and every pixel
 is iterated as a small difference from it (perturbation, with rebasing), which doubles hold precisely
-at any depth.
+at any depth. Meanwhile a worker looks for the nucleus of a mini Mandelbrot set near the centre (finding
+its period by the ball method, then the nucleus by Newton's method) and, if it finds one, the reference
+moves there: its orbit never escapes, and one period of it is all that's needed. Where there's none,
+pixels still going long after the reference escaped start again from one of them instead.
 
-Where the browser has WebGL2 with float render targets, the view is rendered on the GPU instead, by the
+Where the browser has WebGL2 with float render targets (and blending into them), the view is rendered on the GPU instead, by the
 same perturbation in 32-bit floats, down to pixels 1e-30 across; deeper views go back to the CPU.
 `?renderer=cpu` or `?renderer=gpu` in the address chooses one.
 
@@ -45,7 +48,7 @@ so it must be served over HTTP(S) (not opened as a file), with a JavaScript cont
 - `src/index.html`: the page.
 - `src/client/main.js`: the entry point, for both the page and the workers.
 - `src/client/app.js`: starts the explorer. `display.js` holds the parts remade when the window changes size.
-- `src/client/worker/`: the code the web workers run. `pixelIterator.js` is the inner loop; `perturbationIterator.js` is the one for deep views, and `referenceOrbit.js` works out their reference orbits.
+- `src/client/worker/`: the code the web workers run. `pixelIterator.js` is the inner loop; `perturbationIterator.js` is the one for deep views, and `referenceOrbit.js` works out their reference orbits, and `nucleus.js` finds nuclei to base them on.
 - `src/client/gpu/`: the WebGL2 renderer and its shaders.
 - `src/client/view.js` and `fixed.js`: the view, held precisely enough for deep zooms.
 - `src/client/interactiveRenderer.js` and `export/exportRenderer.js`: the interactive view and image export.

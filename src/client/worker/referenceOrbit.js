@@ -42,22 +42,26 @@ export function createOrbitCalculator(x, y, bits) {
     };
 }
 
-// The worker side of reference orbits, for a dedicated worker. A message {start: {x, y, bits}, length,
-// generation} starts a new orbit for c = x + iy; {length, generation} asks for the orbit to be worked out
-// to at least that length. The orbit is worked out a slice at a time, so new messages are read between
-// slices, and each slice goes back to postMessage as {referenceOrbit: {generation, from, values, escaped}}
-// (values transferred), from being the index of its first value. Messages for an older generation than
+// The worker side of reference orbits, for a dedicated worker. A message {start: {x, y, bits, period},
+// length, generation} starts a new orbit for c = x + iy (with period for a nucleus, whose orbit is worked
+// out to Zperiod and no further); {length, generation} asks for the orbit to be worked out to at least
+// that length. The orbit is worked out a slice at a time, so new messages are read between slices, and
+// each slice goes back to postMessage as {referenceOrbit: {generation, from, values, escaped, complete}}
+// (values transferred), from being the index of its first value, and complete saying there's no more. Messages for an older generation than
 // the latest are ignored. Slices are about sliceMs long, and schedule(next) runs the next one after any
 // waiting messages (the render check passes its own, to be deterministic).
 export function createReferenceOrbitWorker(postMessage, {sliceMs = 20, schedule = (next) => setTimeout(next, 0)} = {}) {
     let calculator = null;
     let generation = -1;
     let target = 0;
+    let end = Infinity;         // the length of a nucleus's orbit
     let working = false;
+
+    const complete = () => calculator.escaped() || calculator.length() >= end;
 
     function work() {
         working = false;
-        if (!calculator || calculator.escaped() || calculator.length() >= target) {
+        if (!calculator || complete() || calculator.length() >= target) {
             return;
         }
         const from = calculator.length();
@@ -65,15 +69,15 @@ export function createReferenceOrbitWorker(postMessage, {sliceMs = 20, schedule 
         const slices = [];
         let made = 0;
         // Batches of 64 between looks at the clock.
-        while (Date.now() - started < sliceMs && calculator.length() < target && !calculator.escaped()) {
-            const values = calculator.next(Math.min(64, target - calculator.length()));
+        while (Date.now() - started < sliceMs && calculator.length() < target && !complete()) {
+            const values = calculator.next(Math.min(64, target - calculator.length(), end - calculator.length()));
             slices.push(values);
             made += values.length;
         }
         const values = new Float64Array(made);
         let at = 0;
         slices.forEach((slice) => { values.set(slice, at); at += slice.length; });
-        postMessage({referenceOrbit: {generation, from, values, escaped: calculator.escaped()}}, [values.buffer]);
+        postMessage({referenceOrbit: {generation, from, values, escaped: calculator.escaped(), complete: complete()}}, [values.buffer]);
         scheduleWork();
     }
 
@@ -94,6 +98,7 @@ export function createReferenceOrbitWorker(postMessage, {sliceMs = 20, schedule 
                 calculator = createOrbitCalculator(msg.start.x, msg.start.y, msg.start.bits);
                 generation = msg.generation;
                 target = 0;
+                end = msg.start.period ? msg.start.period + 1 : Infinity;
             }
             target = Math.max(target, msg.length);
             scheduleWork();

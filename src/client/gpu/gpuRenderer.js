@@ -184,7 +184,7 @@ export function createGpuRenderer({width, height, events, imgData, escapeValues,
 
     // The iterations there is reference orbit for past the frames in flight (see interactiveRenderer.js).
     function orbitRoom() {
-        return referenceOrbit.escaped() ? Infinity : referenceOrbit.length() - 2 - submittedIteration;
+        return referenceOrbit.complete() ? Infinity : referenceOrbit.length() - 2 - submittedIteration;
     }
 
     // No frame goes in after one fetching data for the examine panel, which reads the pixels' state as
@@ -193,14 +193,17 @@ export function createGpuRenderer({width, height, events, imgData, escapeValues,
 
     // Frames go in one per animation frame, each with about half an animation frame's work, so the GPU
     // has time left to draw the page (the zoom animations, say) and the image updates as often as the
-    // display does. A hidden page has no animation frames, so there they go in as fast as they can, with
-    // as much work as a frame of the CPU renderer.
+    // display does. A hidden page has no animation frames, and a window that is covered up may get none
+    // either (or very few), so where none have come for a while, frames go in as fast as they can, with as
+    // much work as a frame of the CPU renderer, until one comes.
     const animationFrames = typeof requestAnimationFrame === "function";
     let submitScheduled = 0;            // the pending request to put in a frame, if any
+    let animationFramesStalled = false;
     let lastAnimationFrame = 0;
     let animationFrameTime = 1000 / 60; // the time between animation frames, averaged
 
-    const workAim = () => (document.hidden ? 26 : Math.min(26, Math.max(5, animationFrameTime / 2)));
+    const paced = () => animationFrames && !document.hidden && !animationFramesStalled;
+    const workAim = () => (paced() ? Math.min(26, Math.max(5, animationFrameTime / 2)) : 26);
 
     function scheduleSubmit() {
         if (submitScheduled || destroyed) {
@@ -214,9 +217,18 @@ export function createGpuRenderer({width, height, events, imgData, escapeValues,
             }
         };
         if (animationFrames && !document.hidden) {
-            requestAnimationFrame(go);
-            // In case the page is hidden before the animation frame comes.
-            setTimeout(go, 250);
+            requestAnimationFrame(function (time) {
+                animationFramesStalled = false;
+                go(time);
+            });
+        }
+        if (paced()) {
+            setTimeout(function () {
+                if (submitScheduled === request) {
+                    animationFramesStalled = true;
+                    go();
+                }
+            }, 50);
         } else {
             setTimeout(go, 0);
         }
@@ -278,7 +290,7 @@ export function createGpuRenderer({width, height, events, imgData, escapeValues,
         bindTexture(0, states[current][0], iterate, "state0");
         bindTexture(1, states[current][1], iterate, "state1");
         bindTexture(2, orbitTexture, iterate, "orbit");
-        gl.uniform1i(iterate.uniforms.orbitEnd, referenceOrbit.escaped() ? referenceOrbit.length() - 1 : -1);
+        gl.uniform1i(iterate.uniforms.orbitEnd, referenceOrbit.complete() ? referenceOrbit.length() - 1 : -1);
         gl.uniform1f(iterate.uniforms.startIteration, frame.start);
         gl.uniform1i(iterate.uniforms.iterations, frame.iterations);
         gl.uniform2f(iterate.uniforms.dcTopLeft, (-((width - 1) / 2) - offset.x) * view.pixelSize, (-((height - 1) / 2) - offset.y) * view.pixelSize);
@@ -306,7 +318,8 @@ export function createGpuRenderer({width, height, events, imgData, escapeValues,
         gl.drawArrays(gl.POINTS, 0, width * height);
         gl.disable(gl.BLEND);
         gl.bindBuffer(gl.PIXEL_PACK_BUFFER, frame.countsBuffer);
-        gl.readPixels(0, 0, arrayTextureWidth, rows, gl.RGBA, gl.FLOAT, 0);
+        // All of it, though only rows are used: Chrome only copies a buffer back ahead of time if all of it is read.
+        gl.readPixels(0, 0, arrayTextureWidth, countRows, gl.RGBA, gl.FLOAT, 0);
         gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null);
 
         frame.fence = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
@@ -347,7 +360,7 @@ export function createGpuRenderer({width, height, events, imgData, escapeValues,
             return;
         }
         gl.bindBuffer(gl.COPY_READ_BUFFER, frame.countsBuffer);
-        gl.getBufferSubData(gl.COPY_READ_BUFFER, 0, counts, 0, arrayTextureWidth * Math.ceil(frame.iterations / arrayTextureWidth) * 4);
+        gl.getBufferSubData(gl.COPY_READ_BUFFER, 0, counts);
         gl.bindBuffer(gl.COPY_READ_BUFFER, null);
         const update = new Uint32Array(frame.iterations);
         for (let n = 0; n < frame.iterations; n += 1) {

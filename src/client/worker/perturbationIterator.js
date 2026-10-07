@@ -4,22 +4,22 @@ const histogramEscapeValue = 16;
 const imageEscapeValue = 9007199254740991;
 
 // A worker's copy of the reference orbit (see referenceOrbit.js), which arrives in chunks: values is
-// x, y pairs of Z0, Z1, ..., length how many there are, and escaped whether the last one escaped, so
-// the orbit is complete.
+// x, y pairs of Z0, Z1, ..., length how many there are, and complete whether that's all of it (the last
+// escaped, or is the end of a nucleus's period).
 export function createOrbitStore() {
     const store = {
         generation: -1,
         values: new Float64Array(0),
         length: 0,
-        escaped: false,
+        complete: false,
         // A new orbit, for generation.
         reset: function (generation) {
             store.generation = generation;
             store.length = 0;
-            store.escaped = false;
+            store.complete = false;
         },
         // Values from index from on, for generation.
-        add: function (generation, from, values, escaped) {
+        add: function (generation, from, values, complete) {
             if (generation !== store.generation) {
                 store.reset(generation);
             }
@@ -31,7 +31,7 @@ export function createOrbitStore() {
             }
             store.values.set(values, 2 * from);
             store.length = Math.max(store.length, end / 2);
-            store.escaped = escaped;
+            store.complete = complete;
         }
     };
     return store;
@@ -48,8 +48,8 @@ export function createOrbitStore() {
 // store, which must be long enough for the iterations asked for: at least start + count + 2 values,
 // unless it has escaped.
 //
-// When z comes closer to 0 than d, or the reference orbit runs out (it escaped), the pixel carries on
-// from the start of the reference orbit with d = z (rebasing). That keeps d small next to z, so
+// When z comes closer to 0 than d, or the reference orbit runs out (it escaped, or a nucleus's period
+// is over), the pixel carries on from the start of the reference orbit with d = z (rebasing). That keeps d small next to z, so
 // pixels whose orbits part from the reference's are still right, with just one reference orbit.
 //
 // Escapes are counted and coloured exactly as createPixelIterator's are. Points in the set iterate to
@@ -73,9 +73,9 @@ export function createPerturbationIterator(width, height, startExtents, orbit) {
 
     function iterate(startIteration, noOfIterations, histogramUpdate) {
         const Z = orbit.values;
-        // Rebase on reaching the last value only if the orbit has escaped: otherwise it is still being
+        // Rebase on reaching the last value only if the orbit is complete: otherwise it is still being
         // worked out, and there is always more of it than is asked for.
-        const end = orbit.escaped ? orbit.length - 1 : -1;
+        const end = orbit.complete ? orbit.length - 1 : -1;
         let idx = 0;
         for (let j = 0; j < height; j += 1) {
             const dcy = extents.my + ((firstRow + (j * rowStride)) * extents.stepY);

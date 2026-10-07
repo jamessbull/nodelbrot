@@ -126,7 +126,7 @@
             row("step", running ? Math.round(r.step) : "-") +
             row("bench→" + target, benchText) +
             (previous ? row("previous", previous) : "") +
-            (orbit ? row("orbit", orbit.length + (orbit.escaped ? " (escaped)" : "")) : "") +
+            (orbit ? row("orbit", orbit.length + (orbit.escaped ? " (escaped)" : orbit.period ? " (period " + orbit.period + ")" : "")) : "") +
             "</table>";
     }
 

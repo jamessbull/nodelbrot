@@ -3,10 +3,11 @@ import { createHistogramExportWorker } from "./histogramExportWorker.js";
 import { createImageExportWorker } from "./imageExportWorker.js";
 import { createReferenceOrbitWorker } from "./referenceOrbit.js";
 import { createOrbitStore } from "./perturbationIterator.js";
+import { createNucleusWorker } from "./nucleus.js";
 
-// The code a web worker runs: the interactive view, both phases of an image export, and reference orbits
-// (in a worker of their own, as they take a while). Each message goes to the part named by its
-// workerMessageType. Returns the worker's message handler; replies go to postMessage(message, transfer).
+// The code a web worker runs: the interactive view, both phases of an image export, reference orbits and
+// the search for nuclei to base them on (each in a worker of its own, as they take a while). Each message
+// goes to the part named by its workerMessageType. Returns the worker's message handler; replies go to postMessage(message, transfer).
 export function createWorkerHandler(postMessage) {
     // The reference orbit for an export of a deep view, which comes in exportorbit messages first.
     const exportOrbit = createOrbitStore();
@@ -15,7 +16,8 @@ export function createWorkerHandler(postMessage) {
         histogramexportworker: createHistogramExportWorker(postMessage, exportOrbit),
         imageexportworker: createImageExportWorker(postMessage, exportOrbit),
         referenceorbit: createReferenceOrbitWorker(postMessage),
-        exportorbit: {onmessage: (e) => exportOrbit.add(e.data.orbit.generation, 0, e.data.orbit.values, e.data.orbit.escaped)}
+        nucleus: createNucleusWorker(postMessage),
+        exportorbit: {onmessage: (e) => exportOrbit.add(e.data.orbit.generation, 0, e.data.orbit.values, e.data.orbit.complete)}
     };
     return function (e) {
         const handler = handlers[e.data.workerMessageType];

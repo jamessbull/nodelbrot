@@ -291,7 +291,8 @@ function exportImage(api, exp) {
     if (exp.deep) {
         const view = api.viewAt(exp.deep.x, exp.deep.y, exp.deep.pixelSize);
         const calculator = api.createOrbitCalculator(view.x, view.y, view.bits);
-        orbit = { generation: 1, values: calculator.next(exp.depth + 2), escaped: calculator.escaped() };
+        // Revisions before nuclei call a complete orbit escaped.
+        orbit = { generation: 1, values: calculator.next(exp.depth + 2), escaped: calculator.escaped(), complete: calculator.escaped() };
         const w = (exp.width - 1) * exp.deep.pixelSize, h = (exp.height - 1) * exp.deep.pixelSize;
         extents = api.rectangle(-w / 2, -h / 2, w, h);
     } else {

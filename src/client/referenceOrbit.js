@@ -1,5 +1,5 @@
 import { needsPerturbation } from "./precision.js";
-import { fromNumber } from "./fixed.js";
+import { fromNumber, rescale, toNumber } from "./fixed.js";
 
 // The reference orbit for the view: the orbit of one point, worked out exactly in a worker of its own
 // (made by newWorker) for views where needed(view) is true, those past the precision limit of doubles,
@@ -7,15 +7,22 @@ import { fromNumber } from "./fixed.js";
 // until rereference() moves it. It starts again when the view moves, and is worked out ahead of
 // rendering: initialLength values to begin with, then twice the depth reached.
 //
-// Fires referenceOrbitGrew {generation, from, values, length, escaped} with each chunk of values that
-// arrives, and referenceChanged {generation, offsetX, offsetY} when rereference() starts an orbit for
-// another point.
+// With searchRadius (in pixels), a second worker looks for the nucleus of a mini Mandelbrot set within
+// that distance of the centre (see nucleus.js) as the view starts, and if it finds one, the orbit starts
+// again from there: one that never escapes, and one period of which is all there is to work out.
+//
+// Fires referenceOrbitGrew {generation, from, values, length, escaped, complete, period} with each chunk
+// of values that arrives, and referenceChanged {generation, offsetX, offsetY} when the orbit starts again
+// for another point (from rereference() or a nucleus).
 //
 // values() is the orbit so far, a Float64Array of x, y pairs: Z0 = 0, Z1 = c, ... up to and including
-// the value that escapes (|Z| > 2), if it has. offset() is where its point is, in pixels from the view's
-// centre.
-export function createReferenceOrbit({events, newWorker, needed = needsPerturbation, initialLength = 4096}) {
+// the value that escapes (|Z| > 2), if it has, or Zp (0, or as near as makes no odds) for a nucleus of
+// period p. Either way the orbit is complete(): pixels go back to its start on reaching its end, and
+// there is no more of it. offset() is where its point is, in pixels from the view's centre.
+export function createReferenceOrbit({events, newWorker, needed = needsPerturbation, initialLength = 4096, searchRadius = 0}) {
     let worker = null;
+    let searchWorker = null;
+    let viewGeneration = 0;     // bumped for each view, which the nucleus search goes by
     let generation = 0;
     let active = false;
     let view = null;            // the view the orbit is for
@@ -24,6 +31,8 @@ export function createReferenceOrbit({events, newWorker, needed = needsPerturbat
     let values = new Float64Array(0);
     let length = 0;
     let escaped = false;
+    let period = 0;             // the period of the orbit's point, if it is a nucleus
+    let complete = false;       // whether the orbit has escaped, or has all of its period
     let requested = 0;          // the length the worker has been asked for
     let waiting = [];           // {length, resolve} for whenLength
 
@@ -41,18 +50,19 @@ export function createReferenceOrbit({events, newWorker, needed = needsPerturbat
         values.set(chunk.values, 2 * chunk.from);
         length = end / 2;
         escaped = chunk.escaped;
-        events.fire(events.referenceOrbitGrew, {generation, from: chunk.from, values: chunk.values, length, escaped});
+        complete = chunk.complete;
+        events.fire(events.referenceOrbitGrew, {generation, from: chunk.from, values: chunk.values, length, escaped, complete, period});
         settleWaiting();
     }
 
     function snapshot() {
-        return {generation, values: values.slice(0, 2 * length), escaped, offset};
+        return {generation, values: values.slice(0, 2 * length), escaped, complete, offset};
     }
 
-    // Those waiting for a length they now have, or that the orbit has escaped short of, get it.
+    // Those waiting for a length they now have, or that the orbit is complete short of, get it.
     function settleWaiting() {
         waiting = waiting.filter(function (wait) {
-            if (escaped || length >= wait.length) {
+            if (complete || length >= wait.length) {
                 wait.resolve(snapshot());
                 return false;
             }
@@ -74,15 +84,42 @@ export function createReferenceOrbit({events, newWorker, needed = needsPerturbat
         worker.postMessage(Object.assign({workerMessageType: "referenceorbit", generation}, message));
     }
 
+    // Starts the orbit for newPoint {x, y, bits, period}, offset pixels from the view's centre; period is
+    // there for a nucleus.
     function start(newPoint, newOffset) {
         abandonWaiting();
         generation += 1;
         length = 0;
         escaped = false;
+        complete = false;
+        period = newPoint.period || 0;
         point = newPoint;
         offset = newOffset;
-        requested = initialLength;
+        // A nucleus's whole period is wanted at once: it is complete only then.
+        requested = period ? period + 1 : initialLength;
         ask({start: point, length: requested});
+    }
+
+    function search(forView) {
+        if (!searchWorker) {
+            searchWorker = newWorker();
+            searchWorker.onmessage = found;
+        }
+        searchWorker.postMessage({workerMessageType: "nucleus", generation: viewGeneration, x: forView.x, y: forView.y,
+            bits: forView.bits, pixelSize: forView.pixelSize, radius: searchRadius});
+    }
+
+    // A nucleus for the view, unless it has changed since: the orbit starts again from there.
+    function found(e) {
+        const nucleus = e.data.nucleus;
+        if (!nucleus || nucleus.generation !== viewGeneration || nucleus.period === undefined || !active || period) {
+            return;
+        }
+        const pixelSize = view.pixelSize;
+        const dx = toNumber(rescale(nucleus.x, nucleus.bits, view.bits) - view.x, view.bits) / pixelSize;
+        const dy = toNumber(rescale(nucleus.y, nucleus.bits, view.bits) - view.y, view.bits) / pixelSize;
+        start({x: nucleus.x, y: nucleus.y, bits: nucleus.bits, period: nucleus.period}, {x: dx, y: dy});
+        events.fire(events.referenceChanged, {generation, offsetX: dx, offsetY: dy});
     }
 
     const sameView = (newView) => view !== null && newView.x === view.x && newView.y === view.y && newView.bits === view.bits;
@@ -93,20 +130,26 @@ export function createReferenceOrbit({events, newWorker, needed = needsPerturbat
             return;
         }
         view = newView;
+        viewGeneration += 1;
         active = needed(newView);
         if (active) {
             start({x: newView.x, y: newView.y, bits: newView.bits}, {x: 0, y: 0});
+            if (searchRadius > 0) {
+                search(newView);
+            }
         } else {
             abandonWaiting();
             generation += 1;
             length = 0;
             escaped = false;
+            complete = false;
+            period = 0;
             point = null;
         }
     });
 
     events.listenTo(events.depthReached, function (depth) {
-        if (active && !escaped && 2 * depth > requested) {
+        if (active && !complete && 2 * depth > requested) {
             requested = Math.max(2 * depth, 2 * requested);
             ask({length: requested});
         }
@@ -117,11 +160,13 @@ export function createReferenceOrbit({events, newWorker, needed = needsPerturbat
         generation: () => generation,
         length: () => length,
         escaped: () => escaped,
+        complete: () => complete,
+        period: () => period,
         values: () => values.subarray(0, 2 * length),
         offset: () => offset,
         // Asks for the orbit to be worked out to at least length values, if it isn't being already.
         want: function (wanted) {
-            if (active && !escaped && wanted > requested) {
+            if (active && !complete && wanted > requested) {
                 requested = Math.max(wanted, 2 * requested);
                 ask({length: requested});
             }
@@ -149,6 +194,9 @@ export function createReferenceOrbit({events, newWorker, needed = needsPerturbat
         dispose: function () {
             if (worker) {
                 worker.terminate();
+            }
+            if (searchWorker) {
+                searchWorker.terminate();
             }
         }
     };

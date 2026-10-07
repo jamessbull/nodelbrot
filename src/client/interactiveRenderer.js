@@ -129,7 +129,7 @@ export function createInteractiveRenderer({width, height, events, workers, newWo
     // The iterations there is reference orbit for, after the depth reached, if rendering by perturbation:
     // pixels can get up to two values from the end of an orbit still being worked out.
     function orbitRoom() {
-        if (!perturbing || referenceOrbit.escaped()) {
+        if (!perturbing || referenceOrbit.complete()) {
             return Infinity;
         }
         return referenceOrbit.length() - 2 - currentIteration;
@@ -251,12 +251,12 @@ export function createInteractiveRenderer({width, height, events, workers, newWo
     });
 
     // Each worker keeps its own copy of the reference orbit.
-    function sendOrbit(generation, from, values, escaped) {
-        pool.sendToEach(() => ({workerMessageType: "uiworker", orbit: {generation, from, values, escaped}}));
+    function sendOrbit(generation, from, values, complete) {
+        pool.sendToEach(() => ({workerMessageType: "uiworker", orbit: {generation, from, values, complete}}));
     }
 
     on(events.referenceOrbitGrew, function (chunk) {
-        sendOrbit(chunk.generation, chunk.from, chunk.values, chunk.escaped);
+        sendOrbit(chunk.generation, chunk.from, chunk.values, chunk.complete);
         if (waitingForOrbit && orbitRoom() >= 1) {
             waitingForOrbit = false;
             if (running || frameWanted) {
@@ -267,7 +267,7 @@ export function createInteractiveRenderer({width, height, events, workers, newWo
 
     // A display made again (at a new size) carries on with the orbit there is.
     if (referenceOrbit && referenceOrbit.active() && referenceOrbit.length() > 0) {
-        sendOrbit(referenceOrbit.generation(), 0, referenceOrbit.values().slice(), referenceOrbit.escaped());
+        sendOrbit(referenceOrbit.generation(), 0, referenceOrbit.values().slice(), referenceOrbit.complete());
     }
 
     on(events.histogramChanged, function (info) {

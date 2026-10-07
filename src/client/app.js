@@ -95,7 +95,9 @@ export function startApp(newWorker) {
     let gpuUsable = chosenRenderer !== "cpu" && gpuAvailable();
     const rendererFor = (view) => gpuUsable && view.pixelSize >= gpuSmallestPixel ? "gpu" : "cpu";
     // The GPU renders every view by perturbation, so needs a reference orbit for every view.
-    const referenceOrbit = createReferenceOrbit({events, newWorker, needed: (view) => rendererFor(view) === "gpu" || needsPerturbation(view)});
+    // It looks for a nucleus about as far from the centre as the corners of a big display.
+    const referenceOrbit = createReferenceOrbit({events, newWorker, needed: (view) => rendererFor(view) === "gpu" || needsPerturbation(view),
+        searchRadius: 1000});
     const bookmarks = createBookmarks({bookmarkButton: element("bookmarkButton"), state, events, notice});
     const exportSizes = createExportSizes(element("exportSizeSelect"),
         ["smallExport", "mediumExport", "largeExport", "veryLargeExport"].map(element), size.width, size.height);

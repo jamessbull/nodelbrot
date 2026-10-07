@@ -8,8 +8,8 @@ import { renderFragments, exportMessage } from "../workerMessages.js";
 // Calls onProgress("histogram" or "image", pixels) as each part of a phase is done, then onComplete with
 // the image's RGBA data, or onError with a message if a worker fails.
 //
-// For a view too deep for doubles, orbit is the reference orbit {generation, values, escaped}, worked out
-// to at least depth + 2 values (or until it escapes), and extents is the area relative to its point:
+// For a view too deep for doubles, orbit is the reference orbit {generation, values, complete}, worked out
+// to at least depth + 2 values (or until it is complete), and extents is the area relative to its point:
 // pixels are iterated by perturbation (see perturbationIterator.js).
 export function renderExport({extents, width, height, depth, palette, newWorker, workers = workerCount(), orbit = null,
         onProgress = () => {}, onComplete, onError}) {
