@@ -74,6 +74,15 @@
             color: var(--accent);
         }
 
+        .badge {
+            margin-left: 6px;
+            padding: 1px 6px;
+            border: 1px solid var(--accent);
+            border-radius: 4px;
+            color: var(--accent);
+            font-size: 12px;
+        }
+
         .button {
             font: inherit;
             color: var(--text);
@@ -542,6 +551,8 @@
             Depth <span class="value" id="maxIteration">0</span>
             · last escape <span class="value" id="lastPointEscapedAt">0</span>
             · <span class="value" id="framesPerSecond">0</span> fps
+            <span id="precisionBadge" class="badge" hidden
+                  title="Zoomed in this far, the numbers aren't precise enough: expect banding and noise.">low precision</span>
         </div>
     </header>
 

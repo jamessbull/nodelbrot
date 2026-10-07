@@ -1,37 +1,35 @@
 import { createEvents } from "../src/client/events.js";
-import { viewAt } from "../src/client/view.js";
 import { isNearLimit, precisionWarning } from "../src/client/precision.js";
+import { viewAt } from "../src/client/view.js";
 
 describe("precision limit", function () {
-
-    // The view whose top left is (x, y), w wide on a display 700 pixels across.
-    function view(x, y, w) {
-        return viewAt(x + (w / 2), y + (w * 2 / 7), w / 699);
-    }
-
     it("should not be near the limit for ordinary views", function () {
-        expect(isNearLimit(view(-2.5, -1, 3.5))).toBe(false);
-        expect(isNearLimit(view(-0.74364, 0.13182, 1e-12))).toBe(false);
+        expect(isNearLimit(viewAt(-0.75, 0, 0.005))).toBe(false);
+        expect(isNearLimit(viewAt(-0.74364, 0.13182, 1e-13))).toBe(false);
     });
 
-    it("should be near the limit when pixels are within about 5 steps of double precision", function () {
-        expect(isNearLimit(view(-0.74364, 0.13182, 5e-13))).toBe(true);
+    it("should be near the limit once pixels are small enough for rounding to show", function () {
+        expect(isNearLimit(viewAt(-0.74364, 0.13182, 3e-14))).toBe(true);
     });
 
-    it("should allow deeper zooms close to zero, where doubles are more precise", function () {
-        expect(isNearLimit(view(-1e-10, -1e-10, 1e-20))).toBe(false);
+    it("should go by the pixel size, not by how close the point is to the origin", function () {
+        expect(isNearLimit(viewAt(0.2869, 0.0143, 3e-14))).toBe(true);
     });
 
-    it("should warn once each time the view goes past the limit", function () {
+    it("should warn once each time the view goes past the limit, and show the badge while it is", function () {
         const events = createEvents();
         const shown = [];
-        precisionWarning(events, {show: function (m) { shown.push(m); }});
-        events.fire(events.viewChanged, view(-0.74364, 0.13182, 1e-10));
-        events.fire(events.viewChanged, view(-0.74364, 0.13182, 5e-13));
-        events.fire(events.viewChanged, view(-0.74364, 0.13182, 4e-13));
+        const badge = {hidden: true};
+        precisionWarning({events, notice: {show: function (m) { shown.push(m); }}, badge});
+        events.fire(events.viewChanged, viewAt(-0.74364, 0.13182, 1e-10));
+        expect(badge.hidden).toBe(true);
+        events.fire(events.viewChanged, viewAt(-0.74364, 0.13182, 3e-14));
+        events.fire(events.viewChanged, viewAt(-0.74364, 0.13182, 1e-14));
         expect(shown.length).toBe(1);
-        events.fire(events.viewChanged, view(-0.74364, 0.13182, 1e-10));
-        events.fire(events.viewChanged, view(-0.74364, 0.13182, 5e-13));
+        expect(badge.hidden).toBe(false);
+        events.fire(events.viewChanged, viewAt(-0.74364, 0.13182, 1e-10));
+        expect(badge.hidden).toBe(true);
+        events.fire(events.viewChanged, viewAt(-0.74364, 0.13182, 3e-14));
         expect(shown.length).toBe(2);
     });
 });

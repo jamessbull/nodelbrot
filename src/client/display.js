@@ -7,13 +7,11 @@ import { rectangle } from "./geometry.js";
 import { createZoomInAnimation } from "./ui/actions/zoomInAnimation.js";
 import { createZoomIn } from "./ui/actions/zoomIn.js";
 import { createPixelExaminer } from "./pixelExaminer.js";
-import { precisionWarning } from "./precision.js";
 
 // The parts of the explorer that depend on the size of the display: the renderer and the buffers it
-// renders into, drawing the image, examining pixels, stopping on its own, zooming in and the precision
-// warning. When the display changes size these are disposed of and made again at the new size, so they
+// renders into, drawing the image, examining pixels, stopping on its own and zooming in. When the display changes size these are disposed of and made again at the new size, so they
 // listen through a scope of the events, which dispose() removes along with the renderer's workers.
-export function createDisplay({events, width, height, mainCanvas, uiCanvas, magnifier, examineHint, state, notice, drawSelection, newWorker}) {
+export function createDisplay({events, width, height, mainCanvas, uiCanvas, magnifier, examineHint, state, drawSelection, newWorker}) {
     const scoped = events.scope();
     const pixels = width * height;
     const imgData = new Uint8ClampedArray(pixels * 4);
@@ -38,7 +36,6 @@ export function createDisplay({events, width, height, mainCanvas, uiCanvas, magn
         mandelbrotCanvas: mainCanvas, uiCanvas, events: scoped, selection: createSelection(rectangle(0, 0, width, height)),
         zoomAnim: createZoomInAnimation(uiCanvas, mainCanvas, drawSelection)
     });
-    precisionWarning(scoped, notice);
 
     return {
         width: width,

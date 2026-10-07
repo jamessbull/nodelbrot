@@ -12,6 +12,7 @@ import { createZoomOut } from "./ui/actions/zoomOut.js";
 import { createMove } from "./ui/actions/move.js";
 import { createTouchGestures } from "./ui/touchGestures.js";
 import { createNotice } from "./ui/notice.js";
+import { precisionWarning } from "./precision.js";
 import { createPaletteEditor } from "./paletteEditor.js";
 import { createExportSizes } from "./export/exportSizes.js";
 import { createControls } from "./controls.js";
@@ -83,6 +84,7 @@ export function startApp(newWorker) {
     });
 
     const notice = createNotice(element("notice"));
+    precisionWarning({events, notice, badge: element("precisionBadge")});
     const bookmarks = createBookmarks({bookmarkButton: element("bookmarkButton"), state, events, notice});
     const exportSizes = createExportSizes(element("exportSizeSelect"),
         ["smallExport", "mediumExport", "largeExport", "veryLargeExport"].map(element), size.width, size.height);
@@ -112,7 +114,7 @@ export function startApp(newWorker) {
 
     const newDisplay = (width, height) => createDisplay({
         events: events, width: width, height: height, mainCanvas: mainCanvas, uiCanvas: uiCanvas, magnifier: magnifier, examineHint: element("examineHint"),
-        state: state, notice: notice, drawSelection: drawSelection, newWorker: newWorker
+        state: state, drawSelection: drawSelection, newWorker: newWorker
     });
     let display = newDisplay(size.width, size.height);
 
