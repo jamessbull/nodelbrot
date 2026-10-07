@@ -26,33 +26,20 @@ export function createExporter(_exportDimensions, state, _events, newWorker) {
     let exporting = false;
 
     const exportButton = document.getElementById("export");
-    const lastExportButton = document.getElementById("openLastExportButton");
     const exportDepth = document.getElementById("exportDepth");
     const histogramProgress = document.getElementById("histogramProgress");
     const imageProgress = document.getElementById("imageProgress");
     const timeProgress = document.getElementById("elapsedTime");
-    const downloadButton = document.getElementById("export1");
+    const exportResult = document.getElementById("exportResult");
+    const downloadLink = document.getElementById("downloadExport");
+    const openLink = document.getElementById("openExport");
     const exportProgress = document.getElementById("exportProgress");
     const exportMessage = document.getElementById("exportMessage");
     let exportDimensions;
     let palette;
-    let exportCanvas;
-    let exportUrl;
+    let exportUrl;          // the last export's image, until the next export starts
     const timeReporter = createTimeReporter(timeProgress);
     const progressReporters = {histogram: createProgressReporter(histogramProgress), image: createProgressReporter(imageProgress)};
-
-    lastExportButton.onclick = function () {
-        if (exportUrl) {
-            window.open(exportUrl);
-        }
-    };
-
-    downloadButton.onclick = function () {
-        if (exportCanvas) {
-            hide(exportProgress);
-            window.open(exportCanvas.toDataURL("image/png"));
-        }
-    };
 
     hide(exportProgress);
 
@@ -77,33 +64,32 @@ export function createExporter(_exportDimensions, state, _events, newWorker) {
     // making the image can fail.
     const tooBig = "the browser couldn't make an image this size. Try a smaller size.";
 
+    // Makes the image a PNG and offers it as links to download or open, which work where a pop-up
+    // opened when the export finished would be blocked. The canvas is only needed to make the PNG.
     function showImage(image) {
+        const { width, height } = exportDimensions;
+        let canvas;
         try {
-            exportCanvas = document.createElement('canvas');
-            exportCanvas.width = exportDimensions.width;
-            exportCanvas.height = exportDimensions.height;
-            exportCanvas.getContext('2d').putImageData(new ImageData(image, exportCanvas.width, exportCanvas.height), 0, 0);
+            canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            canvas.getContext('2d').putImageData(new ImageData(image, width, height), 0, 0);
         } catch {
-            exportCanvas = undefined;
             fail(tooBig);
             return;
         }
-        if (exportCanvas.toBlob) {
-            exportCanvas.toBlob(function(blob) {
-                if (!blob) {
-                    fail(tooBig);
-                    return;
-                }
-                exportUrl  = URL.createObjectURL(blob);
-                hide(exportProgress);
-                lastExportButton.classList.remove("disabled");
-                window.open(exportUrl);
-            });
-        } else {
-            lastExportButton.classList.remove("disabled");
-            downloadButton.href = exportCanvas.toDataURL("image/png");
-        }
-        finish();
+        canvas.toBlob(function (blob) {
+            canvas.width = canvas.height = 0;
+            if (!blob) {
+                fail(tooBig);
+                return;
+            }
+            exportUrl = URL.createObjectURL(blob);
+            downloadLink.href = openLink.href = exportUrl;
+            downloadLink.download = "mandelbrot-" + width + "x" + height + ".png";
+            exportResult.hidden = false;
+            finish();
+        });
     }
 
     exportButton.onclick = function () {
@@ -111,7 +97,12 @@ export function createExporter(_exportDimensions, state, _events, newWorker) {
             console.log("Can't export while export already in progress");
             return false ;
         }
-        exportUrl = undefined;
+        // The last export's image goes, as it can be tens of megabytes.
+        if (exportUrl) {
+            URL.revokeObjectURL(exportUrl);
+            exportUrl = undefined;
+        }
+        exportResult.hidden = true;
         exportMessage.textContent = "";
         show(exportProgress);
         const depth = parseDepth(exportDepth.value);

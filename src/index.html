@@ -84,6 +84,10 @@
             cursor: pointer;
         }
 
+        a.button {
+            text-decoration: none;
+        }
+
         .button:hover {
             border-color: var(--text);
         }
@@ -403,7 +407,6 @@
                     </div>
                     <div class="actions">
                         <button id="export" class="button">Export PNG</button>
-                        <button id="openLastExportButton" class="button disabled">View last export</button>
                     </div>
                     <div id="exportProgress" class="progress">
                         <table>
@@ -412,8 +415,9 @@
                             <tr><td>Elapsed</td><td class="value"><span id="elapsedTime">0</span> s</td></tr>
                         </table>
                         <div class="message" id="exportMessage"></div>
-                        <div class="actions">
-                            <a class="button" id="export1">Open image</a>
+                        <div class="actions" id="exportResult" hidden>
+                            <a class="button" id="downloadExport" download="mandelbrot.png">Download PNG</a>
+                            <a class="button" id="openExport" target="_blank" rel="noopener">Open in new tab</a>
                         </div>
                     </div>
                 </div>
@@ -482,7 +486,7 @@
 
     <h3>Exporting</h3>
     <p>Choose the number of iterations: the depth shown in the toolbar is a good guide. Then choose a size: Small is the same as the screen.</p>
-    <p>If your browser allows pop-ups the image opens in a new tab; otherwise open it with View last export. Save it from there.</p>
+    <p>When it's done, download it, or open it in a new tab to look at it first.</p>
 </dialog>
 </body>
 </html>
