@@ -118,7 +118,71 @@ window.results = [];
         });
     }
     document.getElementById("status").textContent = "Done.";
+    await checkExports();
 })().catch(function (e) {
     document.getElementById("status").textContent = "Failed: " + e.message;
     window.results.push({ error: e.message });
 });
+
+// An export of the view at x, y, pixelSize (on the display) with each, resolving with {image, seconds}.
+function exportWith(kind, x, y, pixelSize) {
+    return new Promise(function (resolve, reject) {
+        const view = api.viewAt(x, y, pixelSize);
+        const area = view.area(width, height);
+        const palette = api.createPalette();
+        // Timed from when the export starts, not counting working out the reference orbit.
+        let started = performance.now();
+        const done = (image) => resolve({ image, seconds: (performance.now() - started) / 1000 });
+        const deep = pixelSize < 5e-14;
+        if (kind === "cpu" && !deep) {
+            api.renderExport({ extents: area, width, height, depth, palette, newWorker, onComplete: done, onError: reject });
+            return;
+        }
+        const events = api.createEvents();
+        const referenceOrbit = api.createReferenceOrbit({ events, newWorker, needed: () => true, searchRadius: kind === "gpu" ? 1000 : 0 });
+        events.fire(events.viewChanged, view);
+        // Time for the nucleus search, as the explorer would have had.
+        setTimeout(() => referenceOrbit.whenLength(depth + 2).then(function (orbit) {
+            const extents = api.rectangle(-(area.width() / 2) - (orbit.offset.x * pixelSize), -(area.height() / 2) - (orbit.offset.y * pixelSize),
+                area.width(), area.height());
+            const finish = (image) => { referenceOrbit.dispose(); done(image); };
+            started = performance.now();
+            if (kind === "gpu") {
+                const point = deep ? null : { x: parseFloat(x) + (orbit.offset.x * pixelSize), y: parseFloat(y) + (orbit.offset.y * pixelSize) };
+                api.renderExportOnGpu({ extents, orbit: { values: orbit.values, complete: orbit.complete }, point, palette, depth, width, height,
+                    onComplete: finish, onError: reject });
+            } else {
+                api.renderExport({ extents, orbit: { generation: orbit.generation, values: orbit.values, complete: orbit.complete },
+                    width, height, depth, palette, newWorker, onComplete: finish, onError: reject });
+            }
+        }), 1000);
+    });
+}
+
+async function checkExports() {
+    const exportTable = document.getElementById("exports");
+    document.getElementById("exportStatus").textContent = "Running…";
+    window.exportResults = [];
+    for (const [name, x, y, pixelSize] of views) {
+        const gpu = await exportWith("gpu", x, y, pixelSize);
+        const cpu = await exportWith("cpu", x, y, pixelSize);
+        let blackInOne = 0, alike = 0;
+        for (let p = 0; p < gpu.image.length; p += 4) {
+            const black = (image) => image[p] === 0 && image[p + 1] === 0 && image[p + 2] === 0;
+            if (black(gpu.image) !== black(cpu.image)) blackInOne += 1;
+            if ([0, 1, 2].every((c) => Math.abs(gpu.image[p + c] - cpu.image[p + c]) <= 24)) alike += 1;
+        }
+        const pixels = width * height;
+        const result = { name, pixelSize, blackInOne: blackInOne / pixels, alike: alike / pixels, gpuSeconds: gpu.seconds, cpuSeconds: cpu.seconds };
+        window.exportResults.push(result);
+        const pass = result.blackInOne <= 0.01 && result.alike >= 0.8;
+        const row = exportTable.insertRow();
+        [name, pixelSize.toExponential(0), depth, (100 * result.blackInOne).toFixed(2) + "%", (100 * result.alike).toFixed(1) + "%",
+            result.gpuSeconds.toFixed(2) + "s / " + result.cpuSeconds.toFixed(2) + "s"].forEach(function (text, i) {
+            const cell = row.insertCell();
+            cell.textContent = text;
+            if (i === 4) cell.className = pass ? "pass" : "fail";
+        });
+    }
+    document.getElementById("exportStatus").textContent = "Done.";
+}
