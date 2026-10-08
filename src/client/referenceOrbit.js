@@ -5,7 +5,8 @@ import { fromNumber, rescale, toNumber } from "./fixed.js";
 // (made by newWorker) for views where needed(view) is true, those past the precision limit of doubles,
 // where the renderer iterates pixels as small differences from it. The point is the centre of the view
 // until rereference() moves it. It starts again when the view moves, and is worked out ahead of
-// rendering: initialLength values to begin with, then twice the depth reached.
+// rendering: initialLength values to begin with, then twice the depth reached, but no more than
+// longest(view) unless asked for (the GPU renderer can't use more than gpuMaxDepth).
 //
 // With searchRadius (in pixels), a second worker looks for the nucleus of a mini Mandelbrot set within
 // that distance of the centre (see nucleus.js) as the view starts, and if it finds one, the orbit starts
@@ -19,7 +20,8 @@ import { fromNumber, rescale, toNumber } from "./fixed.js";
 // the value that escapes (|Z| > 2), if it has, or Zp (0, or as near as makes no odds) for a nucleus of
 // period p. Either way the orbit is complete(): pixels go back to its start on reaching its end, and
 // there is no more of it. offset() is where its point is, in pixels from the view's centre.
-export function createReferenceOrbit({events, newWorker, needed = needsPerturbation, initialLength = 4096, searchRadius = 0}) {
+export function createReferenceOrbit({events, newWorker, needed = needsPerturbation, initialLength = 4096, searchRadius = 0,
+        longest = () => Infinity}) {
     let worker = null;
     let searchWorker = null;
     let viewGeneration = 0;     // bumped for each view, which the nucleus search goes by
@@ -150,8 +152,8 @@ export function createReferenceOrbit({events, newWorker, needed = needsPerturbat
     });
 
     events.listenTo(events.depthReached, function (depth) {
-        if (active && !complete && 2 * depth > requested) {
-            requested = Math.max(2 * depth, 2 * requested);
+        if (active && !complete && 2 * depth > requested && requested < longest(view)) {
+            requested = Math.min(longest(view), Math.max(2 * depth, 2 * requested));
             ask({length: requested});
         }
     });
@@ -168,7 +170,7 @@ export function createReferenceOrbit({events, newWorker, needed = needsPerturbat
         // Asks for the orbit to be worked out to at least length values, if it isn't being already.
         want: function (wanted) {
             if (active && !complete && wanted > requested) {
-                requested = Math.max(wanted, 2 * requested);
+                requested = Math.max(wanted, Math.min(longest(view), 2 * requested));
                 ask({length: requested});
             }
         },

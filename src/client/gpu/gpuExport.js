@@ -81,7 +81,7 @@ export function renderExportOnGpu({extents, width, height, depth, orbit, palette
     const bla = createGpuBla(gl);
     const corners = [extents.topLeft().x, extents.topLeft().x + extents.width()].map(Math.abs);
     const sides = [extents.topLeft().y, extents.topLeft().y + extents.height()].map(Math.abs);
-    bla.update(0, orbit.values, orbitLength, Math.hypot(Math.max(...corners), Math.max(...sides)), orbit.complete);
+    bla.update(0, orbit.values, orbitLength, Math.hypot(Math.max(...corners), Math.max(...sides)), orbit.complete, {now: true});
 
     const counts = new Uint32Array(depth + 2);
     const smooth = new Float32Array(width * height);

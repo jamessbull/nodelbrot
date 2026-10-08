@@ -136,10 +136,22 @@ export function createGpuRenderer({width, height, events, imgData, escapeValues,
             if (rowsFor(length) > maxRows) {
                 return false;
             }
+            const oldRows = orbitRows;
             orbitRows = Math.min(maxRows, Math.max(rowsFor(length), 2 * orbitRows, 8));
+            const grown = createTexture(gl, gl.RG32F, arrayTextureWidth, orbitRows, gl.RG, gl.FLOAT);
+            if (orbitTexture && orbitUploaded > 0) {
+                // What is there already is copied over on the GPU, rather than sent again.
+                const from = createFramebuffer(gl, [orbitTexture]);
+                const to = createFramebuffer(gl, [grown]);
+                gl.bindFramebuffer(gl.READ_FRAMEBUFFER, from);
+                gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, to);
+                gl.blitFramebuffer(0, 0, arrayTextureWidth, oldRows, 0, 0, arrayTextureWidth, oldRows, gl.COLOR_BUFFER_BIT, gl.NEAREST);
+                gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+                gl.deleteFramebuffer(from);
+                gl.deleteFramebuffer(to);
+            }
             if (orbitTexture) gl.deleteTexture(orbitTexture);
-            orbitTexture = createTexture(gl, gl.RG32F, arrayTextureWidth, orbitRows, gl.RG, gl.FLOAT);
-            orbitUploaded = 0;
+            orbitTexture = grown;
         }
         if (length > orbitUploaded) {
             const {firstRow, rows, data} = rowsOf(values, orbitUploaded, length, 2);
@@ -313,6 +325,8 @@ export function createGpuRenderer({width, height, events, imgData, escapeValues,
         // The furthest any pixel is from the orbit's point, for the table of runs.
         const dcMax = Math.hypot(((width / 2) + Math.abs(offset.x)) * view.pixelSize, ((height / 2) + Math.abs(offset.y)) * view.pixelSize);
         bla.update(referenceOrbit.generation(), referenceOrbit.values(), referenceOrbit.length(), dcMax, referenceOrbit.complete());
+        // A few milliseconds a frame on making a new table, if one is wanted.
+        bla.work(3);
         const deep = view.pixelSize < deepGpuPixel;
         const iterate = deep ? iterateDeep : iterateShallow;
         gl.useProgram(iterate.program);

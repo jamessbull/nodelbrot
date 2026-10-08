@@ -22,6 +22,17 @@ export const epsilon = 2 ** -53;
 // for doubles (or with tolerance in place of epsilon, for less precise numbers).
 // Runs go no further than the last value, so pixels are at a value the orbit has when they come out.
 export function buildBla(values, length, dcMax, tolerance = epsilon) {
+    const steps = buildBlaInSteps(values, length, dcMax, tolerance);
+    let step = steps.next();
+    while (!step.done) {
+        step = steps.next();
+    }
+    return step.value;
+}
+
+// The same, a generator that yields every so often (every few thousand runs), so it can be made a slice
+// at a time, and returns the table.
+export function* buildBlaInSteps(values, length, dcMax, tolerance = epsilon) {
     const levels = [];
     // Runs of 2^minLevel, made by folding single iterations in.
     const runLength = 2 ** minLevel;
@@ -45,6 +56,7 @@ export function buildBla(values, length, dcMax, tolerance = epsilon) {
             bx = nextBx;
         }
         current.set([ax, ay, bx, by, Number.isFinite(r) ? r : 0], 5 * j);
+        if ((j & 4095) === 4095) yield;
     }
     levels.push(current);
     // Each level up joins pairs of runs from the one below.
@@ -62,6 +74,7 @@ export function buildBla(values, length, dcMax, tolerance = epsilon) {
             next[(5 * j) + 3] = (ayx * bxy) + (ayy * bxx) + byy;
             const r = Math.min(rx, Math.max(0, (ry - (Math.hypot(bxx, bxy) * dcMax)) / Math.hypot(axx, axy)));
             next[(5 * j) + 4] = Number.isFinite(r) ? r : 0;
+            if ((j & 16383) === 16383) yield;
         }
         levels.push(next);
         current = next;

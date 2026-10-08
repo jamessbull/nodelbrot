@@ -1,4 +1,4 @@
-import { buildBla } from "../worker/bla.js";
+import { buildBlaInSteps } from "../worker/bla.js";
 import { createTexture } from "./gl.js";
 import { arrayTextureWidth, maxBlaLevels } from "./shaders.js";
 
@@ -33,45 +33,84 @@ export function createGpuBla(gl) {
         return {x: scale(x), y: scale(y), power};
     }
 
-    // The table for the orbit (of generation) with values (x, y pairs) of length values, and pixels up to
-    // dcMax from its point, made again only if the orbit is another one, has doubled in length (or is
-    // complete, and longer), or dcMax has grown past what it was made for.
-    function update(generation, values, length, dcMax, complete) {
-        if (built && built.generation === generation && dcMax <= built.dcMax &&
-                (length === built.length || (!complete && length < 2 * built.length))) {
-            return;
+    // A table being made (see work): {key, steps}.
+    let job = null;
+
+    // Asks for the table for the orbit (of generation) with values (x, y pairs) of length values, and
+    // pixels up to dcMax from its point. It is made again only if the orbit is another one, has doubled in
+    // length (or is complete, and longer), or dcMax has grown past what it was made for. Making it takes a
+    // while for long orbits, so it is done a slice at a time (see work), or at once with now: meanwhile, a
+    // table for less of the same orbit goes on being used (it is right for as much as it covers), and one
+    // for another orbit, or smaller dcMax, isn't.
+    function update(generation, values, length, dcMax, complete, {now = false} = {}) {
+        const wanted = {generation, length, dcMax: 2 ** Math.ceil(Math.log2(Math.max(dcMax, Number.MIN_VALUE)))};
+        if (built && (built.generation !== generation || dcMax > built.dcMax)) {
+            built = null;
+            levels = 0;
         }
-        built = {generation, length, dcMax: 2 ** Math.ceil(Math.log2(Math.max(dcMax, Number.MIN_VALUE)))};
-        const table = buildBla(values, length, built.dcMax, gpuTolerance).levels.slice(0, maxBlaLevels);
+        const enough = (table) => table && table.generation === generation && dcMax <= table.dcMax &&
+            (length === table.length || (!complete && length < 2 * table.length));
+        if (!enough(built) && !(job && enough(job.key))) {
+            job = {key: wanted, steps: make(values, wanted)};
+        }
+        if (now) {
+            work(Infinity);
+        }
+    }
+
+    // Works on the table being made for up to ms milliseconds, putting it in use if it is finished.
+    function work(ms) {
+        const until = performance.now() + ms;
+        while (job && performance.now() < until) {
+            const step = job.steps.next();
+            if (step.done) {
+                install(job.key, step.value);
+                job = null;
+            }
+        }
+    }
+
+    function* make(values, key) {
+        const table = (yield* buildBlaInSteps(values, key.length, key.dcMax, gpuTolerance)).levels.slice(0, maxBlaLevels);
+        const layout = {start: new Int32Array(maxBlaLevels), count: new Int32Array(maxBlaLevels), levels: 0, mostLog2R: -Infinity};
         let total = 0;
-        levels = 0;
-        mostLog2R = -Infinity;
         table.forEach(function (level, k) {
-            start[k] = total;
-            count[k] = level.length / 5;
-            total += count[k];
-            if (count[k] > 0) levels = k + 1;
+            layout.start[k] = total;
+            layout.count[k] = level.length / 5;
+            total += layout.count[k];
+            if (layout.count[k] > 0) layout.levels = k + 1;
         });
-        const rows = Math.max(1, Math.ceil(total / arrayTextureWidth));
-        const ab = new Float32Array(rows * arrayTextureWidth * 4);
-        const powers = new Float32Array(rows * arrayTextureWidth * 4);
-        table.forEach(function (level, k) {
-            for (let j = 0; j < count[k]; j += 1) {
-                const at = start[k] + j;
+        layout.rows = Math.max(1, Math.ceil(total / arrayTextureWidth));
+        layout.ab = new Float32Array(layout.rows * arrayTextureWidth * 4);
+        layout.powers = new Float32Array(layout.rows * arrayTextureWidth * 4);
+        for (let k = 0; k < table.length; k += 1) {
+            const level = table[k];
+            for (let j = 0; j < layout.count[k]; j += 1) {
+                const at = layout.start[k] + j;
                 const a = split(level[5 * j], level[(5 * j) + 1]);
                 const b = split(level[(5 * j) + 2], level[(5 * j) + 3]);
                 const r = level[(5 * j) + 4];
                 // log2 R, or as good as minus infinity where the run can't be taken.
                 const log2R = r > 0 && Number.isFinite(r) ? Math.log2(r) : -1e30;
-                ab.set([a.x, a.y, b.x, b.y], 4 * at);
-                powers.set([log2R, a.power, b.power, 0], 4 * at);
-                if (k === 0) mostLog2R = Math.max(mostLog2R, log2R);
+                layout.ab.set([a.x, a.y, b.x, b.y], 4 * at);
+                layout.powers.set([log2R, a.power, b.power, 0], 4 * at);
+                if (k === 0) layout.mostLog2R = Math.max(layout.mostLog2R, log2R);
+                if ((j & 4095) === 4095) yield;
             }
-        });
+        }
+        return layout;
+    }
+
+    function install(key, layout) {
         gl.deleteTexture(coefficients);
         gl.deleteTexture(scales);
-        coefficients = createTexture(gl, gl.RGBA32F, arrayTextureWidth, rows, gl.RGBA, gl.FLOAT, ab);
-        scales = createTexture(gl, gl.RGBA32F, arrayTextureWidth, rows, gl.RGBA, gl.FLOAT, powers);
+        coefficients = createTexture(gl, gl.RGBA32F, arrayTextureWidth, layout.rows, gl.RGBA, gl.FLOAT, layout.ab);
+        scales = createTexture(gl, gl.RGBA32F, arrayTextureWidth, layout.rows, gl.RGBA, gl.FLOAT, layout.powers);
+        start.set(layout.start);
+        count.set(layout.count);
+        levels = layout.levels;
+        mostLog2R = layout.mostLog2R;
+        built = key;
     }
 
     // Binds the table to texture units unit and unit + 1 for program, and sets its uniforms.
@@ -88,5 +127,5 @@ export function createGpuBla(gl) {
         gl.uniform1f(program.uniforms.blaMostLog2R, Number.isFinite(mostLog2R) ? mostLog2R : -1e30);
     }
 
-    return {update, use};
+    return {update, work, use};
 }
