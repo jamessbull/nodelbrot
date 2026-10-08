@@ -349,8 +349,7 @@ export function createGpuRenderer({width, height, events, imgData, escapeValues,
         gl.drawArrays(gl.POINTS, 0, width * height);
         gl.disable(gl.BLEND);
         gl.bindBuffer(gl.PIXEL_PACK_BUFFER, frame.countsBuffer);
-        // All of it, though only rows are used: Chrome only copies a buffer back ahead of time if all of it is read.
-        gl.readPixels(0, 0, arrayTextureWidth, countRows, gl.RGBA, gl.FLOAT, 0);
+        gl.readPixels(0, 0, arrayTextureWidth, rows, gl.RGBA, gl.FLOAT, 0);
         gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null);
 
         frame.fence = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
@@ -390,8 +389,10 @@ export function createGpuRenderer({width, height, events, imgData, escapeValues,
         if (frame.generation !== viewGeneration) {
             return;
         }
+        // Chrome (152) warns that this is read the slow way, not from the copy it made ahead of time,
+        // whatever is done (see dev/readbackCheck.html); the counts are small, so that costs little.
         gl.bindBuffer(gl.COPY_READ_BUFFER, frame.countsBuffer);
-        gl.getBufferSubData(gl.COPY_READ_BUFFER, 0, counts);
+        gl.getBufferSubData(gl.COPY_READ_BUFFER, 0, counts, 0, arrayTextureWidth * Math.ceil(frame.iterations / arrayTextureWidth) * 4);
         gl.bindBuffer(gl.COPY_READ_BUFFER, null);
         const update = new Uint32Array(frame.iterations);
         for (let n = 0; n < frame.iterations; n += 1) {

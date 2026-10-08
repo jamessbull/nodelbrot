@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Readback check</title>
+    <style>
+        body { background: #000; color: #faebd7; font: 14px/1.5 system-ui, sans-serif; margin: 20px; max-width: 60em; }
+    </style>
+</head>
+<body>
+<h1>Readback check</h1>
+<p>The GPU renderer copies each frame's escape counts back without waiting: readPixels into a pixel pack buffer, a
+    fence, and getBufferSubData once the fence says the GPU is done. Chrome (152) warns about every such read,
+    "READ-usage buffer was written, then fenced, but written again before being read back", which means it read
+    the buffer the slow way, not from the copy it made ahead of time.</p>
+<p>This page does just that, in each of the ways that might matter, five times each, so open the console to see
+    whether a version of the browser still warns. In Chrome 152 every one does, so it isn't anything the renderer
+    does; the counts are small (a few hundred kilobytes), and reading them the slow way costs well under a
+    millisecond.</p>
+<p id="status">Running…</p>
+<script type="module">
+    const ways = [
+        ["read straight away", {}],
+        ["read in the next task", {nextTask: true}],
+        ["fence checked by getSyncParameter", {getSync: true}],
+        ["read 200 ms later", {wait: 200}],
+        ["read through PIXEL_PACK_BUFFER", {target: "PIXEL_PACK_BUFFER"}],
+        ["DYNAMIC_READ usage", {usage: "DYNAMIC_READ"}]
+    ];
+    const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+    async function readBack(label, {nextTask = false, getSync = false, wait = 0, target = "COPY_READ_BUFFER", usage = "STREAM_READ"}) {
+        console.log("Readback check: " + label);
+        const gl = document.createElement("canvas").getContext("webgl2");
+        const width = 2048, height = 10;
+        const texture = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        gl.texStorage2D(gl.TEXTURE_2D, 1, gl.RGBA8, width, height);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, gl.createFramebuffer());
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
+        const buffer = gl.createBuffer();
+        gl.bindBuffer(gl.PIXEL_PACK_BUFFER, buffer);
+        gl.bufferData(gl.PIXEL_PACK_BUFFER, width * height * 4, gl[usage]);
+        gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null);
+        const into = new Uint8Array(width * height * 4);
+        for (let i = 0; i < 5; i += 1) {
+            gl.clearColor(Math.random(), 0, 0, 1);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+            gl.bindBuffer(gl.PIXEL_PACK_BUFFER, buffer);
+            gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, 0);
+            gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null);
+            const fence = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
+            gl.flush();
+            const done = () => (getSync ? gl.getSyncParameter(fence, gl.SYNC_STATUS) === gl.SIGNALED
+                : gl.clientWaitSync(fence, 0, 0) !== gl.TIMEOUT_EXPIRED);
+            while (!done()) await pause(1);
+            if (nextTask) await pause(0);
+            if (wait) await pause(wait);
+            gl.bindBuffer(gl[target], buffer);
+            gl.getBufferSubData(gl[target], 0, into);
+            gl.bindBuffer(gl[target], null);
+            gl.deleteSync(fence);
+        }
+        gl.getExtension("WEBGL_lose_context").loseContext();
+    }
+
+    for (const [label, options] of ways) {
+        await readBack(label, options);
+    }
+    document.getElementById("status").textContent = "Done: see the console.";
+</script>
+</body>
+</html>
