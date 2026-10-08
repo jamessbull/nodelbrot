@@ -4,6 +4,10 @@ import { blaFor, minLevel } from "./bla.js";
 const histogramEscapeValue = 16;
 const imageEscapeValue = 9007199254740991;
 
+// Cycles are looked for every this many iterations (a power of two), not every one, which costs less: a
+// state that comes round again comes round at the iterations looked at too, a little later.
+const cycleCheckEvery = 8;
+
 // A worker's copy of the reference orbit (see referenceOrbit.js), which arrives in chunks: values is
 // x, y pairs of Z0, Z1, ..., length how many there are, and complete whether that's all of it (the last
 // escaped, or is the end of a nucleus's period).
@@ -166,17 +170,20 @@ export function createPerturbationIterator(width, height, startExtents, orbit, {
                         smoothIterations[idx] = startIteration + n + 1 - log(log(zSquared) / 2 / LN2) / LN2;
                         break;
                     }
-                    if (m === refM && dx === refDx && dy === refDy) {
-                        neverEscapes[idx] = 1;
-                        break;
-                    }
-                    sinceRef += 1;
-                    if (sinceRef === window) {
-                        sinceRef = 0;
-                        window *= 2;
-                        refM = m;
-                        refDx = dx;
-                        refDy = dy;
+                    // Every eighth iteration (see cycleCheckEvery).
+                    if ((n & (cycleCheckEvery - 1)) === 0) {
+                        if (m === refM && dx === refDx && dy === refDy) {
+                            neverEscapes[idx] = 1;
+                            break;
+                        }
+                        sinceRef += 1;
+                        if (sinceRef === window) {
+                            sinceRef = 0;
+                            window *= 2;
+                            refM = m;
+                            refDx = dx;
+                            refDy = dy;
+                        }
                     }
                 }
                 dxs[idx] = dx;
@@ -292,17 +299,20 @@ export function createPerturbationIterator(width, height, startExtents, orbit, {
                         smoothIterations[idx] = startIteration + n + 1 - log(log(zSquared) / 2 / LN2) / LN2;
                         break;
                     }
-                    if (m === refM && dx === refDx && dy === refDy) {
-                        neverEscapes[idx] = 1;
-                        break;
-                    }
-                    sinceRef += 1;
-                    if (sinceRef === window) {
-                        sinceRef = 0;
-                        window *= 2;
-                        refM = m;
-                        refDx = dx;
-                        refDy = dy;
+                    // Every eighth iteration (see cycleCheckEvery).
+                    if ((n & (cycleCheckEvery - 1)) === 0) {
+                        if (m === refM && dx === refDx && dy === refDy) {
+                            neverEscapes[idx] = 1;
+                            break;
+                        }
+                        sinceRef += 1;
+                        if (sinceRef === window) {
+                            sinceRef = 0;
+                            window *= 2;
+                            refM = m;
+                            refDx = dx;
+                            refDy = dy;
+                        }
                     }
                 }
                 stepped += n;
