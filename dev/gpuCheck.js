@@ -22,6 +22,10 @@ const views = [
         "0.13182590420531197349300999970000399993000000000900004999909956343437093500695219075989005196101094284924559474265775284914", 1.5e-118, 100000]
 ];
 
+// ?only=text checks just the views whose names contain it.
+const only = new URLSearchParams(location.search).get("only");
+const checked = () => views.filter(([name]) => !only || name.includes(only));
+
 const newWorker = () => new Worker("/client/main.js", { type: "module" });
 
 // Renders the view with one renderer until it reaches the depth, resolving with its escape counts.
@@ -105,7 +109,7 @@ window.results = [];
         document.getElementById("status").textContent = "This browser can't run the GPU renderer.";
         return;
     }
-    for (const [name, x, y, pixelSize, depth = defaultDepth] of views) {
+    for (const [name, x, y, pixelSize, depth = defaultDepth] of checked()) {
         const view = api.viewAt(x, y, pixelSize);
         const gpu = await render("gpu", view, depth);
         const cpu = await render("cpu", view, depth);
@@ -170,7 +174,7 @@ async function checkExports() {
     const exportTable = document.getElementById("exports");
     document.getElementById("exportStatus").textContent = "Running…";
     window.exportResults = [];
-    for (const [name, x, y, pixelSize, depth = defaultDepth] of views) {
+    for (const [name, x, y, pixelSize, depth = defaultDepth] of checked()) {
         const gpu = await exportWith("gpu", x, y, pixelSize, depth);
         const cpu = await exportWith("cpu", x, y, pixelSize, depth);
         let blackInOne = 0, alike = 0;

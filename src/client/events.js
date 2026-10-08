@@ -18,7 +18,7 @@ const names = {
     depthReached: "",
     frameComplete: "",
     // More of the reference orbit for the view has been worked out: {generation, from, values, length,
-    // escaped, complete, period}, values being the new x, y pairs from index from on.
+    // escaped, complete, period, loopTo}, values being the new x, y pairs from index from on.
     referenceOrbitGrew: "",
     // The reference orbit has started again from another point, {generation, offsetX, offsetY} pixels
     // from the view's centre, so rendering must start again too.

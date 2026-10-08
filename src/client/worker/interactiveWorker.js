@@ -17,7 +17,7 @@ export function createInteractiveWorker(postMessage) {
     const onmessage = function (e) {
         const msg = e.data;
         if (msg.orbit) {
-            orbit.add(msg.orbit.generation, msg.orbit.from, msg.orbit.values, msg.orbit.complete);
+            orbit.add(msg.orbit.generation, msg.orbit.from, msg.orbit.values, msg.orbit.complete, msg.orbit.loopTo);
             return;
         }
         const noOfPixels = msg.exportWidth * msg.exportHeight;

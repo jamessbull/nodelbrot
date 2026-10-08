@@ -47,7 +47,8 @@ ivec2 arrayTexel(int i) {
 // Advances every pixel by up to `iterations` iterations, by perturbation from the reference orbit (see
 // perturbationIterator.js, which this follows step for step, in 32-bit floats). orbitEnd is the index of
 // the reference orbit's last value if it is complete (escaped, or a nucleus's whole period), so pixels
-// rebase on reaching it, otherwise -1. Pixel (i, j) is (dcTopLeft + (i, j) pixelStep) 2^dcPower from the
+// rebase on reaching it, otherwise -1; if the orbit loops, orbitLoop is where they carry on from there
+// instead, with d as it is, otherwise -1. Pixel (i, j) is (dcTopLeft + (i, j) pixelStep) 2^dcPower from the
 // orbit's point. Pixels whose imageEscapedAt is set are left as they are: those that have escaped, and
 // those known to be in the set, which have -1.
 //
@@ -67,6 +68,7 @@ uniform highp sampler2D state1;
 uniform highp sampler2D state2;
 uniform highp sampler2D orbit;
 uniform int orbitEnd;
+uniform int orbitLoop;
 uniform float startIteration;
 uniform int iterations;
 uniform vec2 dcTopLeft;
@@ -176,7 +178,9 @@ void main() {
                 }
                 m += shortestRun << level;
                 n += shortestRun << level;
-                if (m == orbitEnd) {
+                if (m == orbitEnd && orbitLoop >= 0) {
+                    m = orbitLoop;
+                } else if (m == orbitEnd) {
                     rebase(Z(m), d, power);
                     m = 0;
                 }
@@ -208,7 +212,10 @@ void main() {
             m += 1;
             vec2 dNow = plain(d, power);
             vec2 nextZ = Z(m) + dNow;
-            if (dot(nextZ, nextZ) < dot(dNow, dNow) || m == orbitEnd) {
+            bool closer = dot(nextZ, nextZ) < dot(dNow, dNow);
+            if (!closer && m == orbitEnd && orbitLoop >= 0) {
+                m = orbitLoop;
+            } else if (closer || m == orbitEnd) {
                 rebase(Z(m), d, power);
                 m = 0;
             }

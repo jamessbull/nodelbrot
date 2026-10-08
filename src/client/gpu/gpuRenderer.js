@@ -336,6 +336,7 @@ export function createGpuRenderer({width, height, events, imgData, escapeValues,
         bindTexture(3, orbitTexture, iterate, "orbit");
         bla.use(iterate, 4);
         gl.uniform1i(iterate.uniforms.orbitEnd, referenceOrbit.complete() ? referenceOrbit.length() - 1 : -1);
+        gl.uniform1i(iterate.uniforms.orbitLoop, referenceOrbit.loopTo());
         gl.uniform1f(iterate.uniforms.startIteration, frame.start);
         gl.uniform1i(iterate.uniforms.iterations, frame.iterations);
         placePixels(gl, iterate, (-((width - 1) / 2) - offset.x) * view.pixelSize, (-((height - 1) / 2) - offset.y) * view.pixelSize,

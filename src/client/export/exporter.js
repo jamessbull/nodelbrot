@@ -205,7 +205,7 @@ export function createExporter({exportSizes, state, events, newWorker, reference
     function startGpuExport(extents, orbit, point, depth, onFailure) {
         exportMessage.textContent = "Rendering on the GPU…";
         renderExportOnGpu({
-            extents, orbit: {values: orbit.values, complete: orbit.complete}, point, palette, depth,
+            extents, orbit: {values: orbit.values, complete: orbit.complete, loopTo: orbit.loopTo}, point, palette, depth,
             width: exportDimensions.width, height: exportDimensions.height,
             onProgress: (phase, pixels) => progressReporters[phase].add(pixels),
             onComplete: function (image) {
@@ -223,7 +223,7 @@ export function createExporter({exportSizes, state, events, newWorker, reference
 
     function startExport(extents, orbit, depth) {
         renderExport({
-            orbit: orbit && {generation: orbit.generation, values: orbit.values, complete: orbit.complete},
+            orbit: orbit && {generation: orbit.generation, values: orbit.values, complete: orbit.complete, loopTo: orbit.loopTo},
             extents: extents, width: exportDimensions.width, height: exportDimensions.height,
             depth: depth, palette: palette, newWorker: newWorker,
             onProgress: (phase, pixels) => progressReporters[phase].add(pixels),

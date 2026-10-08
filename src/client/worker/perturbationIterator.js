@@ -10,22 +10,24 @@ const cycleCheckEvery = 8;
 
 // A worker's copy of the reference orbit (see referenceOrbit.js), which arrives in chunks: values is
 // x, y pairs of Z0, Z1, ..., length how many there are, and complete whether that's all of it (the last
-// escaped, or is the end of a nucleus's period).
+// escaped, or is the end of a nucleus's period, or the same as the one at loopTo, otherwise -1).
 export function createOrbitStore() {
     const store = {
         generation: -1,
         values: new Float64Array(0),
         length: 0,
         complete: false,
+        loopTo: -1,
         // A new orbit, for generation.
         reset: function (generation) {
             store.generation = generation;
             store.length = 0;
             store.complete = false;
+            store.loopTo = -1;
             store.runShare = undefined;
         },
         // Values from index from on, for generation.
-        add: function (generation, from, values, complete) {
+        add: function (generation, from, values, complete, loopTo = -1) {
             if (generation !== store.generation) {
                 store.reset(generation);
             }
@@ -38,6 +40,7 @@ export function createOrbitStore() {
             store.values.set(values, 2 * from);
             store.length = Math.max(store.length, end / 2);
             store.complete = complete;
+            store.loopTo = loopTo;
         }
     };
     return store;
@@ -55,7 +58,8 @@ export function createOrbitStore() {
 // unless it has escaped.
 //
 // When z comes closer to 0 than d, or the reference orbit runs out (it escaped, or a nucleus's period
-// is over), the pixel carries on from the start of the reference orbit with d = z (rebasing). That keeps
+// is over), the pixel carries on from the start of the reference orbit with d = z (rebasing). An orbit
+// that loops has no end: there, pixels carry on from orbit.loopTo with d as it is, as Z is the same. That keeps
 // d small next to z, so pixels whose orbits part from the reference's are still right, with just one
 // reference orbit.
 //
@@ -119,6 +123,7 @@ export function createPerturbationIterator(width, height, startExtents, orbit, {
         // Rebase on reaching the last value only if the orbit is complete: otherwise it is still being
         // worked out, and there is always more of it than is asked for.
         const end = orbit.complete ? orbit.length - 1 : -1;
+        const loopTo = orbit.loopTo;
         let idx = 0;
         for (let j = 0; j < height; j += 1) {
             const dcy = extents.my + ((firstRow + (j * rowStride)) * extents.stepY);
@@ -153,10 +158,15 @@ export function createPerturbationIterator(width, height, startExtents, orbit, {
                         m += 1;
                         const nextZx = Z[2 * m] + dx;
                         const nextZy = Z[(2 * m) + 1] + dy;
-                        if ((nextZx * nextZx) + (nextZy * nextZy) < (dx * dx) + (dy * dy) || m === end) {
-                            dx = nextZx;
-                            dy = nextZy;
-                            m = 0;
+                        const closer = (nextZx * nextZx) + (nextZy * nextZy) < (dx * dx) + (dy * dy);
+                        if (closer || m === end) {
+                            if (!closer && loopTo >= 0) {
+                                m = loopTo;
+                            } else {
+                                dx = nextZx;
+                                dy = nextZy;
+                                m = 0;
+                            }
                         }
                     }
                     if (histogramEscapedAt === 0 && zSquared > histogramEscapeValue) {
@@ -204,6 +214,7 @@ export function createPerturbationIterator(width, height, startExtents, orbit, {
         // Rebase on reaching the last value only if the orbit is complete: otherwise it is still being
         // worked out, and there is always more of it than is asked for.
         const end = orbit.complete ? orbit.length - 1 : -1;
+        const loopTo = orbit.loopTo;
         const shortestRun = 2 ** minLevel;
         // No run can be taken with d at least this, squared: a quick test first.
         let mostR = 0;
@@ -261,7 +272,9 @@ export function createPerturbationIterator(width, height, startExtents, orbit, {
                             m += shortestRun << level;
                             n += shortestRun << level;
                             skipped += shortestRun << level;
-                            if (m === end) {
+                            if (m === end && loopTo >= 0) {
+                                m = loopTo;
+                            } else if (m === end) {
                                 dx += Z[2 * m];
                                 dy += Z[(2 * m) + 1];
                                 m = 0;
@@ -282,10 +295,15 @@ export function createPerturbationIterator(width, height, startExtents, orbit, {
                         m += 1;
                         const nextZx = Z[2 * m] + dx;
                         const nextZy = Z[(2 * m) + 1] + dy;
-                        if ((nextZx * nextZx) + (nextZy * nextZy) < (dx * dx) + (dy * dy) || m === end) {
-                            dx = nextZx;
-                            dy = nextZy;
-                            m = 0;
+                        const closer = (nextZx * nextZx) + (nextZy * nextZy) < (dx * dx) + (dy * dy);
+                        if (closer || m === end) {
+                            if (!closer && loopTo >= 0) {
+                                m = loopTo;
+                            } else {
+                                dx = nextZx;
+                                dy = nextZy;
+                                m = 0;
+                            }
                         }
                     }
                     if (histogramEscapedAt === 0 && zSquared > histogramEscapeValue) {

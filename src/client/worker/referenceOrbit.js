@@ -5,7 +5,13 @@ import { toNumber } from "../fixed.js";
 // c need from it (see perturbation, to come). next(count) works out up to count more and returns them as
 // a Float64Array of x, y pairs, ending early if the orbit escapes (|Z| > 2): the escaping value is the
 // last. escaped() says whether it has, and length() how many values there are so far.
-export function createOrbitCalculator(x, y, bits) {
+//
+// With findLoop, it also ends once a value comes round again exactly, fixed point and all, as it can for
+// a point in the set once its orbit has been drawn into its cycle (Brent's method, as in
+// pixelIterator.js): the last value is the same as the one at loopTo(), and so is all that follows, so
+// pixels can carry on from there (see perturbationIterator.js). Otherwise loopTo() is -1. (Values that
+// are only the same as doubles won't do: the difference, however small, is far bigger than d deep in.)
+export function createOrbitCalculator(x, y, bits, {findLoop = false} = {}) {
     const shift = BigInt(bits);
     const escapeRadiusSquared = 4n << (2n * shift);     // |Z|^2 > 4, with 2 * bits places
     let zx = 0n;
@@ -14,12 +20,18 @@ export function createOrbitCalculator(x, y, bits) {
     let yy = 0n;
     let length = 0;
     let escaped = false;
+    let loopTo = -1;
+    // The value kept to look for it coming round again, its index, and when it is next replaced.
+    let keptX = null;
+    let keptY = null;
+    let keptAt = 0;
+    let window = 1;
 
     return {
         next: function (count) {
             const values = new Float64Array(2 * count);
             let made = 0;
-            while (made < count && !escaped) {
+            while (made < count && !escaped && loopTo < 0) {
                 if (length > 0) {
                     const xy = zx * zy;
                     zx = ((xx - yy) >> shift) + x;
@@ -29,6 +41,16 @@ export function createOrbitCalculator(x, y, bits) {
                 values[(2 * made) + 1] = toNumber(zy, bits);
                 made += 1;
                 length += 1;
+                if (findLoop) {
+                    if (zx === keptX && zy === keptY) {
+                        loopTo = keptAt;
+                    } else if (length - 1 - keptAt >= window) {
+                        keptX = zx;
+                        keptY = zy;
+                        keptAt = length - 1;
+                        window *= 2;
+                    }
+                }
                 xx = zx * zx;
                 yy = zy * zy;
                 if (xx + yy > escapeRadiusSquared) {
@@ -38,6 +60,7 @@ export function createOrbitCalculator(x, y, bits) {
             return made === count ? values : values.slice(0, 2 * made);
         },
         escaped: () => escaped,
+        loopTo: () => loopTo,
         length: () => length
     };
 }
@@ -46,9 +69,10 @@ export function createOrbitCalculator(x, y, bits) {
 // length, generation} starts a new orbit for c = x + iy (with period for a nucleus, whose orbit is worked
 // out to Zperiod and no further); {length, generation} asks for the orbit to be worked out to at least
 // that length. The orbit is worked out a slice at a time, so new messages are read between slices, and
-// each slice goes back to postMessage as {referenceOrbit: {generation, from, values, escaped, complete}}
-// (values transferred), from being the index of its first value, and complete saying there's no more. Messages for an older generation than
-// the latest are ignored. Slices are about sliceMs long, and schedule(next) runs the next one after any
+// each slice goes back to postMessage as {referenceOrbit: {generation, from, values, escaped, complete,
+// loopTo}} (values transferred), from being the index of its first value, complete saying there's no
+// more, and loopTo where pixels carry on from at the end, for an orbit that has come round again (see
+// createOrbitCalculator), or -1. Messages for an older generation than the latest are ignored. Slices are about sliceMs long, and schedule(next) runs the next one after any
 // waiting messages (the render check passes its own, to be deterministic).
 export function createReferenceOrbitWorker(postMessage, {sliceMs = 20, schedule = (next) => setTimeout(next, 0)} = {}) {
     let calculator = null;
@@ -57,7 +81,7 @@ export function createReferenceOrbitWorker(postMessage, {sliceMs = 20, schedule 
     let end = Infinity;         // the length of a nucleus's orbit
     let working = false;
 
-    const complete = () => calculator.escaped() || calculator.length() >= end;
+    const complete = () => calculator.escaped() || calculator.loopTo() >= 0 || calculator.length() >= end;
 
     function work() {
         working = false;
@@ -77,7 +101,8 @@ export function createReferenceOrbitWorker(postMessage, {sliceMs = 20, schedule 
         const values = new Float64Array(made);
         let at = 0;
         slices.forEach((slice) => { values.set(slice, at); at += slice.length; });
-        postMessage({referenceOrbit: {generation, from, values, escaped: calculator.escaped(), complete: complete()}}, [values.buffer]);
+        postMessage({referenceOrbit: {generation, from, values, escaped: calculator.escaped(), complete: complete(),
+            loopTo: calculator.loopTo()}}, [values.buffer]);
         scheduleWork();
     }
 
@@ -95,7 +120,7 @@ export function createReferenceOrbitWorker(postMessage, {sliceMs = 20, schedule 
                 return;
             }
             if (msg.start) {
-                calculator = createOrbitCalculator(msg.start.x, msg.start.y, msg.start.bits);
+                calculator = createOrbitCalculator(msg.start.x, msg.start.y, msg.start.bits, {findLoop: !msg.start.period});
                 generation = msg.generation;
                 target = 0;
                 end = msg.start.period ? msg.start.period + 1 : Infinity;

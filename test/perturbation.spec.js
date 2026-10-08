@@ -22,17 +22,17 @@ function exactEscape(x, y, bits, maxIterations) {
 
 // A row of width pixels pixelSize apart, centred on (x, y), rendered by perturbation from the orbit of
 // the centre, to maxIterations in frames of step iterations.
-function perturbed(x, y, pixelSize, width, maxIterations, step) {
+function perturbed(x, y, pixelSize, width, maxIterations, step, findLoop = false) {
     const bits = bitsFor(pixelSize);
     const orbit = createOrbitStore();
-    const calculator = createOrbitCalculator(fromDecimal(x, bits), fromDecimal(y, bits), bits);
-    orbit.add(0, 0, calculator.next(maxIterations + 2), calculator.escaped());
+    const calculator = createOrbitCalculator(fromDecimal(x, bits), fromDecimal(y, bits), bits, {findLoop});
+    orbit.add(0, 0, calculator.next(maxIterations + 2), calculator.escaped() || calculator.loopTo() >= 0, calculator.loopTo());
     const extents = {mx: -((width - 1) / 2) * pixelSize, my: 0, stepX: pixelSize, stepY: pixelSize, firstRow: 0, rowStride: 1};
     const pixels = createPerturbationIterator(width, 1, extents, orbit);
     for (let start = 0; start < maxIterations; start += step) {
         pixels.iterate(start, Math.min(step, maxIterations - start), new Uint32Array(step));
     }
-    return {pixels, bits};
+    return {pixels, bits, orbit};
 }
 
 describe("perturbation", function () {
@@ -92,6 +92,24 @@ describe("perturbation", function () {
             const exact = exactEscape(cx + fromNumber((i - 10) * pixelSize, bits), cy, bits, maxIterations);
             expect(Math.abs(pixels.escapeValues[i] - exact)).withContext("pixel " + i).toBeLessThanOrEqual(1);
         }
+    });
+
+    it("should be right for pixels carrying on round a reference orbit that loops", function () {
+        // The centre is in the period 2 bulb, and soon in its cycle; the row reaches out of the bulb,
+        // where pixels escape, some slowly.
+        const x = "-1.2", y = "0.1";
+        const pixelSize = 0.0005, width = 201, maxIterations = 20000;
+        const {pixels, bits, orbit} = perturbed(x, y, pixelSize, width, maxIterations, 1000, true);
+        expect(orbit.loopTo).toBeGreaterThanOrEqual(0);
+        expect(orbit.length).toBeLessThan(5000);
+        const cx = fromDecimal(x, bits), cy = fromDecimal(y, bits);
+        let escaped = 0;
+        for (let i = 0; i < width; i += 1) {
+            const exact = exactEscape(cx + fromNumber((i - 100) * pixelSize, bits), cy, bits, maxIterations);
+            if (exact !== 0) escaped += 1;
+            expect(Math.abs(pixels.escapeValues[i] - exact)).withContext("pixel " + i).toBeLessThanOrEqual(1);
+        }
+        expect(escaped).toBeGreaterThan(10);
     });
 
     it("should carry on right from a new reference orbit, keeping the pixels that had escaped", function () {

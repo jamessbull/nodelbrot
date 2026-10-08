@@ -19,7 +19,7 @@ void main() {
 
 // Renders an export on the GPU, as renderExport (see exportRenderer.js) does on the CPU, by perturbation
 // in 32-bit floats as the GPU renderer does (see gpuRenderer.js). extents is the area relative to the
-// reference orbit's point, orbit the orbit {values, complete}, worked out to at least depth + 2 values
+// reference orbit's point, orbit the orbit {values, complete, loopTo}, worked out to at least depth + 2 values
 // (or complete). Where doubles are precise enough, point is where that is, {x, y}, and pixels in the
 // main cardioid or the period-2 bulb are marked as in the set before starting, rather than iterated to
 // depth (the GPU can't tell, as it doesn't know where pixels are precisely enough).
@@ -134,6 +134,7 @@ export function renderExportOnGpu({extents, width, height, depth, orbit, palette
         bind(3, orbitTexture, iterate, "orbit");
         bla.use(iterate, 4);
         gl.uniform1i(iterate.uniforms.orbitEnd, orbit.complete ? orbitLength - 1 : -1);
+        gl.uniform1i(iterate.uniforms.orbitLoop, orbit.loopTo === undefined ? -1 : orbit.loopTo);
         gl.uniform1f(iterate.uniforms.startIteration, startIteration);
         gl.uniform1i(iterate.uniforms.iterations, iterations);
         placePixels(gl, iterate, extents.topLeft().x + (tile.x * stepX), extents.topLeft().y + (tile.y * stepY), stepX, stepY, deep);

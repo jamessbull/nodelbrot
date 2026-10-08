@@ -12,14 +12,16 @@ import { fromNumber, rescale, toNumber } from "./fixed.js";
 // that distance of the centre (see nucleus.js) as the view starts, and if it finds one, the orbit starts
 // again from there: one that never escapes, and one period of which is all there is to work out.
 //
-// Fires referenceOrbitGrew {generation, from, values, length, escaped, complete, period} with each chunk
+// Fires referenceOrbitGrew {generation, from, values, length, escaped, complete, period, loopTo} with each chunk
 // of values that arrives, and referenceChanged {generation, offsetX, offsetY} when the orbit starts again
 // for another point (from rereference() or a nucleus).
 //
 // values() is the orbit so far, a Float64Array of x, y pairs: Z0 = 0, Z1 = c, ... up to and including
 // the value that escapes (|Z| > 2), if it has, or Zp (0, or as near as makes no odds) for a nucleus of
 // period p. Either way the orbit is complete(): pixels go back to its start on reaching its end, and
-// there is no more of it. offset() is where its point is, in pixels from the view's centre.
+// there is no more of it. It is complete too once a value comes round again (see createOrbitCalculator),
+// and then loopTo() is the index of the value the last is the same as, which pixels carry on from on
+// reaching the end; otherwise it is -1. offset() is where its point is, in pixels from the view's centre.
 export function createReferenceOrbit({events, newWorker, needed = needsPerturbation, initialLength = 4096, searchRadius = 0,
         longest = () => Infinity}) {
     let worker = null;
@@ -34,7 +36,8 @@ export function createReferenceOrbit({events, newWorker, needed = needsPerturbat
     let length = 0;
     let escaped = false;
     let period = 0;             // the period of the orbit's point, if it is a nucleus
-    let complete = false;       // whether the orbit has escaped, or has all of its period
+    let complete = false;       // whether the orbit has escaped, or has all of its period, or loops
+    let loopTo = -1;
     let requested = 0;          // the length the worker has been asked for
     let waiting = [];           // {length, resolve} for whenLength
 
@@ -53,12 +56,13 @@ export function createReferenceOrbit({events, newWorker, needed = needsPerturbat
         length = end / 2;
         escaped = chunk.escaped;
         complete = chunk.complete;
-        events.fire(events.referenceOrbitGrew, {generation, from: chunk.from, values: chunk.values, length, escaped, complete, period});
+        loopTo = chunk.loopTo;
+        events.fire(events.referenceOrbitGrew, {generation, from: chunk.from, values: chunk.values, length, escaped, complete, period, loopTo});
         settleWaiting();
     }
 
     function snapshot() {
-        return {generation, values: values.slice(0, 2 * length), escaped, complete, offset};
+        return {generation, values: values.slice(0, 2 * length), escaped, complete, loopTo, offset};
     }
 
     // Those waiting for a length they now have, or that the orbit is complete short of, get it.
@@ -94,6 +98,7 @@ export function createReferenceOrbit({events, newWorker, needed = needsPerturbat
         length = 0;
         escaped = false;
         complete = false;
+        loopTo = -1;
         period = newPoint.period || 0;
         point = newPoint;
         offset = newOffset;
@@ -146,6 +151,7 @@ export function createReferenceOrbit({events, newWorker, needed = needsPerturbat
             length = 0;
             escaped = false;
             complete = false;
+            loopTo = -1;
             period = 0;
             point = null;
         }
@@ -164,6 +170,7 @@ export function createReferenceOrbit({events, newWorker, needed = needsPerturbat
         length: () => length,
         escaped: () => escaped,
         complete: () => complete,
+        loopTo: () => loopTo,
         period: () => period,
         values: () => values.subarray(0, 2 * length),
         offset: () => offset,
@@ -175,7 +182,7 @@ export function createReferenceOrbit({events, newWorker, needed = needsPerturbat
             }
         },
         // A promise of the orbit worked out to at least length values (or until it escapes), as
-        // {generation, values, escaped, offset}, or null if the view changes first.
+        // {generation, values, escaped, complete, loopTo, offset}, or null if the view changes first.
         whenLength: function (wanted) {
             return new Promise(function (resolve) {
                 waiting.push({length: wanted, resolve});

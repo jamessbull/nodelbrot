@@ -36,6 +36,24 @@ describe("reference orbits", function () {
         expect(orbit.escaped()).toBe(false);
     });
 
+    it("should end, if asked, once a value comes round again", function () {
+        const bits = 64;
+        // In the period 2 bulb, where the orbit is soon drawn into its cycle.
+        const orbit = createOrbitCalculator(fromDecimal("-1.1", bits), fromDecimal("0.05", bits), bits, {findLoop: true});
+        const values = orbit.next(100000);
+        const length = values.length / 2;
+        expect(length).toBeLessThan(1000);
+        expect(orbit.escaped()).toBe(false);
+        const loopTo = orbit.loopTo();
+        expect(values[2 * loopTo]).toBe(values[2 * (length - 1)]);
+        expect(values[(2 * loopTo) + 1]).toBe(values[(2 * (length - 1)) + 1]);
+        // A whole number of periods.
+        expect((length - 1 - loopTo) % 2).toBe(0);
+        expect(orbit.next(10).length).toBe(0);
+        // Not unless asked.
+        expect(calculator("-1.1", "0.05", bits).loopTo()).toBe(-1);
+    });
+
     it("should tell apart points closer than doubles can", function () {
         const bits = 256;
         const x = fromDecimal("-0.743643887037158704752191506114774", bits);
@@ -76,7 +94,8 @@ describe("reference orbits", function () {
 
         it("should send the orbit in slices, as far as asked", async function () {
             const bits = 128;
-            const start = {x: fromDecimal("-0.1", bits), y: fromDecimal("0.1", bits), bits};
+            // The cusp, where the orbit creeps towards 1/2, never coming round again as doubles do in the set.
+            const start = {x: fromDecimal("0.25", bits), y: 0n, bits};
             const worker = startWorker();
             worker.send({generation: 1, start, length: 3000});
             const received = () => worker.replies.reduce((total, r) => total + (r.values.length / 2), 0);
@@ -115,7 +134,7 @@ describe("reference orbits", function () {
         it("should work the orbit out ahead of the depth reached", async function () {
             const events = createEvents();
             const orbit = createReferenceOrbit({events, newWorker: localWorker, needed: () => true, initialLength: 1000});
-            events.fire(events.viewChanged, viewAt("-0.1", "0.1", 1e-20));
+            events.fire(events.viewChanged, viewAt("0.25", "0", 1e-20));
             for (let i = 0; i < 200 && orbit.length() < 1000; i += 1) await pause(5);
             expect(orbit.length()).toBe(1000);
             events.fire(events.depthReached, 1500);
@@ -127,7 +146,7 @@ describe("reference orbits", function () {
         it("should work more out when asked", async function () {
             const events = createEvents();
             const orbit = createReferenceOrbit({events, newWorker: localWorker, needed: () => true, initialLength: 1000});
-            events.fire(events.viewChanged, viewAt("-0.1", "0.1", 1e-20));
+            events.fire(events.viewChanged, viewAt("0.25", "0", 1e-20));
             orbit.want(1500);
             for (let i = 0; i < 200 && orbit.length() < 2000; i += 1) await pause(5);
             expect(orbit.length()).toBe(2000);
@@ -140,7 +159,7 @@ describe("reference orbits", function () {
                 needed: (view) => view.pixelSize < 1e-14, initialLength: 100});
             events.fire(events.viewChanged, viewAt("-0.75", "0", 0.01));
             expect(orbit.active()).toBe(false);
-            const deep = viewAt("-0.1", "0.1", 1e-20);
+            const deep = viewAt("0.25", "0", 1e-20);
             events.fire(events.viewChanged, deep);
             for (let i = 0; i < 200 && orbit.length() < 100; i += 1) await pause(5);
             events.fire(events.viewChanged, deep);
@@ -153,7 +172,7 @@ describe("reference orbits", function () {
             const events = createEvents();
             let gpu = false;
             const orbit = createReferenceOrbit({events, newWorker: localWorker, needed: () => gpu, initialLength: 100});
-            const view = viewAt("-0.1", "0.1", 1e-6);
+            const view = viewAt("0.25", "0", 1e-6);
             events.fire(events.viewChanged, view);
             expect(orbit.active()).toBe(false);
             gpu = true;

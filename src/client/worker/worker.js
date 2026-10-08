@@ -15,7 +15,8 @@ export function createWorkerHandler(postMessage) {
         imageexportworker: createImageExportWorker(postMessage, exportOrbit),
         referenceorbit: createReferenceOrbitWorker(postMessage),
         nucleus: createNucleusWorker(postMessage),
-        exportorbit: {onmessage: (e) => exportOrbit.add(e.data.orbit.generation, 0, e.data.orbit.values, e.data.orbit.complete)}
+        exportorbit: {onmessage: (e) => exportOrbit.add(e.data.orbit.generation, 0, e.data.orbit.values, e.data.orbit.complete,
+            e.data.orbit.loopTo)}
     };
     return function (e) {
         const handler = handlers[e.data.workerMessageType];

@@ -257,12 +257,12 @@ export function createInteractiveRenderer({width, height, events, workers, newWo
     });
 
     // Each worker keeps its own copy of the reference orbit.
-    function sendOrbit(generation, from, values, complete) {
-        pool.sendToEach(() => ({workerMessageType: "uiworker", orbit: {generation, from, values, complete}}));
+    function sendOrbit(generation, from, values, complete, loopTo) {
+        pool.sendToEach(() => ({workerMessageType: "uiworker", orbit: {generation, from, values, complete, loopTo}}));
     }
 
     on(events.referenceOrbitGrew, function (chunk) {
-        sendOrbit(chunk.generation, chunk.from, chunk.values, chunk.complete);
+        sendOrbit(chunk.generation, chunk.from, chunk.values, chunk.complete, chunk.loopTo);
         if (waitingForOrbit && orbitRoom() >= 1) {
             waitingForOrbit = false;
             if (running || frameWanted) {
@@ -273,7 +273,7 @@ export function createInteractiveRenderer({width, height, events, workers, newWo
 
     // A display made again (at a new size) carries on with the orbit there is.
     if (referenceOrbit && referenceOrbit.active() && referenceOrbit.length() > 0) {
-        sendOrbit(referenceOrbit.generation(), 0, referenceOrbit.values().slice(), referenceOrbit.complete());
+        sendOrbit(referenceOrbit.generation(), 0, referenceOrbit.values().slice(), referenceOrbit.complete(), referenceOrbit.loopTo());
     }
 
     on(events.histogramChanged, function (info) {

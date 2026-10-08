@@ -10,7 +10,7 @@ import { colourPixels, lookupTableSize } from "../worker/pixelIterator.js";
 // as each strip is done, then onComplete with the image's RGBA data, or onError with a message if a
 // worker fails.
 //
-// For a view too deep for doubles, orbit is the reference orbit {generation, values, complete}, worked out
+// For a view too deep for doubles, orbit is the reference orbit {generation, values, complete, loopTo}, worked out
 // to at least depth + 2 values (or until it is complete), and extents is the area relative to its point:
 // pixels are iterated by perturbation (see perturbationIterator.js).
 export function renderExport({extents, width, height, depth, palette, newWorker, workers = workerCount(), orbit = null,
