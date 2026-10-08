@@ -3,7 +3,8 @@
 const names = {
     // The view (the rectangle of the complex plane shown) has changed, to the rectangle given.
     viewChanged: "",
-    // Rendering: start (carry on), stop, and restart after a zoom, move or new view.
+    // Rendering: start (carry on; {byUser: true} from the Go button), stop, and restart after a zoom,
+    // move or new view.
     start: "",
     stop: "",
     restart: "",

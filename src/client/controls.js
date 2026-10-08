@@ -38,7 +38,8 @@ export function createControls({exportSizes, state, events, newWorker, reference
     on(events.start, () => showRunning(true));
     on(events.restart, () => showRunning(true));
     on(events.stop, () => showRunning(false));
-    startButton.onclick = () => events.fire(events.start);
+    // From Go, rendering doesn't stop on its own (see autoStop.js).
+    startButton.onclick = () => events.fire(events.start, {byUser: true});
     stopButton.onclick = () => events.fire(events.stop);
 
     // Examining pixels stops rendering, so the pixels stay put, and shows the examine panel over the
