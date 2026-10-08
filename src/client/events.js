@@ -25,7 +25,9 @@ const names = {
     referenceChanged: "",
     // A frame's escape counts from the workers: {update, currentIteration}.
     escapesFromWorkers: "",
-    // The escape histogram has taken those in: {array, filledLength, total, currentIteration}.
+    // The escape histogram has taken those in: {array, filledLength, depth, total,
+    // currentIteration}, array being by bins past exactBins (see histogramBins.js), filledLength the entries
+    // written, and depth the iterations they cover.
     histogramChanged: "",
     // How many pixels have escaped in all, so far.
     escapedTotal: "",

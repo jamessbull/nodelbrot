@@ -6,7 +6,7 @@ import { fromNumber, rescale, toNumber } from "./fixed.js";
 // where the renderer iterates pixels as small differences from it. The point is the centre of the view
 // until rereference() moves it. It starts again when the view moves, and is worked out ahead of
 // rendering: initialLength values to begin with, then twice the depth reached, but no more than
-// longest(view) unless asked for (the GPU renderer can't use more than gpuMaxDepth).
+// longest(view) unless asked for (the GPU renderer can't use more than gpuLongestOrbit).
 //
 // With searchRadius (in pixels), a second worker looks for the nucleus of a mini Mandelbrot set within
 // that distance of the centre (see nucleus.js) as the view starts, and if it finds one, the orbit starts

@@ -1,4 +1,5 @@
 import { inMainCardioidOrBulb } from "../mandelbrotPoint.js";
+import { binPosition } from "../histogramBins.js";
 
 // Number of entries in the palette lookup table used for colouring. With 16384 entries a colour is
 // at most one shade out on palettes whose colours are at least about 1% apart.
@@ -16,6 +17,7 @@ const black = new Uint32Array(new Uint8ClampedArray([0, 0, 0, 255]).buffer)[0];
 // filled part of a histogram of histogramLength entries. colours is a palette lookup table from
 // palette.toLookupTable; the nearest entry is used.
 export function colourPixels(imageData, smoothIterations, imageEscapeValues, histogramData, histogramLength, histogramTotal, colours) {
+    // (Entries are by bins of iterations past exactBins: see histogramBins.js.)
     function percentEscapedBy(iteration) {
         const no = histogramData[iteration];
         if (no === undefined) {
@@ -32,7 +34,7 @@ export function colourPixels(imageData, smoothIterations, imageEscapeValues, his
         if (imageEscapeValues[idx] === 0) {
             pixels[idx] = black;
         } else {
-            const iteration = smoothIterations[idx];
+            const iteration = binPosition(smoothIterations[idx]);
             const iterationFloor = Math.floor(iteration);
             const lower = percentEscapedBy(iterationFloor);
             const higher = percentEscapedBy(iterationFloor + 1);

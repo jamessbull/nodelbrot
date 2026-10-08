@@ -31,8 +31,11 @@ export function run(route, {link, width, height, depth, displayWidth = 1898}) {
         const referenceOrbit = api.createReferenceOrbit({events, newWorker, needed: () => true, searchRadius: route === "centre" ? 0 : 1000});
         const px = w / displayWidth;
         events.fire(events.viewChanged, api.viewAt(view.x, view.y, px));
+        // The orbit, waited for again if a nucleus turns up while waiting (which starts it again), and no
+        // longer than the GPU has (see gpuLongestOrbit), as the exporter does.
+        const orbitFor = () => referenceOrbit.whenLength(Math.min(depth + 2, api.gpuLongestOrbit)).then((orbit) => orbit || orbitFor());
         // Time for the nucleus search, as the explorer would have had.
-        setTimeout(() => referenceOrbit.whenLength(depth + 2).then(function (orbit) {
+        setTimeout(() => orbitFor().then(function (orbit) {
             const about = {orbit: (orbit.complete ? "complete, " : "") + (orbit.values.length / 2) + " values"};
             const extents = api.rectangle(-w / 2 - orbit.offset.x * px, -h / 2 - orbit.offset.y * px, w, h);
             const finish = (image) => {
@@ -42,10 +45,10 @@ export function run(route, {link, width, height, depth, displayWidth = 1898}) {
             started = performance.now();
             if (route.startsWith("gpu")) {
                 const point = route === "gpu" ? {x: cx + orbit.offset.x * px, y: cy + orbit.offset.y * px} : null;
-                api.renderExportOnGpu({extents, orbit: {values: orbit.values, complete: orbit.complete}, point, palette, depth, width, height,
+                api.renderExportOnGpu({extents, orbit: {values: orbit.values, complete: orbit.complete, loopTo: orbit.loopTo}, point, palette, depth, width, height,
                     onComplete: finish, onError: reject});
             } else {
-                api.renderExport({extents, orbit: {generation: orbit.generation, values: orbit.values, complete: orbit.complete},
+                api.renderExport({extents, orbit: {generation: orbit.generation, values: orbit.values, complete: orbit.complete, loopTo: orbit.loopTo},
                     width, height, depth, palette, newWorker, onComplete: finish, onError: reject});
             }
         }), 1500);

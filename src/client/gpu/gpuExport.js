@@ -1,6 +1,7 @@
 import { createFloatContext, createFramebuffer, createProgram, createTexture, fullScreenVertexShader } from "./gl.js";
-import { arrayTextureWidth, deepGpuPixel, iterateShader, placePixels } from "./shaders.js";
+import { arrayTextureWidth, deepGpuPixel, inSet, iterateShader, placePixels } from "./shaders.js";
 import { colourPixels, lookupTableSize } from "../worker/pixelIterator.js";
+import { binOf, binsFor } from "../histogramBins.js";
 import { inMainCardioidOrBulb } from "../mandelbrotPoint.js";
 import { createGpuBla } from "./gpuBla.js";
 
@@ -8,10 +9,11 @@ import { createGpuBla } from "./gpuBla.js";
 // occlusion query to count, only for those still going.
 const stillGoingShader = `#version 300 es
 precision highp float;
-uniform highp sampler2D state1;
+precision highp int;
+uniform highp usampler2D state1;
 out vec4 colour;
 void main() {
-    if (texelFetch(state1, ivec2(gl_FragCoord.xy), 0).x != 0.0) {
+    if (texelFetch(state1, ivec2(gl_FragCoord.xy), 0).w != 0u) {
         discard;
     }
     colour = vec4(1.0);
@@ -62,7 +64,8 @@ export function renderExportOnGpu({extents, width, height, depth, orbit, palette
     const stillGoing = createProgram(gl, fullScreenVertexShader, stillGoingShader);
     gl.bindVertexArray(gl.createVertexArray());
     const floatTexture = () => createTexture(gl, gl.RGBA32F, tileW, tileH, gl.RGBA, gl.FLOAT);
-    const states = [[floatTexture(), floatTexture(), floatTexture()], [floatTexture(), floatTexture(), floatTexture()]];
+    const uintTexture = () => createTexture(gl, gl.RGBA32UI, tileW, tileH, gl.RGBA_INTEGER, gl.UNSIGNED_INT);
+    const states = [[floatTexture(), uintTexture(), uintTexture()], [floatTexture(), uintTexture(), uintTexture()]];
     const stateFramebuffers = states.map((set) => createFramebuffer(gl, set));
     const countFramebuffer = createFramebuffer(gl, [createTexture(gl, gl.R8, tileW, tileH, gl.RED, gl.UNSIGNED_BYTE)]);
     const gpuTimer = gl.getExtension("EXT_disjoint_timer_query_webgl2");
@@ -83,7 +86,8 @@ export function renderExportOnGpu({extents, width, height, depth, orbit, palette
     const sides = [extents.topLeft().y, extents.topLeft().y + extents.height()].map(Math.abs);
     bla.update(0, orbit.values, orbitLength, Math.hypot(Math.max(...corners), Math.max(...sides)), orbit.complete, {now: true});
 
-    const counts = new Uint32Array(depth + 2);
+    // Escapes by iteration (or bin of them: see histogramBins.js).
+    const counts = new Uint32Array(binsFor(depth) + 1);
     const smooth = new Float32Array(width * height);
     let escaped = 0;
     const tiles = [];
@@ -100,24 +104,24 @@ export function renderExportOnGpu({extents, width, height, depth, orbit, palette
     }
 
     // The tile's pixels to start from: none moved, and those in the main cardioid or bulb marked as in
-    // the set (imageEscapedAt -1).
+    // the set (imageEscapedAt inSet).
     function startTile(tile) {
-        const start = new Float32Array(tileW * tileH * 4);
+        const start = new Uint32Array(tileW * tileH * 4);
         if (point) {
             for (let j = 0; j < tile.h; j += 1) {
                 const cy = point.y + extents.topLeft().y + ((tile.y + j) * stepY);
                 for (let i = 0; i < tile.w; i += 1) {
                     if (inMainCardioidOrBulb(point.x + extents.topLeft().x + ((tile.x + i) * stepX), cy)) {
-                        start[4 * ((j * tileW) + i)] = -1;
+                        start[(4 * ((j * tileW) + i)) + 3] = inSet;
                     }
                 }
             }
         }
         gl.bindFramebuffer(gl.FRAMEBUFFER, stateFramebuffers[0]);
-        gl.clearColor(0, 0, 0, 0);
-        gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.clearBufferfv(gl.COLOR, 0, [0, 0, 0, 0]);
+        gl.clearBufferuiv(gl.COLOR, 2, [0, 0, 0, 0]);
         gl.bindTexture(gl.TEXTURE_2D, states[0][1]);
-        gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, tileW, tileH, gl.RGBA, gl.FLOAT, start);
+        gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, tileW, tileH, gl.RGBA_INTEGER, gl.UNSIGNED_INT, start);
         return 0;
     }
 
@@ -135,7 +139,7 @@ export function renderExportOnGpu({extents, width, height, depth, orbit, palette
         bla.use(iterate, 4);
         gl.uniform1i(iterate.uniforms.orbitEnd, orbit.complete ? orbitLength - 1 : -1);
         gl.uniform1i(iterate.uniforms.orbitLoop, orbit.loopTo === undefined ? -1 : orbit.loopTo);
-        gl.uniform1f(iterate.uniforms.startIteration, startIteration);
+        gl.uniform1ui(iterate.uniforms.startIteration, startIteration);
         gl.uniform1i(iterate.uniforms.iterations, iterations);
         placePixels(gl, iterate, extents.topLeft().x + (tile.x * stepX), extents.topLeft().y + (tile.y * stepY), stepX, stepY, deep);
         gl.bindFramebuffer(gl.FRAMEBUFFER, stateFramebuffers[1 - current]);
@@ -185,27 +189,28 @@ export function renderExportOnGpu({extents, width, height, depth, orbit, palette
 
     // The tile's escapes go in the histogram, and its smoothed escape iterations in smooth.
     function finishTile(tile, current) {
-        const state = new Float32Array(tileW * tileH * 4);
-        gl.bindFramebuffer(gl.FRAMEBUFFER, stateFramebuffers[current]);
-        gl.readBuffer(gl.COLOR_ATTACHMENT0);
-        gl.readPixels(0, 0, tileW, tileH, gl.RGBA, gl.FLOAT, state);
-        for (let j = 0; j < tile.h; j += 1) {
-            for (let i = 0; i < tile.w; i += 1) {
-                const at = state[(4 * ((j * tileW) + i)) + 3];
-                if (at > 0 && at <= depth) {
-                    counts[at] += 1;
-                    escaped += 1;
-                }
-            }
-        }
-        gl.readBuffer(gl.COLOR_ATTACHMENT1);
-        gl.readPixels(0, 0, tileW, tileH, gl.RGBA, gl.FLOAT, state);
-        gl.readBuffer(gl.COLOR_ATTACHMENT0);
+        const read = function (attachment) {
+            const state = new Uint32Array(tileW * tileH * 4);
+            gl.bindFramebuffer(gl.FRAMEBUFFER, stateFramebuffers[current]);
+            gl.readBuffer(attachment);
+            gl.readPixels(0, 0, tileW, tileH, gl.RGBA_INTEGER, gl.UNSIGNED_INT, state);
+            gl.readBuffer(gl.COLOR_ATTACHMENT0);
+            return state;
+        };
+        const state1 = read(gl.COLOR_ATTACHMENT1);
+        // The float to add to each escaped pixel's iteration, for its smoothed one.
+        const smoothing = new Float32Array(read(gl.COLOR_ATTACHMENT2).buffer);
         for (let j = 0; j < tile.h; j += 1) {
             for (let i = 0; i < tile.w; i += 1) {
                 const s = 4 * ((j * tileW) + i);
+                const at = state1[s + 2];
+                if (at > 0 && at <= depth) {
+                    counts[binOf(at)] += 1;
+                    escaped += 1;
+                }
                 // Escaped, by the depth: its smoothed iteration (more than 0); otherwise 0, black.
-                smooth[((tile.y + j) * width) + tile.x + i] = state[s] > 0 && state[s] <= depth ? state[s + 1] : 0;
+                const imageAt = state1[s + 3];
+                smooth[((tile.y + j) * width) + tile.x + i] = imageAt > 0 && imageAt !== inSet && imageAt <= depth ? imageAt + smoothing[s] : 0;
             }
         }
     }

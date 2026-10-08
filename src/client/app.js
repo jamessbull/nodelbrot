@@ -18,7 +18,7 @@ import { needsPerturbation } from "./precision.js";
 import { gpuAvailable } from "./gpu/gl.js";
 import { createRendererChoice } from "./rendererChoice.js";
 import { createDepthGauge } from "./depthGauge.js";
-import { gpuMaxDepth } from "./gpu/gpuRenderer.js";
+import { gpuLongestOrbit } from "./gpu/gpuRenderer.js";
 import { createPaletteEditor } from "./paletteEditor.js";
 import { createExportSizes } from "./export/exportSizes.js";
 import { createControls } from "./controls.js";
@@ -105,7 +105,7 @@ export function startApp(newWorker) {
     // The GPU renders every view by perturbation, so needs a reference orbit for every view.
     // It looks for a nucleus about as far from the centre as the corners of a big display.
     const referenceOrbit = createReferenceOrbit({events, newWorker, needed: (view) => rendererFor(view) === "gpu" || needsPerturbation(view),
-        searchRadius: 1000, longest: (view) => (rendererFor(view) === "gpu" ? gpuMaxDepth + 2 : Infinity)});
+        searchRadius: 1000, longest: (view) => (rendererFor(view) === "gpu" ? gpuLongestOrbit : Infinity)});
     const bookmarks = createBookmarks({bookmarkButton: element("bookmarkButton"), state, events, notice});
     const exportSizes = createExportSizes(element("exportSizeSelect"),
         ["smallExport", "mediumExport", "largeExport", "veryLargeExport"].map(element), size.width, size.height);

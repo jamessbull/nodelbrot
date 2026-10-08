@@ -4,16 +4,14 @@ import { deselectButton, hide, selectButton, show } from "../dom.js";
 import { rectangle } from "../geometry.js";
 import { needsPerturbation } from "../precision.js";
 import { renderExportOnGpu } from "../gpu/gpuExport.js";
-import { gpuMaxDepth } from "../gpu/gpuRenderer.js";
+import { gpuLongestOrbit, gpuMaxDepth } from "../gpu/gpuRenderer.js";
 
 // The deepest export allowed on the CPU. Every export worker holds an array with an entry per
 // iteration, and its own copy of the reference orbit, so this keeps memory to around 40MB per worker.
 export const maxDepth = 2000000;
-// And on the GPU, which counts iterations in 32-bit floats: exactly to gpuMaxDepth, and to within an
-// iteration or two to twice that, which is as far as it is let go. Past gpuMaxDepth, it needs a complete
-// reference orbit (a nucleus's period, say) shorter than that, as it keeps where pixels are in the
-// orbit in 32-bit floats too.
-export const maxGpuDepth = (2 * gpuMaxDepth) - 1;
+// And on the GPU, as deep as it renders. Past gpuLongestOrbit, it needs a complete reference orbit (a
+// nucleus's period, say) shorter than that.
+export const maxGpuDepth = gpuMaxDepth;
 
 // Reads the export depth the user typed: a whole number of iterations from 1 to max, with commas or
 // spaces allowed between digits. Returns {depth} or {error} explaining what is wrong.
@@ -79,8 +77,8 @@ export function createExporter({exportSizes, state, events, newWorker, reference
     });
     events.listenTo(events.histogramChanged, function (info) {
         if (info.total > escapedSoFar && !depthTyped) {
-            // Pixels escaped in the iterations up to filledLength.
-            exportDepth.value = suggestedDepth(info.filledLength, deepest());
+            // Pixels escaped in the iterations up to depth.
+            exportDepth.value = suggestedDepth(info.depth, deepest());
         }
         escapedSoFar = info.total;
     });
@@ -169,15 +167,15 @@ export function createExporter({exportSizes, state, events, newWorker, reference
         }
         // The area relative to the reference orbit's point, once the orbit is long enough.
         exportMessage.textContent = "Working out the reference orbit…";
-        // (No more of it than the GPU can find its way along: see maxGpuDepth.)
-        referenceOrbit.whenLength(Math.min(depth.depth, gpuMaxDepth - 2) + 2).then(function (orbit) {
+        // (No more of it than the GPU can have: see gpuLongestOrbit.)
+        referenceOrbit.whenLength(Math.min(depth.depth + 2, gpuLongestOrbit)).then(function (orbit) {
             if (!orbit) {
                 fail("the view changed before it could start. Try again.");
                 return;
             }
             exportMessage.textContent = "";
-            if (depth.depth >= gpuMaxDepth - 2 && !orbit.complete) {
-                fail("this view's reference orbit is too long for an export past " + (gpuMaxDepth - 3).toLocaleString("en-GB") + " iterations.");
+            if (depth.depth + 2 > gpuLongestOrbit && !orbit.complete) {
+                fail("this view's reference orbit is too long for an export past " + (gpuLongestOrbit - 2).toLocaleString("en-GB") + " iterations.");
                 return;
             }
             const extents = rectangle(-(area.width() / 2) - (orbit.offset.x * pixelSize), -(area.height() / 2) - (orbit.offset.y * pixelSize),

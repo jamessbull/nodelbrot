@@ -1,6 +1,7 @@
 import { createWorkerPool, workerCount } from "../workerPool.js";
 import { renderFragments, exportMessage } from "../workerMessages.js";
 import { colourPixels, lookupTableSize } from "../worker/pixelIterator.js";
+import { binOf, binsFor } from "../histogramBins.js";
 
 // Renders extents (a rectangle in the complex plane) as a width x height image, iterating to depth and
 // coloured with palette, without touching the page. Workers made by newWorker() iterate the image in
@@ -41,12 +42,13 @@ export function renderExport({extents, width, height, depth, palette, newWorker,
         onProgress("image", width * height / parts);
     }, function () {
         pool.terminate();
-        // Cumulative counts, as colourPixels wants them: how many pixels had escaped by each iteration.
-        const counts = new Uint32Array(depth + 2);
+        // Cumulative counts, as colourPixels wants them: how many pixels had escaped by each iteration
+        // (or bin of them: see histogramBins.js).
+        const counts = new Uint32Array(binsFor(depth) + 1);
         let total = 0;
         for (let idx = 0; idx < escapes.length; idx += 1) {
             if (escapes[idx] !== 0 && escapes[idx] <= depth) {
-                counts[escapes[idx]] += 1;
+                counts[binOf(escapes[idx])] += 1;
                 total += 1;
             }
         }

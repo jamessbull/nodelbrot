@@ -1,21 +1,29 @@
 import { minLevel as blaMinLevel } from "../worker/bla.js";
+import { binWidth, exactBins } from "../histogramBins.js";
 
-// The GPU renderer's shaders. Each pixel's state is in three RGBA float textures, read from one set
-// and written to the other (ping-pong):
+// The GPU renderer's shaders. Each pixel's state is in three RGBA textures, one of 32-bit floats and two
+// of 32-bit unsigned integers, so iteration counts are exact however deep (floats are only exact to
+// 2^24), read from one set and written to the other (ping-pong):
 //
-//     state0: d.x, d.y, m, escapedAt   d is the pixel's difference from the reference orbit, m where in
-//                                      the orbit it is, escapedAt the iteration |z|^2 passed 16 (or 0)
-//     state1: imageEscapedAt, smooth,  when it passed the image escape value (or 0, or -1 if it is known
-//             sinceKept, power         to be in the set), its smoothed escape iteration for colouring,
-//                                      the iterations since state2 was kept, and deep in, the power of
-//                                      two d's mantissa (in state0) is to be multiplied by
-//     state2: d.x, d.y, m, window      a state kept from the pixel's orbit, to find cycles by, replaced
-//                                      after window iterations, which doubles each time (with d's power)
+//     state0 (float): d.x, d.y,         d is the pixel's difference from the reference orbit, and
+//                     refD.x, refD.y    refD that of a state kept from its orbit, to find cycles by
+//     state1 (uint):  m, refM,          where in the orbit each is, the iteration |z|^2 passed 16 (or
+//                     escapedAt,        0), and when it passed the image escape value (or 0, or inSet if
+//                     imageEscapedAt    it is known to be in the set)
+//     state2 (uint):  sinceRef,         the iterations since the state was kept, log2 of the window after
+//                     log2Window,       which it is replaced (which doubles each time), and deep in, the
+//                     power, refPower   powers of two d's and refD's mantissas are to be multiplied by
+//                                       (as ints, bit for bit). Once the pixel has escaped, x instead
+//                                       holds the bits of the float to add to imageEscapedAt for its
+//                                       smoothed escape iteration, for colouring.
 //
 // Pixel (i, j), with j counted down from the top, is texel (i, j). Long arrays (the reference orbit, the
 // histogram) are 2D textures `width` texels wide, as 1D ones can't be long enough.
 
 export const arrayTextureWidth = 2048;
+
+// The imageEscapedAt of pixels known to be in the set.
+export const inSet = 0xFFFFFFFF;
 
 // The most levels of runs the bivariate linear approximation table can have on the GPU (see gpuBla.js),
 // and the shortest run, 2^blaMinLevel (see bla.js).
@@ -50,26 +58,29 @@ ivec2 arrayTexel(int i) {
 // rebase on reaching it, otherwise -1; if the orbit loops, orbitLoop is where they carry on from there
 // instead, with d as it is, otherwise -1. Pixel (i, j) is (dcTopLeft + (i, j) pixelStep) 2^dcPower from the
 // orbit's point. Pixels whose imageEscapedAt is set are left as they are: those that have escaped, and
-// those known to be in the set, which have -1.
+// those known to be in the set, which have inSet.
+//
+// Each pixel's state is in three textures (see stateLayout), so that iteration counts and indexes into the
+// orbit are exact however deep, as they wouldn't be in 32-bit floats past 2^24.
 //
 // As on the CPU, a pixel whose state (m and d) comes round to exactly what it was is in a cycle, so in
 // the set, and gets -1; and while d is small enough, runs of iterations are taken in one step, from a
 // bivariate linear approximation table (see bla.js and gpuBla.js), if blaLevels is more than 0.
 //
 // Deep in (pixels smaller than deepGpuPixel), d is smaller than 32-bit floats go, so the deep shader keeps
-// it as a mantissa and a power of two (state1.w), which every step works with, adding the terms at
+// it as a mantissa and a power of two (state2.z), which every step works with, adding the terms at
 // whichever power is biggest (terms too small to show there drop out, as they would anyway).
 export function iterateShader(deep) {
     return `#version 300 es
 precision highp float;
 precision highp int;
 uniform highp sampler2D state0;
-uniform highp sampler2D state1;
-uniform highp sampler2D state2;
+uniform highp usampler2D state1;
+uniform highp usampler2D state2;
 uniform highp sampler2D orbit;
 uniform int orbitEnd;
 uniform int orbitLoop;
-uniform float startIteration;
+uniform uint startIteration;
 uniform int iterations;
 uniform vec2 dcTopLeft;
 uniform vec2 pixelStep;
@@ -81,9 +92,10 @@ uniform int blaStart[${maxBlaLevels}];
 uniform int blaCount[${maxBlaLevels}];
 uniform float blaMostLog2R;
 layout(location = 0) out vec4 next0;
-layout(location = 1) out vec4 next1;
-layout(location = 2) out vec4 next2;
+layout(location = 1) out uvec4 next1;
+layout(location = 2) out uvec4 next2;
 ${fetchArray}
+const uint inSet = ${inSet}u;
 const bool deep = ${deep ? "true" : "false"};
 const float histogramEscapeValue = 16.0;
 const float imageEscapeValue = 9007199254740991.0;
@@ -123,27 +135,28 @@ void rebase(vec2 Zm, inout vec2 d, inout int power) {
 void main() {
     ivec2 pixel = ivec2(gl_FragCoord.xy);
     vec4 s0 = texelFetch(state0, pixel, 0);
-    vec4 s1 = texelFetch(state1, pixel, 0);
-    vec4 s2 = texelFetch(state2, pixel, 0);
+    uvec4 s1 = texelFetch(state1, pixel, 0);
+    uvec4 s2 = texelFetch(state2, pixel, 0);
     next0 = s0;
     next1 = s1;
     next2 = s2;
-    if (s1.x != 0.0) {
+    if (s1.w != 0u) {
         return;
     }
     vec2 dc = dcTopLeft + vec2(pixel) * pixelStep;
     vec2 d = s0.xy;
-    int power = deep ? int(s1.w) : 0;
-    int m = int(s0.z);
-    float escapedAt = s0.w;
-    // The state kept for finding cycles (state2: d, m, and its power and log2 of the window, as
-    // (power + 4096) 64 + log2 window), and the iterations since.
-    vec2 refD = s2.xy;
-    int refM = int(s2.z);
-    int refPower = int(floor(s2.w / 64.0)) - 4096;
-    float log2Window = mod(s2.w, 64.0);
-    float window = exp2(log2Window);
-    float sinceRef = s1.z;
+    int power = deep ? int(s2.z) : 0;
+    int m = int(s1.x);
+    uint escapedAt = s1.z;
+    uint imageEscapedAt = 0u;
+    float smoothing = 0.0;
+    // The state kept for finding cycles, the window, and the iterations since.
+    vec2 refD = s0.zw;
+    int refM = int(s1.y);
+    int refPower = int(s2.w);
+    uint log2Window = s2.y;
+    uint window = 1u << log2Window;
+    uint sinceRef = s2.x;
     bool done = false;
     int n = 0;
     while (n < iterations) {
@@ -229,36 +242,33 @@ void main() {
                 }
             }
         }
-        if (escapedAt == 0.0 && zSquared > histogramEscapeValue) {
-            escapedAt = startIteration + float(n);
+        if (escapedAt == 0u && zSquared > histogramEscapeValue) {
+            escapedAt = startIteration + uint(n);
         }
         if (zSquared > imageEscapeValue) {
-            float at = startIteration + float(n);
-            next1 = vec4(at, at + 1.0 - log2(log2(zSquared) / 2.0), 0.0, 0.0);
+            imageEscapedAt = startIteration + uint(n);
+            smoothing = 1.0 - log2(log2(zSquared) / 2.0);
             done = true;
             break;
         }
         if (m == refM && d == refD && power == refPower) {
-            next1 = vec4(-1.0, 0.0, 0.0, 0.0);
+            imageEscapedAt = inSet;
             done = true;
             break;
         }
-        sinceRef += 1.0;
-        if (sinceRef == window) {
-            sinceRef = 0.0;
-            window *= 2.0;
-            log2Window += 1.0;
+        sinceRef += 1u;
+        if (sinceRef == window && log2Window < 31u) {
+            sinceRef = 0u;
+            log2Window += 1u;
+            window = 1u << log2Window;
             refM = m;
             refD = d;
             refPower = power;
         }
     }
-    next0 = vec4(d, float(m), escapedAt);
-    if (!done) {
-        next1.z = sinceRef;
-        next1.w = float(power);
-    }
-    next2 = vec4(refD, float(refM), float(refPower + 4096) * 64.0 + log2Window);
+    next0 = vec4(d, refD);
+    next1 = uvec4(uint(m), uint(refM), escapedAt, imageEscapedAt);
+    next2 = uvec4(done ? floatBitsToUint(smoothing) : sinceRef, log2Window, uint(power), uint(refPower));
 }`;
 }
 
@@ -267,25 +277,26 @@ void main() {
 // escape value.
 export const restartSurvivorsShader = `#version 300 es
 precision highp float;
+precision highp int;
 uniform highp sampler2D state0;
-uniform highp sampler2D state1;
-uniform highp sampler2D state2;
+uniform highp usampler2D state1;
+uniform highp usampler2D state2;
 layout(location = 0) out vec4 next0;
-layout(location = 1) out vec4 next1;
-layout(location = 2) out vec4 next2;
+layout(location = 1) out uvec4 next1;
+layout(location = 2) out uvec4 next2;
 void main() {
     ivec2 pixel = ivec2(gl_FragCoord.xy);
     vec4 s0 = texelFetch(state0, pixel, 0);
-    vec4 s1 = texelFetch(state1, pixel, 0);
-    vec4 s2 = texelFetch(state2, pixel, 0);
-    if (s1.x != 0.0) {
+    uvec4 s1 = texelFetch(state1, pixel, 0);
+    uvec4 s2 = texelFetch(state2, pixel, 0);
+    if (s1.w != 0u) {
         next0 = s0;
         next1 = s1;
         next2 = s2;
     } else {
-        next0 = vec4(0.0, 0.0, 0.0, s0.w);
-        next1 = vec4(0.0);
-        next2 = vec4(0.0);
+        next0 = vec4(0.0);
+        next1 = uvec4(0u, 0u, s1.z, 0u);
+        next2 = uvec4(0u);
     }
 }`;
 
@@ -295,20 +306,20 @@ void main() {
 export const countEscapesVertexShader = `#version 300 es
 precision highp float;
 precision highp int;
-uniform highp sampler2D state0;
+uniform highp usampler2D state1;
 uniform int stateWidth;
-uniform float startIteration;
+uniform uint startIteration;
 uniform int iterations;
 uniform int rows;
 ${fetchArray}
 void main() {
     gl_PointSize = 1.0;
-    float at = texelFetch(state0, ivec2(gl_VertexID % stateWidth, gl_VertexID / stateWidth), 0).w;
-    int n = int(at - startIteration);
-    if (at == 0.0 || at < startIteration || n >= iterations) {
+    uint at = texelFetch(state1, ivec2(gl_VertexID % stateWidth, gl_VertexID / stateWidth), 0).z;
+    if (at == 0u || at < startIteration || at - startIteration >= uint(iterations)) {
         gl_Position = vec4(2.0, 2.0, 0.0, 1.0);
         return;
     }
+    int n = int(at - startIteration);
     vec2 texel = vec2(arrayTexel(n)) + 0.5;
     gl_Position = vec4(texel / vec2(arrayWidth, rows) * 2.0 - 1.0, 0.0, 1.0);
 }`;
@@ -320,13 +331,15 @@ void main() {
     count = vec4(1.0);
 }`;
 
-// Colours escaped pixels by where their smoothed escape iteration falls in the cumulative histogram,
-// against a palette lookup table, as pixelIterator.js's colourPixels does, and the rest black.
+// Colours escaped pixels by where their smoothed escape iteration falls in the cumulative histogram
+// (whose entries are by bins of iterations past exactBins: see histogramBins.js), against a palette
+// lookup table, as pixelIterator.js's colourPixels does, and the rest black.
 export const colourShader = `#version 300 es
 precision highp float;
 precision highp int;
-uniform highp sampler2D state1;
-uniform float depth;
+uniform highp usampler2D state1;
+uniform highp usampler2D state2;
+uniform uint depth;
 uniform highp sampler2D histogram;
 uniform float histogramFilled;
 uniform float histogramCapacity;
@@ -335,9 +348,12 @@ uniform highp sampler2D palette;
 uniform int paletteSize;
 out vec4 colour;
 ${fetchArray}
+const uint inSet = ${inSet}u;
+const uint exactBins = ${exactBins}u;
+const float binWidth = ${binWidth}.0;
 
-// The share of pixels escaped by an iteration: entries past those filled in are zero, and past the end
-// of the histogram everything has escaped.
+// The share of pixels escaped by an entry's iteration (or bin): entries past those filled in are zero,
+// and past the end of the histogram everything has escaped.
 float escapedBy(float iteration) {
     if (iteration >= histogramFilled) {
         return iteration < histogramCapacity ? 0.0 : 1.0;
@@ -347,12 +363,16 @@ float escapedBy(float iteration) {
 }
 
 void main() {
-    vec4 s1 = texelFetch(state1, ivec2(gl_FragCoord.xy), 0);
-    if (s1.x <= 0.0 || s1.x > depth) {
+    ivec2 pixel = ivec2(gl_FragCoord.xy);
+    uint at = texelFetch(state1, pixel, 0).w;
+    if (at == 0u || at == inSet || at > depth) {
         colour = vec4(0.0, 0.0, 0.0, 1.0);
         return;
     }
-    float iteration = s1.y;
+    // The smoothed iteration's place among the entries, worked out from the exact count.
+    float smoothing = uintBitsToFloat(texelFetch(state2, pixel, 0).x);
+    float iteration = at < exactBins ? float(at) + smoothing
+        : float(exactBins + ((at - exactBins) / uint(binWidth))) + (float((at - exactBins) % uint(binWidth)) + smoothing) / binWidth;
     float iterationFloor = floor(iteration);
     float lower = escapedBy(iterationFloor);
     float higher = escapedBy(iterationFloor + 1.0);

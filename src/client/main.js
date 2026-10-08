@@ -17,7 +17,7 @@ export { calculatePoint } from "./mandelbrotPoint.js";
 export { createReferenceOrbit } from "./referenceOrbit.js";
 export { createOrbitCalculator, createReferenceOrbitWorker } from "./worker/referenceOrbit.js";
 export { fromNumber } from "./fixed.js";
-export { createGpuRenderer } from "./gpu/gpuRenderer.js";
+export { createGpuRenderer, gpuLongestOrbit } from "./gpu/gpuRenderer.js";
 export { gpuAvailable } from "./gpu/gl.js";
 export { renderExportOnGpu } from "./gpu/gpuExport.js";
 export { workerCount } from "./workerPool.js";
