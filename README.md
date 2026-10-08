@@ -13,7 +13,8 @@ moves there: its orbit never escapes, and one period of it is all that's needed.
 pixels still going long after the reference escaped start again from one of them instead.
 
 Where the browser has WebGL2 with float render targets (and blending into them), the view is rendered on the GPU instead, by the
-same perturbation in 32-bit floats, down to pixels 1e-30 across; deeper views go back to the CPU.
+same perturbation in 32-bit floats, all the way down (past 1e-25, with each pixel's difference kept as
+a mantissa and a power of two, as 32-bit floats alone run out at about 1e-38).
 The menu at the end of the toolbar says which is drawing the view, and can have the CPU draw them all
 (remembered for next time; `?renderer=cpu` or `?renderer=gpu` in the address overrides it). If the
 browser takes the GPU away, the CPU takes over until the view next moves.

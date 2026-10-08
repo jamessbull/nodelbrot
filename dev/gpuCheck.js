@@ -4,7 +4,8 @@ import * as api from "/client/main.js";
 
 const width = 400;
 const height = 240;
-const depth = 20000;
+// Each view is rendered to its own depth, if it has one, or this.
+const defaultDepth = 20000;
 const views = [
     ["whole set", "-0.75", "0", 0.0125],
     // The centre escapes early but much of the view is in the set, so the GPU renderer re-references.
@@ -12,13 +13,19 @@ const views = [
     ["seahorse valley 1e-6", "-0.743643887037158704752191506114774", "0.131825904205311970493132056385139", 1e-6],
     ["seahorse valley 1e-12", "-0.743643887037158704752191506114774", "0.131825904205311970493132056385139", 1e-12],
     ["seahorse valley 1e-20", "-0.743643887037158704752191506114774", "0.131825904205311970493132056385139", 1e-20],
-    ["spiral 1e-28", "-0.74364388703715869775210999909999300008", "0.13182590420531197349300999970000399993", 1e-28]
+    ["spiral 1e-28", "-0.74364388703715869775210999909999300008", "0.13182590420531197349300999970000399993", 1e-28],
+    // Past where 32-bit floats alone go, so the GPU keeps d as a mantissa and a power of two.
+    ["deep 1e-63", "-0.743643887037158697752109999099993000080000600001999990000699993",
+        "0.131825904205311973493009999700003999930000000009000049999099999", 1e-63],
+    // A mini set (period 10977, about 1e-116 across) near that, filling a third of the view.
+    ["mini set 1e-118", "-0.74364388703715869775210999909999300008000060000199999000070004986080733096196684268419838117792533043792497045348437318297",
+        "0.13182590420531197349300999970000399993000000000900004999909956343437093500695219075989005196101094284924559474265775284914", 1.5e-118, 100000]
 ];
 
 const newWorker = () => new Worker("/client/main.js", { type: "module" });
 
 // Renders the view with one renderer until it reaches the depth, resolving with its escape counts.
-function render(kind, view) {
+function render(kind, view, depth) {
     return new Promise(function (resolve, reject) {
         const events = api.createEvents();
         const pixels = width * height;
@@ -98,10 +105,10 @@ window.results = [];
         document.getElementById("status").textContent = "This browser can't run the GPU renderer.";
         return;
     }
-    for (const [name, x, y, pixelSize] of views) {
+    for (const [name, x, y, pixelSize, depth = defaultDepth] of views) {
         const view = api.viewAt(x, y, pixelSize);
-        const gpu = await render("gpu", view);
-        const cpu = await render("cpu", view);
+        const gpu = await render("gpu", view, depth);
+        const cpu = await render("cpu", view, depth);
         const result = Object.assign({ name, pixelSize, gpuSeconds: gpu.seconds, cpuSeconds: cpu.seconds }, compare(gpu, cpu));
         window.results.push(result);
         const row = table.insertRow();
@@ -125,7 +132,7 @@ window.results = [];
 });
 
 // An export of the view at x, y, pixelSize (on the display) with each, resolving with {image, seconds}.
-function exportWith(kind, x, y, pixelSize) {
+function exportWith(kind, x, y, pixelSize, depth) {
     return new Promise(function (resolve, reject) {
         const view = api.viewAt(x, y, pixelSize);
         const area = view.area(width, height);
@@ -163,9 +170,9 @@ async function checkExports() {
     const exportTable = document.getElementById("exports");
     document.getElementById("exportStatus").textContent = "Running…";
     window.exportResults = [];
-    for (const [name, x, y, pixelSize] of views) {
-        const gpu = await exportWith("gpu", x, y, pixelSize);
-        const cpu = await exportWith("cpu", x, y, pixelSize);
+    for (const [name, x, y, pixelSize, depth = defaultDepth] of views) {
+        const gpu = await exportWith("gpu", x, y, pixelSize, depth);
+        const cpu = await exportWith("cpu", x, y, pixelSize, depth);
         let blackInOne = 0, alike = 0;
         for (let p = 0; p < gpu.image.length; p += 4) {
             const black = (image) => image[p] === 0 && image[p + 1] === 0 && image[p + 2] === 0;

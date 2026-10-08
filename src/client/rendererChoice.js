@@ -1,10 +1,8 @@
-import { gpuSmallestPixel } from "./gpu/gpuRenderer.js";
-
 const storageKey = "nodelbrot.renderer";
 
 // Which renderer draws each view: the GPU (see gpuRenderer.js) or the CPU (interactiveRenderer.js).
-// "auto", the default, has the GPU draw views it can (pixels down to gpuSmallestPixel across) where the
-// browser has one that works, and "cpu" has the CPU draw every view. The choice is made with select
+// "auto", the default, has the GPU draw every view where the browser has one that works, and "cpu" has
+// the CPU draw every view. The choice is made with select
 // (a <select> of those two), kept in storage (localStorage, which may be missing or refuse), and
 // ?renderer=cpu or ?renderer=gpu (or auto) in the address (requested) overrides it for the visit.
 //
@@ -51,7 +49,6 @@ export function createRendererChoice({select, gpuAvailable, requested = null, st
     function whyNotGpu(view) {
         if (!gpuWorks) return "this browser has no WebGL2 GPU rendering";
         if (heldOff) return "the GPU stopped working";
-        if (view.pixelSize < gpuSmallestPixel) return "this view is too deep for the GPU's 32-bit floats";
         return null;
     }
 

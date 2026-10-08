@@ -32,6 +32,7 @@ describe("reading the export depth", function () {
         expect(parseDepth(String(maxDepth))).toEqual({depth: maxDepth});
         // The GPU goes deeper, as far as it counts iterations exactly.
         expect(parseDepth("10000000", maxGpuDepth)).toEqual({depth: 10000000});
-        expect(parseDepth(String(maxGpuDepth + 1), maxGpuDepth).error).toContain("16,777,215");
+        expect(parseDepth("30000000", maxGpuDepth)).toEqual({depth: 30000000});
+        expect(parseDepth(String(maxGpuDepth + 1), maxGpuDepth).error).toContain("33,554,431");
     });
 });

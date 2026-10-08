@@ -6,18 +6,32 @@ import { arrayTextureWidth, maxBlaLevels } from "./shaders.js";
 // 32-bit floats (see bla.js).
 const gpuTolerance = 2 ** -24;
 
-// A bivariate linear approximation table (see bla.js) on the GPU, for the iterate shader: each run's A
-// and B as an RGBA float texture, and its R as an R float texture, with every level one after another in
-// both, from start[level], count[level] runs long. Runs whose numbers are too big for 32-bit floats get
-// no R, so are never taken. With no orbit to speak of, levels is 0, and no runs are taken.
+// A bivariate linear approximation table (see bla.js) on the GPU, for the iterate shader. Deep in, A
+// and B can be far bigger, and R far smaller, than 32-bit floats can hold, so each is kept as a mantissa
+// and a power of two: A and B's mantissas in an RGBA float texture, and log2 R and the powers of A and
+// B in another (as floats, which hold them exactly), with every level one after another in both, from
+// start[level], count[level] runs long. With no orbit to speak of, levels is 0, and no runs are taken.
 export function createGpuBla(gl) {
     let coefficients = createTexture(gl, gl.RGBA32F, 1, 1, gl.RGBA, gl.FLOAT);
-    let radii = createTexture(gl, gl.R32F, 1, 1, gl.RED, gl.FLOAT);
+    let scales = createTexture(gl, gl.RGBA32F, 1, 1, gl.RGBA, gl.FLOAT);
     let levels = 0;
     const start = new Int32Array(maxBlaLevels);
     const count = new Int32Array(maxBlaLevels);
-    let mostRSquared = 0;
+    let mostLog2R = -Infinity;
     let built = null;           // what the table was made for: {generation, length, dcMax}
+
+    // x, y as {x, y} mantissas and the power of two to multiply them by.
+    function split(x, y) {
+        const size = Math.max(Math.abs(x), Math.abs(y));
+        if (size === 0 || !Number.isFinite(size)) {
+            return {x: 0, y: 0, power: 0};
+        }
+        const power = Math.floor(Math.log2(size));
+        // Scaled in two steps, as 2^-power alone can be out of range.
+        const half = Math.trunc(-power / 2);
+        const scale = (v) => v * (2 ** half) * (2 ** (-power - half));
+        return {x: scale(x), y: scale(y), power};
+    }
 
     // The table for the orbit (of generation) with values (x, y pairs) of length values, and pixels up to
     // dcMax from its point, made again only if the orbit is another one, has doubled in length (or is
@@ -31,7 +45,7 @@ export function createGpuBla(gl) {
         const table = buildBla(values, length, built.dcMax, gpuTolerance).levels.slice(0, maxBlaLevels);
         let total = 0;
         levels = 0;
-        mostRSquared = 0;
+        mostLog2R = -Infinity;
         table.forEach(function (level, k) {
             start[k] = total;
             count[k] = level.length / 5;
@@ -40,22 +54,24 @@ export function createGpuBla(gl) {
         });
         const rows = Math.max(1, Math.ceil(total / arrayTextureWidth));
         const ab = new Float32Array(rows * arrayTextureWidth * 4);
-        const r = new Float32Array(rows * arrayTextureWidth);
+        const powers = new Float32Array(rows * arrayTextureWidth * 4);
         table.forEach(function (level, k) {
             for (let j = 0; j < count[k]; j += 1) {
                 const at = start[k] + j;
-                const values32 = [level[5 * j], level[(5 * j) + 1], level[(5 * j) + 2], level[(5 * j) + 3]].map(Math.fround);
-                const radius = Math.fround(level[(5 * j) + 4]);
-                const usable = values32.every(Number.isFinite) && Number.isFinite(radius);
-                ab.set(usable ? values32 : [0, 0, 0, 0], 4 * at);
-                r[at] = usable ? radius : 0;
-                if (usable && k === 0) mostRSquared = Math.max(mostRSquared, radius * radius);
+                const a = split(level[5 * j], level[(5 * j) + 1]);
+                const b = split(level[(5 * j) + 2], level[(5 * j) + 3]);
+                const r = level[(5 * j) + 4];
+                // log2 R, or as good as minus infinity where the run can't be taken.
+                const log2R = r > 0 && Number.isFinite(r) ? Math.log2(r) : -1e30;
+                ab.set([a.x, a.y, b.x, b.y], 4 * at);
+                powers.set([log2R, a.power, b.power, 0], 4 * at);
+                if (k === 0) mostLog2R = Math.max(mostLog2R, log2R);
             }
         });
         gl.deleteTexture(coefficients);
-        gl.deleteTexture(radii);
+        gl.deleteTexture(scales);
         coefficients = createTexture(gl, gl.RGBA32F, arrayTextureWidth, rows, gl.RGBA, gl.FLOAT, ab);
-        radii = createTexture(gl, gl.R32F, arrayTextureWidth, rows, gl.RED, gl.FLOAT, r);
+        scales = createTexture(gl, gl.RGBA32F, arrayTextureWidth, rows, gl.RGBA, gl.FLOAT, powers);
     }
 
     // Binds the table to texture units unit and unit + 1 for program, and sets its uniforms.
@@ -64,12 +80,12 @@ export function createGpuBla(gl) {
         gl.bindTexture(gl.TEXTURE_2D, coefficients);
         gl.uniform1i(program.uniforms.blaCoefficients, unit);
         gl.activeTexture(gl.TEXTURE0 + unit + 1);
-        gl.bindTexture(gl.TEXTURE_2D, radii);
-        gl.uniform1i(program.uniforms.blaRadii, unit + 1);
+        gl.bindTexture(gl.TEXTURE_2D, scales);
+        gl.uniform1i(program.uniforms.blaScales, unit + 1);
         gl.uniform1i(program.uniforms.blaLevels, levels);
         gl.uniform1iv(program.uniforms["blaStart[0]"], start);
         gl.uniform1iv(program.uniforms["blaCount[0]"], count);
-        gl.uniform1f(program.uniforms.blaMostRSquared, mostRSquared);
+        gl.uniform1f(program.uniforms.blaMostLog2R, Number.isFinite(mostLog2R) ? mostLog2R : -1e30);
     }
 
     return {update, use};

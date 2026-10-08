@@ -91,8 +91,7 @@ export function startApp(newWorker) {
     const notice = createNotice(element("notice"));
     depthWarning({events, notice, badge: element("depthBadge")});
     createDepthGauge({events, element: element("depthGauge")});
-    // The GPU renders views down to its smallest pixel, where it can, unless the CPU is chosen; the CPU
-    // renders the rest. See rendererChoice.js.
+    // The GPU renders every view, where it can, unless the CPU is chosen. See rendererChoice.js.
     let storage = null;
     try {
         storage = window.localStorage;

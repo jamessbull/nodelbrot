@@ -1,12 +1,9 @@
 import { createFloatContext, createFramebuffer, createProgram, createTexture, fullScreenVertexShader } from "./gl.js";
-import { arrayTextureWidth, colourShader, countEscapesShader, countEscapesVertexShader, iterateShader, restartSurvivorsShader } from "./shaders.js";
+import { arrayTextureWidth, colourShader, countEscapesShader, countEscapesVertexShader, deepGpuPixel, iterateShader, placePixels,
+    restartSurvivorsShader } from "./shaders.js";
 import { lookupTableSize } from "../worker/pixelIterator.js";
 import { escapesPast, maxRereferences, nearestUnescaped, rereferenceDue } from "../rereference.js";
 import { createGpuBla } from "./gpuBla.js";
-
-// Pixels can't be smaller than this on the GPU: it has only 32-bit floats, and their exponents run out
-// soon after (about 1e-38). Deeper views are rendered on the CPU.
-export const gpuSmallestPixel = 1e-30;
 
 // Iterations are counted in 32-bit floats, which are exact up to here; rendering stops there.
 export const gpuMaxDepth = 2 ** 24;
@@ -35,7 +32,9 @@ export function createGpuRenderer({width, height, events, imgData, escapeValues,
             events.fire(events.rendererLost);
         }
     });
-    const iterate = createProgram(gl, fullScreenVertexShader, iterateShader);
+    // Deep views (see deepGpuPixel) have a shader of their own.
+    const iterateShallow = createProgram(gl, fullScreenVertexShader, iterateShader(false));
+    const iterateDeep = createProgram(gl, fullScreenVertexShader, iterateShader(true));
     const count = createProgram(gl, countEscapesVertexShader, countEscapesShader);
     const colour = createProgram(gl, fullScreenVertexShader, colourShader);
     const restartSurvivors = createProgram(gl, fullScreenVertexShader, restartSurvivorsShader);
@@ -314,6 +313,8 @@ export function createGpuRenderer({width, height, events, imgData, escapeValues,
         // The furthest any pixel is from the orbit's point, for the table of runs.
         const dcMax = Math.hypot(((width / 2) + Math.abs(offset.x)) * view.pixelSize, ((height / 2) + Math.abs(offset.y)) * view.pixelSize);
         bla.update(referenceOrbit.generation(), referenceOrbit.values(), referenceOrbit.length(), dcMax, referenceOrbit.complete());
+        const deep = view.pixelSize < deepGpuPixel;
+        const iterate = deep ? iterateDeep : iterateShallow;
         gl.useProgram(iterate.program);
         bindTexture(0, states[current][0], iterate, "state0");
         bindTexture(1, states[current][1], iterate, "state1");
@@ -323,8 +324,8 @@ export function createGpuRenderer({width, height, events, imgData, escapeValues,
         gl.uniform1i(iterate.uniforms.orbitEnd, referenceOrbit.complete() ? referenceOrbit.length() - 1 : -1);
         gl.uniform1f(iterate.uniforms.startIteration, frame.start);
         gl.uniform1i(iterate.uniforms.iterations, frame.iterations);
-        gl.uniform2f(iterate.uniforms.dcTopLeft, (-((width - 1) / 2) - offset.x) * view.pixelSize, (-((height - 1) / 2) - offset.y) * view.pixelSize);
-        gl.uniform2f(iterate.uniforms.pixelStep, view.pixelSize, view.pixelSize);
+        placePixels(gl, iterate, (-((width - 1) / 2) - offset.x) * view.pixelSize, (-((height - 1) / 2) - offset.y) * view.pixelSize,
+            view.pixelSize, view.pixelSize, deep);
         gl.bindFramebuffer(gl.FRAMEBUFFER, stateFramebuffers[1 - current]);
         gl.drawArrays(gl.TRIANGLES, 0, 3);
         if (gpuTimer) {
@@ -495,15 +496,15 @@ export function createGpuRenderer({width, height, events, imgData, escapeValues,
         gl.bindFramebuffer(gl.FRAMEBUFFER, colourFramebuffer);
         gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, imgData);
         const orbit = referenceOrbit.values();
-        let state = readEscapeValues();
+        const state0 = readEscapeValues();
+        const state1 = readState(stateFramebuffers[current], gl.COLOR_ATTACHMENT1);
         for (let idx = 0; idx < width * height; idx += 1) {
-            const m = state[(idx * 4) + 2];
-            xState[idx] = orbit[2 * m] + state[idx * 4];
-            yState[idx] = orbit[(2 * m) + 1] + state[(idx * 4) + 1];
-        }
-        state = readState(stateFramebuffers[current], gl.COLOR_ATTACHMENT1);
-        for (let idx = 0; idx < width * height; idx += 1) {
-            imageEscapeValues[idx] = Math.max(0, state[idx * 4]);
+            imageEscapeValues[idx] = Math.max(0, state1[idx * 4]);
+            // z = Z + d, d being a mantissa times 2^power deep in (see shaders.js).
+            const m = state0[(idx * 4) + 2];
+            const scale = 2 ** state1[(idx * 4) + 3];
+            xState[idx] = orbit[2 * m] + (state0[idx * 4] * scale);
+            yState[idx] = orbit[(2 * m) + 1] + (state0[(idx * 4) + 1] * scale);
         }
     }
 

@@ -1,5 +1,5 @@
 import { createFloatContext, createFramebuffer, createProgram, createTexture, fullScreenVertexShader } from "./gl.js";
-import { arrayTextureWidth, iterateShader } from "./shaders.js";
+import { arrayTextureWidth, deepGpuPixel, iterateShader, placePixels } from "./shaders.js";
 import { colourPixels, lookupTableSize } from "../worker/pixelIterator.js";
 import { inMainCardioidOrBulb } from "../mandelbrotPoint.js";
 import { createGpuBla } from "./gpuBla.js";
@@ -55,7 +55,10 @@ export function renderExportOnGpu({extents, width, height, depth, orbit, palette
         if (lose) lose.loseContext();
     }
 
-    const iterate = createProgram(gl, fullScreenVertexShader, iterateShader);
+    const stepX = extents.width() / (width - 1);
+    const stepY = extents.height() / (height - 1);
+    const deep = Math.max(stepX, stepY) < deepGpuPixel;
+    const iterate = createProgram(gl, fullScreenVertexShader, iterateShader(deep));
     const stillGoing = createProgram(gl, fullScreenVertexShader, stillGoingShader);
     gl.bindVertexArray(gl.createVertexArray());
     const floatTexture = () => createTexture(gl, gl.RGBA32F, tileW, tileH, gl.RGBA, gl.FLOAT);
@@ -80,8 +83,6 @@ export function renderExportOnGpu({extents, width, height, depth, orbit, palette
     const sides = [extents.topLeft().y, extents.topLeft().y + extents.height()].map(Math.abs);
     bla.update(0, orbit.values, orbitLength, Math.hypot(Math.max(...corners), Math.max(...sides)), orbit.complete);
 
-    const stepX = extents.width() / (width - 1);
-    const stepY = extents.height() / (height - 1);
     const counts = new Uint32Array(depth + 2);
     const smooth = new Float32Array(width * height);
     let escaped = 0;
@@ -135,8 +136,7 @@ export function renderExportOnGpu({extents, width, height, depth, orbit, palette
         gl.uniform1i(iterate.uniforms.orbitEnd, orbit.complete ? orbitLength - 1 : -1);
         gl.uniform1f(iterate.uniforms.startIteration, startIteration);
         gl.uniform1i(iterate.uniforms.iterations, iterations);
-        gl.uniform2f(iterate.uniforms.dcTopLeft, extents.topLeft().x + (tile.x * stepX), extents.topLeft().y + (tile.y * stepY));
-        gl.uniform2f(iterate.uniforms.pixelStep, stepX, stepY);
+        placePixels(gl, iterate, extents.topLeft().x + (tile.x * stepX), extents.topLeft().y + (tile.y * stepY), stepX, stepY, deep);
         gl.bindFramebuffer(gl.FRAMEBUFFER, stateFramebuffers[1 - current]);
         gl.drawArrays(gl.TRIANGLES, 0, 3);
         if (timer) gl.endQuery(gpuTimer.TIME_ELAPSED_EXT);

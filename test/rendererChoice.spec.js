@@ -25,10 +25,10 @@ const shallow = {pixelSize: 1e-6};
 const deep = {pixelSize: 1e-40};
 
 describe("the renderer choice", function () {
-    it("should have the GPU draw the views it can, by default", function () {
+    it("should have the GPU draw every view, by default, however deep", function () {
         const choice = createRendererChoice({select: fakeSelect(), gpuAvailable: true});
         expect(choice.rendererFor(shallow)).toBe("gpu");
-        expect(choice.rendererFor(deep)).toBe("cpu");
+        expect(choice.rendererFor(deep)).toBe("gpu");
     });
 
     it("should have the CPU draw everything where there's no GPU, or it's chosen", function () {
@@ -79,9 +79,10 @@ describe("the renderer choice", function () {
         const choice = createRendererChoice({select, gpuAvailable: true});
         choice.showInUse("gpu", shallow);
         expect(select.options[0].textContent).toBe("Auto (GPU)");
+        choice.lost();
         choice.showInUse("cpu", deep);
         expect(select.options[0].textContent).toBe("Auto (CPU)");
-        expect(select.title).toContain("too deep");
+        expect(select.title).toContain("stopped working");
     });
 });
 
