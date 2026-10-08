@@ -20,7 +20,7 @@ export function run(route, {link, width, height, depth, displayWidth = 1898}) {
     const w = view.w, h = view.h, cx = parseFloat(view.x), cy = parseFloat(view.y);
     return new Promise(function (resolve, reject) {
         let started;
-        const done = (extra) => (image) => resolve(Object.assign({seconds: (performance.now() - started) / 1000, image}, extra));
+        const done = (extra) => (image) => resolve(Object.assign({seconds: (performance.now() - started) / 1000, image: image.image()}, extra));
         if (route === "direct") {
             started = performance.now();
             api.renderExport({extents: api.rectangle(cx - w / 2, cy - h / 2, w, h), width, height, depth, palette, newWorker,

@@ -1,6 +1,7 @@
 import { createFloatContext, createFramebuffer, createProgram, createTexture, fullScreenVertexShader } from "./gl.js";
 import { arrayTextureWidth, deepGpuPixel, inSet, iterateShader, placePixels } from "./shaders.js";
-import { colourPixels, lookupTableSize } from "../worker/pixelIterator.js";
+import { lookupTableSize } from "../worker/pixelIterator.js";
+import { exportImage } from "../export/exportImage.js";
 import { binOf, binsFor } from "../histogramBins.js";
 import { inMainCardioidOrBulb } from "../mandelbrotPoint.js";
 import { createGpuBla } from "./gpuBla.js";
@@ -30,8 +31,8 @@ void main() {
 // runs of iterations are taken in one step where they can be. The image is done in tiles, each iterated
 // in passes of about passMs of GPU work (so as not to hold the GPU so long the browser takes it away),
 // until every pixel is done or depth is reached. Each pixel's escapes are counted into a histogram of
-// the whole image, and the image is coloured against that once every tile is done. Calls onProgress("image",
-// pixels) as tiles are done, onComplete(image) with the RGBA data, and onError(message) if the GPU can't
+// the whole image, which the image is coloured against (see exportImage.js). Calls onProgress("image",
+// pixels) as tiles are done, onComplete(image) once every tile is, and onError(message) if the GPU can't
 // do it, after which nothing more is called.
 export function renderExportOnGpu({extents, width, height, depth, orbit, palette, point = null, onProgress = () => {}, onComplete,
         onError, tileWidth = 1024, tileHeight = 512, passMs = 30}) {
@@ -247,9 +248,7 @@ export function renderExportOnGpu({extents, width, height, depth, orbit, palette
             for (let i = 1; i < counts.length; i += 1) {
                 counts[i] += counts[i - 1];
             }
-            const image = new Uint8ClampedArray(width * height * 4);
-            colourPixels(image, smooth, smooth, counts, counts.length, escaped, palette.toLookupTable(lookupTableSize));
-            onComplete(image);
+            onComplete(exportImage({width, height, smooth, counts, total: escaped, colours: palette.toLookupTable(lookupTableSize)}));
         } catch (e) {
             fail(e.message);
         }

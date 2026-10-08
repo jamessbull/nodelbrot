@@ -143,7 +143,7 @@ function exportWith(kind, x, y, pixelSize, depth) {
         const palette = api.createPalette();
         // Timed from when the export starts, not counting working out the reference orbit.
         let started = performance.now();
-        const done = (image) => resolve({ image, seconds: (performance.now() - started) / 1000 });
+        const done = (image) => resolve({ image: image.image(), seconds: (performance.now() - started) / 1000 });
         const deep = pixelSize < 5e-14;
         if (kind === "cpu" && !deep) {
             api.renderExport({ extents: area, width, height, depth, palette, newWorker, onComplete: done, onError: reject });

@@ -108,7 +108,7 @@ export function startApp(newWorker) {
         searchRadius: 1000, longest: (view) => (rendererFor(view) === "gpu" ? gpuLongestOrbit : Infinity)});
     const bookmarks = createBookmarks({bookmarkButton: element("bookmarkButton"), state, events, notice});
     const exportSizes = createExportSizes(element("exportSizeSelect"),
-        ["smallExport", "mediumExport", "largeExport", "veryLargeExport"].map(element), size.width, size.height);
+        ["smallExport", "mediumExport", "largeExport", "veryLargeExport", "a1Export"].map(element), size.width, size.height);
     createControls({exportSizes, state, events, newWorker, referenceOrbit, useGpu: (view) => rendererFor(view) === "gpu"});
 
     const maxIteration = element("maxIteration");

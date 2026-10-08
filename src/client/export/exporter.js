@@ -5,6 +5,7 @@ import { rectangle } from "../geometry.js";
 import { needsPerturbation } from "../precision.js";
 import { renderExportOnGpu } from "../gpu/gpuExport.js";
 import { gpuLongestOrbit, gpuMaxDepth } from "../gpu/gpuRenderer.js";
+import { writePng } from "./pngWriter.js";
 
 // The deepest export allowed on the CPU. Every export worker holds an array with an entry per
 // iteration, and its own copy of the reference orbit, so this keeps memory to around 40MB per worker.
@@ -25,6 +26,17 @@ export function parseDepth(text, max = maxDepth) {
         return {error: "Iterations must be between 1 and " + max.toLocaleString("en-GB") + "."};
     }
     return {depth: depth};
+}
+
+// The area to export at width x height: area (the one on screen), with more of the plane above and below
+// it, or either side, if the export is another shape (a paper size, say), so that it shows all of it.
+export function exportArea(area, width, height) {
+    const aspect = width / height;
+    const w = Math.max(area.width(), area.height() * aspect);
+    const h = Math.max(area.height(), area.width() / aspect);
+    const centreX = area.topLeft().x + (area.width() / 2);
+    const centreY = area.topLeft().y + (area.height() / 2);
+    return rectangle(centreX - (w / 2), centreY - (h / 2), w, h);
 }
 
 // The depth to suggest for exporting a view whose last pixel to escape on screen did so at lastEscape:
@@ -102,35 +114,22 @@ export function createExporter({exportSizes, state, events, newWorker, reference
         finish();
     }
 
-    // Browsers limit canvas size, some (such as Safari on phones) below the largest export, so
-    // making the image can fail.
-    const tooBig = "the browser couldn't make an image this size. Try a smaller size.";
-
-    // Makes the image a PNG and offers it as links to download or open, which work where a pop-up
-    // opened when the export finished would be blocked. The canvas is only needed to make the PNG.
+    // Makes the image (see exportImage.js) a PNG, a strip at a time (see pngWriter.js), and offers it as
+    // links to download or open, which work where a pop-up opened when the export finished would be
+    // blocked. Big ones take a while, and memory the browser may not have.
     function showImage(image) {
-        const { width, height } = exportDimensions;
-        let canvas;
-        try {
-            canvas = document.createElement('canvas');
-            canvas.width = width;
-            canvas.height = height;
-            canvas.getContext('2d').putImageData(new ImageData(image, width, height), 0, 0);
-        } catch {
-            fail(tooBig);
-            return;
-        }
-        canvas.toBlob(function (blob) {
-            canvas.width = canvas.height = 0;
-            if (!blob) {
-                fail(tooBig);
-                return;
-            }
+        const {width, height} = image;
+        const making = (rows) => { exportMessage.textContent = "Making the PNG… " + Math.floor(100 * rows / height) + "%"; };
+        making(0);
+        writePng(width, height, image.rows, {onProgress: making}).then(function (blob) {
+            exportMessage.textContent = "";
             exportUrl = URL.createObjectURL(blob);
             downloadLink.href = openLink.href = exportUrl;
             downloadLink.download = "mandelbrot-" + width + "x" + height + ".png";
             exportResult.hidden = false;
             finish();
+        }, function (e) {
+            fail("the browser couldn't make an image this size (" + e.message + "). Try a smaller size.");
         });
     }
 
@@ -158,7 +157,7 @@ export function createExporter({exportSizes, state, events, newWorker, reference
         selectButton(exportButton);
         progressReporters.image.reportOn(exportDimensions.width, exportDimensions.height);
         timeReporter.start();
-        const area = state.getArea();
+        const area = exportArea(state.getArea(), exportDimensions.width, exportDimensions.height);
         const view = state.getView();
         const pixelSize = view.pixelSize;
         if (!gpu && (!referenceOrbit || !referenceOrbit.active() || !needsPerturbation(view))) {

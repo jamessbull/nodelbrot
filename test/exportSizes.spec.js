@@ -13,6 +13,11 @@ describe("export sizes", function () {
         expect(huge.width / huge.height).toBeCloseTo(700 / 400, 2);
     });
 
+    it("should offer A1 at 300 dots per inch, turned the same way as the display", function () {
+        expect(exportSizes(700, 400)[4]).toEqual({width: 9933, height: 7016});
+        expect(exportSizes(400, 700)[4]).toEqual({width: 7016, height: 9933});
+    });
+
     it("should not go past the huge size on a big display", function () {
         const sizes = exportSizes(2500, 1400);
         expect(sizes[2]).toEqual(sizes[3]);

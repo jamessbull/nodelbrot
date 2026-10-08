@@ -1,4 +1,5 @@
-import { maxDepth, maxGpuDepth, parseDepth, suggestedDepth } from "../src/client/export/exporter.js";
+import { exportArea, maxDepth, maxGpuDepth, parseDepth, suggestedDepth } from "../src/client/export/exporter.js";
+import { rectangle } from "../src/client/geometry.js";
 
 describe("reading the export depth", function () {
 
@@ -35,5 +36,21 @@ describe("reading the export depth", function () {
         expect(parseDepth("30000000", maxGpuDepth)).toEqual({depth: 30000000});
         expect(parseDepth("200000000", maxGpuDepth)).toEqual({depth: 200000000});
         expect(parseDepth(String(maxGpuDepth + 1), maxGpuDepth).error).toContain("268,435,456");
+    });
+});
+
+describe("export area", function () {
+    it("should show all of the area on screen, with more above and below, or either side, for another shape", function () {
+        const screen = rectangle(-2, -0.5, 3, 1);
+        const paper = exportArea(screen, 9933, 7016);
+        expect(paper.width()).toBe(3);
+        expect(paper.height()).toBeCloseTo(3 * 7016 / 9933, 12);
+        expect(paper.topLeft().x + (paper.width() / 2)).toBeCloseTo(-0.5, 12);
+        expect(paper.topLeft().y + (paper.height() / 2)).toBeCloseTo(0, 12);
+        const tall = exportArea(screen, 7016, 9933);
+        expect(tall.height()).toBeCloseTo(3 * 9933 / 7016, 12);
+        expect(tall.width()).toBe(3);
+        const same = exportArea(screen, 3000, 1000);
+        expect([same.width(), same.height()]).toEqual([3, 1]);
     });
 });
