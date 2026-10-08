@@ -4,6 +4,9 @@ import { arrayTextureWidth, colourShader, countEscapesShader, countEscapesVertex
 import { lookupTableSize } from "../worker/pixelIterator.js";
 import { escapesPast, maxRereferences, nearestUnescaped, rereferenceDue } from "../rereference.js";
 import { createGpuBla } from "./gpuBla.js";
+import { binOf } from "../histogramBins.js";
+import { inMainCardioidOrBulb } from "../mandelbrotPoint.js";
+import { needsPerturbation } from "../precision.js";
 
 // Rendering stops here. Iterations are counted exactly (see shaders.js), and the histogram, in bins past
 // exactBins (see histogramBins.js), is still small enough for a texture (25 million entries).
@@ -170,7 +173,8 @@ export function createGpuRenderer({width, height, events, imgData, escapeValues,
     }
 
     function uploadHistogram(info) {
-        const dirtyFrom = histogramArray === info.array ? info.currentIteration : 0;
+        // The entries changed: from the bin of the first iteration the frame counted escapes for.
+        const dirtyFrom = histogramArray === info.array ? binOf(info.currentIteration) : 0;
         if (histogramArray !== info.array || rowsFor(info.array.length) > histogramRows) {
             histogramRows = rowsFor(info.array.length);
             gl.deleteTexture(histogramTexture);
@@ -193,8 +197,34 @@ export function createGpuRenderer({width, height, events, imgData, escapeValues,
             gl.clearBufferuiv(gl.COLOR, 1, [0, 0, 0, 0]);
             gl.clearBufferuiv(gl.COLOR, 2, [0, 0, 0, 0]);
         });
+        markMainCardioidAndBulb();
         resetPending = false;
         survivorsRestartPending = false;
+    }
+
+    // Pixels in the main cardioid or the period-2 bulb are marked as in the set from the start, rather than
+    // iterated to the end, as the CPU renderer does, where doubles can say which those are. Next to them
+    // the pixels in the set take so long to settle into a cycle that finding one would take far longer.
+    function markMainCardioidAndBulb() {
+        if (needsPerturbation(view)) {
+            return;
+        }
+        const centre = view.centre();
+        const marks = new Uint32Array(width * height * 4);
+        let any = false;
+        for (let j = 0; j < height; j += 1) {
+            const y = centre.y + ((j - ((height - 1) / 2)) * view.pixelSize);
+            for (let i = 0; i < width; i += 1) {
+                if (inMainCardioidOrBulb(centre.x + ((i - ((width - 1) / 2)) * view.pixelSize), y)) {
+                    marks[(4 * ((j * width) + i)) + 3] = inSet;
+                    any = true;
+                }
+            }
+        }
+        if (any) {
+            gl.bindTexture(gl.TEXTURE_2D, states[current][1]);
+            gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, width, height, gl.RGBA_INTEGER, gl.UNSIGNED_INT, marks);
+        }
     }
 
     function restartSurvivingPixels() {
