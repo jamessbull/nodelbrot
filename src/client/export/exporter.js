@@ -3,6 +3,8 @@ import { createProgressReporter, createTimeReporter } from "./progress.js";
 import { deselectButton, hide, selectButton, show } from "../dom.js";
 import { rectangle } from "../geometry.js";
 import { needsPerturbation } from "../precision.js";
+import { renderExportOnGpu } from "../gpu/gpuExport.js";
+import { gpuSmallestPixel } from "../gpu/gpuRenderer.js";
 
 // The deepest export allowed. Every export worker holds a histogram with an entry per iteration, so
 // this keeps memory to around 8MB per worker.
@@ -33,11 +35,13 @@ export function suggestedDepth(lastEscape) {
 // The export panel: exports the current view at the chosen size and depth, with workers made by
 // newWorker(), and shows the result. The depth follows the one the view needs, as it renders (see
 // suggestedDepth), until the user types one, which holds until the view changes.
-// Deep views (past the precision of doubles) wait for referenceOrbit to be worked out to the export's
-// depth. Others are iterated directly, even if the GPU renderer has an orbit for them, as that can tell
-// pixels in the main cardioid and bulb, and orbits that settle into a cycle, without iterating them to
-// the export's depth.
-export function createExporter({exportSizes, state, events, newWorker, referenceOrbit}) {
+// Views the GPU draws (useGpu(view)) are exported on the GPU (see gpuExport.js), if its pixels are big
+// enough for it, and the depth small enough, and on the CPU if that fails. Otherwise, deep views (past
+// the precision of doubles) are exported by perturbation on the CPU, and the rest iterated directly, as
+// that can tell pixels in the main cardioid and bulb, and orbits that settle into a cycle, without
+// iterating them to the export's depth. Both GPU and deep exports wait for referenceOrbit to be worked
+// out to the export's depth.
+export function createExporter({exportSizes, state, events, newWorker, referenceOrbit, useGpu = () => false}) {
     let exporting = false;
 
     const exportButton = document.getElementById("export");
@@ -147,12 +151,16 @@ export function createExporter({exportSizes, state, events, newWorker, reference
         progressReporters.histogram.reportOn(Math.floor(exportDimensions.width / 10), Math.floor(exportDimensions.height / 10));
         timeReporter.start();
         const area = state.getArea();
-        const pixelSize = state.getView().pixelSize;
-        if (!referenceOrbit || !referenceOrbit.active() || !needsPerturbation(state.getView())) {
+        const view = state.getView();
+        const pixelSize = view.pixelSize;
+        const exportPixel = Math.max(area.width() / (exportDimensions.width - 1), area.height() / (exportDimensions.height - 1));
+        const orbitThere = referenceOrbit && referenceOrbit.active();
+        const onGpu = orbitThere && useGpu(view) && exportPixel >= gpuSmallestPixel && depth.depth < 2 ** 24;
+        if (!onGpu && (!orbitThere || !needsPerturbation(view))) {
             startExport(area, null, depth.depth);
             return;
         }
-        // Deep: the area relative to the reference orbit's point, once the orbit is long enough.
+        // The area relative to the reference orbit's point, once the orbit is long enough.
         exportMessage.textContent = "Working out the reference orbit…";
         referenceOrbit.whenLength(depth.depth + 2).then(function (orbit) {
             if (!orbit) {
@@ -160,10 +168,46 @@ export function createExporter({exportSizes, state, events, newWorker, reference
                 return;
             }
             exportMessage.textContent = "";
-            startExport(rectangle(-(area.width() / 2) - (orbit.offset.x * pixelSize), -(area.height() / 2) - (orbit.offset.y * pixelSize),
-                area.width(), area.height()), orbit, depth.depth);
+            const extents = rectangle(-(area.width() / 2) - (orbit.offset.x * pixelSize), -(area.height() / 2) - (orbit.offset.y * pixelSize),
+                area.width(), area.height());
+            if (onGpu) {
+                // Where the orbit's point is, where doubles can say.
+                const point = needsPerturbation(view) ? null : {x: area.topLeft().x + (area.width() / 2) + (orbit.offset.x * pixelSize),
+                    y: area.topLeft().y + (area.height() / 2) + (orbit.offset.y * pixelSize)};
+                startGpuExport(extents, orbit, point, depth.depth, function () {
+                    // The CPU instead, as it would have done it.
+                    if (needsPerturbation(view)) {
+                        startExport(extents, orbit, depth.depth);
+                    } else {
+                        startExport(area, null, depth.depth);
+                    }
+                });
+            } else {
+                startExport(extents, orbit, depth.depth);
+            }
         });
     };
+
+    function startGpuExport(extents, orbit, point, depth, onFailure) {
+        exportMessage.textContent = "Rendering on the GPU…";
+        // The GPU counts escapes over the whole image as it goes, without a separate histogram phase.
+        progressReporters.histogram.add(Math.floor(exportDimensions.width / 10) * Math.floor(exportDimensions.height / 10));
+        renderExportOnGpu({
+            extents, orbit: {values: orbit.values, complete: orbit.complete}, point, palette, depth,
+            width: exportDimensions.width, height: exportDimensions.height,
+            onProgress: (phase, pixels) => progressReporters[phase].add(pixels),
+            onComplete: function (image) {
+                exportMessage.textContent = "";
+                showImage(image);
+            },
+            onError: function (message) {
+                console.warn("Exporting on the CPU, as the GPU couldn't: " + message);
+                exportMessage.textContent = "";
+                progressReporters.image.reportOn(exportDimensions.width, exportDimensions.height);
+                onFailure();
+            }
+        });
+    }
 
     function startExport(extents, orbit, depth) {
         renderExport({

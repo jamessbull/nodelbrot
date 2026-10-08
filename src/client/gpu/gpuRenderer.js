@@ -311,7 +311,7 @@ export function createGpuRenderer({width, height, events, imgData, escapeValues,
         gl.uniform1f(iterate.uniforms.startIteration, frame.start);
         gl.uniform1i(iterate.uniforms.iterations, frame.iterations);
         gl.uniform2f(iterate.uniforms.dcTopLeft, (-((width - 1) / 2) - offset.x) * view.pixelSize, (-((height - 1) / 2) - offset.y) * view.pixelSize);
-        gl.uniform1f(iterate.uniforms.pixelSize, view.pixelSize);
+        gl.uniform2f(iterate.uniforms.pixelStep, view.pixelSize, view.pixelSize);
         gl.bindFramebuffer(gl.FRAMEBUFFER, stateFramebuffers[1 - current]);
         gl.drawArrays(gl.TRIANGLES, 0, 3);
         if (gpuTimer) {
@@ -490,7 +490,7 @@ export function createGpuRenderer({width, height, events, imgData, escapeValues,
         }
         state = readState(stateFramebuffers[current], gl.COLOR_ATTACHMENT1);
         for (let idx = 0; idx < width * height; idx += 1) {
-            imageEscapeValues[idx] = state[idx * 4];
+            imageEscapeValues[idx] = Math.max(0, state[idx * 4]);
         }
     }
 

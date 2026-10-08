@@ -109,7 +109,7 @@ export function startApp(newWorker) {
     const bookmarks = createBookmarks({bookmarkButton: element("bookmarkButton"), state, events, notice});
     const exportSizes = createExportSizes(element("exportSizeSelect"),
         ["smallExport", "mediumExport", "largeExport", "veryLargeExport"].map(element), size.width, size.height);
-    createControls({exportSizes, state, events, newWorker, referenceOrbit});
+    createControls({exportSizes, state, events, newWorker, referenceOrbit, useGpu: (view) => rendererFor(view) === "gpu"});
 
     const maxIteration = element("maxIteration");
     const lastEscapedOn = element("lastPointEscapedAt");

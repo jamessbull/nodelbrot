@@ -19,6 +19,7 @@ export { createOrbitCalculator, createReferenceOrbitWorker } from "./worker/refe
 export { fromNumber } from "./fixed.js";
 export { createGpuRenderer } from "./gpu/gpuRenderer.js";
 export { gpuAvailable } from "./gpu/gl.js";
+export { renderExportOnGpu } from "./gpu/gpuExport.js";
 export { workerCount } from "./workerPool.js";
 
 if (typeof WorkerGlobalScope !== "undefined" && self instanceof WorkerGlobalScope) {

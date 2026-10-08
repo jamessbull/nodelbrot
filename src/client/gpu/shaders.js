@@ -20,7 +20,9 @@ ivec2 arrayTexel(int i) {
 // Advances every pixel by up to `iterations` iterations, by perturbation from the reference orbit (see
 // perturbationIterator.js, which this follows step for step, in 32-bit floats). orbitEnd is the index of
 // the reference orbit's last value if it is complete (escaped, or a nucleus's whole period), so pixels
-// rebase on reaching it, otherwise -1.
+// rebase on reaching it, otherwise -1. Pixel (i, j) is dcTopLeft + (i, j) pixelStep from the orbit's point.
+// Pixels whose imageEscapedAt is set are left as they are: those that have escaped, and those known to
+// be in the set, which have -1 (see gpuExport.js).
 export const iterateShader = `#version 300 es
 precision highp float;
 precision highp int;
@@ -31,7 +33,7 @@ uniform int orbitEnd;
 uniform float startIteration;
 uniform int iterations;
 uniform vec2 dcTopLeft;
-uniform float pixelSize;
+uniform vec2 pixelStep;
 layout(location = 0) out vec4 next0;
 layout(location = 1) out vec4 next1;
 ${fetchArray}
@@ -51,7 +53,7 @@ void main() {
     if (s1.x != 0.0) {
         return;
     }
-    vec2 dc = dcTopLeft + vec2(pixel) * pixelSize;
+    vec2 dc = dcTopLeft + vec2(pixel) * pixelStep;
     vec2 d = s0.xy;
     int m = int(s0.z);
     float escapedAt = s0.w;
@@ -161,7 +163,7 @@ float escapedBy(float iteration) {
 
 void main() {
     vec4 s1 = texelFetch(state1, ivec2(gl_FragCoord.xy), 0);
-    if (s1.x == 0.0 || s1.x > depth) {
+    if (s1.x <= 0.0 || s1.x > depth) {
         colour = vec4(0.0, 0.0, 0.0, 1.0);
         return;
     }

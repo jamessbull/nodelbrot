@@ -21,6 +21,11 @@ browser takes the GPU away, the CPU takes over until the view next moves.
 When a new view is slow to appear, a gauge down the left of the image shows how deep rendering has
 gone, coming down to meet the depth the view before had reached.
 
+Exports of views the GPU draws are rendered on the GPU too, in tiles (pixels in the main cardioid and
+bulb marked first, where doubles can tell). On the CPU, deep views skip runs of iterations while pixels
+are close to the reference orbit (bivariate linear approximation), and pixels whose iteration comes
+round to exactly where it was are known to be in the set and left.
+
 ## Setup
 
 Needs Node 24 or later (see `.nvmrc`).

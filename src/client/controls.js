@@ -24,7 +24,7 @@ function popover(button, panel) {
 }
 
 // The Stop, Go, Examine and Export buttons. The export makes workers with newWorker().
-export function createControls({exportSizes, state, events, newWorker, referenceOrbit}) {
+export function createControls({exportSizes, state, events, newWorker, referenceOrbit, useGpu}) {
     const on = events.listenTo;
 
     const stopButton = element("stop");
@@ -61,5 +61,5 @@ export function createControls({exportSizes, state, events, newWorker, reference
     };
 
     popover(element("exportMenuButton"), element("exportImagePanel"));
-    createExporter({exportSizes, state, events, newWorker, referenceOrbit});
+    createExporter({exportSizes, state, events, newWorker, referenceOrbit, useGpu});
 }
