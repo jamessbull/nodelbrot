@@ -198,9 +198,13 @@ export function createGpuRenderer({width, height, events, imgData, escapeValues,
         return referenceOrbit.complete() ? Infinity : referenceOrbit.length() - 2 - submittedIteration;
     }
 
-    // No frame goes in after one fetching data for the examine panel, which reads the pixels' state as
-    // that frame leaves it.
-    const canSubmit = () => framesInFlight.length < maxFramesInFlight && !framesInFlight.some((frame) => frame.sendsData);
+    // Frames for a view since changed don't count, so the new view's go in straight away: the GPU does
+    // what is already queued first anyway, and those frames are dropped as they finish. No frame goes in
+    // after one fetching data for the examine panel, which reads the pixels' state as that frame leaves it.
+    function canSubmit() {
+        const forThisView = framesInFlight.filter((frame) => frame.generation === viewGeneration);
+        return forThisView.length < maxFramesInFlight && !forThisView.some((frame) => frame.sendsData);
+    }
 
     // Frames go in one per animation frame, each with about half an animation frame's work, so the GPU
     // has time left to draw the page (the zoom animations, say) and the image updates as often as the
