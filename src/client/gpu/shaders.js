@@ -1,15 +1,24 @@
-// The GPU renderer's shaders. Each pixel's state is in two RGBA float textures, read from one pair and
-// written to the other (ping-pong):
+import { minLevel as blaMinLevel } from "../worker/bla.js";
+
+// The GPU renderer's shaders. Each pixel's state is in three RGBA float textures, read from one set
+// and written to the other (ping-pong):
 //
 //     state0: d.x, d.y, m, escapedAt   d is the pixel's difference from the reference orbit, m where in
 //                                      the orbit it is, escapedAt the iteration |z|^2 passed 16 (or 0)
-//     state1: imageEscapedAt, smooth   when it passed the image escape value (or 0), and its smoothed
-//                                      escape iteration for colouring
+//     state1: imageEscapedAt, smooth,  when it passed the image escape value (or 0, or -1 if it is known
+//             sinceKept                to be in the set), its smoothed escape iteration for colouring,
+//                                      and the iterations since state2 was kept
+//     state2: d.x, d.y, m, window      a state kept from the pixel's orbit, to find cycles by, replaced
+//                                      after window iterations, which doubles each time
 //
 // Pixel (i, j), with j counted down from the top, is texel (i, j). Long arrays (the reference orbit, the
 // histogram) are 2D textures `width` texels wide, as 1D ones can't be long enough.
 
 export const arrayTextureWidth = 2048;
+
+// The most levels of runs the bivariate linear approximation table can have on the GPU (see gpuBla.js),
+// and the shortest run, 2^blaMinLevel (see bla.js).
+export const maxBlaLevels = 24;
 
 const fetchArray = `
 const int arrayWidth = ${arrayTextureWidth};
@@ -22,23 +31,37 @@ ivec2 arrayTexel(int i) {
 // the reference orbit's last value if it is complete (escaped, or a nucleus's whole period), so pixels
 // rebase on reaching it, otherwise -1. Pixel (i, j) is dcTopLeft + (i, j) pixelStep from the orbit's point.
 // Pixels whose imageEscapedAt is set are left as they are: those that have escaped, and those known to
-// be in the set, which have -1 (see gpuExport.js).
+// be in the set, which have -1.
+//
+// As on the CPU, a pixel whose state (m and d) comes round to exactly what it was is in a cycle, so in
+// the set, and gets -1; and while d is small enough, runs of iterations are taken in one step, from a
+// bivariate linear approximation table (see bla.js and gpuBla.js), if blaLevels is more than 0.
 export const iterateShader = `#version 300 es
 precision highp float;
 precision highp int;
 uniform highp sampler2D state0;
 uniform highp sampler2D state1;
+uniform highp sampler2D state2;
 uniform highp sampler2D orbit;
 uniform int orbitEnd;
 uniform float startIteration;
 uniform int iterations;
 uniform vec2 dcTopLeft;
 uniform vec2 pixelStep;
+uniform highp sampler2D blaCoefficients;
+uniform highp sampler2D blaRadii;
+uniform int blaLevels;
+uniform int blaStart[${maxBlaLevels}];
+uniform int blaCount[${maxBlaLevels}];
+uniform float blaMostRSquared;
 layout(location = 0) out vec4 next0;
 layout(location = 1) out vec4 next1;
+layout(location = 2) out vec4 next2;
 ${fetchArray}
 const float histogramEscapeValue = 16.0;
 const float imageEscapeValue = 9007199254740991.0;
+const int shortestRun = ${2 ** blaMinLevel};
+const int shortestShift = ${blaMinLevel};
 
 vec2 Z(int m) {
     return texelFetch(orbit, arrayTexel(m), 0).xy;
@@ -48,8 +71,10 @@ void main() {
     ivec2 pixel = ivec2(gl_FragCoord.xy);
     vec4 s0 = texelFetch(state0, pixel, 0);
     vec4 s1 = texelFetch(state1, pixel, 0);
+    vec4 s2 = texelFetch(state2, pixel, 0);
     next0 = s0;
     next1 = s1;
+    next2 = s2;
     if (s1.x != 0.0) {
         return;
     }
@@ -57,7 +82,49 @@ void main() {
     vec2 d = s0.xy;
     int m = int(s0.z);
     float escapedAt = s0.w;
-    for (int n = 1; n <= iterations; n++) {
+    // The state kept for finding cycles (state2: d and m, and the window), and the iterations since.
+    vec2 refD = s2.xy;
+    int refM = int(s2.z);
+    float window = max(s2.w, 1.0);
+    float sinceRef = s1.z;
+    bool done = false;
+    int n = 0;
+    while (n < iterations) {
+        // The longest run that starts here, fits in what's left, and d is small enough for (see
+        // perturbationIterator.js).
+        float dd = dot(d, d);
+        if (blaLevels > 0 && m > 0 && ((m - 1) & (shortestRun - 1)) == 0 && dd < blaMostRSquared && shortestRun <= iterations - n) {
+            int from = m - 1;
+            int first = from >> shortestShift;
+            if (first < blaCount[0]) {
+                float r = texelFetch(blaRadii, arrayTexel(blaStart[0] + first), 0).x;
+                if (dd < r * r) {
+                    int level = 0;
+                    int at = blaStart[0] + first;
+                    for (int up = 1; up < ${maxBlaLevels}; up++) {
+                        int run = shortestRun << up;
+                        if (up >= blaLevels || (from & (run - 1)) != 0 || run > iterations - n) break;
+                        int upFirst = from >> (shortestShift + up);
+                        if (upFirst >= blaCount[up]) break;
+                        float upR = texelFetch(blaRadii, arrayTexel(blaStart[up] + upFirst), 0).x;
+                        if (dd >= upR * upR) break;
+                        level = up;
+                        at = blaStart[up] + upFirst;
+                    }
+                    vec4 ab = texelFetch(blaCoefficients, arrayTexel(at), 0);
+                    d = vec2(ab.x * d.x - ab.y * d.y + ab.z * dc.x - ab.w * dc.y,
+                             ab.x * d.y + ab.y * d.x + ab.z * dc.y + ab.w * dc.x);
+                    m += shortestRun << level;
+                    n += shortestRun << level;
+                    if (m == orbitEnd) {
+                        d += Z(m);
+                        m = 0;
+                    }
+                    continue;
+                }
+            }
+        }
+        n += 1;
         vec2 Zm = Z(m);
         vec2 z = Zm + d;
         float zSquared = dot(z, z);
@@ -77,30 +144,53 @@ void main() {
         if (zSquared > imageEscapeValue) {
             float at = startIteration + float(n);
             next1 = vec4(at, at + 1.0 - log2(log2(zSquared) / 2.0), 0.0, 0.0);
+            done = true;
             break;
+        }
+        if (m == refM && d == refD) {
+            next1 = vec4(-1.0, 0.0, 0.0, 0.0);
+            done = true;
+            break;
+        }
+        sinceRef += 1.0;
+        if (sinceRef == window) {
+            sinceRef = 0.0;
+            window *= 2.0;
+            refM = m;
+            refD = d;
         }
     }
     next0 = vec4(d, float(m), escapedAt);
+    if (!done) {
+        next1.z = sinceRef;
+    }
+    next2 = vec4(refD, float(refM), window);
 }`;
 
 // Starts the pixels still going again from the start of a new reference orbit (see rereference.js),
-// keeping those that have escaped, and when any passed the histogram's escape value.
+// keeping those that have escaped or are known to be in the set, and when any passed the histogram's
+// escape value.
 export const restartSurvivorsShader = `#version 300 es
 precision highp float;
 uniform highp sampler2D state0;
 uniform highp sampler2D state1;
+uniform highp sampler2D state2;
 layout(location = 0) out vec4 next0;
 layout(location = 1) out vec4 next1;
+layout(location = 2) out vec4 next2;
 void main() {
     ivec2 pixel = ivec2(gl_FragCoord.xy);
     vec4 s0 = texelFetch(state0, pixel, 0);
     vec4 s1 = texelFetch(state1, pixel, 0);
+    vec4 s2 = texelFetch(state2, pixel, 0);
     if (s1.x != 0.0) {
         next0 = s0;
         next1 = s1;
+        next2 = s2;
     } else {
         next0 = vec4(0.0, 0.0, 0.0, s0.w);
         next1 = vec4(0.0);
+        next2 = vec4(0.0);
     }
 }`;
 

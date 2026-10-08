@@ -18,9 +18,10 @@
 export const minLevel = 4;
 export const epsilon = 2 ** -53;
 
-// The table for the orbit values (x, y pairs) of length values, for pixels up to dcMax from its point.
+// The table for the orbit values (x, y pairs) of length values, for pixels up to dcMax from its point,
+// for doubles (or with tolerance in place of epsilon, for less precise numbers).
 // Runs go no further than the last value, so pixels are at a value the orbit has when they come out.
-export function buildBla(values, length, dcMax) {
+export function buildBla(values, length, dcMax, tolerance = epsilon) {
     const levels = [];
     // Runs of 2^minLevel, made by folding single iterations in.
     const runLength = 2 ** minLevel;
@@ -33,7 +34,7 @@ export function buildBla(values, length, dcMax) {
             const zx = values[2 * m];
             const zy = values[(2 * m) + 1];
             // This iteration: A = 2Z, B = 1, R = epsilon |Z|; then combined with the run so far.
-            const stepR = epsilon * Math.hypot(zx, zy);
+            const stepR = tolerance * Math.hypot(zx, zy);
             const aSize = Math.hypot(ax, ay);
             r = Math.min(r, Math.max(0, (stepR - (Math.hypot(bx, by) * dcMax)) / aSize));
             const nextAx = 2 * ((zx * ax) - (zy * ay));

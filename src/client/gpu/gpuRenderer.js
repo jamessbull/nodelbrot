@@ -2,6 +2,7 @@ import { createFloatContext, createFramebuffer, createProgram, createTexture, fu
 import { arrayTextureWidth, colourShader, countEscapesShader, countEscapesVertexShader, iterateShader, restartSurvivorsShader } from "./shaders.js";
 import { lookupTableSize } from "../worker/pixelIterator.js";
 import { escapesPast, maxRereferences, nearestUnescaped, rereferenceDue } from "../rereference.js";
+import { createGpuBla } from "./gpuBla.js";
 
 // Pixels can't be smaller than this on the GPU: it has only 32-bit floats, and their exponents run out
 // soon after (about 1e-38). Deeper views are rendered on the CPU.
@@ -41,8 +42,9 @@ export function createGpuRenderer({width, height, events, imgData, escapeValues,
     gl.bindVertexArray(gl.createVertexArray());
 
     const floatTexture = () => createTexture(gl, gl.RGBA32F, width, height, gl.RGBA, gl.FLOAT);
-    const states = [[floatTexture(), floatTexture()], [floatTexture(), floatTexture()]];
-    const stateFramebuffers = states.map((pair) => createFramebuffer(gl, pair));
+    const states = [[floatTexture(), floatTexture(), floatTexture()], [floatTexture(), floatTexture(), floatTexture()]];
+    const stateFramebuffers = states.map((set) => createFramebuffer(gl, set));
+    const bla = createGpuBla(gl);
     let current = 0;                // which of states holds the pixels as they are
     const colourFramebuffer = createFramebuffer(gl, [createTexture(gl, gl.RGBA8, width, height, gl.RGBA, gl.UNSIGNED_BYTE)]);
 
@@ -181,6 +183,7 @@ export function createGpuRenderer({width, height, events, imgData, escapeValues,
         gl.useProgram(restartSurvivors.program);
         bindTexture(0, states[current][0], restartSurvivors, "state0");
         bindTexture(1, states[current][1], restartSurvivors, "state1");
+        bindTexture(2, states[current][2], restartSurvivors, "state2");
         gl.bindFramebuffer(gl.FRAMEBUFFER, stateFramebuffers[1 - current]);
         gl.drawArrays(gl.TRIANGLES, 0, 3);
         current = 1 - current;
@@ -301,17 +304,22 @@ export function createGpuRenderer({width, height, events, imgData, escapeValues,
         }
         gl.viewport(0, 0, width, height);
 
-        // Iterate, from one pair of state textures into the other.
+        // Iterate, from one set of state textures into the other.
         frame.timerQuery = null;
         if (gpuTimer) {
             frame.timerQuery = gl.createQuery();
             gl.beginQuery(gpuTimer.TIME_ELAPSED_EXT, frame.timerQuery);
         }
         const offset = referenceOrbit.offset();
+        // The furthest any pixel is from the orbit's point, for the table of runs.
+        const dcMax = Math.hypot(((width / 2) + Math.abs(offset.x)) * view.pixelSize, ((height / 2) + Math.abs(offset.y)) * view.pixelSize);
+        bla.update(referenceOrbit.generation(), referenceOrbit.values(), referenceOrbit.length(), dcMax, referenceOrbit.complete());
         gl.useProgram(iterate.program);
         bindTexture(0, states[current][0], iterate, "state0");
         bindTexture(1, states[current][1], iterate, "state1");
-        bindTexture(2, orbitTexture, iterate, "orbit");
+        bindTexture(2, states[current][2], iterate, "state2");
+        bindTexture(3, orbitTexture, iterate, "orbit");
+        bla.use(iterate, 4);
         gl.uniform1i(iterate.uniforms.orbitEnd, referenceOrbit.complete() ? referenceOrbit.length() - 1 : -1);
         gl.uniform1f(iterate.uniforms.startIteration, frame.start);
         gl.uniform1i(iterate.uniforms.iterations, frame.iterations);

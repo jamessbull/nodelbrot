@@ -2,6 +2,7 @@ import { createFloatContext, createFramebuffer, createProgram, createTexture, fu
 import { arrayTextureWidth, iterateShader } from "./shaders.js";
 import { colourPixels, lookupTableSize } from "../worker/pixelIterator.js";
 import { inMainCardioidOrBulb } from "../mandelbrotPoint.js";
+import { createGpuBla } from "./gpuBla.js";
 
 // Each pixel is done when it has escaped or is known to be in the set: the fragment is kept, for an
 // occlusion query to count, only for those still going.
@@ -23,10 +24,11 @@ void main() {
 // main cardioid or the period-2 bulb are marked as in the set before starting, rather than iterated to
 // depth (the GPU can't tell, as it doesn't know where pixels are precisely enough).
 //
-// The image is done in tiles, each iterated in passes of about passMs of GPU work (so as not to hold the
-// GPU so long the browser takes it away), until every pixel is done or depth is reached. Each pixel's
-// escapes are counted into a histogram of the whole image (the CPU export samples a tenth of it each
-// way), and the image is coloured against that once every tile is done. Calls onProgress("image",
+// Pixels whose iteration comes round to exactly where it was are in the set too (see shaders.js), and
+// runs of iterations are taken in one step where they can be. The image is done in tiles, each iterated
+// in passes of about passMs of GPU work (so as not to hold the GPU so long the browser takes it away),
+// until every pixel is done or depth is reached. Each pixel's escapes are counted into a histogram of
+// the whole image, and the image is coloured against that once every tile is done. Calls onProgress("image",
 // pixels) as tiles are done, onComplete(image) with the RGBA data, and onError(message) if the GPU can't
 // do it, after which nothing more is called.
 export function renderExportOnGpu({extents, width, height, depth, orbit, palette, point = null, onProgress = () => {}, onComplete,
@@ -57,8 +59,8 @@ export function renderExportOnGpu({extents, width, height, depth, orbit, palette
     const stillGoing = createProgram(gl, fullScreenVertexShader, stillGoingShader);
     gl.bindVertexArray(gl.createVertexArray());
     const floatTexture = () => createTexture(gl, gl.RGBA32F, tileW, tileH, gl.RGBA, gl.FLOAT);
-    const states = [[floatTexture(), floatTexture()], [floatTexture(), floatTexture()]];
-    const stateFramebuffers = states.map((pair) => createFramebuffer(gl, pair));
+    const states = [[floatTexture(), floatTexture(), floatTexture()], [floatTexture(), floatTexture(), floatTexture()]];
+    const stateFramebuffers = states.map((set) => createFramebuffer(gl, set));
     const countFramebuffer = createFramebuffer(gl, [createTexture(gl, gl.R8, tileW, tileH, gl.RED, gl.UNSIGNED_BYTE)]);
     const gpuTimer = gl.getExtension("EXT_disjoint_timer_query_webgl2");
 
@@ -72,6 +74,11 @@ export function renderExportOnGpu({extents, width, height, depth, orbit, palette
     const orbitData = new Float32Array(orbitRows * arrayTextureWidth * 2);
     orbitData.set(orbit.values);
     const orbitTexture = createTexture(gl, gl.RG32F, arrayTextureWidth, orbitRows, gl.RG, gl.FLOAT, orbitData);
+    // Runs of iterations to take in one step, for the furthest corner of the image from the orbit's point.
+    const bla = createGpuBla(gl);
+    const corners = [extents.topLeft().x, extents.topLeft().x + extents.width()].map(Math.abs);
+    const sides = [extents.topLeft().y, extents.topLeft().y + extents.height()].map(Math.abs);
+    bla.update(0, orbit.values, orbitLength, Math.hypot(Math.max(...corners), Math.max(...sides)), orbit.complete);
 
     const stepX = extents.width() / (width - 1);
     const stepY = extents.height() / (height - 1);
@@ -113,7 +120,7 @@ export function renderExportOnGpu({extents, width, height, depth, orbit, palette
         return 0;
     }
 
-    // Iterations, from startIteration, of the tile in states[current], into the other pair, with a query
+    // Iterations, from startIteration, of the tile in states[current], into the other set, with a query
     // for whether any pixel is still going after them, and the GPU time they took.
     function pass(tile, current, startIteration, iterations) {
         gl.viewport(0, 0, tileW, tileH);
@@ -122,7 +129,9 @@ export function renderExportOnGpu({extents, width, height, depth, orbit, palette
         gl.useProgram(iterate.program);
         bind(0, states[current][0], iterate, "state0");
         bind(1, states[current][1], iterate, "state1");
-        bind(2, orbitTexture, iterate, "orbit");
+        bind(2, states[current][2], iterate, "state2");
+        bind(3, orbitTexture, iterate, "orbit");
+        bla.use(iterate, 4);
         gl.uniform1i(iterate.uniforms.orbitEnd, orbit.complete ? orbitLength - 1 : -1);
         gl.uniform1f(iterate.uniforms.startIteration, startIteration);
         gl.uniform1i(iterate.uniforms.iterations, iterations);
