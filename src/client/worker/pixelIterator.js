@@ -152,6 +152,7 @@ export function createPixelIterator(width, height, extents) {
         xState: xState,
         yState: yState,
         escapeValues: escapeValues,
-        imageEscapeValues: imageEscapeValues
+        imageEscapeValues: imageEscapeValues,
+        smoothIterations: smoothIterations
     };
 }

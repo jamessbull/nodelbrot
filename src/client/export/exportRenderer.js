@@ -1,21 +1,24 @@
 import { createWorkerPool, workerCount } from "../workerPool.js";
 import { renderFragments, exportMessage } from "../workerMessages.js";
+import { colourPixels, lookupTableSize } from "../worker/pixelIterator.js";
 
 // Renders extents (a rectangle in the complex plane) as a width x height image, iterating to depth and
-// coloured with palette, without touching the page. Two phases run on one pool of workers, made by
-// newWorker(): first a histogram of how many pixels escape at each iteration, from a sample of the image
-// at a tenth of its size each way, then the image itself in strips, coloured against that histogram.
-// Calls onProgress("histogram" or "image", pixels) as each part of a phase is done, then onComplete with
-// the image's RGBA data, or onError with a message if a worker fails.
+// coloured with palette, without touching the page. Workers made by newWorker() iterate the image in
+// strips, sending back each pixel's escape iteration and smoothed escape iteration; then the histogram
+// of how many escape at each iteration is made from every pixel, as the GPU export's is (see
+// gpuExport.js), and the image coloured against it, as the screen is. Calls onProgress("image", pixels)
+// as each strip is done, then onComplete with the image's RGBA data, or onError with a message if a
+// worker fails.
 //
 // For a view too deep for doubles, orbit is the reference orbit {generation, values, complete}, worked out
 // to at least depth + 2 values (or until it is complete), and extents is the area relative to its point:
 // pixels are iterated by perturbation (see perturbationIterator.js).
 export function renderExport({extents, width, height, depth, palette, newWorker, workers = workerCount(), orbit = null,
         onProgress = () => {}, onComplete, onError}) {
-    const histogramParts = 10;
-    const imageParts = 100;
+    const parts = 100;
     const pool = createWorkerPool(workers, newWorker);
+    const escapes = new Uint32Array(width * height);
+    const smooth = new Float32Array(width * height);
 
     function fail(message) {
         pool.terminate();
@@ -24,61 +27,34 @@ export function renderExport({extents, width, height, depth, palette, newWorker,
         }
     }
 
-    function fragments(columns, rows, parts) {
-        return renderFragments(extents.topLeft().x, extents.topLeft().y, extents.width(), extents.height(), columns, rows).split(parts);
-    }
-
     if (orbit) {
         pool.sendToEach(() => ({workerMessageType: "exportorbit", orbit}));
     }
 
-    function histogramPhase(onHistogram) {
-        const sampleWidth = Math.floor(width / 10);
-        const sampleHeight = Math.floor(height / 10);
-        const histogram = new Uint32Array(depth + 1);
+    const jobs = renderFragments(extents.topLeft().x, extents.topLeft().y, extents.width(), extents.height(), width, height)
+        .split(parts).map((fragment) => Object.assign(exportMessage(fragment, depth), {perturbation: Boolean(orbit)}));
+    pool.consume(jobs, function (msg) {
+        // offset is in bytes of the RGBA image, four to a pixel.
+        const at = msg.result.offset / 4;
+        escapes.set(new Uint32Array(msg.result.escapes), at);
+        smooth.set(new Float32Array(msg.result.smooth), at);
+        onProgress("image", width * height / parts);
+    }, function () {
+        pool.terminate();
+        // Cumulative counts, as colourPixels wants them: how many pixels had escaped by each iteration.
+        const counts = new Uint32Array(depth + 2);
         let total = 0;
-        const jobs = fragments(sampleWidth, sampleHeight, histogramParts).map((fragment) => ({
-            workerMessageType: "histogramexportworker",
-            maxIterations: depth,
-            exportWidth: fragment.columns,
-            exportHeight: fragment.rows,
-            extents: fragment.extents,
-            perturbation: Boolean(orbit)
-        }));
-        pool.consume(jobs, function (msg) {
-            const counts = new Uint32Array(msg.result.histogramData);
-            for (let i = 1; i < counts.length; i += 1) {
-                histogram[i] += counts[i];
+        for (let idx = 0; idx < escapes.length; idx += 1) {
+            if (escapes[idx] !== 0 && escapes[idx] <= depth) {
+                counts[escapes[idx]] += 1;
+                total += 1;
             }
-            total += msg.result.histogramTotal;
-            onProgress("histogram", sampleWidth * sampleHeight / histogramParts);
-        }, function () {
-            // The image phase needs cumulative counts: how many pixels had escaped by each iteration.
-            for (let i = 1; i < histogram.length; i += 1) {
-                histogram[i] += histogram[i - 1];
-            }
-            onHistogram(histogram, total);
-        }, fail);
-    }
-
-    function imagePhase(histogram, total) {
-        const nodes = palette.toNodeList();
-        const blend = palette.blend();
-        pool.sendToEach(function () {
-            const histogramData = new Uint32Array(histogram).buffer;
-            return {workerMessageType: "imageexportworker", updateHistogramData: true, paletteNodes: nodes, paletteBlend: blend,
-                histogramData: histogramData, histogramTotal: total, transfer: [histogramData]};
-        });
-        const jobs = fragments(width, height, imageParts).map((fragment) => Object.assign(exportMessage(fragment, depth), {perturbation: Boolean(orbit)}));
+        }
+        for (let i = 1; i < counts.length; i += 1) {
+            counts[i] += counts[i - 1];
+        }
         const image = new Uint8ClampedArray(width * height * 4);
-        pool.consume(jobs, function (msg) {
-            image.set(new Uint8ClampedArray(msg.result.imgData), msg.result.offset);
-            onProgress("image", width * height / imageParts);
-        }, function () {
-            pool.terminate();
-            onComplete(image);
-        }, fail);
-    }
-
-    histogramPhase(imagePhase);
+        colourPixels(image, smooth, smooth, counts, counts.length, total, palette.toLookupTable(lookupTableSize));
+        onComplete(image);
+    }, fail);
 }

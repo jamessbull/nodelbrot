@@ -6,8 +6,8 @@ import { needsPerturbation } from "../precision.js";
 import { renderExportOnGpu } from "../gpu/gpuExport.js";
 import { gpuMaxDepth, gpuSmallestPixel } from "../gpu/gpuRenderer.js";
 
-// The deepest export allowed on the CPU. Every export worker holds a histogram with an entry per
-// iteration, so this keeps memory to around 8MB per worker. On the GPU, exports go as deep as it counts
+// The deepest export allowed on the CPU. Every export worker holds an array with an entry per
+// iteration, and its own copy of the reference orbit, so this keeps memory to around 40MB per worker. On the GPU, exports go as deep as it counts
 // iterations exactly.
 export const maxDepth = 2000000;
 export const maxGpuDepth = gpuMaxDepth - 1;
@@ -48,7 +48,6 @@ export function createExporter({exportSizes, state, events, newWorker, reference
 
     const exportButton = document.getElementById("export");
     const exportDepth = document.getElementById("exportDepth");
-    const histogramProgress = document.getElementById("histogramProgress");
     const imageProgress = document.getElementById("imageProgress");
     const timeProgress = document.getElementById("elapsedTime");
     const exportResult = document.getElementById("exportResult");
@@ -60,7 +59,7 @@ export function createExporter({exportSizes, state, events, newWorker, reference
     let palette;
     let exportUrl;          // the last export's image, until the next export starts
     const timeReporter = createTimeReporter(timeProgress);
-    const progressReporters = {histogram: createProgressReporter(histogramProgress), image: createProgressReporter(imageProgress)};
+    const progressReporters = {image: createProgressReporter(imageProgress)};
 
     hide(exportProgress);
 
@@ -161,7 +160,6 @@ export function createExporter({exportSizes, state, events, newWorker, reference
         exportDimensions = exportSizes.dimensions();
         selectButton(exportButton);
         progressReporters.image.reportOn(exportDimensions.width, exportDimensions.height);
-        progressReporters.histogram.reportOn(Math.floor(exportDimensions.width / 10), Math.floor(exportDimensions.height / 10));
         timeReporter.start();
         const area = state.getArea();
         const view = state.getView();
@@ -202,8 +200,6 @@ export function createExporter({exportSizes, state, events, newWorker, reference
 
     function startGpuExport(extents, orbit, point, depth, onFailure) {
         exportMessage.textContent = "Rendering on the GPU…";
-        // The GPU counts escapes over the whole image as it goes, without a separate histogram phase.
-        progressReporters.histogram.add(Math.floor(exportDimensions.width / 10) * Math.floor(exportDimensions.height / 10));
         renderExportOnGpu({
             extents, orbit: {values: orbit.values, complete: orbit.complete}, point, palette, depth,
             width: exportDimensions.width, height: exportDimensions.height,

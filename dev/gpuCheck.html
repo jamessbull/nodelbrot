@@ -26,9 +26,9 @@
 <h2>Exports</h2>
 <p>Exports each view on the GPU (from a nucleus, as the explorer does) and on the CPU (from the view's centre, or
     directly where doubles are precise enough), and compares the images: how many pixels are black (in the set, by
-    the depth) in one and not the other, and how many are much the same colour. The GPU colours against a histogram
-    of the whole image, the CPU against a sample, so colours differ a little. They pass with at most 1% black in only
-    one, and at least 80% much the same colour.</p>
+    the depth) in one and not the other, and how many are much the same colour. Both colour against a histogram of
+    the whole image, so colours differ only where escape counts do, as above. They pass with at most 1% black in only
+    one, and at least 90% much the same colour.</p>
 <p id="exportStatus">Waiting…</p>
 <table id="exports">
     <tr><th>View</th><th>Pixel size</th><th>Depth</th><th>Black in only one</th><th>Much the same colour</th><th>GPU / CPU time</th></tr>

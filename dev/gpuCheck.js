@@ -175,7 +175,7 @@ async function checkExports() {
         const pixels = width * height;
         const result = { name, pixelSize, blackInOne: blackInOne / pixels, alike: alike / pixels, gpuSeconds: gpu.seconds, cpuSeconds: cpu.seconds };
         window.exportResults.push(result);
-        const pass = result.blackInOne <= 0.01 && result.alike >= 0.8;
+        const pass = result.blackInOne <= 0.01 && result.alike >= 0.9;
         const row = exportTable.insertRow();
         [name, pixelSize.toExponential(0), depth, (100 * result.blackInOne).toFixed(2) + "%", (100 * result.alike).toFixed(1) + "%",
             result.gpuSeconds.toFixed(2) + "s / " + result.cpuSeconds.toFixed(2) + "s"].forEach(function (text, i) {

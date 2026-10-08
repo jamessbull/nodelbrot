@@ -356,6 +356,7 @@ export function createPerturbationIterator(width, height, startExtents, orbit, {
         get xState() { return orbitPoints().xs; },
         get yState() { return orbitPoints().ys; },
         escapeValues: escapeValues,
-        imageEscapeValues: imageEscapeValues
+        imageEscapeValues: imageEscapeValues,
+        smoothIterations: smoothIterations
     };
 }
