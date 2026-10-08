@@ -4,32 +4,34 @@ import { deselectButton, hide, selectButton, show } from "../dom.js";
 import { rectangle } from "../geometry.js";
 import { needsPerturbation } from "../precision.js";
 import { renderExportOnGpu } from "../gpu/gpuExport.js";
-import { gpuSmallestPixel } from "../gpu/gpuRenderer.js";
+import { gpuMaxDepth, gpuSmallestPixel } from "../gpu/gpuRenderer.js";
 
-// The deepest export allowed. Every export worker holds a histogram with an entry per iteration, so
-// this keeps memory to around 8MB per worker.
+// The deepest export allowed on the CPU. Every export worker holds a histogram with an entry per
+// iteration, so this keeps memory to around 8MB per worker. On the GPU, exports go as deep as it counts
+// iterations exactly.
 export const maxDepth = 2000000;
+export const maxGpuDepth = gpuMaxDepth - 1;
 
-// Reads the export depth the user typed: a whole number of iterations from 1 to maxDepth, with
-// commas or spaces allowed between digits. Returns {depth} or {error} explaining what is wrong.
-export function parseDepth(text) {
+// Reads the export depth the user typed: a whole number of iterations from 1 to max, with commas or
+// spaces allowed between digits. Returns {depth} or {error} explaining what is wrong.
+export function parseDepth(text, max = maxDepth) {
     const digits = String(text).replace(/[,\s]/g, "");
     if (!/^[0-9]+$/.test(digits)) {
         return {error: "Iterations must be a whole number, such as 1000."};
     }
     const depth = parseInt(digits, 10);
-    if (depth < 1 || depth > maxDepth) {
-        return {error: "Iterations must be between 1 and " + maxDepth.toLocaleString("en-GB") + "."};
+    if (depth < 1 || depth > max) {
+        return {error: "Iterations must be between 1 and " + max.toLocaleString("en-GB") + "."};
     }
     return {depth: depth};
 }
 
 // The depth to suggest for exporting a view whose last pixel to escape on screen did so at lastEscape:
-// a little past it, at two significant figures, and at least 1000.
-export function suggestedDepth(lastEscape) {
+// a little past it, at two significant figures, at least 1000, and at most max.
+export function suggestedDepth(lastEscape, max = maxDepth) {
     const wanted = Math.max(1000, Math.ceil(lastEscape * 1.05));
     const unit = 10 ** (Math.floor(Math.log10(wanted)) - 1);
-    return Math.min(maxDepth, Math.ceil(wanted / unit) * unit);
+    return Math.min(max, Math.ceil(wanted / unit) * unit);
 }
 
 // The export panel: exports the current view at the chosen size and depth, with workers made by
@@ -76,10 +78,20 @@ export function createExporter({exportSizes, state, events, newWorker, reference
     events.listenTo(events.histogramChanged, function (info) {
         if (info.total > escapedSoFar && !depthTyped) {
             // Pixels escaped in the iterations up to filledLength.
-            exportDepth.value = suggestedDepth(info.filledLength);
+            exportDepth.value = suggestedDepth(info.filledLength, deepest());
         }
         escapedSoFar = info.total;
     });
+
+    // Whether an export of the view at the chosen size would be on the GPU, and so how deep it can go.
+    function onGpu() {
+        const area = state.getArea();
+        const view = state.getView();
+        const {width, height} = exportSizes.dimensions();
+        const exportPixel = Math.max(area.width() / (width - 1), area.height() / (height - 1));
+        return Boolean(referenceOrbit && referenceOrbit.active() && useGpu(view) && exportPixel >= gpuSmallestPixel);
+    }
+    const deepest = () => (onGpu() ? maxGpuDepth : maxDepth);
 
     function finish() {
         deselectButton(exportButton);
@@ -139,7 +151,8 @@ export function createExporter({exportSizes, state, events, newWorker, reference
         exportResult.hidden = true;
         exportMessage.textContent = "";
         show(exportProgress);
-        const depth = parseDepth(exportDepth.value);
+        const gpu = onGpu();
+        const depth = parseDepth(exportDepth.value, gpu ? maxGpuDepth : maxDepth);
         if (depth.error) {
             exportMessage.textContent = depth.error;
             return false;
@@ -153,10 +166,7 @@ export function createExporter({exportSizes, state, events, newWorker, reference
         const area = state.getArea();
         const view = state.getView();
         const pixelSize = view.pixelSize;
-        const exportPixel = Math.max(area.width() / (exportDimensions.width - 1), area.height() / (exportDimensions.height - 1));
-        const orbitThere = referenceOrbit && referenceOrbit.active();
-        const onGpu = orbitThere && useGpu(view) && exportPixel >= gpuSmallestPixel && depth.depth < 2 ** 24;
-        if (!onGpu && (!orbitThere || !needsPerturbation(view))) {
+        if (!gpu && (!referenceOrbit || !referenceOrbit.active() || !needsPerturbation(view))) {
             startExport(area, null, depth.depth);
             return;
         }
@@ -170,13 +180,15 @@ export function createExporter({exportSizes, state, events, newWorker, reference
             exportMessage.textContent = "";
             const extents = rectangle(-(area.width() / 2) - (orbit.offset.x * pixelSize), -(area.height() / 2) - (orbit.offset.y * pixelSize),
                 area.width(), area.height());
-            if (onGpu) {
+            if (gpu) {
                 // Where the orbit's point is, where doubles can say.
                 const point = needsPerturbation(view) ? null : {x: area.topLeft().x + (area.width() / 2) + (orbit.offset.x * pixelSize),
                     y: area.topLeft().y + (area.height() / 2) + (orbit.offset.y * pixelSize)};
                 startGpuExport(extents, orbit, point, depth.depth, function () {
-                    // The CPU instead, as it would have done it.
-                    if (needsPerturbation(view)) {
+                    // The CPU instead, as it would have done it, if it can go that deep.
+                    if (depth.depth > maxDepth) {
+                        fail("the GPU couldn't, and the CPU can only go to " + maxDepth.toLocaleString("en-GB") + " iterations.");
+                    } else if (needsPerturbation(view)) {
                         startExport(extents, orbit, depth.depth);
                     } else {
                         startExport(area, null, depth.depth);

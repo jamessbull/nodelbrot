@@ -7,6 +7,9 @@ import { escapesPast, maxRereferences, nearestUnescaped, rereferenceDue } from "
 // soon after (about 1e-38). Deeper views are rendered on the CPU.
 export const gpuSmallestPixel = 1e-30;
 
+// Iterations are counted in 32-bit floats, which are exact up to here; rendering stops there.
+export const gpuMaxDepth = 2 ** 24;
+
 // Renders the interactive view on the GPU with WebGL2, a frame at a time, handling the same events as the
 // CPU renderer (see interactiveRenderer.js), so the rest of the explorer works the same with either. Every
 // view is rendered by perturbation from referenceOrbit, which must be active for it (32-bit floats aren't
@@ -47,8 +50,6 @@ export function createGpuRenderer({width, height, events, imgData, escapeValues,
     const initialStepSize = 95;
     const minStepSize = 5;
     const maxStepSize = 20000;
-    // Iterations are counted in 32-bit floats, which are exact up to here; rendering stops there.
-    const maxDepth = 2 ** 24;
 
     // The counts of escapes in a frame, by iteration from its start.
     const countRows = Math.ceil(maxStepSize / arrayTextureWidth);
@@ -262,14 +263,14 @@ export function createGpuRenderer({width, height, events, imgData, escapeValues,
     }
 
     function submitFrame() {
-        if (submittedIteration >= maxDepth) {
+        if (submittedIteration >= gpuMaxDepth) {
             frameWanted = false;
             if (running) {
                 events.fire(events.stop);
             }
             return;
         }
-        const room = Math.min(orbitRoom(), maxDepth - submittedIteration);
+        const room = Math.min(orbitRoom(), gpuMaxDepth - submittedIteration);
         if (room < 1) {
             waitingForOrbit = true;
             referenceOrbit.want(submittedIteration + stepSize + 2);

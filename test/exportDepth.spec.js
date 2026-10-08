@@ -1,4 +1,4 @@
-import { maxDepth, parseDepth, suggestedDepth } from "../src/client/export/exporter.js";
+import { maxDepth, maxGpuDepth, parseDepth, suggestedDepth } from "../src/client/export/exporter.js";
 
 describe("reading the export depth", function () {
 
@@ -23,11 +23,15 @@ describe("reading the export depth", function () {
         expect(suggestedDepth(788930)).toBe(830000);
         expect(suggestedDepth(120)).toBe(1000);
         expect(suggestedDepth(5000000)).toBe(maxDepth);
+        expect(suggestedDepth(5000000, maxGpuDepth)).toBe(5300000);
     });
 
     it("should refuse depths out of range", function () {
         expect(parseDepth("0").error).toContain("between 1 and");
         expect(parseDepth(String(maxDepth + 1)).error).toContain("between 1 and");
         expect(parseDepth(String(maxDepth))).toEqual({depth: maxDepth});
+        // The GPU goes deeper, as far as it counts iterations exactly.
+        expect(parseDepth("10000000", maxGpuDepth)).toEqual({depth: 10000000});
+        expect(parseDepth(String(maxGpuDepth + 1), maxGpuDepth).error).toContain("16,777,215");
     });
 });
